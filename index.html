@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#185FA5">
+<title>Loan Progress</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Loan Progress">
+
+<style>
+:root {
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+  --blue-dark: #0C447C;
+  --green: #3B6D11;
+  --green-light: #EAF3DE;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+  --amber: #854F0B;
+  --amber-light: #FAEEDA;
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --gray-50: #F7F7F5;
+  --gray-100: #F1EFE8;
+  --gray-200: #D3D1C7;
+  --gray-400: #888780;
+  --gray-600: #5F5E5A;
+  --gray-900: #2C2C2A;
+  --white: #FFFFFF;
+  --border: #E5E3DC;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
+
+/* Header */
+.header {
+  background: var(--blue);
+  color: white;
+  padding: 16px;
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+.user-badge {
+  background: rgba(255,255,255,0.2);
+  padding: 6px 12px; border-radius: 20px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+}
+
+/* User selection */
+.user-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-card {
+  background: white; border-radius: var(--radius-lg);
+  padding: 24px; width: 100%; max-width: 400px;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-card h2 { margin: 0 0 16px; font-size: 20px; }
+.user-list { display: flex; flex-direction: column; gap: 8px; }
+.user-btn {
+  padding: 14px; border: 1px solid var(--border);
+  background: white; border-radius: var(--radius);
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+.user-btn:hover { background: var(--gray-100); }
+.user-btn.admin { border-color: var(--blue); color: var(--blue); }
+
+/* Tabs */
+.tabs {
+  display: flex; background: white;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; overflow-y: hidden;
+  position: sticky; top: 56px; z-index: 50;
+  -webkit-overflow-scrolling: touch;
+}
+.tab {
+  padding: 14px 16px; border: none; background: none;
+  font-size: 14px; font-weight: 500;
+  color: var(--gray-600); cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  flex-shrink: 0;
+}
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+.subtabs {
+  display: flex; gap: 6px;
+  padding: 10px 12px; background: white;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.subtab {
+  padding: 8px 14px; border: 1px solid var(--border);
+  background: white; border-radius: 20px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.subtab.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+/* Content */
+.content { padding: 12px; }
+
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.section-header h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.count-badge {
+  background: var(--gray-100); color: var(--gray-600);
+  padding: 2px 10px; border-radius: 10px;
+  font-size: 12px; font-weight: 500;
+}
+
+/* Loan Card */
+.loan-card {
+  background: white; border-radius: var(--radius);
+  padding: 14px; margin-bottom: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.loan-card-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; margin-bottom: 8px;
+}
+.loan-name { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+.loan-meta {
+  font-size: 12px; color: var(--gray-600);
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.loan-amount {
+  font-size: 16px; font-weight: 600;
+  color: var(--blue-dark);
+  white-space: nowrap;
+}
+.loan-amount .unit { font-size: 11px; font-weight: 500; color: var(--gray-600); }
+.loan-details {
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 4px 12px; font-size: 13px;
+  padding-top: 8px; border-top: 1px solid var(--gray-100);
+  margin-top: 8px;
+}
+.loan-details dt { color: var(--gray-600); }
+.loan-details dd { margin: 0; color: var(--gray-900); }
+.loan-remarks {
+  margin-top: 8px; padding: 8px 10px;
+  background: var(--amber-light); color: var(--amber);
+  border-radius: 6px; font-size: 12px;
+}
+.chip {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 10px; font-size: 11px; font-weight: 500;
+}
+.chip.agri { background: var(--green-light); color: var(--green); }
+.chip.sme { background: var(--purple-light); color: var(--purple); }
+.chip.edu { background: var(--amber-light); color: var(--amber); }
+.chip.status-p { background: var(--amber-light); color: var(--amber); }
+.chip.status-s { background: var(--green-light); color: var(--green); }
+.chip.status-r { background: var(--red-light); color: var(--red); }
+
+.loan-actions {
+  display: flex; gap: 8px; margin-top: 10px;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 8px 14px; border: 1px solid var(--border);
+  background: white; border-radius: 6px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  color: var(--gray-900);
+}
+.btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
+.btn.success { background: var(--green); color: white; border-color: var(--green); }
+.btn.warn { background: var(--amber); color: white; border-color: var(--amber); }
+.btn.danger { background: var(--red); color: white; border-color: var(--red); }
+.btn.small { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* FAB */
+.fab {
+  position: fixed; bottom: 20px; right: 20px;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--blue); color: white;
+  border: none; font-size: 28px; font-weight: 300;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  cursor: pointer; z-index: 90;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Form Modal */
+.form-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.form-sheet {
+  background: white;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%; max-width: 600px;
+  max-height: 92vh; overflow-y: auto;
+  padding: 20px; padding-bottom: 80px;
+  -webkit-overflow-scrolling: touch;
+}
+@media (min-width: 768px) {
+  .form-modal { align-items: center; }
+  .form-sheet { border-radius: var(--radius-lg); max-height: 85vh; }
+}
+.form-sheet h2 { margin: 0 0 16px; font-size: 18px; }
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block; margin-bottom: 6px;
+  font-size: 13px; font-weight: 500; color: var(--gray-600);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 15px; font-family: inherit;
+  background: white;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none; border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-light);
+}
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-actions {
+  display: flex; gap: 10px; margin-top: 20px;
+}
+.form-actions .btn { flex: 1; padding: 12px; font-size: 15px; }
+
+/* Summary cards */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.summary-card {
+  background: white; padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.summary-card .label {
+  font-size: 11px; color: var(--gray-600);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.summary-card .value {
+  font-size: 18px; font-weight: 700;
+  color: var(--blue-dark);
+}
+.summary-card .sub { font-size: 11px; color: var(--gray-600); margin-top: 2px; }
+
+/* Daily reporting sections */
+.daily-section {
+  background: white; border-radius: var(--radius-lg);
+  padding: 16px; margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+.daily-section h3 {
+  margin: 0 0 10px; font-size: 14px;
+  color: var(--gray-600); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.daily-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.daily-table th, .daily-table td {
+  padding: 8px; text-align: left;
+  border-bottom: 1px solid var(--gray-100);
+}
+.daily-table th { font-weight: 600; color: var(--gray-600); font-size: 12px; }
+.daily-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.daily-table tr.total-row { background: var(--gray-100); font-weight: 600; }
+
+/* Loading */
+.loading {
+  text-align: center; padding: 40px 20px;
+  color: var(--gray-600); font-size: 14px;
+}
+.empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--gray-400); font-size: 14px;
+}
+.status-dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--green);
+  margin-right: 6px;
+}
+.status-dot.offline { background: var(--red); }
+
+/* Filter */
+.filter-row {
+  display: flex; gap: 8px; margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.filter-row select, .filter-row input {
+  padding: 8px 10px; border: 1px solid var(--border);
+  border-radius: 6px; font-size: 13px; background: white;
+  flex: 1; min-width: 120px;
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 90px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-900); color: white;
+  padding: 10px 18px; border-radius: 20px;
+  font-size: 13px; z-index: 2000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* PIN modal */
+.pin-input {
+  letter-spacing: 8px; text-align: center;
+  font-size: 20px !important;
+}
+
+@media (max-width: 480px) {
+  .summary-card .value { font-size: 16px; }
+  .tab { padding: 12px 12px; font-size: 13px; }
+  .loan-card { padding: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="header">
+    <h1>📋 Loan Progress</h1>
+    <div class="user-badge" id="userBadge" onclick="showUserSelect()">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="currentUserName">Loading...</span>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="pending">Pending</button>
+    <button class="tab" data-tab="sanctioned">Sanctioned</button>
+    <button class="tab" data-tab="returned">Returned</button>
+    <button class="tab" data-tab="daily">Daily Report</button>
+  </div>
+
+  <div class="content" id="content">
+    <div class="loading">Loading data...</div>
+  </div>
+</div>
+
+<button class="fab" id="fab" onclick="openAddForm()" title="Add new loan">+</button>
+
+<!-- User selection modal -->
+<div class="user-modal" id="userModal" style="display:none;">
+  <div class="modal-card">
+    <h2>Who are you?</h2>
+    <p style="font-size:13px;color:var(--gray-600);margin:0 0 16px;">Select your name to continue</p>
+    <div class="user-list" id="userList"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <button class="user-btn admin" onclick="promptAdmin()">🔒 Admin</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit form modal -->
+<div class="form-modal" id="formModal" style="display:none;">
+  <div class="form-sheet">
+    <h2 id="formTitle">Add New Loan</h2>
+    <form id="loanForm" onsubmit="saveLoan(event)">
+      <input type="hidden" id="loanId">
+
+      <div class="form-group">
+        <label>Allocated To *</label>
+        <select id="allocatedTo" required>
+          <option value="">Select officer</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="category" required>
+          <option value="">Select category</option>
+          <option value="Agriculture">Agriculture</option>
+          <option value="SME">SME</option>
+          <option value="Education">Education</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Branch *</label>
+        <select id="branch" required>
+          <option value="">Select branch</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Customer Name *</label>
+        <input type="text" id="customerName" required placeholder="e.g., SUNIL SHARMA INDUSTRY">
+      </div>
+
+      <div class="form-group">
+        <label>Amount (in lakhs) *</label>
+        <input type="number" id="amount" step="0.01" min="0" required placeholder="e.g., 35">
+      </div>
+
+      <div class="form-group">
+        <label>Receive Date *</label>
+        <input type="date" id="receiveDate" required>
+      </div>
+
+      <div class="form-group" id="sanctionDateGroup" style="display:none;">
+        <label>Sanction Date *</label>
+        <input type="date" id="sanctionDate">
+      </div>
+
+      <div class="form-group">
+        <label>Remarks</label>
+        <textarea id="remarks" placeholder="Any additional notes..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn" onclick="closeForm()">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PIN modal -->
+<div class="form-modal" id="pinModal" style="display:none;">
+  <div class="form-sheet" style="max-width:360px;">
+    <h2>Admin PIN</h2>
+    <p style="font-size:13px;color:var(--gray-600);margin:0 0 16px;">Enter 6-digit PIN to continue</p>
+    <input type="password" id="pinInput" class="pin-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:6px;">
+    <div class="form-actions">
+      <button class="btn" onclick="closePinModal()">Cancel</button>
+      <button class="btn primary" onclick="checkPin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal (admin) -->
+<div class="form-modal" id="settingsModal" style="display:none;">
+  <div class="form-sheet">
+    <h2>⚙️ Admin Settings</h2>
+
+    <div class="form-group">
+      <label>Processing Officers</label>
+      <div id="officersList" style="margin-bottom:8px;"></div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="newOfficer" placeholder="Add officer name" style="flex:1;">
+        <button class="btn primary" onclick="addOfficer()">Add</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Branches</label>
+      <div id="branchesList" style="margin-bottom:8px;max-height:200px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="newBranch" placeholder="e.g., 1234 : BRANCH NAME" style="flex:1;">
+        <button class="btn primary" onclick="addBranch()">Add</button>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" onclick="closeSettings()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, updateDoc, deleteDoc,
+  onSnapshot, query, orderBy, getDoc, getDocs
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDY0AMy0eZI_74nJSoy46uHqgKvh9NkKw8",
+  authDomain: "loan-tracker-4af27.firebaseapp.com",
+  projectId: "loan-tracker-4af27",
+  storageBucket: "loan-tracker-4af27.firebasestorage.app",
+  messagingSenderId: "700827916451",
+  appId: "1:700827916451:web:d872bf2905d234bdb60716",
+  measurementId: "G-77QQ60KXQB"
+};
+
+const ADMIN_PIN = "147258";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// State
+let state = {
+  currentUser: null,
+  isAdmin: false,
+  activeTab: 'pending',
+  activeSubtab: 'all',
+  loans: [],
+  officers: ['Anchal', 'Nikita', 'Ritika'],
+  branches: [
+    '7459 : KAFOTA',
+    '4589 : SME TARUWALA',
+    '50569 : TIMBI',
+    '1680 : ADB PAONTA SAHIB',
+    '1755 : PAONTA SAHIB',
+    '8117 : RAJPUR',
+    '50536 : BHAGANI',
+    '2413 : MAJRA',
+    '686 : NAHAN',
+    '6784 : DHAULA KUAN',
+    '3399 : RAJBAN',
+    '63982 : SHILLAI',
+    '4590 : KALA AMB'
+  ]
+};
+
+// --- Utility functions ---
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+}
+
+function todayISO() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function formatAmount(amt) {
+  const n = parseFloat(amt) || 0;
+  return n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function categoryChip(cat) {
+  const map = {
+    'Agriculture': 'agri',
+    'SME': 'sme',
+    'Education': 'edu'
+  };
+  return `<span class="chip ${map[cat] || ''}">${cat}</span>`;
+}
+
+// --- Firebase: load settings ---
+async function loadSettings() {
+  try {
+    const settingsDoc = await getDoc(doc(db, 'settings', 'config'));
+    if (settingsDoc.exists()) {
+      const data = settingsDoc.data();
+      if (data.officers && data.officers.length) state.officers = data.officers;
+      if (data.branches && data.branches.length) state.branches = data.branches;
+    } else {
+      // Create initial settings
+      await setDoc(doc(db, 'settings', 'config'), {
+        officers: state.officers,
+        branches: state.branches
+      });
+    }
+  } catch (e) {
+    console.error('Load settings error:', e);
+  }
+}
+
+async function saveSettings() {
+  try {
+    await setDoc(doc(db, 'settings', 'config'), {
+      officers: state.officers,
+      branches: state.branches
+    });
+  } catch (e) {
+    console.error('Save settings error:', e);
+    showToast('Error saving settings');
+  }
+}
+
+// --- Firebase: loan operations ---
+function subscribeLoans() {
+  const q = query(collection(db, 'loans'), orderBy('receiveDate', 'desc'));
+  onSnapshot(q, (snapshot) => {
+    state.loans = [];
+    snapshot.forEach(doc => {
+      state.loans.push({ id: doc.id, ...doc.data() });
+    });
+    document.getElementById('statusDot').classList.remove('offline');
+    render();
+  }, (error) => {
+    console.error('Snapshot error:', error);
+    document.getElementById('statusDot').classList.add('offline');
+    showToast('Connection issue. Retrying...');
+  });
+}
+
+async function createLoan(data) {
+  const id = 'loan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  await setDoc(doc(db, 'loans', id), {
+    ...data,
+    createdAt: new Date().toISOString(),
+    createdBy: state.currentUser,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+async function updateLoan(id, data) {
+  await updateDoc(doc(db, 'loans', id), {
+    ...data,
+    updatedAt: new Date().toISOString(),
+    updatedBy: state.currentUser
+  });
+}
+
+async function removeLoan(id) {
+  await deleteDoc(doc(db, 'loans', id));
+}
+
+// --- User selection ---
+window.showUserSelect = function() {
+  const list = document.getElementById('userList');
+  list.innerHTML = state.officers.map(o =>
+    `<button class="user-btn" onclick="selectUser('${o.replace(/'/g, "\\'")}')">${o}</button>`
+  ).join('');
+  document.getElementById('userModal').style.display = 'flex';
+};
+
+window.selectUser = function(name) {
+  state.currentUser = name;
+  state.isAdmin = false;
+  localStorage.setItem('currentUser', name);
+  localStorage.setItem('isAdmin', 'false');
+  document.getElementById('currentUserName').textContent = name;
+  document.getElementById('userModal').style.display = 'none';
+  render();
+};
+
+window.promptAdmin = function() {
+  document.getElementById('userModal').style.display = 'none';
+  document.getElementById('pinModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('pinInput').focus(), 100);
+};
+
+window.checkPin = function() {
+  const pin = document.getElementById('pinInput').value;
+  if (pin === ADMIN_PIN) {
+    state.currentUser = 'Admin';
+    state.isAdmin = true;
+    localStorage.setItem('currentUser', 'Admin');
+    localStorage.setItem('isAdmin', 'true');
+    document.getElementById('currentUserName').textContent = '🔒 Admin';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinModal').style.display = 'none';
+    showToast('Admin mode activated');
+    render();
+  } else {
+    showToast('Incorrect PIN');
+    document.getElementById('pinInput').value = '';
+  }
+};
+
+window.closePinModal = function() {
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinModal').style.display = 'none';
+};
+
+// --- Form ---
+window.openAddForm = function(loan = null) {
+  if (!state.currentUser) {
+    showUserSelect();
+    return;
+  }
+
+  // Populate dropdowns
+  const allocSel = document.getElementById('allocatedTo');
+  allocSel.innerHTML = '<option value="">Select officer</option>' +
+    state.officers.map(o => `<option value="${o}">${o}</option>`).join('');
+
+  const branchSel = document.getElementById('branch');
+  branchSel.innerHTML = '<option value="">Select branch</option>' +
+    state.branches.map(b => `<option value="${b}">${b}</option>`).join('');
+
+  if (loan) {
+    document.getElementById('formTitle').textContent = 'Edit Loan';
+    document.getElementById('loanId').value = loan.id;
+    document.getElementById('allocatedTo').value = loan.allocatedTo || '';
+    document.getElementById('category').value = loan.category || '';
+    document.getElementById('branch').value = loan.branch || '';
+    document.getElementById('customerName').value = loan.customerName || '';
+    document.getElementById('amount').value = loan.amount || '';
+    document.getElementById('receiveDate').value = loan.receiveDate || '';
+    document.getElementById('sanctionDate').value = loan.sanctionDate || '';
+    document.getElementById('remarks').value = loan.remarks || '';
+    document.getElementById('sanctionDateGroup').style.display =
+      loan.status === 'sanctioned' ? 'block' : 'none';
+  } else {
+    document.getElementById('formTitle').textContent = 'Add New Loan';
+    document.getElementById('loanForm').reset();
+    document.getElementById('loanId').value = '';
+    document.getElementById('receiveDate').value = todayISO();
+    if (state.currentUser && !state.isAdmin) {
+      document.getElementById('allocatedTo').value = state.currentUser;
+    }
+    document.getElementById('sanctionDateGroup').style.display = 'none';
+  }
+
+  document.getElementById('formModal').style.display = 'flex';
+};
+
+window.closeForm = function() {
+  document.getElementById('formModal').style.display = 'none';
+};
+
+window.saveLoan = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('loanId').value;
+  const data = {
+    allocatedTo: document.getElementById('allocatedTo').value,
+    category: document.getElementById('category').value,
+    branch: document.getElementById('branch').value,
+    customerName: document.getElementById('customerName').value.trim().toUpperCase(),
+    amount: parseFloat(document.getElementById('amount').value),
+    receiveDate: document.getElementById('receiveDate').value,
+    remarks: document.getElementById('remarks').value.trim()
+  };
+
+  const sdate = document.getElementById('sanctionDate').value;
+  if (sdate) data.sanctionDate = sdate;
+
+  try {
+    if (id) {
+      await updateLoan(id, data);
+      showToast('Loan updated');
+    } else {
+      data.status = 'pending';
+      await createLoan(data);
+      showToast('Loan added');
+    }
+    closeForm();
+  } catch (err) {
+    console.error(err);
+    showToast('Error saving loan');
+  }
+};
+
+// --- Loan actions ---
+window.sanctionLoan = async function(id) {
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan) return;
+  if (!confirm(`Sanction loan for ${loan.customerName}?\nAmount: ₹${formatAmount(loan.amount)} lakh`)) return;
+  try {
+    await updateLoan(id, {
+      status: 'sanctioned',
+      sanctionDate: todayISO()
+    });
+    showToast('Loan sanctioned ✓');
+  } catch (e) { showToast('Error'); console.error(e); }
+};
+
+window.returnLoan = async function(id) {
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan) return;
+  const reason = prompt(`Reason for returning ${loan.customerName}?`, loan.remarks || '');
+  if (reason === null) return;
+  try {
+    await updateLoan(id, {
+      status: 'returned',
+      remarks: reason,
+      returnedDate: todayISO()
+    });
+    showToast('Loan marked as returned');
+  } catch (e) { showToast('Error'); console.error(e); }
+};
+
+window.moveToPending = async function(id) {
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan) return;
+  if (!confirm(`Move ${loan.customerName} back to pending?`)) return;
+  try {
+    await updateLoan(id, { status: 'pending' });
+    showToast('Moved to pending');
+  } catch (e) { showToast('Error'); console.error(e); }
+};
+
+window.editLoan = function(id) {
+  const loan = state.loans.find(l => l.id === id);
+  if (loan) openAddForm(loan);
+};
+
+window.deleteLoan = async function(id) {
+  if (!state.isAdmin) {
+    showToast('Only admin can delete');
+    return;
+  }
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan) return;
+  if (!confirm(`DELETE ${loan.customerName}? This cannot be undone.`)) return;
+  try {
+    await removeLoan(id);
+    showToast('Loan deleted');
+  } catch (e) { showToast('Error'); console.error(e); }
+};
+
+// --- Tabs ---
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    state.activeTab = t.dataset.tab;
+    state.activeSubtab = 'all';
+    render();
+  });
+});
+
+window.setSubtab = function(sub) {
+  state.activeSubtab = sub;
+  render();
+};
+
+// --- Render ---
+function render() {
+  if (!state.currentUser) {
+    showUserSelect();
+    return;
+  }
+
+  const content = document.getElementById('content');
+
+  if (state.activeTab === 'pending') {
+    renderPending(content);
+  } else if (state.activeTab === 'sanctioned') {
+    renderSanctioned(content);
+  } else if (state.activeTab === 'returned') {
+    renderReturned(content);
+  } else if (state.activeTab === 'daily') {
+    renderDaily(content);
+  }
+}
+
+function renderLoanCard(loan, actions) {
+  const remarks = loan.remarks ? `<div class="loan-remarks">📝 ${escapeHtml(loan.remarks)}</div>` : '';
+  return `
+    <div class="loan-card">
+      <div class="loan-card-header">
+        <div style="flex:1;min-width:0;">
+          <p class="loan-name">${escapeHtml(loan.customerName)}</p>
+          <div class="loan-meta">
+            ${categoryChip(loan.category)}
+            <span>${escapeHtml(loan.branch || '')}</span>
+          </div>
+        </div>
+        <div class="loan-amount">₹${formatAmount(loan.amount)}<span class="unit"> L</span></div>
+      </div>
+      <dl class="loan-details">
+        <dt>Officer</dt><dd>${escapeHtml(loan.allocatedTo)}</dd>
+        <dt>Received</dt><dd>${formatDate(loan.receiveDate)}</dd>
+        ${loan.sanctionDate ? `<dt>Sanctioned</dt><dd>${formatDate(loan.sanctionDate)}</dd>` : ''}
+        ${loan.returnedDate ? `<dt>Returned</dt><dd>${formatDate(loan.returnedDate)}</dd>` : ''}
+      </dl>
+      ${remarks}
+      <div class="loan-actions">${actions}</div>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function renderPending(container) {
+  const subs = [
+    { key: 'all', label: 'All' },
+    { key: 'Agriculture', label: 'Agriculture' },
+    { key: 'SME', label: 'SME' },
+    { key: 'Education', label: 'Education' }
+  ];
+
+  const subTabsHtml = `
+    <div class="subtabs">
+      ${subs.map(s => `
+        <button class="subtab ${state.activeSubtab === s.key ? 'active' : ''}"
+                onclick="setSubtab('${s.key}')">${s.label}</button>
+      `).join('')}
+    </div>
+  `;
+
+  let pending = state.loans.filter(l => l.status === 'pending');
+  if (state.activeSubtab !== 'all') {
+    pending = pending.filter(l => l.category === state.activeSubtab);
+  }
+
+  const totalAmt = pending.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+
+  const cardsHtml = pending.length === 0
+    ? '<div class="empty">No pending loans</div>'
+    : pending.map(loan => {
+        const actions = `
+          <button class="btn success small" onclick="sanctionLoan('${loan.id}')">✓ Sanction</button>
+          <button class="btn warn small" onclick="returnLoan('${loan.id}')">↩ Return</button>
+          <button class="btn small" onclick="editLoan('${loan.id}')">Edit</button>
+          ${state.isAdmin ? `<button class="btn danger small" onclick="deleteLoan('${loan.id}')">Delete</button>` : ''}
+        `;
+        return renderLoanCard(loan, actions);
+      }).join('');
+
+  container.innerHTML = subTabsHtml + `
+    <div class="section-header">
+      <h2>Pending Loans</h2>
+      <span class="count-badge">${pending.length} • ₹${formatAmount(totalAmt)} L</span>
+    </div>
+    ${cardsHtml}
+  `;
+}
+
+function renderSanctioned(container) {
+  const subs = [
+    { key: 'all', label: 'All' },
+    { key: 'Agriculture', label: 'Agriculture' },
+    { key: 'SME', label: 'SME' },
+    { key: 'Education', label: 'Education' }
+  ];
+
+  const subTabsHtml = `
+    <div class="subtabs">
+      ${subs.map(s => `
+        <button class="subtab ${state.activeSubtab === s.key ? 'active' : ''}"
+                onclick="setSubtab('${s.key}')">${s.label}</button>
+      `).join('')}
+    </div>
+  `;
+
+  let sanctioned = state.loans.filter(l => l.status === 'sanctioned')
+    .sort((a, b) => (b.sanctionDate || '').localeCompare(a.sanctionDate || ''));
+
+  if (state.activeSubtab !== 'all') {
+    sanctioned = sanctioned.filter(l => l.category === state.activeSubtab);
+  }
+
+  const totalAmt = sanctioned.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+
+  const cardsHtml = sanctioned.length === 0
+    ? '<div class="empty">No sanctioned loans yet</div>'
+    : sanctioned.map(loan => {
+        const actions = `
+          <button class="btn small" onclick="moveToPending('${loan.id}')">Move to Pending</button>
+          <button class="btn small" onclick="editLoan('${loan.id}')">Edit</button>
+          ${state.isAdmin ? `<button class="btn danger small" onclick="deleteLoan('${loan.id}')">Delete</button>` : ''}
+        `;
+        return renderLoanCard(loan, actions);
+      }).join('');
+
+  container.innerHTML = subTabsHtml + `
+    <div class="section-header">
+      <h2>Sanctioned Loans</h2>
+      <span class="count-badge">${sanctioned.length} • ₹${formatAmount(totalAmt)} L</span>
+    </div>
+    ${cardsHtml}
+  `;
+}
+
+function renderReturned(container) {
+  const returned = state.loans.filter(l => l.status === 'returned');
+  const totalAmt = returned.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+
+  const cardsHtml = returned.length === 0
+    ? '<div class="empty">No returned loans</div>'
+    : returned.map(loan => {
+        const actions = `
+          <button class="btn small" onclick="moveToPending('${loan.id}')">Move to Pending</button>
+          <button class="btn success small" onclick="sanctionLoan('${loan.id}')">✓ Sanction</button>
+          <button class="btn small" onclick="editLoan('${loan.id}')">Edit</button>
+          ${state.isAdmin ? `<button class="btn danger small" onclick="deleteLoan('${loan.id}')">Delete</button>` : ''}
+        `;
+        return renderLoanCard(loan, actions);
+      }).join('');
+
+  container.innerHTML = `
+    <div class="section-header">
+      <h2>Returned Loans</h2>
+      <span class="count-badge">${returned.length} • ₹${formatAmount(totalAmt)} L</span>
+    </div>
+    ${cardsHtml}
+  `;
+}
+
+function renderDaily(container) {
+  const today = todayISO();
+  const thisMonth = today.slice(0, 7); // YYYY-MM
+
+  const sanctionedToday = state.loans.filter(l => l.status === 'sanctioned' && l.sanctionDate === today);
+  const sanctionedMonth = state.loans.filter(l => l.status === 'sanctioned' && (l.sanctionDate || '').startsWith(thisMonth));
+  const pendingAll = state.loans.filter(l => l.status === 'pending');
+
+  function buildTable(loans, showSanctionDate = false) {
+    if (loans.length === 0) return '<div class="empty" style="padding:16px;">No entries</div>';
+
+    // Group by officer + category
+    const groups = {};
+    for (const l of loans) {
+      const key = l.allocatedTo || 'Unknown';
+      if (!groups[key]) groups[key] = {};
+      const cat = l.category || 'Other';
+      if (!groups[key][cat]) groups[key][cat] = { count: 0, amount: 0 };
+      groups[key][cat].count++;
+      groups[key][cat].amount += parseFloat(l.amount) || 0;
+    }
+
+    const cats = ['Agriculture', 'SME', 'Education'];
+    let html = `
+      <table class="daily-table">
+        <thead>
+          <tr>
+            <th>Officer</th>
+            ${cats.map(c => `<th colspan="2" style="text-align:center;">${c}</th>`).join('')}
+            <th colspan="2" style="text-align:center;">Total</th>
+          </tr>
+          <tr>
+            <th></th>
+            ${cats.map(() => `<th style="text-align:right;">Cnt</th><th style="text-align:right;">Amt</th>`).join('')}
+            <th style="text-align:right;">Cnt</th><th style="text-align:right;">Amt</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    let grandTotal = { count: 0, amount: 0 };
+
+    for (const officer of state.officers) {
+      const g = groups[officer] || {};
+      let rowTotal = { count: 0, amount: 0 };
+      html += `<tr><td>${escapeHtml(officer)}</td>`;
+      for (const c of cats) {
+        const v = g[c] || { count: 0, amount: 0 };
+        rowTotal.count += v.count;
+        rowTotal.amount += v.amount;
+        html += `<td class="num">${v.count}</td><td class="num">${v.amount ? formatAmount(v.amount) : '0'}</td>`;
+      }
+      html += `<td class="num"><b>${rowTotal.count}</b></td><td class="num"><b>${rowTotal.amount ? formatAmount(rowTotal.amount) : '0'}</b></td></tr>`;
+      grandTotal.count += rowTotal.count;
+      grandTotal.amount += rowTotal.amount;
+    }
+
+    // Totals row
+    html += `<tr class="total-row"><td>Total</td>`;
+    for (const c of cats) {
+      let cCount = 0, cAmt = 0;
+      for (const officer of state.officers) {
+        const v = (groups[officer] || {})[c] || { count: 0, amount: 0 };
+        cCount += v.count;
+        cAmt += v.amount;
+      }
+      html += `<td class="num">${cCount}</td><td class="num">${cAmt ? formatAmount(cAmt) : '0'}</td>`;
+    }
+    html += `<td class="num">${grandTotal.count}</td><td class="num">${grandTotal.amount ? formatAmount(grandTotal.amount) : '0'}</td></tr>`;
+    html += `</tbody></table>`;
+
+    return html;
+  }
+
+  const todayAmt = sanctionedToday.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const monthAmt = sanctionedMonth.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const pendingAmt = pendingAll.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+
+  container.innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="label">Today</div>
+        <div class="value">${sanctionedToday.length}</div>
+        <div class="sub">₹${formatAmount(todayAmt)} L</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">This Month</div>
+        <div class="value">${sanctionedMonth.length}</div>
+        <div class="sub">₹${formatAmount(monthAmt)} L</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Pending</div>
+        <div class="value">${pendingAll.length}</div>
+        <div class="sub">₹${formatAmount(pendingAmt)} L</div>
+      </div>
+    </div>
+
+    <div class="daily-section">
+      <h3>📅 Sanctioned Today — ${formatDate(today)}</h3>
+      ${buildTable(sanctionedToday)}
+    </div>
+
+    <div class="daily-section">
+      <h3>📆 Sanctioned This Month</h3>
+      ${buildTable(sanctionedMonth)}
+    </div>
+
+    <div class="daily-section">
+      <h3>⏳ Currently Pending</h3>
+      ${buildTable(pendingAll)}
+    </div>
+
+    ${state.isAdmin ? `
+      <div style="text-align:center;margin-top:20px;">
+        <button class="btn" onclick="openSettings()">⚙️ Admin Settings</button>
+      </div>
+    ` : ''}
+  `;
+}
+
+// --- Admin settings ---
+window.openSettings = function() {
+  if (!state.isAdmin) return;
+  renderSettingsLists();
+  document.getElementById('settingsModal').style.display = 'flex';
+};
+
+window.closeSettings = function() {
+  document.getElementById('settingsModal').style.display = 'none';
+};
+
+function renderSettingsLists() {
+  const offList = document.getElementById('officersList');
+  offList.innerHTML = state.officers.map((o, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--gray-100);border-radius:6px;margin-bottom:4px;">
+      <span>${escapeHtml(o)}</span>
+      <button class="btn small danger" onclick="removeOfficer(${i})">Remove</button>
+    </div>
+  `).join('');
+
+  const brList = document.getElementById('branchesList');
+  brList.innerHTML = state.branches.map((b, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--gray-100);border-radius:6px;margin-bottom:4px;">
+      <span style="font-size:13px;">${escapeHtml(b)}</span>
+      <button class="btn small danger" onclick="removeBranch(${i})">Remove</button>
+    </div>
+  `).join('');
+}
+
+window.addOfficer = async function() {
+  const name = document.getElementById('newOfficer').value.trim();
+  if (!name) return;
+  if (state.officers.includes(name)) { showToast('Already exists'); return; }
+  state.officers.push(name);
+  await saveSettings();
+  document.getElementById('newOfficer').value = '';
+  renderSettingsLists();
+  render();
+  showToast('Officer added');
+};
+
+window.removeOfficer = async function(i) {
+  if (!confirm(`Remove ${state.officers[i]}?`)) return;
+  state.officers.splice(i, 1);
+  await saveSettings();
+  renderSettingsLists();
+  render();
+};
+
+window.addBranch = async function() {
+  const name = document.getElementById('newBranch').value.trim();
+  if (!name) return;
+  if (state.branches.includes(name)) { showToast('Already exists'); return; }
+  state.branches.push(name);
+  await saveSettings();
+  document.getElementById('newBranch').value = '';
+  renderSettingsLists();
+  showToast('Branch added');
+};
+
+window.removeBranch = async function(i) {
+  if (!confirm(`Remove ${state.branches[i]}?`)) return;
+  state.branches.splice(i, 1);
+  await saveSettings();
+  renderSettingsLists();
+};
+
+// --- Category-change handler on form ---
+document.getElementById('category').addEventListener('change', () => {
+  // no-op placeholder for future
+});
+
+// --- PIN enter key ---
+document.getElementById('pinInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') checkPin();
+});
+
+// --- Init ---
+async function init() {
+  await loadSettings();
+
+  const savedUser = localStorage.getItem('currentUser');
+  const savedAdmin = localStorage.getItem('isAdmin') === 'true';
+  if (savedUser) {
+    state.currentUser = savedUser;
+    state.isAdmin = savedAdmin;
+    document.getElementById('currentUserName').textContent = savedAdmin ? '🔒 Admin' : savedUser;
+  }
+
+  subscribeLoans();
+
+  if (!state.currentUser) {
+    showUserSelect();
+  }
+}
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
+  });
+}
+
+init();
+</script>
+</body>
+</html>
