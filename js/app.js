@@ -391,6 +391,8 @@ function renderReturned(c){
     </div>${cards}`;
 }
 
+let currentCharts = [];
+
 function renderDaily(c){
   const td=todayStr(), thisMonth=td.slice(0,7);
   const todayL  =S.loans.filter(l=>l.status==='sanctioned'&&l.sanctionDate===td);
@@ -429,6 +431,14 @@ function renderDaily(c){
 
   c.innerHTML=`
     <div class="report-card">
+      <div class="report-head"><span class="report-head-title">📊 Categories This Month</span></div>
+      <div class="chart-container"><canvas id="catChart"></canvas></div>
+    </div>
+    <div class="report-card">
+      <div class="report-head"><span class="report-head-title">🏆 Officer Activity (Lakhs)</span></div>
+      <div class="chart-container"><canvas id="offChart"></canvas></div>
+    </div>
+    <div class="report-card">
       <div class="report-head"><span class="report-head-title">📅 Sanctioned Today — ${fmtDate(td)}</span><span class="report-head-amt">₹${fmtAmt(tAmt)} L</span></div>
       ${mkTable(todayL)}
     </div>
@@ -443,6 +453,52 @@ function renderDaily(c){
     ${S.isAdmin?`<div style="text-align:center;margin-top:16px;">
       <button class="btn btn-cancel-full" onclick="handleSettings()" style="padding:12px 28px;font-size:14px;max-width:200px;">⚙️ Admin Settings</button>
     </div>`:''}`;
+
+  currentCharts.forEach(ch => ch.destroy());
+  currentCharts = [];
+
+  const cats = ['Agriculture', 'SME', 'Education'];
+  let catAmts = [0, 0, 0];
+  let offAmts = {};
+  S.officers.forEach(o => offAmts[o] = 0);
+  
+  monthL.forEach(l => {
+     let amt = parseFloat(l.amount)||0;
+     let cIdx = cats.indexOf(l.category);
+     if(cIdx !== -1) catAmts[cIdx] += amt;
+     if(offAmts[l.allocatedTo] !== undefined) offAmts[l.allocatedTo] += amt;
+  });
+
+  if(window.Chart && document.getElementById('catChart')) {
+      const ctxCat = document.getElementById('catChart').getContext('2d');
+      currentCharts.push(new Chart(ctxCat, {
+        type: 'doughnut',
+        data: {
+          labels: cats,
+          datasets: [{
+            data: catAmts,
+            backgroundColor: ['rgba(16,185,129,0.8)', 'rgba(107,95,191,0.8)', 'rgba(245,158,11,0.8)'],
+            borderWidth: 0
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+      }));
+
+      const ctxOff = document.getElementById('offChart').getContext('2d');
+      currentCharts.push(new Chart(ctxOff, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(offAmts),
+          datasets: [{
+            label: 'Sanctioned (₹ Lakhs)',
+            data: Object.values(offAmts),
+            backgroundColor: 'rgba(107,95,191,0.8)',
+            borderRadius: 6
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+      }));
+  }
 }
 
 /* ── INIT ── */
