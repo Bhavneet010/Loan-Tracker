@@ -12,14 +12,15 @@ const FB = {
   messagingSenderId:"700827916451",
   appId:"1:700827916451:web:d872bf2905d234bdb60716"
 };
-const PIN = "147258";
+let PIN = "147258";
+let notifReady = false;
 const app = initializeApp(FB);
 const db  = getFirestore(app);
 
 /* ── STATE ── */
 const S = {
   user:null, isAdmin:false,
-  tab:'pending', sub:'All',
+  tab:'pending', sub:'All', settingsTab:'officers', search:'', myLoansOnly:false, dark:false,
   loans:[],
   officers:['Anchal','Nikita','Ritika'],
   branches:[
@@ -44,6 +45,39 @@ function toast(msg) {
   document.body.appendChild(t); setTimeout(()=>t.remove(),2600);
 }
 
+const daysPending = d => !d ? 0 : Math.floor((Date.now()-new Date(d).getTime())/86400000);
+
+async function requestNotifPermission(){
+  if('Notification' in window && Notification.permission==='default')
+    await Notification.requestPermission();
+}
+function notifyLoanChange(loan){
+  if(Notification.permission!=='granted') return;
+  if(!document.hidden && document.hasFocus()) return;
+  const labels={pending:'Pending',sanctioned:'✓ Sanctioned',returned:'↩ Returned'};
+  const title=`${labels[loan.status]||loan.status} — ${loan.customerName}`;
+  const body=`₹${fmtAmt(loan.amount)}L · ${loan.allocatedTo}`;
+  try{ new Notification(title,{body,icon:'/icon-192.png',tag:loan.id,renotify:true}); }catch(e){}
+}
+function showUndoToast(msg, undoFn){
+  document.querySelectorAll('.toast').forEach(e=>e.remove());
+  const t=document.createElement('div'); t.className='toast toast-undo';
+  const sp=document.createElement('span'); sp.textContent=msg;
+  const btn=document.createElement('button'); btn.className='undo-btn'; btn.textContent='Undo';
+  btn.onclick=async()=>{ clearTimeout(t._timer); t.remove(); await undoFn(); };
+  t.appendChild(sp); t.appendChild(btn);
+  document.body.appendChild(t);
+  t._timer=setTimeout(()=>t.remove(),4500);
+}
+window.toggleDark = function(){
+  S.dark=!S.dark;
+  document.body.classList.toggle('dark',S.dark);
+  localStorage.setItem('lpDark',S.dark?'1':'0');
+  document.getElementById('darkBtn').textContent=S.dark?'☀️':'🌙';
+};
+window.handleSearch = v=>{ S.search=v.toLowerCase().trim(); render(); };
+window.toggleMyLoans = function(){ S.myLoansOnly=!S.myLoansOnly; render(); };
+
 /* ── FIREBASE SETTINGS ── */
 async function loadSettings() {
   try {
@@ -52,19 +86,29 @@ async function loadSettings() {
       const d=snap.data();
       if(d.officers?.length) S.officers=d.officers;
       if(d.branches?.length) S.branches=d.branches;
+      if(d.adminPin) PIN=d.adminPin;
     } else {
-      await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches});
+      await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,adminPin:PIN});
     }
   } catch(e){console.error(e);}
 }
 async function saveSettings() {
-  try { await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches}); }
+  try { await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,adminPin:PIN}); }
   catch(e){ toast('Error saving'); }
 }
 
 /* ── FIREBASE LOANS ── */
 function subscribeLoans() {
   onSnapshot(query(collection(db,'loans'),orderBy('receiveDate','desc')), snap => {
+    if(notifReady && S.user && Notification.permission==='granted'){
+      snap.docChanges().forEach(change=>{
+        if(change.type==='modified'){
+          const loan={id:change.doc.id,...change.doc.data()};
+          if(S.isAdmin || loan.allocatedTo===S.user) notifyLoanChange(loan);
+        }
+      });
+    }
+    notifReady=true;
     S.loans=[];
     snap.forEach(d=>S.loans.push({id:d.id,...d.data()}));
     document.getElementById('syncDot').classList.remove('off');
@@ -89,18 +133,22 @@ function updateBadges(){
 
 /* ── USER ── */
 window.showUserSelect = function(){
-  document.getElementById('userList').innerHTML = S.officers.map(o=>`
-    <button class="user-btn" onclick="selectUser('${esc(o)}')">
-      <div class="av">${initials(o)}</div><span>${esc(o)}</span>
-    </button>`).join('');
+  document.getElementById('userList').innerHTML = S.officers.map(o=>{
+    const n=S.loans.filter(l=>l.status==='pending'&&l.allocatedTo===o).length;
+    const badge=n?`<span class="officer-count">${n}</span>`:'';
+    return `<button class="user-btn" onclick="selectUser('${esc(o)}')">
+      <div class="av">${initials(o)}</div><span>${esc(o)}</span>${badge}
+    </button>`;
+  }).join('');
   document.getElementById('userModal').style.display='flex';
 };
 window.selectUser = function(name){
-  S.user=name; S.isAdmin=false;
+  S.user=name; S.isAdmin=false; S.myLoansOnly=true;
   localStorage.setItem('lpUser',name); localStorage.setItem('lpAdmin','false');
   document.getElementById('userName').textContent=name;
   document.getElementById('userAv').textContent=initials(name);
   document.getElementById('userModal').style.display='none';
+  requestNotifPermission();
   render();
 };
 window.promptAdmin = function(){
@@ -110,12 +158,13 @@ window.promptAdmin = function(){
 };
 window.checkPin = function(){
   if(document.getElementById('pinInput').value===PIN){
-    S.user='Admin'; S.isAdmin=true;
+    S.user='Admin'; S.isAdmin=true; S.myLoansOnly=false;
     localStorage.setItem('lpUser','Admin'); localStorage.setItem('lpAdmin','true');
     document.getElementById('userName').textContent='Admin';
     document.getElementById('userAv').textContent='🔒';
     document.getElementById('pinInput').value='';
     document.getElementById('pinModal').style.display='none';
+    requestNotifPermission();
     toast('Admin mode active'); render();
   } else { toast('Incorrect PIN'); document.getElementById('pinInput').value=''; }
 };
@@ -125,21 +174,68 @@ document.getElementById('pinInput').addEventListener('keydown',e=>{ if(e.key==='
 /* ── SETTINGS ── */
 window.handleSettings = function(){
   if(!S.isAdmin){ toast('Admin access required'); return; }
+  S.settingsTab='officers';
   renderSettingsList();
   document.getElementById('settingsModal').style.display='flex';
 };
 window.closeSettings = function(){ document.getElementById('settingsModal').style.display='none'; };
+window.setSettingsTab = function(tab){ S.settingsTab=tab; renderSettingsList(); };
+window.changePassword = async function(){
+  const np=document.getElementById('newPin').value.trim();
+  const cp=document.getElementById('confirmPin').value.trim();
+  if(!/^\d{6}$/.test(np)){ toast('PIN must be exactly 6 digits'); return; }
+  if(np!==cp){ toast('PINs do not match'); return; }
+  try{
+    PIN=np; await saveSettings();
+    document.getElementById('newPin').value='';
+    document.getElementById('confirmPin').value='';
+    toast('Admin PIN changed ✓');
+  } catch(e){ toast('Error saving PIN'); }
+};
 function renderSettingsList(){
-  document.getElementById('officerList').innerHTML = S.officers.map((o,i)=>`
-    <div class="setting-item">
-      <span>${esc(o)}</span>
-      <button class="btn-sm-danger" onclick="removeOfficer(${i})">Remove</button>
-    </div>`).join('');
-  document.getElementById('branchList').innerHTML = S.branches.map((b,i)=>`
-    <div class="setting-item">
-      <span style="font-size:13px;">${esc(b)}</span>
-      <button class="btn-sm-danger" onclick="removeBranch(${i})">Remove</button>
-    </div>`).join('');
+  document.querySelectorAll('.settings-tabs .stab').forEach(b=>{
+    b.classList.toggle('active', b.dataset.stab===S.settingsTab);
+  });
+  const el=document.getElementById('settingsContent');
+  if(!el) return;
+  if(S.settingsTab==='officers'){
+    el.innerHTML=`
+      <div style="max-height:280px;overflow-y:auto;margin-bottom:8px;">
+        ${S.officers.map((o,i)=>`
+          <div class="setting-item">
+            <span>${esc(o)}</span>
+            <button class="btn-sm-danger" onclick="removeOfficer(${i})">Remove</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="newOfficer" placeholder="Add officer name" style="flex:1;">
+        <button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addOfficer()">Add</button>
+      </div>`;
+  } else if(S.settingsTab==='branches'){
+    el.innerHTML=`
+      <div style="max-height:280px;overflow-y:auto;margin-bottom:8px;">
+        ${S.branches.map((b,i)=>`
+          <div class="setting-item">
+            <span style="font-size:13px;">${esc(b)}</span>
+            <button class="btn-sm-danger" onclick="removeBranch(${i})">Remove</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="newBranch" placeholder="e.g. 1234 : BRANCH NAME" style="flex:1;">
+        <button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addBranch()">Add</button>
+      </div>`;
+  } else if(S.settingsTab==='adminid'){
+    el.innerHTML=`
+      <div class="form-group">
+        <label>New PIN (6 digits)</label>
+        <input type="password" id="newPin" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••">
+      </div>
+      <div class="form-group">
+        <label>Confirm New PIN</label>
+        <input type="password" id="confirmPin" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••">
+      </div>
+      <button type="button" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;" onclick="changePassword()">Change PIN</button>`;
+  }
 }
 window.addOfficer = async function(){
   const v=document.getElementById('newOfficer').value.trim();
@@ -237,9 +333,14 @@ window.editLoan   = id=>{ const l=S.loans.find(x=>x.id===id); if(l) openForm(l);
 window.deleteLoan = async function(id){
   if(!S.isAdmin){toast('Admin only');return;}
   const l=S.loans.find(x=>x.id===id); if(!l) return;
-  if(!confirm(`DELETE ${l.customerName}?\nThis cannot be undone.`)) return;
-  try { await removeLoan(id); toast('Deleted'); }
-  catch(e){ toast('Error'); }
+  try {
+    const snapshot={...l};
+    await removeLoan(id);
+    showUndoToast(`Deleted ${l.customerName}`, async()=>{
+      await setDoc(doc(db,'loans',snapshot.id),snapshot);
+      toast('Loan restored ✓');
+    });
+  } catch(e){ toast('Error'); }
 };
 
 /* ── TABS ── */
@@ -247,7 +348,9 @@ document.getElementById('mainTabs').addEventListener('click',e=>{
   const btn=e.target.closest('[data-tab]'); if(!btn) return;
   document.querySelectorAll('#mainTabs .tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  S.tab=btn.dataset.tab; S.sub='All'; render();
+  S.tab=btn.dataset.tab; S.sub='All'; S.search='';
+  const si=document.getElementById('searchInput'); if(si) si.value='';
+  render();
 });
 window.setSub = sub=>{ S.sub=sub; render(); };
 
@@ -289,17 +392,24 @@ function updateHero(){
 }
 
 function subtabsHtml(){
-  return ['All','Agriculture','SME','Education'].map(t=>
+  const cats=['All','Agriculture','SME','Education'].map(t=>
     `<button class="subtab ${S.sub===t?'active':''}" onclick="setSub('${t}')">${t}</button>`
   ).join('');
+  const myToggle=(S.user&&!S.isAdmin)
+    ?`<button class="subtab ${S.myLoansOnly?'active':''}" onclick="toggleMyLoans()">${S.myLoansOnly?'👤 Mine':'👥 All'}</button>`
+    :'';
+  return cats+myToggle;
 }
 
 function loanCard(loan, actions, variant=''){
-  const remarks = loan.remarks?`<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>`:'';
+  const remarks  = loan.remarks?`<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>`:'';
   const sanctTag = loan.sanctionDate?`<span class="tag date">✓ ${fmtDate(loan.sanctionDate)}</span>`:'';
   const retTag   = loan.returnedDate?`<span class="tag date">↩ ${fmtDate(loan.returnedDate)}</span>`:'';
+  const days     = loan.status==='pending' ? daysPending(loan.receiveDate) : 0;
+  const overdueTag = days>7 ? `<span class="tag overdue">⚠ ${days}d</span>` : '';
+  const cls      = `${variant}${days>7&&loan.status==='pending'?' overdue':''}`.trim();
   return `
-  <div class="loan-card ${variant}">
+  <div class="loan-card ${cls}">
     <div class="lc-top">
       <div class="lc-left">
         <div class="lc-name">${esc(loan.customerName)}</div>
@@ -311,7 +421,7 @@ function loanCard(loan, actions, variant=''){
       <span class="tag ${catCls(loan.category)}">${esc(loan.category)}</span>
       <span class="tag officer">${esc(loan.allocatedTo)}</span>
       <span class="tag date">Recd ${fmtDate(loan.receiveDate)}</span>
-      ${sanctTag}${retTag}
+      ${overdueTag}${sanctTag}${retTag}
     </div>
     ${remarks}
     <div class="lc-actions">${actions}</div>
@@ -326,6 +436,8 @@ function emptyState(icon,msg,sub){
 function render(){
   if(!S.user){ showUserSelect(); return; }
   updateHero();
+  const sw=document.getElementById('searchWrap');
+  if(sw) sw.style.display=S.tab==='daily'?'none':'';
   const c=document.getElementById('content');
   if(S.tab==='pending')     renderPending(c);
   else if(S.tab==='sanctioned') renderSanctioned(c);
@@ -336,6 +448,8 @@ function render(){
 function renderPending(c){
   let loans=S.loans.filter(l=>l.status==='pending');
   if(S.sub!=='All') loans=loans.filter(l=>l.category===S.sub);
+  if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
+  if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('📭','No pending loans','Tap + to add a new loan')
@@ -357,6 +471,8 @@ function renderSanctioned(c){
   let loans=S.loans.filter(l=>l.status==='sanctioned')
     .sort((a,b)=>(b.sanctionDate||'').localeCompare(a.sanctionDate||''));
   if(S.sub!=='All') loans=loans.filter(l=>l.category===S.sub);
+  if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
+  if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('🎉','No sanctioned loans yet','Sanction pending loans to see them here')
@@ -374,7 +490,9 @@ function renderSanctioned(c){
 }
 
 function renderReturned(c){
-  const loans=S.loans.filter(l=>l.status==='returned');
+  let loans=S.loans.filter(l=>l.status==='returned');
+  if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
+  if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('📋','No returned loans','Returned loans will appear here')
@@ -385,7 +503,8 @@ function renderReturned(c){
         ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`,
       'returned')).join('');
   c.innerHTML=`
-    <div class="sec-head" style="margin-top:4px;">
+    <div class="subtabs">${subtabsHtml()}</div>
+    <div class="sec-head">
       <div class="sec-title">Returned Loans</div>
       <div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div>
     </div>${cards}`;
@@ -504,10 +623,16 @@ function renderDaily(c){
 /* ── INIT ── */
 async function init(){
   await loadSettings();
+  const darkPref=localStorage.getItem('lpDark');
+  if(darkPref==='1'){
+    S.dark=true;
+    document.body.classList.add('dark');
+    document.getElementById('darkBtn').textContent='☀️';
+  }
   const su=localStorage.getItem('lpUser');
   const sa=localStorage.getItem('lpAdmin')==='true';
   if(su){
-    S.user=su; S.isAdmin=sa;
+    S.user=su; S.isAdmin=sa; S.myLoansOnly=!sa;
     document.getElementById('userName').textContent=su==='Admin'?'Admin':su;
     document.getElementById('userAv').textContent=su==='Admin'?'🔒':initials(su);
   }
