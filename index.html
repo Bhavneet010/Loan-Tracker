@@ -153,22 +153,12 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h2>Admin Settings</h2>
-    <div class="form-group" style="margin-bottom:22px;">
-      <label>Processing Officers</label>
-      <div id="officerList" style="margin-bottom:8px;"></div>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="newOfficer" placeholder="Add officer name" style="flex:1;">
-        <button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addOfficer()">Add</button>
-      </div>
+    <div class="settings-tabs">
+      <button class="stab active" data-stab="officers" onclick="setSettingsTab('officers')">Officers</button>
+      <button class="stab" data-stab="branches" onclick="setSettingsTab('branches')">Branches</button>
+      <button class="stab" data-stab="adminid" onclick="setSettingsTab('adminid')">Admin ID</button>
     </div>
-    <div class="form-group">
-      <label>Branches</label>
-      <div id="branchList" style="margin-bottom:8px;max-height:200px;overflow-y:auto;"></div>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="newBranch" placeholder="e.g. 1234 : BRANCH NAME" style="flex:1;">
-        <button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addBranch()">Add</button>
-      </div>
-    </div>
+    <div id="settingsContent"></div>
     <div class="form-row">
       <button class="btn btn-cancel-full" onclick="closeSettings()">Done</button>
     </div>

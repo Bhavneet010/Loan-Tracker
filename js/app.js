@@ -12,14 +12,14 @@ const FB = {
   messagingSenderId:"700827916451",
   appId:"1:700827916451:web:d872bf2905d234bdb60716"
 };
-const PIN = "147258";
+let PIN = "147258";
 const app = initializeApp(FB);
 const db  = getFirestore(app);
 
 /* ── STATE ── */
 const S = {
   user:null, isAdmin:false,
-  tab:'pending', sub:'All',
+  tab:'pending', sub:'All', settingsTab:'officers',
   loans:[],
   officers:['Anchal','Nikita','Ritika'],
   branches:[
@@ -52,13 +52,14 @@ async function loadSettings() {
       const d=snap.data();
       if(d.officers?.length) S.officers=d.officers;
       if(d.branches?.length) S.branches=d.branches;
+      if(d.adminPin) PIN=d.adminPin;
     } else {
-      await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches});
+      await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,adminPin:PIN});
     }
   } catch(e){console.error(e);}
 }
 async function saveSettings() {
-  try { await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches}); }
+  try { await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,adminPin:PIN}); }
   catch(e){ toast('Error saving'); }
 }
 
@@ -125,21 +126,68 @@ document.getElementById('pinInput').addEventListener('keydown',e=>{ if(e.key==='
 /* ── SETTINGS ── */
 window.handleSettings = function(){
   if(!S.isAdmin){ toast('Admin access required'); return; }
+  S.settingsTab='officers';
   renderSettingsList();
   document.getElementById('settingsModal').style.display='flex';
 };
 window.closeSettings = function(){ document.getElementById('settingsModal').style.display='none'; };
+window.setSettingsTab = function(tab){ S.settingsTab=tab; renderSettingsList(); };
+window.changePassword = async function(){
+  const np=document.getElementById('newPin').value.trim();
+  const cp=document.getElementById('confirmPin').value.trim();
+  if(!/^\d{6}$/.test(np)){ toast('PIN must be exactly 6 digits'); return; }
+  if(np!==cp){ toast('PINs do not match'); return; }
+  try{
+    PIN=np; await saveSettings();
+    document.getElementById('newPin').value='';
+    document.getElementById('confirmPin').value='';
+    toast('Admin PIN changed ✓');
+  } catch(e){ toast('Error saving PIN'); }
+};
 function renderSettingsList(){
-  document.getElementById('officerList').innerHTML = S.officers.map((o,i)=>`
-    <div class="setting-item">
-      <span>${esc(o)}</span>
-      <button class="btn-sm-danger" onclick="removeOfficer(${i})">Remove</button>
-    </div>`).join('');
-  document.getElementById('branchList').innerHTML = S.branches.map((b,i)=>`
-    <div class="setting-item">
-      <span style="font-size:13px;">${esc(b)}</span>
-      <button class="btn-sm-danger" onclick="removeBranch(${i})">Remove</button>
-    </div>`).join('');
+  document.querySelectorAll('.settings-tabs .stab').forEach(b=>{
+    b.classList.toggle('active', b.dataset.stab===S.settingsTab);
+  });
+  const el=document.getElementById('settingsContent');
+  if(!el) return;
+  if(S.settingsTab==='officers'){
+    el.innerHTML=`
+      <div style="max-height:280px;overflow-y:auto;margin-bottom:8px;">
+        ${S.officers.map((o,i)=>`
+          <div class="setting-item">
+            <span>${esc(o)}</span>
+            <button class="btn-sm-danger" onclick="removeOfficer(${i})">Remove</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="newOfficer" placeholder="Add officer name" style="flex:1;">
+        <button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addOfficer()">Add</button>
+      </div>`;
+  } else if(S.settingsTab==='branches'){
+    el.innerHTML=`
+      <div style="max-height:280px;overflow-y:auto;margin-bottom:8px;">
+        ${S.branches.map((b,i)=>`
+          <div class="setting-item">
+            <span style="font-size:13px;">${esc(b)}</span>
+            <button class="btn-sm-danger" onclick="removeBranch(${i})">Remove</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="newBranch" placeholder="e.g. 1234 : BRANCH NAME" style="flex:1;">
+        <button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addBranch()">Add</button>
+      </div>`;
+  } else if(S.settingsTab==='adminid'){
+    el.innerHTML=`
+      <div class="form-group">
+        <label>New PIN (6 digits)</label>
+        <input type="password" id="newPin" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••">
+      </div>
+      <div class="form-group">
+        <label>Confirm New PIN</label>
+        <input type="password" id="confirmPin" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••">
+      </div>
+      <button type="button" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;" onclick="changePassword()">Change PIN</button>`;
+  }
 }
 window.addOfficer = async function(){
   const v=document.getElementById('newOfficer').value.trim();
