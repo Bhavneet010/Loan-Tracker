@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#185FA5">
+<meta name="theme-color" content="#7B6FD4">
 <title>Loan Progress</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -11,389 +11,477 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Loan Progress">
-
 <style>
+/* ─── TOKENS ─────────────────────────────────── */
 :root {
-  --blue: #185FA5;
-  --blue-light: #E6F1FB;
-  --blue-dark: #0C447C;
-  --green: #3B6D11;
-  --green-light: #EAF3DE;
-  --red: #A32D2D;
-  --red-light: #FCEBEB;
-  --amber: #854F0B;
-  --amber-light: #FAEEDA;
-  --purple: #534AB7;
-  --purple-light: #EEEDFE;
-  --gray-50: #F7F7F5;
-  --gray-100: #F1EFE8;
-  --gray-200: #D3D1C7;
-  --gray-400: #888780;
-  --gray-600: #5F5E5A;
-  --gray-900: #2C2C2A;
-  --white: #FFFFFF;
-  --border: #E5E3DC;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  --p1: #6B5FBF;   /* purple dark  */
+  --p2: #7B6FD4;   /* purple mid   */
+  --p3: #9B8FE4;   /* purple light */
+  --p-bg: rgba(123,111,212,0.10);
+  --p-bd: rgba(123,111,212,0.22);
+  --glass: rgba(255,255,255,0.55);
+  --glass-bd: rgba(255,255,255,0.82);
+  --glass-hover: rgba(255,255,255,0.70);
+  --text1: #1E1B3A;
+  --text2: #4A4870;
+  --text3: #7B7A9A;
+  --green: #047857; --green-bg: rgba(16,185,129,0.10); --green-bd: rgba(16,185,129,0.25);
+  --amber: #B45309; --amber-bg: rgba(245,158,11,0.10); --amber-bd: rgba(245,158,11,0.25);
+  --red:   #B91C1C; --red-bg:   rgba(239,68,68,0.10);   --red-bd:   rgba(239,68,68,0.25);
+  --radius: 14px; --radius-lg: 20px; --radius-xl: 24px;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
+/* ─── RESET & BASE ───────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
-  margin: 0; padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--gray-50);
-  color: var(--gray-900);
-  font-size: 15px;
-  line-height: 1.5;
+  margin:0; padding:0; min-height:100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  font-size: 15px; line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  background: linear-gradient(160deg, #E8E6F8 0%, #EDE8F5 40%, #F2EEF8 70%, #F8F4F8 100%);
+  background-attachment: fixed;
+  color: var(--text1);
 }
+body::before {
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(circle at 20% 10%, #C9C4EE 0%, transparent 45%),
+    radial-gradient(circle at 85% 25%, #D2C8F2 0%, transparent 45%),
+    radial-gradient(circle at 10% 70%, #E4DFF5 0%, transparent 40%),
+    radial-gradient(circle at 90% 85%, #F0E8F8 0%, transparent 40%);
+}
+#app { position:relative; z-index:1; max-width:700px; margin:0 auto; padding-bottom:90px; }
 
-#app { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
-
-/* Header */
+/* ─── HEADER ─────────────────────────────────── */
 .header {
-  background: var(--blue);
-  color: white;
-  padding: 16px;
   position: sticky; top: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  background: var(--glass); backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--glass-bd);
+  padding: 14px 16px 10px;
 }
-.header h1 { margin: 0; font-size: 18px; font-weight: 600; }
-.user-badge {
-  background: rgba(255,255,255,0.2);
-  padding: 6px 12px; border-radius: 20px;
-  font-size: 13px; font-weight: 500;
-  cursor: pointer;
+.header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:2px; }
+.header-brand { display:flex; align-items:center; gap:10px; }
+.brand-av {
+  width:38px; height:38px; border-radius:12px;
+  background:linear-gradient(135deg, var(--p2), var(--p3));
+  display:flex; align-items:center; justify-content:center;
+  color:white; font-weight:800; font-size:16px;
+  box-shadow:0 4px 10px rgba(123,111,212,0.35);
 }
+.brand-name { font-size:15px; font-weight:700; color:var(--text1); letter-spacing:-0.3px; }
+.brand-sub  { font-size:11px; color:var(--text3); font-weight:500; }
+.header-right { display:flex; gap:8px; align-items:center; }
+.hbtn {
+  width:36px; height:36px; border-radius:10px;
+  background:var(--glass); border:1px solid var(--glass-bd);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; cursor:pointer; color:var(--text2);
+}
+.user-pill {
+  display:flex; align-items:center; gap:6px;
+  background:var(--glass); border:1px solid var(--glass-bd);
+  padding:5px 10px 5px 5px; border-radius:20px; cursor:pointer;
+  font-size:13px; font-weight:600; color:var(--text1);
+}
+.user-pill .av {
+  width:26px; height:26px; border-radius:50%;
+  background:linear-gradient(135deg, var(--p2), var(--p3));
+  color:white; font-weight:700; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+}
+.sync-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:#10B981; display:inline-block; margin-right:2px;
+}
+.sync-dot.off { background:#EF4444; }
 
-/* User selection */
-.user-modal {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-}
-.modal-card {
-  background: white; border-radius: var(--radius-lg);
-  padding: 24px; width: 100%; max-width: 400px;
-  max-height: 90vh; overflow-y: auto;
-}
-.modal-card h2 { margin: 0 0 16px; font-size: 20px; }
-.user-list { display: flex; flex-direction: column; gap: 8px; }
-.user-btn {
-  padding: 14px; border: 1px solid var(--border);
-  background: white; border-radius: var(--radius);
-  font-size: 15px; font-weight: 500; cursor: pointer;
-  text-align: left;
-  transition: all 0.15s;
-}
-.user-btn:hover { background: var(--gray-100); }
-.user-btn.admin { border-color: var(--blue); color: var(--blue); }
-
-/* Tabs */
+/* ─── MAIN TABS ──────────────────────────────── */
 .tabs {
-  display: flex; background: white;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto; overflow-y: hidden;
-  position: sticky; top: 56px; z-index: 50;
-  -webkit-overflow-scrolling: touch;
+  display:flex; gap:6px; padding:10px 14px 8px;
+  overflow-x:auto; background:transparent;
+  -webkit-overflow-scrolling:touch;
+  position:sticky; top:66px; z-index:90;
 }
 .tab {
-  padding: 14px 16px; border: none; background: none;
-  font-size: 14px; font-weight: 500;
-  color: var(--gray-600); cursor: pointer;
-  white-space: nowrap;
-  border-bottom: 3px solid transparent;
-  flex-shrink: 0;
+  padding:9px 16px; border-radius:20px;
+  font-size:13px; font-weight:600; cursor:pointer;
+  white-space:nowrap; flex-shrink:0; border:none;
+  background:var(--glass); border:1px solid var(--glass-bd);
+  color:var(--text3); backdrop-filter:blur(10px);
+  transition:all 0.18s;
 }
-.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+.tab.active {
+  background:linear-gradient(135deg, var(--p2), var(--p3));
+  color:white; border-color:transparent;
+  box-shadow:0 4px 14px rgba(123,111,212,0.38);
+}
+.tab .badge {
+  display:inline-block; background:rgba(255,255,255,0.25);
+  color:inherit; font-size:10px; font-weight:700;
+  padding:1px 6px; border-radius:10px; margin-left:4px;
+}
+.tab:not(.active) .badge { background:var(--p-bg); color:var(--p2); }
 
+/* ─── SUBTABS ────────────────────────────────── */
 .subtabs {
-  display: flex; gap: 6px;
-  padding: 10px 12px; background: white;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
+  display:flex; gap:6px; padding:4px 14px 10px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
 }
 .subtab {
-  padding: 8px 14px; border: 1px solid var(--border);
-  background: white; border-radius: 20px;
-  font-size: 13px; font-weight: 500; cursor: pointer;
-  color: var(--gray-600);
-  white-space: nowrap;
+  padding:7px 14px; border-radius:20px;
+  font-size:12px; font-weight:600; cursor:pointer;
+  white-space:nowrap; border:none;
+  background:var(--glass); border:1px solid var(--glass-bd);
+  color:var(--text3);
 }
-.subtab.active { background: var(--blue); color: white; border-color: var(--blue); }
-
-/* Content */
-.content { padding: 12px; }
-
-.section-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 12px;
-}
-.section-header h2 { margin: 0; font-size: 16px; font-weight: 600; }
-.count-badge {
-  background: var(--gray-100); color: var(--gray-600);
-  padding: 2px 10px; border-radius: 10px;
-  font-size: 12px; font-weight: 500;
+.subtab.active {
+  background:var(--p-bg); border-color:var(--p-bd);
+  color:var(--p1); font-weight:700;
 }
 
-/* Loan Card */
+/* ─── CONTENT ────────────────────────────────── */
+.content { padding:0 14px; }
+
+/* ─── HERO SUMMARY CARD ──────────────────────── */
+.hero-card {
+  background:var(--glass); backdrop-filter:blur(24px);
+  border:1px solid var(--glass-bd); border-radius:var(--radius-xl);
+  padding:18px; margin-bottom:12px;
+  box-shadow:0 8px 24px rgba(123,111,212,0.08);
+}
+.hero-label { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; color:var(--text3); margin-bottom:6px; }
+.hero-amount { font-size:32px; font-weight:800; color:var(--text1); letter-spacing:-1px; margin-bottom:12px; }
+.hero-amount .unit { font-size:14px; color:var(--text3); font-weight:500; letter-spacing:0; }
+.hero-pills { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.hpill {
+  background:var(--p-bg); border:1px solid var(--p-bd);
+  border-radius:12px; padding:10px 8px; text-align:center;
+}
+.hpill .pl { font-size:10px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.4px; }
+.hpill .pv { font-size:20px; font-weight:800; color:var(--text1); margin:2px 0; }
+.hpill .ps { font-size:10px; color:var(--text3); }
+
+/* ─── STATS SCROLL ───────────────────────────── */
+.stats-row { display:flex; gap:10px; margin-bottom:12px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
+.stat-card {
+  flex:none; min-width:130px;
+  background:var(--glass); backdrop-filter:blur(20px);
+  border:1px solid var(--glass-bd); border-radius:var(--radius);
+  padding:14px; box-shadow:0 4px 12px rgba(123,111,212,0.06);
+}
+.stat-l { font-size:10px; text-transform:uppercase; letter-spacing:0.6px; font-weight:600; color:var(--text3); }
+.stat-v { font-size:22px; font-weight:800; color:var(--text1); letter-spacing:-0.5px; margin:4px 0 2px; }
+.stat-s { font-size:11px; color:var(--text3); }
+.stat-badge {
+  display:inline-flex; align-items:center;
+  background:var(--p-bg); border:1px solid var(--p-bd);
+  color:var(--p1); padding:2px 8px; border-radius:10px;
+  font-size:10px; font-weight:700; margin-top:6px;
+}
+
+/* ─── SECTION HEADER ─────────────────────────── */
+.sec-head { display:flex; justify-content:space-between; align-items:center; margin:4px 0 10px; padding:0 2px; }
+.sec-title { font-size:16px; font-weight:700; color:var(--text1); letter-spacing:-0.3px; }
+.sec-count {
+  font-size:11px; color:var(--p1); font-weight:700;
+  background:var(--p-bg); border:1px solid var(--p-bd);
+  padding:3px 10px; border-radius:10px;
+}
+
+/* ─── LOAN CARD ──────────────────────────────── */
 .loan-card {
-  background: white; border-radius: var(--radius);
-  padding: 14px; margin-bottom: 10px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background:var(--glass); backdrop-filter:blur(20px);
+  border:1px solid var(--glass-bd); border-radius:var(--radius-lg);
+  padding:15px 15px 13px 18px; margin-bottom:10px;
+  box-shadow:0 4px 14px rgba(123,111,212,0.07);
+  position:relative; overflow:hidden;
 }
-.loan-card-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  gap: 12px; margin-bottom: 8px;
+.loan-card::before {
+  content:''; position:absolute; top:0; left:0;
+  width:4px; height:100%;
+  background:linear-gradient(180deg, var(--p2), var(--p3));
+  border-radius:4px 0 0 4px;
 }
-.loan-name { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
-.loan-meta {
-  font-size: 12px; color: var(--gray-600);
-  display: flex; flex-wrap: wrap; gap: 8px;
+.loan-card.returned::before { background:linear-gradient(180deg,#EF4444,#F87171); }
+.loan-card.sanctioned::before { background:linear-gradient(180deg,#10B981,#34D399); }
+.lc-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.lc-name { font-size:14px; font-weight:700; color:var(--text1); letter-spacing:-0.2px; margin:0 0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; }
+.lc-branch { font-size:11px; color:var(--text3); }
+.lc-amount { font-size:20px; font-weight:800; color:var(--text1); letter-spacing:-0.5px; white-space:nowrap; }
+.lc-amount .u { font-size:11px; color:var(--text3); font-weight:500; }
+.lc-tags { display:flex; gap:6px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+.tag {
+  padding:3px 10px; border-radius:20px;
+  font-size:10px; font-weight:700; display:inline-block;
 }
-.loan-amount {
-  font-size: 16px; font-weight: 600;
-  color: var(--blue-dark);
-  white-space: nowrap;
+.tag.sme   { background:var(--p-bg); color:var(--p1); border:1px solid var(--p-bd); }
+.tag.agri  { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd); }
+.tag.edu   { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-bd); }
+.tag.date  { background:rgba(255,255,255,0.75); color:var(--text3); border:1px solid rgba(0,0,0,0.07); }
+.tag.officer { background:rgba(255,255,255,0.75); color:var(--text2); border:1px solid rgba(0,0,0,0.07); }
+.lc-remarks {
+  margin-bottom:10px; padding:8px 10px;
+  background:var(--amber-bg); border:1px solid var(--amber-bd);
+  border-radius:8px; font-size:12px; color:var(--amber);
 }
-.loan-amount .unit { font-size: 11px; font-weight: 500; color: var(--gray-600); }
-.loan-details {
-  display: grid; grid-template-columns: auto 1fr;
-  gap: 4px 12px; font-size: 13px;
-  padding-top: 8px; border-top: 1px solid var(--gray-100);
-  margin-top: 8px;
-}
-.loan-details dt { color: var(--gray-600); }
-.loan-details dd { margin: 0; color: var(--gray-900); }
-.loan-remarks {
-  margin-top: 8px; padding: 8px 10px;
-  background: var(--amber-light); color: var(--amber);
-  border-radius: 6px; font-size: 12px;
-}
-.chip {
-  display: inline-block; padding: 2px 8px;
-  border-radius: 10px; font-size: 11px; font-weight: 500;
-}
-.chip.agri { background: var(--green-light); color: var(--green); }
-.chip.sme { background: var(--purple-light); color: var(--purple); }
-.chip.edu { background: var(--amber-light); color: var(--amber); }
-.chip.status-p { background: var(--amber-light); color: var(--amber); }
-.chip.status-s { background: var(--green-light); color: var(--green); }
-.chip.status-r { background: var(--red-light); color: var(--red); }
-
-.loan-actions {
-  display: flex; gap: 8px; margin-top: 10px;
-  flex-wrap: wrap;
-}
+.lc-actions { display:flex; gap:7px; flex-wrap:wrap; }
 .btn {
-  padding: 8px 14px; border: 1px solid var(--border);
-  background: white; border-radius: 6px;
-  font-size: 13px; font-weight: 500; cursor: pointer;
-  color: var(--gray-900);
+  padding:9px 14px; border-radius:10px;
+  font-size:12px; font-weight:600; cursor:pointer;
+  border:none; display:inline-flex; align-items:center; gap:5px;
+  transition:all 0.15s;
 }
-.btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
-.btn.success { background: var(--green); color: white; border-color: var(--green); }
-.btn.warn { background: var(--amber); color: white; border-color: var(--amber); }
-.btn.danger { background: var(--red); color: white; border-color: var(--red); }
-.btn.small { padding: 5px 10px; font-size: 12px; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  background:linear-gradient(135deg, var(--p2), var(--p1));
+  color:white; box-shadow:0 4px 12px rgba(123,111,212,0.35);
+  flex:1;
+}
+.btn-outline {
+  background:rgba(255,255,255,0.8); color:var(--text1);
+  border:1px solid rgba(0,0,0,0.08);
+}
+.btn-ghost {
+  background:rgba(255,255,255,0.6); color:var(--text3);
+  border:1px solid rgba(0,0,0,0.06); padding:9px 10px;
+}
+.btn-danger {
+  background:var(--red-bg); color:var(--red);
+  border:1px solid var(--red-bd);
+}
+.btn-success {
+  background:var(--green-bg); color:var(--green);
+  border:1px solid var(--green-bd); flex:1;
+}
 
-/* FAB */
+/* ─── EMPTY STATE ────────────────────────────── */
+.empty-state {
+  text-align:center; padding:48px 20px;
+  background:var(--glass); backdrop-filter:blur(20px);
+  border:1px solid var(--glass-bd); border-radius:var(--radius-lg);
+}
+.empty-state .icon { font-size:40px; margin-bottom:10px; }
+.empty-state .msg { font-size:14px; font-weight:600; color:var(--text2); margin-bottom:4px; }
+.empty-state .sub { font-size:12px; color:var(--text3); }
+
+/* ─── DAILY REPORT ───────────────────────────── */
+.report-section {
+  background:var(--glass); backdrop-filter:blur(20px);
+  border:1px solid var(--glass-bd); border-radius:var(--radius-lg);
+  margin-bottom:12px; overflow:hidden;
+}
+.report-section-head {
+  padding:14px 16px; border-bottom:1px solid rgba(123,111,212,0.10);
+  font-size:13px; font-weight:700; color:var(--text1);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.report-section-head .amt {
+  font-size:13px; font-weight:700; color:var(--p1);
+}
+.report-table { width:100%; border-collapse:collapse; font-size:12px; }
+.report-table th {
+  padding:8px 10px; text-align:left; color:var(--text3);
+  font-size:11px; font-weight:600; text-transform:uppercase;
+  letter-spacing:0.4px; border-bottom:1px solid rgba(123,111,212,0.08);
+  background:rgba(123,111,212,0.04);
+}
+.report-table td { padding:9px 10px; border-bottom:1px solid rgba(0,0,0,0.04); color:var(--text1); }
+.report-table td.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+.report-table th.num { text-align:right; }
+.report-table tr.total-row td { font-weight:700; background:var(--p-bg); }
+.report-table tr:last-child td { border-bottom:none; }
+
+/* ─── FAB ────────────────────────────────────── */
 .fab {
-  position: fixed; bottom: 20px; right: 20px;
-  width: 56px; height: 56px; border-radius: 50%;
-  background: var(--blue); color: white;
-  border: none; font-size: 28px; font-weight: 300;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  cursor: pointer; z-index: 90;
-  display: flex; align-items: center; justify-content: center;
+  position:fixed; bottom:22px; right:18px;
+  width:56px; height:56px; border-radius:18px;
+  background:linear-gradient(135deg, var(--p2), var(--p3));
+  color:white; border:none; font-size:26px;
+  box-shadow:0 8px 24px rgba(123,111,212,0.5);
+  cursor:pointer; z-index:80;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform 0.15s;
 }
+.fab:active { transform:scale(0.94); }
 
-/* Form Modal */
-.form-modal {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  display: flex; align-items: flex-end; justify-content: center;
+/* ─── MODALS ─────────────────────────────────── */
+.overlay {
+  position:fixed; inset:0; background:rgba(20,18,40,0.45);
+  z-index:200; display:flex; align-items:flex-end; justify-content:center;
+  backdrop-filter:blur(2px);
 }
-.form-sheet {
-  background: white;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  width: 100%; max-width: 600px;
-  max-height: 92vh; overflow-y: auto;
-  padding: 20px; padding-bottom: 80px;
-  -webkit-overflow-scrolling: touch;
+.overlay.center { align-items:center; padding:20px; }
+.sheet {
+  background:#F2F0FA; border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+  width:100%; max-width:640px; max-height:92vh; overflow-y:auto;
+  padding:20px 18px 40px; -webkit-overflow-scrolling:touch;
 }
-@media (min-width: 768px) {
-  .form-modal { align-items: center; }
-  .form-sheet { border-radius: var(--radius-lg); max-height: 85vh; }
+.sheet-handle {
+  width:40px; height:4px; background:rgba(123,111,212,0.25);
+  border-radius:2px; margin:0 auto 18px;
 }
-.form-sheet h2 { margin: 0 0 16px; font-size: 18px; }
-.form-group { margin-bottom: 14px; }
+@media(min-width:640px){
+  .sheet { border-radius:var(--radius-xl); margin:0 auto; }
+}
+.sheet h2 { margin:0 0 18px; font-size:20px; font-weight:800; color:var(--text1); letter-spacing:-0.5px; }
+.modal-card {
+  background:#F2F0FA; border-radius:var(--radius-xl);
+  padding:24px; width:100%; max-width:380px;
+}
+.modal-card h2 { margin:0 0 6px; font-size:22px; font-weight:800; color:var(--text1); }
+.modal-card p { font-size:13px; color:var(--text3); margin:0 0 18px; }
+
+/* ─── USER BUTTONS ───────────────────────────── */
+.user-list { display:flex; flex-direction:column; gap:8px; }
+.user-btn {
+  padding:14px 16px; border-radius:var(--radius);
+  background:var(--glass); border:1px solid var(--glass-bd);
+  font-size:15px; font-weight:600; cursor:pointer;
+  text-align:left; color:var(--text1);
+  display:flex; align-items:center; gap:12px;
+  transition:all 0.15s;
+}
+.user-btn:hover { background:var(--glass-hover); }
+.user-btn .uav {
+  width:36px; height:36px; border-radius:10px;
+  background:linear-gradient(135deg, var(--p2), var(--p3));
+  color:white; font-weight:700; font-size:14px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.user-btn.admin .uav { background:linear-gradient(135deg,#374151,#1F2937); }
+.user-btn.admin { border-color:var(--p-bd); }
+
+/* ─── FORM INPUTS ────────────────────────────── */
+.form-group { margin-bottom:14px; }
 .form-group label {
-  display: block; margin-bottom: 6px;
-  font-size: 13px; font-weight: 500; color: var(--gray-600);
+  display:block; margin-bottom:6px;
+  font-size:12px; font-weight:700; color:var(--text2);
+  text-transform:uppercase; letter-spacing:0.5px;
 }
 .form-group input,
 .form-group select,
 .form-group textarea {
-  width: 100%; padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: 6px;
-  font-size: 15px; font-family: inherit;
-  background: white;
+  width:100%; padding:12px 14px;
+  border:1px solid rgba(123,111,212,0.2);
+  border-radius:var(--radius); font-size:15px;
+  font-family:inherit; background:rgba(255,255,255,0.75);
+  color:var(--text1); outline:none;
+  transition:border-color 0.15s, box-shadow 0.15s;
 }
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  outline: none; border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-light);
+  border-color:var(--p2);
+  box-shadow:0 0 0 3px rgba(123,111,212,0.15);
 }
-.form-group textarea { resize: vertical; min-height: 60px; }
-.form-actions {
-  display: flex; gap: 10px; margin-top: 20px;
-}
-.form-actions .btn { flex: 1; padding: 12px; font-size: 15px; }
+.form-group textarea { resize:vertical; min-height:64px; }
+.form-actions { display:flex; gap:10px; margin-top:20px; }
+.form-actions .btn { flex:1; padding:14px; font-size:15px; justify-content:center; }
 
-/* Summary cards */
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 14px;
+/* ─── SETTINGS ITEMS ─────────────────────────── */
+.setting-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px; background:var(--glass);
+  border:1px solid var(--glass-bd); border-radius:10px;
+  margin-bottom:6px;
 }
-.summary-card {
-  background: white; padding: 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  text-align: center;
-}
-.summary-card .label {
-  font-size: 11px; color: var(--gray-600);
-  text-transform: uppercase; letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-.summary-card .value {
-  font-size: 18px; font-weight: 700;
-  color: var(--blue-dark);
-}
-.summary-card .sub { font-size: 11px; color: var(--gray-600); margin-top: 2px; }
+.setting-item span { font-size:14px; font-weight:500; color:var(--text1); }
 
-/* Daily reporting sections */
-.daily-section {
-  background: white; border-radius: var(--radius-lg);
-  padding: 16px; margin-bottom: 12px;
-  border: 1px solid var(--border);
-}
-.daily-section h3 {
-  margin: 0 0 10px; font-size: 14px;
-  color: var(--gray-600); font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.daily-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.daily-table th, .daily-table td {
-  padding: 8px; text-align: left;
-  border-bottom: 1px solid var(--gray-100);
-}
-.daily-table th { font-weight: 600; color: var(--gray-600); font-size: 12px; }
-.daily-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-.daily-table tr.total-row { background: var(--gray-100); font-weight: 600; }
-
-/* Loading */
-.loading {
-  text-align: center; padding: 40px 20px;
-  color: var(--gray-600); font-size: 14px;
-}
-.empty {
-  text-align: center; padding: 40px 20px;
-  color: var(--gray-400); font-size: 14px;
-}
-.status-dot {
-  display: inline-block; width: 8px; height: 8px;
-  border-radius: 50%; background: var(--green);
-  margin-right: 6px;
-}
-.status-dot.offline { background: var(--red); }
-
-/* Filter */
-.filter-row {
-  display: flex; gap: 8px; margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-.filter-row select, .filter-row input {
-  padding: 8px 10px; border: 1px solid var(--border);
-  border-radius: 6px; font-size: 13px; background: white;
-  flex: 1; min-width: 120px;
-}
-
-/* Toast */
+/* ─── TOAST ──────────────────────────────────── */
 .toast {
-  position: fixed; bottom: 90px; left: 50%;
-  transform: translateX(-50%);
-  background: var(--gray-900); color: white;
-  padding: 10px 18px; border-radius: 20px;
-  font-size: 13px; z-index: 2000;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+  background:var(--text1); color:white;
+  padding:10px 20px; border-radius:20px; font-size:13px; font-weight:500;
+  z-index:9999; white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,0.25);
+  animation:fadeUp 0.2s ease;
 }
+@keyframes fadeUp { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
-/* PIN modal */
+/* ─── LOADING ────────────────────────────────── */
+.loading-state {
+  display:flex; flex-direction:column; align-items:center;
+  padding:60px 20px; gap:14px; color:var(--text3);
+}
+.spinner {
+  width:32px; height:32px; border-radius:50%;
+  border:3px solid var(--p-bd); border-top-color:var(--p2);
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ─── PIN INPUT ──────────────────────────────── */
 .pin-input {
-  letter-spacing: 8px; text-align: center;
-  font-size: 20px !important;
+  letter-spacing:10px; text-align:center;
+  font-size:22px !important; font-weight:700 !important;
 }
 
-@media (max-width: 480px) {
-  .summary-card .value { font-size: 16px; }
-  .tab { padding: 12px 12px; font-size: 13px; }
-  .loan-card { padding: 12px; }
+@media(max-width:400px){
+  .lc-name { max-width:160px; }
+  .hero-amount { font-size:26px; }
+  .hpill .pv { font-size:17px; }
 }
 </style>
 </head>
 <body>
-
 <div id="app">
+
+  <!-- HEADER -->
   <div class="header">
-    <h1>📋 Loan Progress</h1>
-    <div class="user-badge" id="userBadge" onclick="showUserSelect()">
-      <span class="status-dot" id="statusDot"></span>
-      <span id="currentUserName">Loading...</span>
+    <div class="header-top">
+      <div class="header-brand">
+        <div class="brand-av">₹</div>
+        <div>
+          <div class="brand-name">Loan Progress</div>
+          <div class="brand-sub">AMCC Paonta Sahib</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="hbtn" id="settingsBtn" onclick="handleSettingsClick()" title="Settings">⚙️</div>
+        <div class="user-pill" onclick="showUserSelect()">
+          <span class="sync-dot" id="syncDot"></span>
+          <div class="av" id="userAvatar">?</div>
+          <span id="currentUserName">Select</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="tabs" id="tabs">
-    <button class="tab active" data-tab="pending">Pending</button>
-    <button class="tab" data-tab="sanctioned">Sanctioned</button>
-    <button class="tab" data-tab="returned">Returned</button>
+  <!-- MAIN TABS -->
+  <div class="tabs" id="mainTabs">
+    <button class="tab active" data-tab="pending">Pending <span class="badge" id="badge-pending">0</span></button>
+    <button class="tab" data-tab="sanctioned">Sanctioned <span class="badge" id="badge-sanctioned">0</span></button>
+    <button class="tab" data-tab="returned">Returned <span class="badge" id="badge-returned">0</span></button>
     <button class="tab" data-tab="daily">Daily Report</button>
   </div>
 
-  <div class="content" id="content">
-    <div class="loading">Loading data...</div>
+  <!-- CONTENT -->
+  <div id="content">
+    <div class="loading-state"><div class="spinner"></div><span>Loading…</span></div>
   </div>
 </div>
 
-<button class="fab" id="fab" onclick="openAddForm()" title="Add new loan">+</button>
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openAddForm()">+</button>
 
-<!-- User selection modal -->
-<div class="user-modal" id="userModal" style="display:none;">
+<!-- ── USER SELECT MODAL ── -->
+<div class="overlay center" id="userModal" style="display:none;">
   <div class="modal-card">
     <h2>Who are you?</h2>
-    <p style="font-size:13px;color:var(--gray-600);margin:0 0 16px;">Select your name to continue</p>
+    <p>Select your name to continue</p>
     <div class="user-list" id="userList"></div>
-    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-      <button class="user-btn admin" onclick="promptAdmin()">🔒 Admin</button>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(123,111,212,0.12);">
+      <button class="user-btn admin" onclick="promptAdmin()">
+        <div class="uav">🔒</div>
+        <span>Admin</span>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- Add/Edit form modal -->
-<div class="form-modal" id="formModal" style="display:none;">
-  <div class="form-sheet">
+<!-- ── ADD / EDIT LOAN FORM ── -->
+<div class="overlay" id="formModal" style="display:none;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
     <h2 id="formTitle">Add New Loan</h2>
     <form id="loanForm" onsubmit="saveLoan(event)">
       <input type="hidden" id="loanId">
@@ -404,7 +492,6 @@ html, body {
           <option value="">Select officer</option>
         </select>
       </div>
-
       <div class="form-group">
         <label>Category *</label>
         <select id="category" required>
@@ -414,840 +501,649 @@ html, body {
           <option value="Education">Education</option>
         </select>
       </div>
-
       <div class="form-group">
         <label>Branch *</label>
         <select id="branch" required>
           <option value="">Select branch</option>
         </select>
       </div>
-
       <div class="form-group">
         <label>Customer Name *</label>
-        <input type="text" id="customerName" required placeholder="e.g., SUNIL SHARMA INDUSTRY">
+        <input type="text" id="customerName" required placeholder="e.g. SUNIL SHARMA INDUSTRY">
       </div>
-
       <div class="form-group">
-        <label>Amount (in lakhs) *</label>
-        <input type="number" id="amount" step="0.01" min="0" required placeholder="e.g., 35">
+        <label>Amount (in Lakhs) *</label>
+        <input type="number" id="amount" step="0.01" min="0" required placeholder="e.g. 35">
       </div>
-
       <div class="form-group">
         <label>Receive Date *</label>
         <input type="date" id="receiveDate" required>
       </div>
-
       <div class="form-group" id="sanctionDateGroup" style="display:none;">
-        <label>Sanction Date *</label>
+        <label>Sanction Date</label>
         <input type="date" id="sanctionDate">
       </div>
-
       <div class="form-group">
         <label>Remarks</label>
-        <textarea id="remarks" placeholder="Any additional notes..."></textarea>
+        <textarea id="remarks" placeholder="Additional notes…"></textarea>
       </div>
-
       <div class="form-actions">
-        <button type="button" class="btn" onclick="closeForm()">Cancel</button>
-        <button type="submit" class="btn primary">Save</button>
+        <button type="button" class="btn btn-outline" onclick="closeForm()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Loan</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- PIN modal -->
-<div class="form-modal" id="pinModal" style="display:none;">
-  <div class="form-sheet" style="max-width:360px;">
+<!-- ── PIN MODAL ── -->
+<div class="overlay center" id="pinModal" style="display:none;">
+  <div class="modal-card">
     <h2>Admin PIN</h2>
-    <p style="font-size:13px;color:var(--gray-600);margin:0 0 16px;">Enter 6-digit PIN to continue</p>
-    <input type="password" id="pinInput" class="pin-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:6px;">
+    <p>Enter 6-digit PIN to continue</p>
+    <div class="form-group">
+      <input type="password" id="pinInput" class="pin-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="••••••">
+    </div>
     <div class="form-actions">
-      <button class="btn" onclick="closePinModal()">Cancel</button>
-      <button class="btn primary" onclick="checkPin()">Unlock</button>
+      <button class="btn btn-outline" onclick="closePinModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="checkPin()">Unlock</button>
     </div>
   </div>
 </div>
 
-<!-- Settings modal (admin) -->
-<div class="form-modal" id="settingsModal" style="display:none;">
-  <div class="form-sheet">
-    <h2>⚙️ Admin Settings</h2>
+<!-- ── ADMIN SETTINGS MODAL ── -->
+<div class="overlay" id="settingsModal" style="display:none;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Admin Settings</h2>
 
-    <div class="form-group">
+    <div class="form-group" style="margin-bottom:20px;">
       <label>Processing Officers</label>
       <div id="officersList" style="margin-bottom:8px;"></div>
-      <div style="display:flex;gap:6px;">
+      <div style="display:flex;gap:8px;">
         <input type="text" id="newOfficer" placeholder="Add officer name" style="flex:1;">
-        <button class="btn primary" onclick="addOfficer()">Add</button>
+        <button type="button" class="btn btn-primary" onclick="addOfficer()" style="flex:none;padding:10px 16px;">Add</button>
       </div>
     </div>
 
     <div class="form-group">
       <label>Branches</label>
-      <div id="branchesList" style="margin-bottom:8px;max-height:200px;overflow-y:auto;"></div>
-      <div style="display:flex;gap:6px;">
-        <input type="text" id="newBranch" placeholder="e.g., 1234 : BRANCH NAME" style="flex:1;">
-        <button class="btn primary" onclick="addBranch()">Add</button>
+      <div id="branchesList" style="margin-bottom:8px;max-height:220px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="newBranch" placeholder="e.g. 1234 : BRANCH NAME" style="flex:1;">
+        <button type="button" class="btn btn-primary" onclick="addBranch()" style="flex:none;padding:10px 16px;">Add</button>
       </div>
     </div>
 
     <div class="form-actions">
-      <button class="btn" onclick="closeSettings()">Close</button>
+      <button class="btn btn-outline" onclick="closeSettings()" style="flex:1;padding:14px;justify-content:center;">Done</button>
     </div>
   </div>
 </div>
 
+<!-- ── FIREBASE + APP LOGIC ── -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import {
   getFirestore, collection, doc, setDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy, getDoc, getDocs
+  onSnapshot, query, orderBy, getDoc
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDY0AMy0eZI_74nJSoy46uHqgKvh9NkKw8",
   authDomain: "loan-tracker-4af27.firebaseapp.com",
   projectId: "loan-tracker-4af27",
   storageBucket: "loan-tracker-4af27.firebasestorage.app",
   messagingSenderId: "700827916451",
-  appId: "1:700827916451:web:d872bf2905d234bdb60716",
-  measurementId: "G-77QQ60KXQB"
+  appId: "1:700827916451:web:d872bf2905d234bdb60716"
 };
 
 const ADMIN_PIN = "147258";
+const fb = initializeApp(firebaseConfig);
+const db = getFirestore(fb);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// State
-let state = {
-  currentUser: null,
+/* ── STATE ── */
+const S = {
+  user: null,
   isAdmin: false,
-  activeTab: 'pending',
-  activeSubtab: 'all',
+  tab: 'pending',
+  subtab: 'All',
   loans: [],
-  officers: ['Anchal', 'Nikita', 'Ritika'],
+  officers: ['Anchal','Nikita','Ritika'],
   branches: [
-    '7459 : KAFOTA',
-    '4589 : SME TARUWALA',
-    '50569 : TIMBI',
-    '1680 : ADB PAONTA SAHIB',
-    '1755 : PAONTA SAHIB',
-    '8117 : RAJPUR',
-    '50536 : BHAGANI',
-    '2413 : MAJRA',
-    '686 : NAHAN',
-    '6784 : DHAULA KUAN',
-    '3399 : RAJBAN',
-    '63982 : SHILLAI',
-    '4590 : KALA AMB'
+    '686 : NAHAN','1680 : ADB PAONTA SAHIB','1755 : PAONTA SAHIB',
+    '2413 : MAJRA','3399 : RAJBAN','4589 : SME TARUWALA',
+    '4590 : KALA AMB','6784 : DHAULA KUAN','7459 : KAFOTA',
+    '8117 : RAJPUR','50536 : BHAGANI','50569 : TIMBI','63982 : SHILLAI'
   ]
 };
 
-// --- Utility functions ---
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  return `${dd}.${mm}.${yyyy}`;
-}
-
-function todayISO() {
+/* ── UTILS ── */
+function today() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
+  return d.toISOString().slice(0,10);
 }
-
-function formatAmount(amt) {
-  const n = parseFloat(amt) || 0;
-  return n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+function fmtDate(s) {
+  if(!s) return '';
+  const [y,m,d] = s.split('-');
+  return `${d}.${m}.${y}`;
 }
-
-function showToast(msg) {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
+function fmtAmt(v) {
+  const n = parseFloat(v)||0;
+  return n.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2});
+}
+function esc(s) {
+  if(s==null) return '';
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function toast(msg) {
+  document.querySelectorAll('.toast').forEach(e=>e.remove());
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2500);
+  setTimeout(()=>t.remove(),2600);
+}
+function catTag(cat) {
+  const m={Agriculture:'agri',SME:'sme',Education:'edu'};
+  return `<span class="tag ${m[cat]||''}">${esc(cat)}</span>`;
+}
+function initials(name) {
+  return (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 }
 
-function categoryChip(cat) {
-  const map = {
-    'Agriculture': 'agri',
-    'SME': 'sme',
-    'Education': 'edu'
-  };
-  return `<span class="chip ${map[cat] || ''}">${cat}</span>`;
-}
-
-// --- Firebase: load settings ---
+/* ── FIREBASE SETTINGS ── */
 async function loadSettings() {
   try {
-    const settingsDoc = await getDoc(doc(db, 'settings', 'config'));
-    if (settingsDoc.exists()) {
-      const data = settingsDoc.data();
-      if (data.officers && data.officers.length) state.officers = data.officers;
-      if (data.branches && data.branches.length) state.branches = data.branches;
+    const d = await getDoc(doc(db,'settings','config'));
+    if(d.exists()) {
+      const data=d.data();
+      if(data.officers?.length) S.officers=data.officers;
+      if(data.branches?.length) S.branches=data.branches;
     } else {
-      // Create initial settings
-      await setDoc(doc(db, 'settings', 'config'), {
-        officers: state.officers,
-        branches: state.branches
-      });
+      await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches});
     }
-  } catch (e) {
-    console.error('Load settings error:', e);
-  }
+  } catch(e) { console.error(e); }
 }
-
 async function saveSettings() {
-  try {
-    await setDoc(doc(db, 'settings', 'config'), {
-      officers: state.officers,
-      branches: state.branches
-    });
-  } catch (e) {
-    console.error('Save settings error:', e);
-    showToast('Error saving settings');
-  }
+  try { await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches}); }
+  catch(e) { toast('Error saving settings'); console.error(e); }
 }
 
-// --- Firebase: loan operations ---
+/* ── FIREBASE LOANS ── */
 function subscribeLoans() {
-  const q = query(collection(db, 'loans'), orderBy('receiveDate', 'desc'));
-  onSnapshot(q, (snapshot) => {
-    state.loans = [];
-    snapshot.forEach(doc => {
-      state.loans.push({ id: doc.id, ...doc.data() });
-    });
-    document.getElementById('statusDot').classList.remove('offline');
+  const q=query(collection(db,'loans'),orderBy('receiveDate','desc'));
+  onSnapshot(q,snap=>{
+    S.loans=[];
+    snap.forEach(d=>S.loans.push({id:d.id,...d.data()}));
+    updateBadges();
+    document.getElementById('syncDot').classList.remove('off');
     render();
-  }, (error) => {
-    console.error('Snapshot error:', error);
-    document.getElementById('statusDot').classList.add('offline');
-    showToast('Connection issue. Retrying...');
+  }, err=>{
+    document.getElementById('syncDot').classList.add('off');
+    console.error(err);
   });
 }
-
 async function createLoan(data) {
-  const id = 'loan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-  await setDoc(doc(db, 'loans', id), {
-    ...data,
-    createdAt: new Date().toISOString(),
-    createdBy: state.currentUser,
-    updatedAt: new Date().toISOString()
-  });
+  const id='loan_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  await setDoc(doc(db,'loans',id),{...data,status:'pending',createdAt:new Date().toISOString(),createdBy:S.user,updatedAt:new Date().toISOString()});
+}
+async function updateLoan(id,data) {
+  await updateDoc(doc(db,'loans',id),{...data,updatedAt:new Date().toISOString(),updatedBy:S.user});
+}
+async function removeLoan(id) { await deleteDoc(doc(db,'loans',id)); }
+
+/* ── BADGES ── */
+function updateBadges() {
+  document.getElementById('badge-pending').textContent   = S.loans.filter(l=>l.status==='pending').length;
+  document.getElementById('badge-sanctioned').textContent= S.loans.filter(l=>l.status==='sanctioned').length;
+  document.getElementById('badge-returned').textContent  = S.loans.filter(l=>l.status==='returned').length;
 }
 
-async function updateLoan(id, data) {
-  await updateDoc(doc(db, 'loans', id), {
-    ...data,
-    updatedAt: new Date().toISOString(),
-    updatedBy: state.currentUser
-  });
-}
-
-async function removeLoan(id) {
-  await deleteDoc(doc(db, 'loans', id));
-}
-
-// --- User selection ---
+/* ── USER ── */
 window.showUserSelect = function() {
-  const list = document.getElementById('userList');
-  list.innerHTML = state.officers.map(o =>
-    `<button class="user-btn" onclick="selectUser('${o.replace(/'/g, "\\'")}')">${o}</button>`
-  ).join('');
-  document.getElementById('userModal').style.display = 'flex';
+  const list=document.getElementById('userList');
+  list.innerHTML=S.officers.map(o=>`
+    <button class="user-btn" onclick="selectUser('${esc(o)}')">
+      <div class="uav">${initials(o)}</div><span>${esc(o)}</span>
+    </button>`).join('');
+  document.getElementById('userModal').style.display='flex';
 };
-
 window.selectUser = function(name) {
-  state.currentUser = name;
-  state.isAdmin = false;
-  localStorage.setItem('currentUser', name);
-  localStorage.setItem('isAdmin', 'false');
-  document.getElementById('currentUserName').textContent = name;
-  document.getElementById('userModal').style.display = 'none';
+  S.user=name; S.isAdmin=false;
+  localStorage.setItem('lpUser',name); localStorage.setItem('lpAdmin','false');
+  document.getElementById('currentUserName').textContent=name;
+  document.getElementById('userAvatar').textContent=initials(name);
+  document.getElementById('userModal').style.display='none';
   render();
 };
-
 window.promptAdmin = function() {
-  document.getElementById('userModal').style.display = 'none';
-  document.getElementById('pinModal').style.display = 'flex';
-  setTimeout(() => document.getElementById('pinInput').focus(), 100);
+  document.getElementById('userModal').style.display='none';
+  document.getElementById('pinModal').style.display='flex';
+  setTimeout(()=>document.getElementById('pinInput').focus(),100);
 };
-
 window.checkPin = function() {
-  const pin = document.getElementById('pinInput').value;
-  if (pin === ADMIN_PIN) {
-    state.currentUser = 'Admin';
-    state.isAdmin = true;
-    localStorage.setItem('currentUser', 'Admin');
-    localStorage.setItem('isAdmin', 'true');
-    document.getElementById('currentUserName').textContent = '🔒 Admin';
-    document.getElementById('pinInput').value = '';
-    document.getElementById('pinModal').style.display = 'none';
-    showToast('Admin mode activated');
+  if(document.getElementById('pinInput').value===ADMIN_PIN) {
+    S.user='Admin'; S.isAdmin=true;
+    localStorage.setItem('lpUser','Admin'); localStorage.setItem('lpAdmin','true');
+    document.getElementById('currentUserName').textContent='Admin';
+    document.getElementById('userAvatar').textContent='🔒';
+    document.getElementById('pinInput').value='';
+    document.getElementById('pinModal').style.display='none';
+    toast('Admin mode active');
     render();
   } else {
-    showToast('Incorrect PIN');
-    document.getElementById('pinInput').value = '';
+    toast('Incorrect PIN'); document.getElementById('pinInput').value='';
   }
 };
-
 window.closePinModal = function() {
-  document.getElementById('pinInput').value = '';
-  document.getElementById('pinModal').style.display = 'none';
+  document.getElementById('pinInput').value='';
+  document.getElementById('pinModal').style.display='none';
+};
+document.getElementById('pinInput').addEventListener('keydown',e=>{ if(e.key==='Enter') window.checkPin(); });
+
+/* ── SETTINGS ── */
+window.handleSettingsClick = function() {
+  if(S.isAdmin) { renderSettingsLists(); document.getElementById('settingsModal').style.display='flex'; }
+  else toast('Admin access required');
+};
+window.closeSettings = function() { document.getElementById('settingsModal').style.display='none'; };
+function renderSettingsLists() {
+  document.getElementById('officersList').innerHTML=S.officers.map((o,i)=>`
+    <div class="setting-item">
+      <span>${esc(o)}</span>
+      <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;" onclick="removeOfficer(${i})">Remove</button>
+    </div>`).join('');
+  document.getElementById('branchesList').innerHTML=S.branches.map((b,i)=>`
+    <div class="setting-item">
+      <span style="font-size:13px;">${esc(b)}</span>
+      <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;" onclick="removeBranch(${i})">Remove</button>
+    </div>`).join('');
+}
+window.addOfficer = async function() {
+  const v=document.getElementById('newOfficer').value.trim();
+  if(!v) return;
+  if(S.officers.includes(v)){toast('Already exists');return;}
+  S.officers.push(v); await saveSettings();
+  document.getElementById('newOfficer').value='';
+  renderSettingsLists(); render(); toast('Officer added');
+};
+window.removeOfficer = async function(i) {
+  if(!confirm(`Remove ${S.officers[i]}?`)) return;
+  S.officers.splice(i,1); await saveSettings(); renderSettingsLists(); render();
+};
+window.addBranch = async function() {
+  const v=document.getElementById('newBranch').value.trim();
+  if(!v) return;
+  if(S.branches.includes(v)){toast('Already exists');return;}
+  S.branches.push(v); await saveSettings();
+  document.getElementById('newBranch').value='';
+  renderSettingsLists(); toast('Branch added');
+};
+window.removeBranch = async function(i) {
+  if(!confirm(`Remove ${S.branches[i]}?`)) return;
+  S.branches.splice(i,1); await saveSettings(); renderSettingsLists();
 };
 
-// --- Form ---
-window.openAddForm = function(loan = null) {
-  if (!state.currentUser) {
-    showUserSelect();
-    return;
-  }
-
-  // Populate dropdowns
-  const allocSel = document.getElementById('allocatedTo');
-  allocSel.innerHTML = '<option value="">Select officer</option>' +
-    state.officers.map(o => `<option value="${o}">${o}</option>`).join('');
-
-  const branchSel = document.getElementById('branch');
-  branchSel.innerHTML = '<option value="">Select branch</option>' +
-    state.branches.map(b => `<option value="${b}">${b}</option>`).join('');
-
-  if (loan) {
-    document.getElementById('formTitle').textContent = 'Edit Loan';
-    document.getElementById('loanId').value = loan.id;
-    document.getElementById('allocatedTo').value = loan.allocatedTo || '';
-    document.getElementById('category').value = loan.category || '';
-    document.getElementById('branch').value = loan.branch || '';
-    document.getElementById('customerName').value = loan.customerName || '';
-    document.getElementById('amount').value = loan.amount || '';
-    document.getElementById('receiveDate').value = loan.receiveDate || '';
-    document.getElementById('sanctionDate').value = loan.sanctionDate || '';
-    document.getElementById('remarks').value = loan.remarks || '';
-    document.getElementById('sanctionDateGroup').style.display =
-      loan.status === 'sanctioned' ? 'block' : 'none';
+/* ── FORM ── */
+window.openAddForm = function(loan=null) {
+  if(!S.user){showUserSelect();return;}
+  const asel=document.getElementById('allocatedTo');
+  asel.innerHTML='<option value="">Select officer</option>'+S.officers.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  const bsel=document.getElementById('branch');
+  bsel.innerHTML='<option value="">Select branch</option>'+S.branches.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  if(loan) {
+    document.getElementById('formTitle').textContent='Edit Loan';
+    document.getElementById('loanId').value=loan.id;
+    document.getElementById('allocatedTo').value=loan.allocatedTo||'';
+    document.getElementById('category').value=loan.category||'';
+    document.getElementById('branch').value=loan.branch||'';
+    document.getElementById('customerName').value=loan.customerName||'';
+    document.getElementById('amount').value=loan.amount||'';
+    document.getElementById('receiveDate').value=loan.receiveDate||'';
+    document.getElementById('sanctionDate').value=loan.sanctionDate||'';
+    document.getElementById('remarks').value=loan.remarks||'';
+    document.getElementById('sanctionDateGroup').style.display=loan.status==='sanctioned'?'block':'none';
   } else {
-    document.getElementById('formTitle').textContent = 'Add New Loan';
+    document.getElementById('formTitle').textContent='Add New Loan';
     document.getElementById('loanForm').reset();
-    document.getElementById('loanId').value = '';
-    document.getElementById('receiveDate').value = todayISO();
-    if (state.currentUser && !state.isAdmin) {
-      document.getElementById('allocatedTo').value = state.currentUser;
-    }
-    document.getElementById('sanctionDateGroup').style.display = 'none';
+    document.getElementById('loanId').value='';
+    document.getElementById('receiveDate').value=today();
+    document.getElementById('sanctionDateGroup').style.display='none';
+    if(S.user&&!S.isAdmin) document.getElementById('allocatedTo').value=S.user;
   }
-
-  document.getElementById('formModal').style.display = 'flex';
+  document.getElementById('formModal').style.display='flex';
 };
-
-window.closeForm = function() {
-  document.getElementById('formModal').style.display = 'none';
-};
-
+window.closeForm = function() { document.getElementById('formModal').style.display='none'; };
 window.saveLoan = async function(e) {
   e.preventDefault();
-  const id = document.getElementById('loanId').value;
-  const data = {
-    allocatedTo: document.getElementById('allocatedTo').value,
-    category: document.getElementById('category').value,
-    branch: document.getElementById('branch').value,
-    customerName: document.getElementById('customerName').value.trim().toUpperCase(),
-    amount: parseFloat(document.getElementById('amount').value),
-    receiveDate: document.getElementById('receiveDate').value,
-    remarks: document.getElementById('remarks').value.trim()
+  const id=document.getElementById('loanId').value;
+  const data={
+    allocatedTo:document.getElementById('allocatedTo').value,
+    category:document.getElementById('category').value,
+    branch:document.getElementById('branch').value,
+    customerName:document.getElementById('customerName').value.trim().toUpperCase(),
+    amount:parseFloat(document.getElementById('amount').value),
+    receiveDate:document.getElementById('receiveDate').value,
+    remarks:document.getElementById('remarks').value.trim()
   };
-
-  const sdate = document.getElementById('sanctionDate').value;
-  if (sdate) data.sanctionDate = sdate;
-
+  const sd=document.getElementById('sanctionDate').value;
+  if(sd) data.sanctionDate=sd;
   try {
-    if (id) {
-      await updateLoan(id, data);
-      showToast('Loan updated');
-    } else {
-      data.status = 'pending';
-      await createLoan(data);
-      showToast('Loan added');
-    }
+    if(id) { await updateLoan(id,data); toast('Loan updated ✓'); }
+    else { await createLoan(data); toast('Loan added ✓'); }
     closeForm();
-  } catch (err) {
-    console.error(err);
-    showToast('Error saving loan');
-  }
+  } catch(err) { toast('Error saving'); console.error(err); }
 };
 
-// --- Loan actions ---
+/* ── LOAN ACTIONS ── */
 window.sanctionLoan = async function(id) {
-  const loan = state.loans.find(l => l.id === id);
-  if (!loan) return;
-  if (!confirm(`Sanction loan for ${loan.customerName}?\nAmount: ₹${formatAmount(loan.amount)} lakh`)) return;
-  try {
-    await updateLoan(id, {
-      status: 'sanctioned',
-      sanctionDate: todayISO()
-    });
-    showToast('Loan sanctioned ✓');
-  } catch (e) { showToast('Error'); console.error(e); }
+  const l=S.loans.find(x=>x.id===id); if(!l) return;
+  if(!confirm(`Sanction loan for ${l.customerName}?\n₹${fmtAmt(l.amount)} Lakh`)) return;
+  try { await updateLoan(id,{status:'sanctioned',sanctionDate:today()}); toast('Sanctioned ✓'); }
+  catch(e){ toast('Error'); console.error(e); }
 };
-
 window.returnLoan = async function(id) {
-  const loan = state.loans.find(l => l.id === id);
-  if (!loan) return;
-  const reason = prompt(`Reason for returning ${loan.customerName}?`, loan.remarks || '');
-  if (reason === null) return;
-  try {
-    await updateLoan(id, {
-      status: 'returned',
-      remarks: reason,
-      returnedDate: todayISO()
-    });
-    showToast('Loan marked as returned');
-  } catch (e) { showToast('Error'); console.error(e); }
+  const l=S.loans.find(x=>x.id===id); if(!l) return;
+  const reason=prompt(`Reason for returning ${l.customerName}?`,l.remarks||'');
+  if(reason===null) return;
+  try { await updateLoan(id,{status:'returned',remarks:reason,returnedDate:today()}); toast('Marked as returned'); }
+  catch(e){ toast('Error'); console.error(e); }
 };
-
 window.moveToPending = async function(id) {
-  const loan = state.loans.find(l => l.id === id);
-  if (!loan) return;
-  if (!confirm(`Move ${loan.customerName} back to pending?`)) return;
-  try {
-    await updateLoan(id, { status: 'pending' });
-    showToast('Moved to pending');
-  } catch (e) { showToast('Error'); console.error(e); }
+  const l=S.loans.find(x=>x.id===id); if(!l) return;
+  if(!confirm(`Move ${l.customerName} back to Pending?`)) return;
+  try { await updateLoan(id,{status:'pending'}); toast('Moved to pending'); }
+  catch(e){ toast('Error'); console.error(e); }
 };
-
 window.editLoan = function(id) {
-  const loan = state.loans.find(l => l.id === id);
-  if (loan) openAddForm(loan);
+  const l=S.loans.find(x=>x.id===id); if(l) openAddForm(l);
 };
-
 window.deleteLoan = async function(id) {
-  if (!state.isAdmin) {
-    showToast('Only admin can delete');
-    return;
-  }
-  const loan = state.loans.find(l => l.id === id);
-  if (!loan) return;
-  if (!confirm(`DELETE ${loan.customerName}? This cannot be undone.`)) return;
-  try {
-    await removeLoan(id);
-    showToast('Loan deleted');
-  } catch (e) { showToast('Error'); console.error(e); }
+  if(!S.isAdmin){toast('Admin only');return;}
+  const l=S.loans.find(x=>x.id===id); if(!l) return;
+  if(!confirm(`DELETE ${l.customerName}?\nThis cannot be undone.`)) return;
+  try { await removeLoan(id); toast('Deleted'); }
+  catch(e){ toast('Error'); console.error(e); }
 };
 
-// --- Tabs ---
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    t.classList.add('active');
-    state.activeTab = t.dataset.tab;
-    state.activeSubtab = 'all';
-    render();
-  });
-});
-
-window.setSubtab = function(sub) {
-  state.activeSubtab = sub;
+/* ── TABS ── */
+document.getElementById('mainTabs').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-tab]'); if(!btn) return;
+  document.querySelectorAll('#mainTabs .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  S.tab=btn.dataset.tab; S.subtab='All';
   render();
-};
+});
+window.setSubtab = function(s) { S.subtab=s; render(); };
 
-// --- Render ---
+/* ── RENDER ── */
 function render() {
-  if (!state.currentUser) {
-    showUserSelect();
-    return;
-  }
-
-  const content = document.getElementById('content');
-
-  if (state.activeTab === 'pending') {
-    renderPending(content);
-  } else if (state.activeTab === 'sanctioned') {
-    renderSanctioned(content);
-  } else if (state.activeTab === 'returned') {
-    renderReturned(content);
-  } else if (state.activeTab === 'daily') {
-    renderDaily(content);
-  }
+  if(!S.user){showUserSelect();return;}
+  const c=document.getElementById('content');
+  if(S.tab==='pending')    renderPending(c);
+  else if(S.tab==='sanctioned') renderSanctioned(c);
+  else if(S.tab==='returned')   renderReturned(c);
+  else if(S.tab==='daily')      renderDaily(c);
 }
 
-function renderLoanCard(loan, actions) {
-  const remarks = loan.remarks ? `<div class="loan-remarks">📝 ${escapeHtml(loan.remarks)}</div>` : '';
+/* ── LOAN CARD HTML ── */
+function loanCardHtml(loan,actions,variant='') {
+  const remarks=loan.remarks?`<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>`:'';
+  const sanctDate=loan.sanctionDate?`<span class="tag date">Sanctioned ${fmtDate(loan.sanctionDate)}</span>`:'';
+  const retDate=loan.returnedDate?`<span class="tag date">Returned ${fmtDate(loan.returnedDate)}</span>`:'';
   return `
-    <div class="loan-card">
-      <div class="loan-card-header">
+    <div class="loan-card ${variant}">
+      <div class="lc-top">
         <div style="flex:1;min-width:0;">
-          <p class="loan-name">${escapeHtml(loan.customerName)}</p>
-          <div class="loan-meta">
-            ${categoryChip(loan.category)}
-            <span>${escapeHtml(loan.branch || '')}</span>
-          </div>
+          <div class="lc-name">${esc(loan.customerName)}</div>
+          <div class="lc-branch">${esc(loan.branch||'')}</div>
         </div>
-        <div class="loan-amount">₹${formatAmount(loan.amount)}<span class="unit"> L</span></div>
+        <div class="lc-amount">₹${fmtAmt(loan.amount)}<span class="u"> L</span></div>
       </div>
-      <dl class="loan-details">
-        <dt>Officer</dt><dd>${escapeHtml(loan.allocatedTo)}</dd>
-        <dt>Received</dt><dd>${formatDate(loan.receiveDate)}</dd>
-        ${loan.sanctionDate ? `<dt>Sanctioned</dt><dd>${formatDate(loan.sanctionDate)}</dd>` : ''}
-        ${loan.returnedDate ? `<dt>Returned</dt><dd>${formatDate(loan.returnedDate)}</dd>` : ''}
-      </dl>
+      <div class="lc-tags">
+        ${catTag(loan.category)}
+        <span class="tag officer">${esc(loan.allocatedTo)}</span>
+        <span class="tag date">Recd ${fmtDate(loan.receiveDate)}</span>
+        ${sanctDate}${retDate}
+      </div>
       ${remarks}
-      <div class="loan-actions">${actions}</div>
-    </div>
-  `;
+      <div class="lc-actions">${actions}</div>
+    </div>`;
 }
 
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
+function subtabsHtml(active) {
+  const tabs=['All','Agriculture','SME','Education'];
+  return `<div class="subtabs">${tabs.map(t=>`
+    <button class="subtab ${active===t?'active':''}" onclick="setSubtab('${t}')">${t}</button>`).join('')}
+  </div>`;
 }
 
-function renderPending(container) {
-  const subs = [
-    { key: 'all', label: 'All' },
-    { key: 'Agriculture', label: 'Agriculture' },
-    { key: 'SME', label: 'SME' },
-    { key: 'Education', label: 'Education' }
-  ];
+/* ── PENDING ── */
+function renderPending(c) {
+  let loans=S.loans.filter(l=>l.status==='pending');
+  const all=loans; // for hero
+  if(S.subtab!=='All') loans=loans.filter(l=>l.category===S.subtab);
+  const totalAmt=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
 
-  const subTabsHtml = `
-    <div class="subtabs">
-      ${subs.map(s => `
-        <button class="subtab ${state.activeSubtab === s.key ? 'active' : ''}"
-                onclick="setSubtab('${s.key}')">${s.label}</button>
-      `).join('')}
-    </div>
-  `;
+  const heroHtml=`
+    <div class="hero-card">
+      <div class="hero-label">Pending Portfolio</div>
+      <div class="hero-amount">₹${fmtAmt(all.reduce((s,l)=>s+(parseFloat(l.amount)||0),0))}<span class="unit"> Lakh</span></div>
+      <div class="hero-pills">
+        ${['Agriculture','SME','Education'].map(cat=>{
+          const items=all.filter(l=>l.category===cat);
+          return `<div class="hpill">
+            <div class="pl">${cat}</div>
+            <div class="pv">${items.length}</div>
+            <div class="ps">₹${fmtAmt(items.reduce((s,l)=>s+(parseFloat(l.amount)||0),0))}L</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
 
-  let pending = state.loans.filter(l => l.status === 'pending');
-  if (state.activeSubtab !== 'all') {
-    pending = pending.filter(l => l.category === state.activeSubtab);
-  }
+  const cards=loans.length===0
+    ?`<div class="empty-state"><div class="icon">📭</div><div class="msg">No pending loans</div><div class="sub">Tap + to add a new loan</div></div>`
+    :loans.map(l=>{
+      const actions=`
+        <button class="btn btn-primary" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
+        <button class="btn btn-outline" onclick="returnLoan('${l.id}')">↩ Return</button>
+        <button class="btn btn-ghost" onclick="editLoan('${l.id}')">✎</button>
+        ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
+      return loanCardHtml(l,actions);
+    }).join('');
 
-  const totalAmt = pending.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-
-  const cardsHtml = pending.length === 0
-    ? '<div class="empty">No pending loans</div>'
-    : pending.map(loan => {
-        const actions = `
-          <button class="btn success small" onclick="sanctionLoan('${loan.id}')">✓ Sanction</button>
-          <button class="btn warn small" onclick="returnLoan('${loan.id}')">↩ Return</button>
-          <button class="btn small" onclick="editLoan('${loan.id}')">Edit</button>
-          ${state.isAdmin ? `<button class="btn danger small" onclick="deleteLoan('${loan.id}')">Delete</button>` : ''}
-        `;
-        return renderLoanCard(loan, actions);
-      }).join('');
-
-  container.innerHTML = subTabsHtml + `
-    <div class="section-header">
-      <h2>Pending Loans</h2>
-      <span class="count-badge">${pending.length} • ₹${formatAmount(totalAmt)} L</span>
-    </div>
-    ${cardsHtml}
-  `;
+  c.innerHTML=`<div style="padding:10px 14px 0;">${heroHtml}</div>
+    ${subtabsHtml(S.subtab)}
+    <div class="content">
+      <div class="sec-head">
+        <div class="sec-title">Pending Loans</div>
+        <div class="sec-count">${loans.length} • ₹${fmtAmt(totalAmt)} L</div>
+      </div>
+      ${cards}
+    </div>`;
 }
 
-function renderSanctioned(container) {
-  const subs = [
-    { key: 'all', label: 'All' },
-    { key: 'Agriculture', label: 'Agriculture' },
-    { key: 'SME', label: 'SME' },
-    { key: 'Education', label: 'Education' }
-  ];
+/* ── SANCTIONED ── */
+function renderSanctioned(c) {
+  let loans=S.loans.filter(l=>l.status==='sanctioned')
+    .sort((a,b)=>(b.sanctionDate||'').localeCompare(a.sanctionDate||''));
+  if(S.subtab!=='All') loans=loans.filter(l=>l.category===S.subtab);
+  const totalAmt=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
 
-  const subTabsHtml = `
-    <div class="subtabs">
-      ${subs.map(s => `
-        <button class="subtab ${state.activeSubtab === s.key ? 'active' : ''}"
-                onclick="setSubtab('${s.key}')">${s.label}</button>
-      `).join('')}
-    </div>
-  `;
+  const cards=loans.length===0
+    ?`<div class="empty-state"><div class="icon">🎉</div><div class="msg">No sanctioned loans yet</div><div class="sub">Sanction pending loans to see them here</div></div>`
+    :loans.map(l=>{
+      const actions=`
+        <button class="btn btn-outline" onclick="moveToPending('${l.id}')">↩ Pending</button>
+        <button class="btn btn-ghost" onclick="editLoan('${l.id}')">✎</button>
+        ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
+      return loanCardHtml(l,actions,'sanctioned');
+    }).join('');
 
-  let sanctioned = state.loans.filter(l => l.status === 'sanctioned')
-    .sort((a, b) => (b.sanctionDate || '').localeCompare(a.sanctionDate || ''));
-
-  if (state.activeSubtab !== 'all') {
-    sanctioned = sanctioned.filter(l => l.category === state.activeSubtab);
-  }
-
-  const totalAmt = sanctioned.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-
-  const cardsHtml = sanctioned.length === 0
-    ? '<div class="empty">No sanctioned loans yet</div>'
-    : sanctioned.map(loan => {
-        const actions = `
-          <button class="btn small" onclick="moveToPending('${loan.id}')">Move to Pending</button>
-          <button class="btn small" onclick="editLoan('${loan.id}')">Edit</button>
-          ${state.isAdmin ? `<button class="btn danger small" onclick="deleteLoan('${loan.id}')">Delete</button>` : ''}
-        `;
-        return renderLoanCard(loan, actions);
-      }).join('');
-
-  container.innerHTML = subTabsHtml + `
-    <div class="section-header">
-      <h2>Sanctioned Loans</h2>
-      <span class="count-badge">${sanctioned.length} • ₹${formatAmount(totalAmt)} L</span>
-    </div>
-    ${cardsHtml}
-  `;
+  c.innerHTML=`${subtabsHtml(S.subtab)}
+    <div class="content">
+      <div class="sec-head">
+        <div class="sec-title">Sanctioned Loans</div>
+        <div class="sec-count">${loans.length} • ₹${fmtAmt(totalAmt)} L</div>
+      </div>
+      ${cards}
+    </div>`;
 }
 
-function renderReturned(container) {
-  const returned = state.loans.filter(l => l.status === 'returned');
-  const totalAmt = returned.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+/* ── RETURNED ── */
+function renderReturned(c) {
+  const loans=S.loans.filter(l=>l.status==='returned');
+  const totalAmt=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
 
-  const cardsHtml = returned.length === 0
-    ? '<div class="empty">No returned loans</div>'
-    : returned.map(loan => {
-        const actions = `
-          <button class="btn small" onclick="moveToPending('${loan.id}')">Move to Pending</button>
-          <button class="btn success small" onclick="sanctionLoan('${loan.id}')">✓ Sanction</button>
-          <button class="btn small" onclick="editLoan('${loan.id}')">Edit</button>
-          ${state.isAdmin ? `<button class="btn danger small" onclick="deleteLoan('${loan.id}')">Delete</button>` : ''}
-        `;
-        return renderLoanCard(loan, actions);
-      }).join('');
+  const cards=loans.length===0
+    ?`<div class="empty-state"><div class="icon">📋</div><div class="msg">No returned loans</div><div class="sub">Returned loans will appear here</div></div>`
+    :loans.map(l=>{
+      const actions=`
+        <button class="btn btn-success" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
+        <button class="btn btn-outline" onclick="moveToPending('${l.id}')">↩ Pending</button>
+        <button class="btn btn-ghost" onclick="editLoan('${l.id}')">✎</button>
+        ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
+      return loanCardHtml(l,actions,'returned');
+    }).join('');
 
-  container.innerHTML = `
-    <div class="section-header">
-      <h2>Returned Loans</h2>
-      <span class="count-badge">${returned.length} • ₹${formatAmount(totalAmt)} L</span>
+  c.innerHTML=`<div class="content" style="padding-top:12px;">
+    <div class="sec-head">
+      <div class="sec-title">Returned Loans</div>
+      <div class="sec-count">${loans.length} • ₹${fmtAmt(totalAmt)} L</div>
     </div>
-    ${cardsHtml}
-  `;
+    ${cards}
+  </div>`;
 }
 
-function renderDaily(container) {
-  const today = todayISO();
-  const thisMonth = today.slice(0, 7); // YYYY-MM
+/* ── DAILY REPORT ── */
+function renderDaily(c) {
+  const td=today();
+  const thisMonth=td.slice(0,7);
+  const todayLoans  =S.loans.filter(l=>l.status==='sanctioned'&&l.sanctionDate===td);
+  const monthLoans  =S.loans.filter(l=>l.status==='sanctioned'&&(l.sanctionDate||'').startsWith(thisMonth));
+  const pendingLoans=S.loans.filter(l=>l.status==='pending');
 
-  const sanctionedToday = state.loans.filter(l => l.status === 'sanctioned' && l.sanctionDate === today);
-  const sanctionedMonth = state.loans.filter(l => l.status === 'sanctioned' && (l.sanctionDate || '').startsWith(thisMonth));
-  const pendingAll = state.loans.filter(l => l.status === 'pending');
+  const todayAmt  =todayLoans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
+  const monthAmt  =monthLoans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
+  const pendingAmt=pendingLoans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
 
-  function buildTable(loans, showSanctionDate = false) {
-    if (loans.length === 0) return '<div class="empty" style="padding:16px;">No entries</div>';
-
-    // Group by officer + category
-    const groups = {};
-    for (const l of loans) {
-      const key = l.allocatedTo || 'Unknown';
-      if (!groups[key]) groups[key] = {};
-      const cat = l.category || 'Other';
-      if (!groups[key][cat]) groups[key][cat] = { count: 0, amount: 0 };
-      groups[key][cat].count++;
-      groups[key][cat].amount += parseFloat(l.amount) || 0;
+  function summaryTable(loans) {
+    if(!loans.length) return `<div style="padding:16px;text-align:center;font-size:13px;color:var(--text3);">No entries</div>`;
+    const cats=['Agriculture','SME','Education'];
+    const groups={};
+    for(const l of loans){
+      if(!groups[l.allocatedTo||'?']) groups[l.allocatedTo||'?']={};
+      const cat=l.category||'Other';
+      if(!groups[l.allocatedTo||'?'][cat]) groups[l.allocatedTo||'?'][cat]={count:0,amount:0};
+      groups[l.allocatedTo||'?'][cat].count++;
+      groups[l.allocatedTo||'?'][cat].amount+=parseFloat(l.amount)||0;
     }
-
-    const cats = ['Agriculture', 'SME', 'Education'];
-    let html = `
-      <table class="daily-table">
-        <thead>
-          <tr>
-            <th>Officer</th>
-            ${cats.map(c => `<th colspan="2" style="text-align:center;">${c}</th>`).join('')}
-            <th colspan="2" style="text-align:center;">Total</th>
-          </tr>
-          <tr>
-            <th></th>
-            ${cats.map(() => `<th style="text-align:right;">Cnt</th><th style="text-align:right;">Amt</th>`).join('')}
-            <th style="text-align:right;">Cnt</th><th style="text-align:right;">Amt</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    let grandTotal = { count: 0, amount: 0 };
-
-    for (const officer of state.officers) {
-      const g = groups[officer] || {};
-      let rowTotal = { count: 0, amount: 0 };
-      html += `<tr><td>${escapeHtml(officer)}</td>`;
-      for (const c of cats) {
-        const v = g[c] || { count: 0, amount: 0 };
-        rowTotal.count += v.count;
-        rowTotal.amount += v.amount;
-        html += `<td class="num">${v.count}</td><td class="num">${v.amount ? formatAmount(v.amount) : '0'}</td>`;
+    let rows='';
+    let grand={count:0,amount:0};
+    for(const off of S.officers){
+      const g=groups[off]||{};
+      let rt={count:0,amount:0};
+      let cells='';
+      for(const cat of cats){
+        const v=g[cat]||{count:0,amount:0};
+        rt.count+=v.count; rt.amount+=v.amount;
+        cells+=`<td class="num">${v.count||''}</td><td class="num">${v.count?fmtAmt(v.amount):''}</td>`;
       }
-      html += `<td class="num"><b>${rowTotal.count}</b></td><td class="num"><b>${rowTotal.amount ? formatAmount(rowTotal.amount) : '0'}</b></td></tr>`;
-      grandTotal.count += rowTotal.count;
-      grandTotal.amount += rowTotal.amount;
+      grand.count+=rt.count; grand.amount+=rt.amount;
+      rows+=`<tr><td>${esc(off)}</td>${cells}<td class="num"><b>${rt.count||0}</b></td><td class="num"><b>${rt.count?fmtAmt(rt.amount):'0'}</b></td></tr>`;
     }
-
-    // Totals row
-    html += `<tr class="total-row"><td>Total</td>`;
-    for (const c of cats) {
-      let cCount = 0, cAmt = 0;
-      for (const officer of state.officers) {
-        const v = (groups[officer] || {})[c] || { count: 0, amount: 0 };
-        cCount += v.count;
-        cAmt += v.amount;
-      }
-      html += `<td class="num">${cCount}</td><td class="num">${cAmt ? formatAmount(cAmt) : '0'}</td>`;
+    // totals
+    let tcells='';
+    for(const cat of cats){
+      let cc=0,ca=0;
+      for(const off of S.officers){ const v=(groups[off]||{})[cat]||{count:0,amount:0}; cc+=v.count; ca+=v.amount; }
+      tcells+=`<td class="num">${cc||''}</td><td class="num">${cc?fmtAmt(ca):''}</td>`;
     }
-    html += `<td class="num">${grandTotal.count}</td><td class="num">${grandTotal.amount ? formatAmount(grandTotal.amount) : '0'}</td></tr>`;
-    html += `</tbody></table>`;
-
-    return html;
+    rows+=`<tr class="total-row"><td>Total</td>${tcells}<td class="num">${grand.count}</td><td class="num">${fmtAmt(grand.amount)}</td></tr>`;
+    return `<div style="overflow-x:auto;"><table class="report-table">
+      <thead>
+        <tr>
+          <th>Officer</th>
+          ${cats.map(c=>`<th class="num" colspan="2">${c}</th>`).join('')}
+          <th class="num" colspan="2">Total</th>
+        </tr>
+        <tr>
+          <th></th>
+          ${cats.map(()=>'<th class="num">Cnt</th><th class="num">Amt</th>').join('')}
+          <th class="num">Cnt</th><th class="num">Amt</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
   }
 
-  const todayAmt = sanctionedToday.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-  const monthAmt = sanctionedMonth.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-  const pendingAmt = pendingAll.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-
-  container.innerHTML = `
-    <div class="summary-grid">
-      <div class="summary-card">
-        <div class="label">Today</div>
-        <div class="value">${sanctionedToday.length}</div>
-        <div class="sub">₹${formatAmount(todayAmt)} L</div>
+  c.innerHTML=`<div class="content" style="padding-top:12px;">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-l">Sanctioned Today</div>
+        <div class="stat-v">${todayLoans.length}</div>
+        <div class="stat-s">₹${fmtAmt(todayAmt)} L</div>
+        ${todayLoans.length?`<div class="stat-badge">↗ ${fmtDate(td)}</div>`:''}
       </div>
-      <div class="summary-card">
-        <div class="label">This Month</div>
-        <div class="value">${sanctionedMonth.length}</div>
-        <div class="sub">₹${formatAmount(monthAmt)} L</div>
+      <div class="stat-card">
+        <div class="stat-l">This Month</div>
+        <div class="stat-v">${monthLoans.length}</div>
+        <div class="stat-s">₹${fmtAmt(monthAmt)} L</div>
+        <div class="stat-badge">Month total</div>
       </div>
-      <div class="summary-card">
-        <div class="label">Pending</div>
-        <div class="value">${pendingAll.length}</div>
-        <div class="sub">₹${formatAmount(pendingAmt)} L</div>
+      <div class="stat-card">
+        <div class="stat-l">Pending</div>
+        <div class="stat-v">${pendingLoans.length}</div>
+        <div class="stat-s">₹${fmtAmt(pendingAmt)} L</div>
       </div>
     </div>
 
-    <div class="daily-section">
-      <h3>📅 Sanctioned Today — ${formatDate(today)}</h3>
-      ${buildTable(sanctionedToday)}
-    </div>
-
-    <div class="daily-section">
-      <h3>📆 Sanctioned This Month</h3>
-      ${buildTable(sanctionedMonth)}
-    </div>
-
-    <div class="daily-section">
-      <h3>⏳ Currently Pending</h3>
-      ${buildTable(pendingAll)}
-    </div>
-
-    ${state.isAdmin ? `
-      <div style="text-align:center;margin-top:20px;">
-        <button class="btn" onclick="openSettings()">⚙️ Admin Settings</button>
+    <div class="report-section">
+      <div class="report-section-head">
+        <span>📅 Sanctioned Today — ${fmtDate(td)}</span>
+        <span class="amt">₹${fmtAmt(todayAmt)} L</span>
       </div>
-    ` : ''}
-  `;
+      ${summaryTable(todayLoans)}
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-head">
+        <span>📆 Sanctioned This Month</span>
+        <span class="amt">₹${fmtAmt(monthAmt)} L</span>
+      </div>
+      ${summaryTable(monthLoans)}
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-head">
+        <span>⏳ Currently Pending</span>
+        <span class="amt">₹${fmtAmt(pendingAmt)} L</span>
+      </div>
+      ${summaryTable(pendingLoans)}
+    </div>
+
+    ${S.isAdmin?`<div style="text-align:center;margin-top:16px;">
+      <button class="btn btn-outline" onclick="handleSettingsClick()" style="padding:12px 28px;font-size:14px;">⚙️ Admin Settings</button>
+    </div>`:''}
+  </div>`;
 }
 
-// --- Admin settings ---
-window.openSettings = function() {
-  if (!state.isAdmin) return;
-  renderSettingsLists();
-  document.getElementById('settingsModal').style.display = 'flex';
-};
-
-window.closeSettings = function() {
-  document.getElementById('settingsModal').style.display = 'none';
-};
-
-function renderSettingsLists() {
-  const offList = document.getElementById('officersList');
-  offList.innerHTML = state.officers.map((o, i) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--gray-100);border-radius:6px;margin-bottom:4px;">
-      <span>${escapeHtml(o)}</span>
-      <button class="btn small danger" onclick="removeOfficer(${i})">Remove</button>
-    </div>
-  `).join('');
-
-  const brList = document.getElementById('branchesList');
-  brList.innerHTML = state.branches.map((b, i) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--gray-100);border-radius:6px;margin-bottom:4px;">
-      <span style="font-size:13px;">${escapeHtml(b)}</span>
-      <button class="btn small danger" onclick="removeBranch(${i})">Remove</button>
-    </div>
-  `).join('');
-}
-
-window.addOfficer = async function() {
-  const name = document.getElementById('newOfficer').value.trim();
-  if (!name) return;
-  if (state.officers.includes(name)) { showToast('Already exists'); return; }
-  state.officers.push(name);
-  await saveSettings();
-  document.getElementById('newOfficer').value = '';
-  renderSettingsLists();
-  render();
-  showToast('Officer added');
-};
-
-window.removeOfficer = async function(i) {
-  if (!confirm(`Remove ${state.officers[i]}?`)) return;
-  state.officers.splice(i, 1);
-  await saveSettings();
-  renderSettingsLists();
-  render();
-};
-
-window.addBranch = async function() {
-  const name = document.getElementById('newBranch').value.trim();
-  if (!name) return;
-  if (state.branches.includes(name)) { showToast('Already exists'); return; }
-  state.branches.push(name);
-  await saveSettings();
-  document.getElementById('newBranch').value = '';
-  renderSettingsLists();
-  showToast('Branch added');
-};
-
-window.removeBranch = async function(i) {
-  if (!confirm(`Remove ${state.branches[i]}?`)) return;
-  state.branches.splice(i, 1);
-  await saveSettings();
-  renderSettingsLists();
-};
-
-// --- Category-change handler on form ---
-document.getElementById('category').addEventListener('change', () => {
-  // no-op placeholder for future
-});
-
-// --- PIN enter key ---
-document.getElementById('pinInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') checkPin();
-});
-
-// --- Init ---
+/* ── INIT ── */
 async function init() {
   await loadSettings();
-
-  const savedUser = localStorage.getItem('currentUser');
-  const savedAdmin = localStorage.getItem('isAdmin') === 'true';
-  if (savedUser) {
-    state.currentUser = savedUser;
-    state.isAdmin = savedAdmin;
-    document.getElementById('currentUserName').textContent = savedAdmin ? '🔒 Admin' : savedUser;
+  const savedUser=localStorage.getItem('lpUser');
+  const savedAdmin=localStorage.getItem('lpAdmin')==='true';
+  if(savedUser){
+    S.user=savedUser; S.isAdmin=savedAdmin;
+    document.getElementById('currentUserName').textContent=savedUser==='Admin'?'Admin':savedUser;
+    document.getElementById('userAvatar').textContent=savedUser==='Admin'?'🔒':initials(savedUser);
   }
-
   subscribeLoans();
-
-  if (!state.currentUser) {
-    showUserSelect();
-  }
+  if(!S.user) showUserSelect();
 }
 
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
-  });
+if('serviceWorker' in navigator) {
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 
 init();
