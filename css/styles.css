@@ -411,3 +411,58 @@ body::after{
   color:white;border-color:transparent;
   box-shadow:0 4px 14px rgba(123,111,212,0.38);
 }
+
+/* ── SEARCH ── */
+.search-wrap{padding:0 2px 10px;}
+.search-wrap-inner{position:relative;}
+.search-wrap-inner::before{content:'🔍';position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+.search-inp{
+  width:100%;padding:11px 14px 11px 40px;
+  border:1px solid rgba(107,95,191,0.2);border-radius:12px;
+  font-size:14px;font-family:inherit;
+  background:rgba(255,255,255,0.75);color:var(--text1);outline:none;
+}
+.search-inp:focus{border-color:var(--p2);box-shadow:0 0 0 3px rgba(107,95,191,0.15);}
+
+/* ── OVERDUE ── */
+.tag.overdue{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
+.loan-card.overdue::before{background:linear-gradient(180deg,#EF4444,#F87171);}
+
+/* ── OFFICER LOAN COUNT ── */
+.officer-count{margin-left:auto;background:var(--p-bg);color:var(--p2);border:1px solid var(--p-bd);padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;}
+
+/* ── UNDO TOAST ── */
+.toast-undo{display:flex;align-items:center;gap:10px;min-width:200px;}
+.undo-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.35);color:white;padding:4px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+/* ── DARK MODE ── */
+body.dark{--text1:#E8E6F4;--text2:#B8B0E4;--text3:rgba(232,230,244,0.58);}
+body.dark::before,body.dark::after{
+  background:radial-gradient(circle at 15% 10%,#2A254E 0%,transparent 45%),
+    radial-gradient(circle at 90% 25%,#201C42 0%,transparent 50%),
+    linear-gradient(160deg,#1A1835 0%,#12102C 60%,#1C1A38 100%);
+}
+body.dark .header{background:rgba(18,16,40,0.8);}
+body.dark .panel{background:#1A1835;}
+body.dark .tab{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.25);}
+body.dark .subtab{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.25);}
+body.dark .stab{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.25);}
+body.dark .loan-card{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);}
+body.dark .stat{background:rgba(30,28,58,0.55);border-color:rgba(80,70,130,0.25);}
+body.dark .sheet{background:#1E1C38;}
+body.dark .modal-box{background:#1E1C38;}
+body.dark .user-btn{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);color:var(--text1);}
+body.dark .form-group input,body.dark .form-group select,body.dark .form-group textarea{background:rgba(36,32,64,0.85);color:var(--text1);border-color:rgba(107,95,191,0.3);}
+body.dark .btn-cancel-full{background:rgba(36,32,64,0.85);color:var(--text1);border-color:rgba(107,95,191,0.25)!important;}
+body.dark .btn-return{background:rgba(36,32,64,0.85);color:var(--text1);border-color:rgba(107,95,191,0.2)!important;}
+body.dark .btn-more{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.2)!important;}
+body.dark .setting-item{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);}
+body.dark .report-card{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);}
+body.dark .empty-state{background:rgba(30,28,58,0.65);border-color:rgba(80,70,130,0.3);}
+body.dark .tag.date{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.2);}
+body.dark .tag.officer{background:rgba(36,32,64,0.85);color:var(--text2);border-color:rgba(107,95,191,0.2);}
+body.dark .toast{background:#1E1C38;color:var(--text1);}
+body.dark .undo-btn{color:var(--text1);}
+body.dark .search-inp{background:rgba(36,32,64,0.85);color:var(--text1);border-color:rgba(107,95,191,0.3);}
+body.dark .hbtn{background:rgba(36,32,64,0.7);border-color:rgba(107,95,191,0.3);}
+body.dark .user-pill{background:rgba(36,32,64,0.7);border-color:rgba(107,95,191,0.3);}

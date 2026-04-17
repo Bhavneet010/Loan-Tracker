@@ -27,6 +27,7 @@
         </div>
       </div>
       <div class="header-right">
+        <div class="hbtn" id="darkBtn" onclick="toggleDark()" title="Dark mode">🌙</div>
         <div class="hbtn" onclick="handleSettings()" title="Settings">⚙️</div>
         <div class="user-pill" onclick="showUserSelect()">
           <span class="sync-dot" id="syncDot"></span>
@@ -54,6 +55,13 @@
       <button class="tab" data-tab="sanctioned">Sanctioned <span class="badge" id="b-sanctioned">0</span></button>
       <button class="tab" data-tab="returned">Returned <span class="badge" id="b-returned">0</span></button>
       <button class="tab" data-tab="daily">Daily Report</button>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-wrap" id="searchWrap" style="display:none;">
+      <div class="search-wrap-inner">
+        <input type="text" id="searchInput" class="search-inp" placeholder="Search customer, branch…" autocomplete="off" oninput="handleSearch(this.value)">
+      </div>
     </div>
 
     <!-- DYNAMIC CONTENT -->
