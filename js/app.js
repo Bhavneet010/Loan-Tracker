@@ -915,6 +915,7 @@ function renderReturned(c){
 }
 
 let currentCharts = [];
+let perfSeg = 'month';
 
 function renderDaily(c){
   const td=todayStr(), thisMonth=td.slice(0,7);
@@ -925,9 +926,44 @@ function renderDaily(c){
   const mAmt=monthL.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const pAmt=pendingL.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
 
+  /* ── Officer leaderboard data ── */
+  const cats=['Agriculture','SME','Education'];
+  const offData={};
+  S.officers.forEach(o=>offData[o]={total:0,agri:0,sme:0,edu:0});
+  monthL.forEach(l=>{
+    const amt=parseFloat(l.amount)||0;
+    const o=l.allocatedTo;
+    if(offData[o]!==undefined){
+      offData[o].total+=amt;
+      if(l.category==='Agriculture') offData[o].agri+=amt;
+      else if(l.category==='SME') offData[o].sme+=amt;
+      else if(l.category==='Education') offData[o].edu+=amt;
+    }
+  });
+  const sorted=Object.entries(offData).sort((a,b)=>b[1].total-a[1].total);
+  const maxAmt=sorted.length?sorted[0][1].total:1;
+  const rankCls=['gold','silver','bronze'];
+
+  const leaderboardHtml=sorted.map(([name,d],i)=>{
+    const pct=maxAmt>0?Math.round(d.total/maxAmt*100):0;
+    return `<div class="perf-lb-item">
+      <div class="perf-lb-rank ${rankCls[i]||''}">${i+1}</div>
+      <div class="perf-lb-info">
+        <div class="perf-lb-name">${esc(name)}</div>
+        <div class="perf-lb-cats">
+          ${d.agri?`<span class="perf-lb-cat agri">Agri \u20b9${fmtAmt(d.agri)}L</span>`:''}
+          ${d.sme?`<span class="perf-lb-cat sme">SME \u20b9${fmtAmt(d.sme)}L</span>`:''}
+          ${d.edu?`<span class="perf-lb-cat edu">Edu \u20b9${fmtAmt(d.edu)}L</span>`:''}
+        </div>
+        <div class="perf-lb-bar-wrap"><div class="perf-lb-bar" style="width:${pct}%"></div></div>
+      </div>
+      <div class="perf-lb-amt">\u20b9${fmtAmt(d.total)}L</div>
+    </div>`;
+  }).join('');
+
+  /* ── Data table builder ── */
   function mkTable(loans){
     if(!loans.length) return `<div style="padding:16px;text-align:center;font-size:13px;color:#7B7A9A;">No entries</div>`;
-    const cats=['Agriculture','SME','Education'];
     const grp={};
     loans.forEach(l=>{
       const o=l.allocatedTo||'?'; const cat=l.category||'Other';
@@ -946,83 +982,121 @@ function renderDaily(c){
     rows+=`<tr class="total"><td>Total</td>${totCells}<td class="r">${grand.n}</td><td class="r">${fmtAmt(grand.a)}</td></tr>`;
     return `<div style="overflow-x:auto;"><table class="rtable">
       <thead>
-        <tr><th>Officer</th>${cats.map(c=>`<th class="r" colspan="2">${c}</th>`).join('')}<th class="r" colspan="2">Total</th></tr>
+        <tr><th>Officer</th>${cats.map(ct=>`<th class="r" colspan="2">${ct}</th>`).join('')}<th class="r" colspan="2">Total</th></tr>
         <tr><th></th>${cats.map(()=>'<th class="r">Cnt</th><th class="r">Amt</th>').join('')}<th class="r">Cnt</th><th class="r">Amt</th></tr>
       </thead>
       <tbody>${rows}</tbody></table></div>`;
   }
 
+  /* ── Segmented table data ── */
+  const segData={
+    today:{title:`\ud83d\udcc5 Sanctioned Today \u2014 ${fmtDate(td)}`,amt:tAmt,loans:todayL},
+    month:{title:'\ud83d\udcc6 Sanctioned This Month',amt:mAmt,loans:monthL},
+    pending:{title:'\u23f3 Currently Pending',amt:pAmt,loans:pendingL}
+  };
+  const seg=segData[perfSeg];
+
   c.innerHTML=`
-    <div class="report-card">
-      <div class="report-head"><span class="report-head-title">📊 Categories This Month</span></div>
-      <div class="chart-container"><canvas id="catChart"></canvas></div>
+    <div class="perf-kpi-row">
+      <div class="perf-kpi today">
+        <div class="perf-kpi-label">Today</div>
+        <div class="perf-kpi-value">\u20b9${fmtAmt(tAmt)}L</div>
+        <div class="perf-kpi-sub">${todayL.length} loan${todayL.length!==1?'s':''}</div>
+      </div>
+      <div class="perf-kpi month">
+        <div class="perf-kpi-label">This Month</div>
+        <div class="perf-kpi-value">\u20b9${fmtAmt(mAmt)}L</div>
+        <div class="perf-kpi-sub">${monthL.length} sanctioned</div>
+      </div>
+      <div class="perf-kpi pipeline">
+        <div class="perf-kpi-label">Pending</div>
+        <div class="perf-kpi-value">\u20b9${fmtAmt(pAmt)}L</div>
+        <div class="perf-kpi-sub">${pendingL.length} in pipeline</div>
+      </div>
+    </div>
+    <div class="perf-chart-grid">
+      <div class="report-card">
+        <div class="report-head"><span class="report-head-title">\ud83d\udcca Categories</span></div>
+        <div class="chart-container"><canvas id="catChart"></canvas></div>
+      </div>
+      <div class="report-card">
+        <div class="report-head"><span class="report-head-title">\ud83c\udfc6 Officers</span></div>
+        <div class="chart-container"><canvas id="offChart"></canvas></div>
+      </div>
+    </div>
+    <div class="perf-lb">
+      <div class="perf-lb-title">\ud83e\udd47 Top Performers \u2014 This Month</div>
+      ${leaderboardHtml || '<div style="text-align:center;padding:12px;font-size:13px;color:#7B7A9A;">No data yet</div>'}
+    </div>
+    <div class="perf-seg">
+      <button class="perf-seg-btn ${perfSeg==='today'?'active':''}" onclick="setPerfSeg('today')">Today</button>
+      <button class="perf-seg-btn ${perfSeg==='month'?'active':''}" onclick="setPerfSeg('month')">This Month</button>
+      <button class="perf-seg-btn ${perfSeg==='pending'?'active':''}" onclick="setPerfSeg('pending')">Pending</button>
     </div>
     <div class="report-card">
-      <div class="report-head"><span class="report-head-title">🏆 Officer Activity (Lakhs)</span></div>
-      <div class="chart-container"><canvas id="offChart"></canvas></div>
-    </div>
-    <div class="report-card">
-      <div class="report-head"><span class="report-head-title">📅 Sanctioned Today — ${fmtDate(td)}</span><span class="report-head-amt">₹${fmtAmt(tAmt)} L</span></div>
-      ${mkTable(todayL)}
-    </div>
-    <div class="report-card">
-      <div class="report-head"><span class="report-head-title">📆 Sanctioned This Month</span><span class="report-head-amt">₹${fmtAmt(mAmt)} L</span></div>
-      ${mkTable(monthL)}
-    </div>
-    <div class="report-card">
-      <div class="report-head"><span class="report-head-title">⏳ Currently Pending</span><span class="report-head-amt">₹${fmtAmt(pAmt)} L</span></div>
-      ${mkTable(pendingL)}
+      <div class="report-head">
+        <span class="report-head-title">${seg.title}</span>
+        <span class="report-head-amt">\u20b9${fmtAmt(seg.amt)} L</span>
+      </div>
+      ${mkTable(seg.loans)}
     </div>
     ${S.isAdmin?`<div style="text-align:center;margin-top:16px;">
-      <button class="btn btn-cancel-full" onclick="handleSettings()" style="padding:12px 28px;font-size:14px;max-width:200px;">⚙️ Admin Settings</button>
+      <button class="btn btn-cancel-full" onclick="handleSettings()" style="padding:12px 28px;font-size:14px;max-width:200px;">\u2699\ufe0f Admin Settings</button>
     </div>`:''}`;
 
   currentCharts.forEach(ch => ch.destroy());
   currentCharts = [];
 
-  const cats = ['Agriculture', 'SME', 'Education'];
   let catAmts = [0, 0, 0];
   let offAmts = {};
   S.officers.forEach(o => offAmts[o] = 0);
-  
   monthL.forEach(l => {
-     let amt = parseFloat(l.amount)||0;
-     let cIdx = cats.indexOf(l.category);
-     if(cIdx !== -1) catAmts[cIdx] += amt;
-     if(offAmts[l.allocatedTo] !== undefined) offAmts[l.allocatedTo] += amt;
+    let amt = parseFloat(l.amount)||0;
+    let cIdx = cats.indexOf(l.category);
+    if(cIdx !== -1) catAmts[cIdx] += amt;
+    if(offAmts[l.allocatedTo] !== undefined) offAmts[l.allocatedTo] += amt;
   });
 
   if(window.Chart && document.getElementById('catChart')) {
-      const ctxCat = document.getElementById('catChart').getContext('2d');
-      currentCharts.push(new Chart(ctxCat, {
-        type: 'doughnut',
-        data: {
-          labels: cats,
-          datasets: [{
-            data: catAmts,
-            backgroundColor: ['rgba(16,185,129,0.8)', 'rgba(107,95,191,0.8)', 'rgba(245,158,11,0.8)'],
-            borderWidth: 0
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-      }));
+    const ctxCat = document.getElementById('catChart').getContext('2d');
+    currentCharts.push(new Chart(ctxCat, {
+      type: 'doughnut',
+      data: {
+        labels: cats,
+        datasets: [{
+          data: catAmts,
+          backgroundColor: ['rgba(16,185,129,0.75)', 'rgba(107,95,191,0.75)', 'rgba(245,158,11,0.75)'],
+          borderWidth: 0
+        }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } } }
+    }));
 
-      const ctxOff = document.getElementById('offChart').getContext('2d');
-      currentCharts.push(new Chart(ctxOff, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(offAmts),
-          datasets: [{
-            label: 'Sanctioned (₹ Lakhs)',
-            data: Object.values(offAmts),
-            backgroundColor: 'rgba(107,95,191,0.8)',
-            borderRadius: 6
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-      }));
+    const ctxOff = document.getElementById('offChart').getContext('2d');
+    currentCharts.push(new Chart(ctxOff, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(offAmts),
+        datasets: [{
+          label: '\u20b9 Lakhs',
+          data: Object.values(offAmts),
+          backgroundColor: 'rgba(107,95,191,0.7)',
+          borderRadius: 5
+        }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, scales:{ y:{beginAtZero:true, ticks:{font:{size:10}}}, x:{ticks:{font:{size:10}}} }, plugins:{ legend:{display:false} } }
+    }));
   }
 }
+
+window.setPerfSeg = function(seg){
+  perfSeg = seg;
+  const overlay = document.getElementById('perfOverlayContent');
+  if(overlay && document.getElementById('perfOverlay').style.display !== 'none'){
+    renderDaily(overlay);
+  }
+};
+
 
 /* ── INIT ── */
 async function init(){
