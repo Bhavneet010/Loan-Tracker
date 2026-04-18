@@ -151,13 +151,13 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 
 /* ── MAIN TABS ── */
 .tabs{
-  display:flex;gap:6px;overflow-x:auto;
-  padding-bottom:12px;-webkit-overflow-scrolling:touch;
+  display:flex;gap:6px;overflow:hidden;
+  padding-bottom:12px;
 }
 .tab{
-  padding:9px 14px;border-radius:20px;
+  flex:1;padding:9px 8px;border-radius:20px;
   font-size:13px;font-weight:600;cursor:pointer;
-  white-space:nowrap;flex-shrink:0;border:none;
+  white-space:nowrap;border:none;text-align:center;
   background:rgba(255,255,255,0.7);
   border:1px solid rgba(107,95,191,0.15);
   color:#7B7A9A;
@@ -492,6 +492,31 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 /* ── UNDO TOAST ── */
 .toast-undo{display:flex;align-items:center;gap:10px;min-width:200px;}
 .undo-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.35);color:white;padding:4px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+/* ── PERFORMANCE OVERLAY ── */
+.perf-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:#F5F3FC;overflow-y:auto;
+}
+.perf-overlay-header{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;
+  position:sticky;top:0;
+  background:#F5F3FC;
+  border-bottom:1px solid rgba(107,95,191,0.15);
+  z-index:10;
+}
+.back-btn{
+  background:none;border:none;
+  font-size:1rem;cursor:pointer;
+  color:var(--p1);padding:4px 8px;border-radius:6px;
+  font-weight:600;
+}
+.back-btn:hover{background:rgba(107,95,191,0.08);}
+.perf-overlay-title{font-weight:700;font-size:1.1rem;color:var(--text1);}
+body.dark .perf-overlay{background:#1A1835;}
+body.dark .perf-overlay-header{background:#1A1835;border-color:rgba(107,95,191,0.25);}
+body.dark .back-btn:hover{background:rgba(107,95,191,0.15);}
 
 /* ── DARK MODE ── */
 body.dark{--text1:#E8E6F4;--text2:#B8B0E4;--text3:rgba(232,230,244,0.58);}

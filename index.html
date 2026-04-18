@@ -33,6 +33,9 @@
         <div class="hbtn notif-hbtn" onclick="showNotifOverlay()" title="Notifications">
           🔔<span class="hbtn-badge" id="b-notifs"></span>
         </div>
+        <div class="hbtn" onclick="showPerfOverlay()" title="Performance">
+          📊
+        </div>
         <div class="user-pill-wrap">
           <div class="user-pill" onclick="toggleUserMenu()">
             <span class="sync-dot" id="syncDot"></span>
@@ -55,7 +58,6 @@
       <button class="tab active" data-tab="pending">Pending <span class="badge" id="b-pending">0</span></button>
       <button class="tab" data-tab="sanctioned">Sanctioned <span class="badge" id="b-sanctioned">0</span></button>
       <button class="tab" data-tab="returned">Returned <span class="badge" id="b-returned">0</span></button>
-      <button class="tab" data-tab="daily">Performance</button>
     </div>
 
     <!-- SEARCH -->
@@ -71,6 +73,15 @@
     </div>
   </div>
 
+</div>
+
+<!-- PERFORMANCE OVERLAY -->
+<div id="perfOverlay" class="perf-overlay" style="display:none;">
+  <div class="perf-overlay-header">
+    <button class="back-btn" onclick="closePerfOverlay()">← Back</button>
+    <span class="perf-overlay-title">Performance</span>
+  </div>
+  <div id="perfOverlayContent" style="padding:14px;"></div>
 </div>
 
 <!-- NOTIFICATIONS OVERLAY -->

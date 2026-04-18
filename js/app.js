@@ -99,6 +99,18 @@ window.showNotifOverlay = function(){
   markNotifsRead();
 };
 window.closeNotifOverlay = ()=>{ document.getElementById('notifOverlay').style.display='none'; };
+
+window.showPerfOverlay = function(){
+  document.getElementById('perfOverlay').style.display='block';
+  document.body.style.overflow='hidden';
+  renderDaily(document.getElementById('perfOverlayContent'));
+};
+window.closePerfOverlay = function(){
+  currentCharts.forEach(ch=>ch.destroy());
+  currentCharts=[];
+  document.getElementById('perfOverlay').style.display='none';
+  document.body.style.overflow='';
+};
 window.clearNotifications = async function(){
   const toHide=visibleNotifs();
   for(const n of toHide)
@@ -624,12 +636,11 @@ function render(){
   if(!S.user){ showUserSelect(); return; }
   updateHero();
   const sw=document.getElementById('searchWrap');
-  if(sw) sw.style.display=(S.tab==='daily'||S.tab==='notifs')?'none':'';
+  if(sw) sw.style.display=(S.tab==='notifs')?'none':'';
   const c=document.getElementById('content');
   if(S.tab==='pending')         renderPending(c);
   else if(S.tab==='sanctioned') renderSanctioned(c);
   else if(S.tab==='returned')   renderReturned(c);
-  else if(S.tab==='daily')      renderDaily(c);
   else if(S.tab==='notifs')     renderNotifications(c);
 }
 
