@@ -443,6 +443,7 @@ function pendingLoanItem(loan){
     <div class="loan-row" onclick="toggleExpand('${loan.id}')">
       <div class="lr-info">
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
+        <span class="tag ${catCls(loan.category)} lr-cat">${esc(loan.category)}</span>
         <span class="lr-name">${esc(loan.customerName||'')}</span>
       </div>
       <div class="lr-meta">
