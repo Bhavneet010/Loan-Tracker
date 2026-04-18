@@ -167,22 +167,22 @@ async function createLoan(data){ const id=newId(); await setDoc(doc(db,'loans',i
 async function updateLoan(id,data){ await updateDoc(doc(db,'loans',id),{...data,...ts()}); }
 async function removeLoan(id){ await deleteDoc(doc(db,'loans',id)); }
 
-/* ── BULK SANCTION IMPORT ── */
+/* ── BULK RETURN IMPORT ── */
 function slugifyId(s){
   return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40);
 }
-function sanctionDocId(period, entry){
-  return `import_${period}_${slugifyId(entry.customerName)}_${entry.sanctionDate||''}`.replace(/-/g,'');
-}
-async function importSanctionsFromUrl(url){
+async function importReturnsFromUrl(url){
   const res=await fetch(url,{cache:'no-store'});
   if(!res.ok) throw new Error('Failed to load '+url);
   const payload=await res.json();
   const period=payload.period||'unknown';
+  const defaultDate=payload.returnedDate||todayStr();
   const entries=Array.isArray(payload.entries)?payload.entries:[];
   let added=0, skipped=0;
   for(const e of entries){
-    const id=sanctionDocId(period,e);
+    const returnedDate=e.returnedDate||defaultDate;
+    const receiveDate=e.receiveDate||returnedDate;
+    const id=`import_returns_${period}_${slugifyId(e.customerName)}`.replace(/-/g,'');
     const existing=await getDoc(doc(db,'loans',id));
     if(existing.exists()){ skipped++; continue; }
     await setDoc(doc(db,'loans',id),{
@@ -191,30 +191,29 @@ async function importSanctionsFromUrl(url){
       branch:e.branch,
       customerName:(e.customerName||'').toUpperCase(),
       amount:parseFloat(e.amount)||0,
-      receiveDate:e.receiveDate,
-      sanctionDate:e.sanctionDate,
+      receiveDate, returnedDate,
       remarks:e.remarks||'',
-      status:'sanctioned',
+      status:'returned',
       createdAt:new Date().toISOString(),
       createdBy:S.user||'import',
-      source:`import:${period}`,
+      source:`import:returns:${period}`,
       ...ts()
     });
     added++;
   }
   return {added, skipped, total:entries.length, label:payload.label||period};
 }
-window.importMonthlySanctions = async function(){
+window.importMonthlyReturns = async function(){
   if(!S.isAdmin){ toast('Admin only'); return; }
-  const url='data/sanctions-2026-04.json';
-  if(!confirm('Import April 2026 sanctions into Firestore? Existing entries (matched by customer + sanction date) will be skipped.')) return;
-  const btn=document.getElementById('importSanctionsBtn');
+  const url='data/returns-2026-04.json';
+  if(!confirm('Import April 2026 returns into Firestore? Existing entries (matched by customer) will be skipped.')) return;
+  const btn=document.getElementById('importReturnsBtn');
   if(btn){ btn.disabled=true; btn.textContent='Importing…'; }
   try {
-    const r=await importSanctionsFromUrl(url);
+    const r=await importReturnsFromUrl(url);
     toast(`${r.label}: ${r.added} added, ${r.skipped} skipped`);
   } catch(e){ console.error(e); toast('Import failed'); }
-  finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 sanctions'; } }
+  finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 returns'; } }
 };
 
 /* ── NOTIFICATIONS ── */
@@ -452,10 +451,10 @@ function renderSettingsList(){
   } else if(S.settingsTab==='import'){
     el.innerHTML=`
       <div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.5;">
-        Import this month's sanctioned loans from <code>data/sanctions-2026-04.json</code>.
-        Existing entries (matched by customer + sanction date) are skipped, so it's safe to re-run.
+        Import this month's returned loans from <code>data/returns-2026-04.json</code>.
+        Existing entries (matched by customer) are skipped, so it's safe to re-run.
       </div>
-      <button type="button" id="importSanctionsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;" onclick="importMonthlySanctions()">📥 Import April 2026 sanctions</button>`;
+      <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>`;
   }
 }
 window.addOfficer = async function(){
