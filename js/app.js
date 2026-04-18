@@ -423,6 +423,40 @@ function emptyState(icon,msg,sub){
   return `<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-msg">${msg}</div><div class="empty-sub">${sub}</div></div>`;
 }
 
+window.toggleExpand = function(id){
+  const el=document.getElementById('li-'+id);
+  if(el) el.classList.toggle('expanded');
+};
+
+function pendingLoanItem(loan){
+  const days=daysPending(loan.receiveDate);
+  const overdueCls=days>7?' overdue':'';
+  const overdueTag=days>7?`<span class="tag overdue">⚠ ${days}d</span>`:'';
+  const actions=`
+    <button class="btn btn-sanction" onclick="sanctionLoan('${loan.id}')">✓ Sanction</button>
+    <button class="btn btn-return"   onclick="returnLoan('${loan.id}')">↩ Return</button>
+    <button class="btn btn-more"     onclick="editLoan('${loan.id}')">✎</button>
+    ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${loan.id}')">🗑</button>`:''}`;
+  return `<div class="loan-item${overdueCls}" id="li-${loan.id}">
+    <div class="loan-row" onclick="toggleExpand('${loan.id}')">
+      <div class="lr-info">
+        <span class="lr-branch">${esc(loan.branch||'')}</span>
+        <span class="lr-sep">·</span>
+        <span class="lr-officer">${esc(loan.allocatedTo)}</span>
+        <span class="lr-sep">·</span>
+        <span class="tag ${catCls(loan.category)} lr-cat">${esc(loan.category)}</span>
+      </div>
+      <div class="lr-meta">
+        ${overdueTag}
+        <span class="lr-date">${fmtDate(loan.receiveDate)}</span>
+        <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
+        <span class="lr-chev">›</span>
+      </div>
+    </div>
+    <div class="loan-detail">${loanCard(loan,actions)}</div>
+  </div>`;
+}
+
 /* ── RENDER TABS ── */
 function render(){
   if(!S.user){ showUserSelect(); return; }
@@ -437,19 +471,15 @@ function render(){
 }
 
 function renderPending(c){
-  let loans=S.loans.filter(l=>l.status==='pending');
+  let loans=S.loans.filter(l=>l.status==='pending')
+    .sort((a,b)=>(a.receiveDate||'').localeCompare(b.receiveDate||''));
   if(S.sub!=='All') loans=loans.filter(l=>l.category===S.sub);
   if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
   if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('📭','No pending loans','Tap + to add a new loan')
-    : loans.map(l=>`${loanCard(l,`
-        <button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
-        <button class="btn btn-return"   onclick="returnLoan('${l.id}')">↩ Return</button>
-        <button class="btn btn-more"     onclick="editLoan('${l.id}')">✎</button>
-        ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`
-      )}`).join('');
+    : loans.map(l=>pendingLoanItem(l)).join('');
   c.innerHTML=`
     <div class="subtabs">${subtabsHtml()}</div>
     <div class="sec-head">
@@ -481,7 +511,8 @@ function renderSanctioned(c){
 }
 
 function renderReturned(c){
-  let loans=S.loans.filter(l=>l.status==='returned');
+  let loans=S.loans.filter(l=>l.status==='returned')
+    .sort((a,b)=>(a.receiveDate||'').localeCompare(b.receiveDate||''));
   if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
   if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);

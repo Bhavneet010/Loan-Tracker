@@ -434,6 +434,30 @@ body::after{
 .tag.overdue{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
 .loan-card.overdue::before{background:linear-gradient(180deg,#EF4444,#F87171);}
 
+/* ── PENDING COMPACT ROWS ── */
+.loan-item{margin-bottom:8px;}
+.loan-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;gap:8px;cursor:pointer;
+  background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.85);border-radius:14px;
+}
+.loan-item.overdue .loan-row{border-left:4px solid #EF4444;}
+.loan-item.expanded .loan-row{border-radius:14px 14px 0 0;border-bottom-color:transparent;}
+.loan-detail{display:none;}
+.loan-item.expanded .loan-detail{display:block;}
+.loan-detail .loan-card{border-radius:0 0 14px 14px;border-top:none;margin-bottom:0;}
+.lr-info{display:flex;align-items:center;gap:5px;min-width:0;flex:1;overflow:hidden;}
+.lr-branch{font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;}
+.lr-officer{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75px;}
+.lr-sep{color:var(--text3);font-size:11px;flex-shrink:0;}
+.lr-cat{flex-shrink:0;font-size:10px!important;padding:2px 8px!important;}
+.lr-meta{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.lr-date{font-size:11px;color:var(--text3);white-space:nowrap;}
+.lr-amount{font-size:13px;font-weight:800;color:var(--text1);white-space:nowrap;}
+.lr-chev{font-size:14px;color:var(--text3);display:inline-block;transition:transform 0.2s;}
+.loan-item.expanded .lr-chev{transform:rotate(90deg);}
+
 /* ── OFFICER LOAN COUNT ── */
 .officer-count{margin-left:auto;background:var(--p-bg);color:var(--p2);border:1px solid var(--p-bd);padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;}
 
@@ -472,3 +496,5 @@ body.dark .undo-btn{color:var(--text1);}
 body.dark .search-inp{background:rgba(36,32,64,0.85);color:var(--text1);border-color:rgba(107,95,191,0.3);}
 body.dark .hbtn{background:rgba(36,32,64,0.7);border-color:rgba(107,95,191,0.3);}
 body.dark .user-pill{background:rgba(36,32,64,0.7);border-color:rgba(107,95,191,0.3);}
+body.dark .loan-row{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);}
+body.dark .loan-detail .loan-card{border-color:rgba(80,70,130,0.3);}
