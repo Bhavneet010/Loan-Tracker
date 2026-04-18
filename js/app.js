@@ -145,7 +145,6 @@ window.showUserSelect = function(){
 window.selectUser = function(name){
   S.user=name; S.isAdmin=false; S.myLoansOnly=true;
   localStorage.setItem('lpUser',name); localStorage.setItem('lpAdmin','false');
-  document.getElementById('userName').textContent=name;
   document.getElementById('userAv').textContent=initials(name);
   document.getElementById('userModal').style.display='none';
   requestNotifPermission();
@@ -160,7 +159,6 @@ window.checkPin = function(){
   if(document.getElementById('pinInput').value===PIN){
     S.user='Admin'; S.isAdmin=true; S.myLoansOnly=false;
     localStorage.setItem('lpUser','Admin'); localStorage.setItem('lpAdmin','true');
-    document.getElementById('userName').textContent='Admin';
     document.getElementById('userAv').textContent='🔒';
     document.getElementById('pinInput').value='';
     document.getElementById('pinModal').style.display='none';
@@ -170,6 +168,7 @@ window.checkPin = function(){
 };
 window.closePinModal = function(){ document.getElementById('pinInput').value=''; document.getElementById('pinModal').style.display='none'; };
 document.getElementById('pinInput').addEventListener('keydown',e=>{ if(e.key==='Enter') window.checkPin(); });
+document.getElementById('pinInput').addEventListener('input',e=>{ if(e.target.value.length===6) window.checkPin(); });
 
 /* ── SETTINGS ── */
 window.handleSettings = function(){
@@ -363,14 +362,6 @@ function updateHero(){
   const pAmt = pending.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const sAmt = sanctioned.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const rAmt = returned.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
-  document.getElementById('pageTitle').textContent = titles[S.tab]||'';
-  const subMap={
-    pending:`${pending.length} loan${pending.length!==1?'s':''} awaiting action`,
-    sanctioned:`${sanctioned.length} loan${sanctioned.length!==1?'s':''} sanctioned`,
-    returned:`${returned.length} loan${returned.length!==1?'s':''} returned`,
-    daily:'Performance overview'
-  };
-  document.getElementById('pageSub').textContent = subMap[S.tab]||'';
   document.getElementById('statsScroll').innerHTML=`
     <div class="stat">
       <div class="stat-l">Pending</div>
@@ -633,7 +624,6 @@ async function init(){
   const sa=localStorage.getItem('lpAdmin')==='true';
   if(su){
     S.user=su; S.isAdmin=sa; S.myLoansOnly=!sa;
-    document.getElementById('userName').textContent=su==='Admin'?'Admin':su;
     document.getElementById('userAv').textContent=su==='Admin'?'🔒':initials(su);
   }
   subscribeLoans();
