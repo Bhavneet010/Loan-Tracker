@@ -443,13 +443,13 @@ function pendingLoanItem(loan){
   return `<div class="loan-item${overdueCls}" id="li-${loan.id}">
     <div class="loan-row" onclick="toggleExpand('${loan.id}')">
       <div class="lr-info">
+        <span class="lr-av">${initials(loan.allocatedTo)}</span>
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
         <span class="tag ${catCls(loan.category)} lr-cat">${esc(shortCat(loan.category))}</span>
         <span class="lr-name">${esc(loan.customerName||'')}</span>
       </div>
       <div class="lr-meta">
         ${overdueTag}
-        <span class="lr-av">${initials(loan.allocatedTo)}</span>
         <span class="lr-date">${fmtShortDate(loan.receiveDate)}</span>
         <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">›</span>
