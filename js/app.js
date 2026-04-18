@@ -216,6 +216,49 @@ window.importMonthlyReturns = async function(){
   finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 returns'; } }
 };
 
+async function importPendingFromUrl(url){
+  const res=await fetch(url,{cache:'no-store'});
+  if(!res.ok) throw new Error('Failed to load '+url);
+  const payload=await res.json();
+  const period=payload.period||'unknown';
+  const defaultCategory=payload.defaultCategory||'SME';
+  const entries=Array.isArray(payload.entries)?payload.entries:[];
+  let added=0, skipped=0;
+  for(const e of entries){
+    const id=`import_pending_${period}_${slugifyId(e.customerName)}`.replace(/-/g,'');
+    const existing=await getDoc(doc(db,'loans',id));
+    if(existing.exists()){ skipped++; continue; }
+    await setDoc(doc(db,'loans',id),{
+      allocatedTo:e.allocatedTo,
+      category:e.category||defaultCategory,
+      branch:e.branch,
+      customerName:(e.customerName||'').toUpperCase(),
+      amount:parseFloat(e.amount)||0,
+      receiveDate:e.receiveDate,
+      remarks:e.remarks||'',
+      status:'pending',
+      createdAt:new Date().toISOString(),
+      createdBy:S.user||'import',
+      source:`import:pending:${period}`,
+      ...ts()
+    });
+    added++;
+  }
+  return {added, skipped, total:entries.length, label:payload.label||period};
+}
+window.importMonthlyPending = async function(){
+  if(!S.isAdmin){ toast('Admin only'); return; }
+  const url='data/pending-2026-04.json';
+  if(!confirm('Import April 2026 pending SME loans into Firestore? Existing entries (matched by customer) will be skipped.')) return;
+  const btn=document.getElementById('importPendingBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Importing…'; }
+  try {
+    const r=await importPendingFromUrl(url);
+    toast(`${r.label}: ${r.added} added, ${r.skipped} skipped`);
+  } catch(e){ console.error(e); toast('Import failed'); }
+  finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 pending (SME)'; } }
+};
+
 /* ── NOTIFICATIONS ── */
 async function createNotification(type, loan){
   const id='n_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
@@ -451,10 +494,10 @@ function renderSettingsList(){
   } else if(S.settingsTab==='import'){
     el.innerHTML=`
       <div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.5;">
-        Import this month's returned loans from <code>data/returns-2026-04.json</code>.
-        Existing entries (matched by customer) are skipped, so it's safe to re-run.
+        Bulk-import April 2026 data from the <code>data/</code> folder. Existing entries (matched by customer) are skipped, so each import is safe to re-run.
       </div>
-      <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>`;
+      <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>
+      <button type="button" id="importPendingBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;" onclick="importMonthlyPending()">📥 Import April 2026 pending (SME)</button>`;
   }
 }
 window.addOfficer = async function(){

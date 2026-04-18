@@ -1,0 +1,14 @@
+{
+  "period": "2026-04",
+  "label": "April 2026 Pending (SME)",
+  "defaultCategory": "SME",
+  "entries": [
+    { "allocatedTo": "Anchal", "branch": "50569 : TIMBI",            "customerName": "JANKI DEVI ACHAR WALI PMEGP", "amount": 5,     "receiveDate": "2026-03-16" },
+    { "allocatedTo": "Anchal", "branch": "1680 : ADB PAONTA SAHIB", "customerName": "NEW POOJA COLLECTION",        "amount": 2.98,  "receiveDate": "2026-04-09" },
+    { "allocatedTo": "Ritika", "branch": "1755 : PAONTA SAHIB",     "customerName": "ADARSH BAKERS",               "amount": 10,    "receiveDate": "2026-02-24" },
+    { "allocatedTo": "Ritika", "branch": "6784 : DHAULA KUAN",      "customerName": "GURU KRIPA CONSTRUCTION",     "amount": 19.37, "receiveDate": "2026-03-27" },
+    { "allocatedTo": "Ritika", "branch": "1755 : PAONTA SAHIB",     "customerName": "KEWAL RAM ENHANCEMENT",       "amount": 6,     "receiveDate": "2026-04-17" },
+    { "allocatedTo": "Nikita", "branch": "1680 : ADB PAONTA SAHIB", "customerName": "SINGH CONTRACTOR",            "amount": 5,     "receiveDate": "2026-04-16" },
+    { "allocatedTo": "Nikita", "branch": "1680 : ADB PAONTA SAHIB", "customerName": "MOHAMMAD RIYASAT E-RICKSHAW", "amount": 1.85,  "receiveDate": "2026-04-16" }
+  ]
+}
