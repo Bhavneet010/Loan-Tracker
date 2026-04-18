@@ -358,7 +358,7 @@ window.setSub = sub=>{ S.sub=sub; render(); };
 
 /* ── RENDER HELPERS ── */
 function updateHero(){
-  const titles={pending:'Pending',sanctioned:'Sanctioned',returned:'Returned',daily:'Daily Report'};
+  const titles={pending:'Pending',sanctioned:'Sanctioned',returned:'Returned',daily:'Performance'};
   const pending   = S.loans.filter(l=>l.status==='pending');
   const sanctioned= S.loans.filter(l=>l.status==='sanctioned');
   const returned  = S.loans.filter(l=>l.status==='returned');
