@@ -1,13 +1,13 @@
 {
-  "name": "Loan Progress",
-  "short_name": "Loan Progress",
-  "description": "Track loan applications across Pending, Sanctioned, and Returned states",
+  "name": "Nirnay",
+  "short_name": "Nirnay",
+  "description": "Nirnay — Track loan applications across Pending, Sanctioned, and Returned states",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#185FA5",
+  "background_color": "#06030f",
+  "theme_color": "#7c3aed",
   "icons": [
     {
       "src": "icon-192.png",
