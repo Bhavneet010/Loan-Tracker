@@ -34,6 +34,8 @@ const S = {
 /* ── UTILS ── */
 const todayStr = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
 const fmtDate  = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; };
+const fmtShortDate = s => { if(!s) return ''; const [,m,d]=s.split('-'); return `${parseInt(d)} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(m)-1]}`; };
+const branchCode = s => (s||'').split(' ')[0] || '';
 const fmtAmt   = v => (parseFloat(v)||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2});
 const esc      = s => s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initials = n => (n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -440,15 +442,13 @@ function pendingLoanItem(loan){
   return `<div class="loan-item${overdueCls}" id="li-${loan.id}">
     <div class="loan-row" onclick="toggleExpand('${loan.id}')">
       <div class="lr-info">
-        <span class="lr-branch">${esc(loan.branch||'')}</span>
-        <span class="lr-sep">·</span>
-        <span class="lr-officer">${esc(loan.allocatedTo)}</span>
-        <span class="lr-sep">·</span>
-        <span class="tag ${catCls(loan.category)} lr-cat">${esc(loan.category)}</span>
+        <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
+        <span class="lr-name">${esc(loan.customerName||'')}</span>
       </div>
       <div class="lr-meta">
         ${overdueTag}
-        <span class="lr-date">${fmtDate(loan.receiveDate)}</span>
+        <span class="lr-av">${initials(loan.allocatedTo)}</span>
+        <span class="lr-date">${fmtShortDate(loan.receiveDate)}</span>
         <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">›</span>
       </div>
