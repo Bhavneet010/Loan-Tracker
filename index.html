@@ -30,11 +30,15 @@
         </div>
       </div>
       <div class="header-right">
-        <div class="hbtn" id="darkBtn" onclick="toggleDark()" title="Dark mode">🌙</div>
-        <div class="hbtn" onclick="handleSettings()" title="Settings">⚙️</div>
-        <div class="user-pill" onclick="showUserSelect()">
-          <span class="sync-dot" id="syncDot"></span>
-          <div class="uav" id="userAv">?</div>
+        <div class="hbtn notif-hbtn" onclick="showNotifOverlay()" title="Notifications">
+          🔔<span class="hbtn-badge" id="b-notifs"></span>
+        </div>
+        <div class="user-pill-wrap">
+          <div class="user-pill" onclick="toggleUserMenu()">
+            <span class="sync-dot" id="syncDot"></span>
+            <div class="uav" id="userAv">?</div>
+          </div>
+          <div id="userMenu" class="user-dropdown" style="display:none;"></div>
         </div>
       </div>
     </div>
@@ -52,7 +56,6 @@
       <button class="tab" data-tab="sanctioned">Sanctioned <span class="badge" id="b-sanctioned">0</span></button>
       <button class="tab" data-tab="returned">Returned <span class="badge" id="b-returned">0</span></button>
       <button class="tab" data-tab="daily">Performance</button>
-      <button class="tab" data-tab="notifs">Alerts <span class="badge" id="b-notifs"></span></button>
     </div>
 
     <!-- SEARCH -->
@@ -68,6 +71,21 @@
     </div>
   </div>
 
+</div>
+
+<!-- NOTIFICATIONS OVERLAY -->
+<div class="overlay" id="notifOverlay" style="display:none;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="margin:0;">Notifications</h2>
+      <button class="btn btn-sm-danger" onclick="clearNotifications()">Clear all</button>
+    </div>
+    <div id="notifList"></div>
+    <div class="form-row" style="margin-top:12px;">
+      <button class="btn btn-cancel-full" onclick="closeNotifOverlay()">Close</button>
+    </div>
+  </div>
 </div>
 
 <!-- FAB -->

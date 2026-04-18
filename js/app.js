@@ -76,7 +76,35 @@ window.toggleDark = function(){
   S.dark=!S.dark;
   document.body.classList.toggle('dark',S.dark);
   localStorage.setItem('lpDark',S.dark?'1':'0');
-  document.getElementById('darkBtn').textContent=S.dark?'☀️':'🌙';
+};
+window.toggleUserMenu = function(){
+  const menu=document.getElementById('userMenu');
+  if(menu.style.display==='none'){
+    menu.innerHTML=`
+      ${S.isAdmin?`<button class="udrop-item" onclick="closeUserMenu();handleSettings()">⚙️ Settings</button>`:''}
+      <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark?'☀️ Light theme':'🌙 Dark theme'}</button>
+      <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">👤 Change officer</button>`;
+    menu.style.display='block';
+    setTimeout(()=>document.addEventListener('click',_closeMenuOutside,{once:true}),0);
+  } else { menu.style.display='none'; }
+};
+window.closeUserMenu = ()=>{ document.getElementById('userMenu').style.display='none'; };
+function _closeMenuOutside(e){
+  const menu=document.getElementById('userMenu');
+  if(menu&&!menu.contains(e.target)) menu.style.display='none';
+}
+window.showNotifOverlay = function(){
+  document.getElementById('notifOverlay').style.display='flex';
+  renderNotifOverlay();
+  markNotifsRead();
+};
+window.closeNotifOverlay = ()=>{ document.getElementById('notifOverlay').style.display='none'; };
+window.clearNotifications = async function(){
+  const toHide=visibleNotifs();
+  for(const n of toHide)
+    updateDoc(doc(db,'notifications',n.id),{clearedBy:[...(n.clearedBy||[]),S.user]}).catch(()=>{});
+  closeNotifOverlay();
+  toast('Notifications cleared');
 };
 window.handleSearch = v=>{ S.search=v.toLowerCase().trim(); render(); };
 window.toggleMyLoans = function(){ S.myLoansOnly=!S.myLoansOnly; render(); };
@@ -153,10 +181,37 @@ function subscribeNotifications(){
   });
 }
 function visibleNotifs(){
-  if(S.isAdmin) return S.notifications;
-  return S.notifications.filter(n=>
+  const base=S.isAdmin ? S.notifications : S.notifications.filter(n=>
     n.allocatedTo===S.user&&(n.type==='added'||n.type==='sanctioned'||n.type==='returned')
   );
+  return base.filter(n=>!(n.clearedBy||[]).includes(S.user));
+}
+function renderNotifOverlay(){
+  const c=document.getElementById('notifList'); if(!c) return;
+  const notifs=visibleNotifs();
+  if(!notifs.length){ c.innerHTML=`<div class="empty-state" style="padding:32px 20px;">🔔<br><br><b>No notifications</b><br><span style="font-size:12px;color:#7B7A9A;">Activity will appear here</span></div>`; return; }
+  const typeIcon={added:'➕',sanctioned:'✓',returned:'↩',edited:'✎'};
+  const typeLabel={added:'New loan added',sanctioned:'Loan sanctioned',returned:'Loan returned',edited:'Loan updated'};
+  const typeCls={added:'notif-added',sanctioned:'notif-sanctioned',returned:'notif-returned',edited:'notif-edited'};
+  function timeAgo(ts){
+    if(!ts) return '';
+    const mins=Math.floor((Date.now()-new Date(ts).getTime())/60000);
+    if(mins<1) return 'just now'; if(mins<60) return `${mins}m ago`;
+    const hrs=Math.floor(mins/60);
+    if(hrs<24) return `${hrs}h ago`; return `${Math.floor(hrs/24)}d ago`;
+  }
+  c.innerHTML=notifs.map(n=>{
+    const unread=!(n.readBy||[]).includes(S.user);
+    return `<div class="notif-card${unread?' unread':''}">
+      <div class="notif-icon ${typeCls[n.type]||''}">${typeIcon[n.type]||'•'}</div>
+      <div class="notif-body">
+        <div class="notif-label">${typeLabel[n.type]||n.type}</div>
+        <div class="notif-name">${esc(n.customerName)} · ₹${fmtAmt(n.amount)}L</div>
+        <div class="notif-meta">${esc(n.branch||'')} · ${esc(n.category||'')} · ${esc(n.allocatedTo||'')} · by ${esc(n.by||'')}</div>
+      </div>
+      <div class="notif-time">${timeAgo(n.timestamp)}</div>
+    </div>`;
+  }).join('');
 }
 function updateNotifBadge(){
   const el=document.getElementById('b-notifs'); if(!el||!S.user) return;
@@ -767,7 +822,6 @@ async function init(){
   if(darkPref==='1'){
     S.dark=true;
     document.body.classList.add('dark');
-    document.getElementById('darkBtn').textContent='☀️';
   }
   const su=localStorage.getItem('lpUser');
   const sa=localStorage.getItem('lpAdmin')==='true';
