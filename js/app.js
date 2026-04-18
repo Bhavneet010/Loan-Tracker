@@ -20,7 +20,10 @@ const db  = getFirestore(app);
 /* ── STATE ── */
 const S = {
   user:null, isAdmin:false,
-  tab:'pending', sub:'All', settingsTab:'officers', search:'', myLoansOnly:false, dark:false,
+  tab:'pending', settingsTab:'officers', search:'', dark:false,
+  filter:{ category:'All', officer:'All' },
+  sort:{ field:'date', dir:'desc' },
+  openPop:null,
   loans:[], notifications:[],
   officers:['Anchal','Nikita','Ritika'],
   branches:[
@@ -41,6 +44,20 @@ const fmtAmt   = v => (parseFloat(v)||0).toLocaleString('en-IN',{minimumFraction
 const esc      = s => s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initials = n => (n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 const catCls   = c => ({Agriculture:'agri',SME:'sme',Education:'edu'}[c]||'');
+
+const OFFICER_PALETTE = [
+  {bg:'linear-gradient(135deg,#7B6FD4,#5A4EAF)'},
+  {bg:'linear-gradient(135deg,#10B981,#047857)'},
+  {bg:'linear-gradient(135deg,#F59E0B,#B45309)'},
+  {bg:'linear-gradient(135deg,#EC4899,#BE185D)'},
+  {bg:'linear-gradient(135deg,#0EA5E9,#0369A1)'},
+  {bg:'linear-gradient(135deg,#8B5CF6,#5B21B6)'}
+];
+const officerColor = n => {
+  const s=String(n||''); let h=0;
+  for(let i=0;i<s.length;i++) h=(h*31 + s.charCodeAt(i)) >>> 0;
+  return OFFICER_PALETTE[h % OFFICER_PALETTE.length];
+};
 
 function toast(msg) {
   document.querySelectorAll('.toast').forEach(e=>e.remove());
@@ -119,7 +136,6 @@ window.clearNotifications = async function(){
   toast('Notifications cleared');
 };
 window.handleSearch = v=>{ S.search=v.toLowerCase().trim(); render(); };
-window.toggleMyLoans = function(){ S.myLoansOnly=!S.myLoansOnly; render(); };
 
 /* ── FIREBASE SETTINGS ── */
 async function loadSettings() {
@@ -394,15 +410,19 @@ window.showUserSelect = function(){
     const n=S.loans.filter(l=>l.status==='pending'&&l.allocatedTo===o).length;
     const badge=n?`<span class="officer-count">${n}</span>`:'';
     return `<button class="user-btn" onclick="selectUser('${esc(o)}')">
-      <div class="av">${initials(o)}</div><span>${esc(o)}</span>${badge}
+      <div class="av" style="background:${officerColor(o).bg};">${initials(o)}</div><span>${esc(o)}</span>${badge}
     </button>`;
   }).join('');
   document.getElementById('userModal').style.display='flex';
 };
 window.selectUser = function(name){
-  S.user=name; S.isAdmin=false; S.myLoansOnly=true;
+  S.user=name; S.isAdmin=false;
+  S.filter={ category:'All', officer:'Mine' };
   localStorage.setItem('lpUser',name); localStorage.setItem('lpAdmin','false');
-  document.getElementById('userAv').textContent=initials(name);
+  const av=document.getElementById('userAv');
+  av.textContent=initials(name);
+  av.style.background=officerColor(name).bg;
+  av.style.color='#fff';
   document.getElementById('userModal').style.display='none';
   requestNotifPermission();
   render();
@@ -414,9 +434,13 @@ window.promptAdmin = function(){
 };
 window.checkPin = function(){
   if(document.getElementById('pinInput').value===PIN){
-    S.user='Admin'; S.isAdmin=true; S.myLoansOnly=false;
+    S.user='Admin'; S.isAdmin=true;
+    S.filter={ category:'All', officer:'All' };
     localStorage.setItem('lpUser','Admin'); localStorage.setItem('lpAdmin','true');
-    document.getElementById('userAv').textContent='🔒';
+    const av=document.getElementById('userAv');
+    av.textContent='🔒';
+    av.style.background='';
+    av.style.color='';
     document.getElementById('pinInput').value='';
     document.getElementById('pinModal').style.display='none';
     requestNotifPermission();
@@ -624,12 +648,99 @@ document.getElementById('mainTabs').addEventListener('click',e=>{
   const btn=e.target.closest('[data-tab]'); if(!btn) return;
   document.querySelectorAll('#mainTabs .tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  S.tab=btn.dataset.tab; S.sub='All'; S.search='';
+  S.tab=btn.dataset.tab; S.search='';
   const si=document.getElementById('searchInput'); if(si) si.value='';
   if(S.tab==='notifs') markNotifsRead();
   render();
 });
-window.setSub = sub=>{ S.sub=sub; render(); };
+
+/* ── FILTER + SORT ── */
+const SORT_LABELS={ date:'Date', amount:'Amount', officer:'Officer', category:'Category' };
+function activeFilterCount(){
+  let n=0;
+  if(S.filter.category!=='All') n++;
+  if(S.filter.officer!=='All') n++;
+  return n;
+}
+function applyFilters(loans){
+  let out=loans;
+  if(S.filter.category!=='All') out=out.filter(l=>l.category===S.filter.category);
+  if(S.filter.officer==='Mine' && S.user) out=out.filter(l=>l.allocatedTo===S.user);
+  else if(S.filter.officer!=='All' && S.filter.officer!=='Mine') out=out.filter(l=>l.allocatedTo===S.filter.officer);
+  return out;
+}
+function dateFieldFor(tab){
+  return tab==='sanctioned'?'sanctionDate':tab==='returned'?'returnedDate':'receiveDate';
+}
+function applySort(loans){
+  const dir = S.sort.dir==='asc'?1:-1;
+  const field = S.sort.field;
+  const dateKey = dateFieldFor(S.tab);
+  const cmp=(a,b)=>{
+    let av, bv;
+    if(field==='date'){ av=a[dateKey]||''; bv=b[dateKey]||''; }
+    else if(field==='amount'){ av=parseFloat(a.amount)||0; bv=parseFloat(b.amount)||0; }
+    else if(field==='officer'){ av=(a.allocatedTo||'').toLowerCase(); bv=(b.allocatedTo||'').toLowerCase(); }
+    else if(field==='category'){ av=a.category||''; bv=b.category||''; }
+    if(av<bv) return -1*dir; if(av>bv) return 1*dir; return 0;
+  };
+  return [...loans].sort(cmp);
+}
+function filterSortBarHtml(){
+  const fc=activeFilterCount();
+  const sortLabel=`${SORT_LABELS[S.sort.field]||'Date'} ${S.sort.dir==='asc'?'↑':'↓'}`;
+  const officerOpts=[
+    {v:'All',label:'All officers'},
+    ...(S.user && !S.isAdmin ? [{v:'Mine',label:'Just me'}] : []),
+    ...S.officers.map(o=>({v:o,label:o}))
+  ];
+  const catOpts=[
+    {v:'All',label:'All categories'},
+    {v:'Agriculture',label:'Agriculture'},
+    {v:'SME',label:'SME'},
+    {v:'Education',label:'Education'}
+  ];
+  const sortFields=[
+    {v:'date',label:`${S.tab==='sanctioned'?'Sanction':S.tab==='returned'?'Return':'Receive'} date`},
+    {v:'amount',label:'Amount'},
+    {v:'officer',label:'Officer'},
+    {v:'category',label:'Category'}
+  ];
+  const radio=(name,opts,current)=>opts.map(o=>
+    `<label><input type="radio" name="${name}" value="${esc(o.v)}" ${current===o.v?'checked':''} onchange="${name==='sortField'?`setSort('${o.v}',null)`:name==='sortDir'?`setSort(null,'${o.v}')`:`setFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`
+  ).join('');
+  const filterStyle=S.openPop==='filter'?'':'display:none;';
+  const sortStyle  =S.openPop==='sort'?'':'display:none;';
+  return `<div class="fs-bar" onclick="event.stopPropagation();">
+    <button class="fs-btn${fc?' active':''}${S.openPop==='filter'?' open':''}" onclick="event.stopPropagation();toggleFsMenu('filter')">⚲ Filter<span class="fs-badge">${fc||''}</span></button>
+    <button class="fs-btn${S.openPop==='sort'?' open':''}" onclick="event.stopPropagation();toggleFsMenu('sort')">↕ Sort <span class="fs-label">${sortLabel}</span></button>
+    <div class="fs-pop" id="fsFilterPop" style="${filterStyle}">
+      <h4>Category</h4>${radio('category',catOpts,S.filter.category)}
+      <hr>
+      <h4>Officer</h4>${radio('officer',officerOpts,S.filter.officer)}
+    </div>
+    <div class="fs-pop fs-pop-right" id="fsSortPop" style="${sortStyle}">
+      <h4>Sort by</h4>${radio('sortField',sortFields,S.sort.field)}
+      <hr>
+      <h4>Direction</h4>${radio('sortDir',[{v:'desc',label:'Descending'},{v:'asc',label:'Ascending'}],S.sort.dir)}
+    </div>
+  </div>`;
+}
+window.toggleFsMenu = function(which){
+  S.openPop = S.openPop===which ? null : which;
+  render();
+};
+window.setFilter = function(key,val){ S.filter[key]=val; render(); };
+window.setSort = function(field,dir){
+  if(field) S.sort.field=field;
+  if(dir) S.sort.dir=dir;
+  render();
+};
+document.addEventListener('click', e => {
+  if(!S.openPop) return;
+  if(e.target.closest && e.target.closest('.fs-bar')) return;
+  S.openPop=null; render();
+}, true);
 
 /* ── RENDER HELPERS ── */
 function updateHero(){
@@ -658,16 +769,6 @@ function updateHero(){
       <div class="stat-v">₹${fmtAmt(rAmt)}L</div>
       <div class="stat-s">${returned.length} items</div>
     </div>`;
-}
-
-function subtabsHtml(){
-  const cats=['All','Agriculture','SME','Education'].map(t=>
-    `<button class="subtab ${S.sub===t?'active':''}" onclick="setSub('${t}')">${t}</button>`
-  ).join('');
-  const myToggle=(S.user&&!S.isAdmin)
-    ?`<button class="subtab ${S.myLoansOnly?'active':''}" onclick="toggleMyLoans()">${S.myLoansOnly?'👤 Mine':'👥 All'}</button>`
-    :'';
-  return cats+myToggle;
 }
 
 function loanCard(loan, actions, variant=''){
@@ -706,19 +807,18 @@ window.toggleExpand = function(id){
   if(el) el.classList.toggle('expanded');
 };
 
-function compactLoanItem(loan, actions, dateStr, itemCls='', cardVariant=''){
+function compactLoanItem(loan, actions, itemCls='', cardVariant=''){
   const overdueTag=itemCls.includes('overdue')?`<span class="tag overdue">⚠ ${daysPending(loan.receiveDate)}d</span>`:'';
-  return `<div class="loan-item${itemCls?' '+itemCls:''}" id="li-${loan.id}">
+  const cls=[`cat-${catCls(loan.category)||'none'}`, `status-${loan.status||'pending'}`, itemCls].filter(Boolean).join(' ');
+  return `<div class="loan-item ${cls}" id="li-${loan.id}">
     <div class="loan-row" onclick="toggleExpand('${loan.id}')">
       <div class="lr-info">
-        <span class="lr-av">${initials(loan.allocatedTo)}</span>
+        <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
-        <span class="tag ${catCls(loan.category)} lr-cat">${esc(shortCat(loan.category))}</span>
         <span class="lr-name">${esc(loan.customerName||'')}</span>
       </div>
       <div class="lr-meta">
         ${overdueTag}
-        <span class="lr-date">${dateStr}</span>
         <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">›</span>
       </div>
@@ -743,12 +843,16 @@ function render(){
   else if(S.tab==='notifs')     renderNotifications(c);
 }
 
+function searchMatch(l){
+  if(!S.search) return true;
+  return (l.customerName||'').toLowerCase().includes(S.search)
+      || (l.branch||'').toLowerCase().includes(S.search)
+      || (l.allocatedTo||'').toLowerCase().includes(S.search);
+}
+
 function renderPending(c){
-  let loans=S.loans.filter(l=>l.status==='pending')
-    .sort((a,b)=>(a.receiveDate||'').localeCompare(b.receiveDate||''));
-  if(S.sub!=='All') loans=loans.filter(l=>l.category===S.sub);
-  if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
-  if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
+  let loans=applyFilters(S.loans.filter(l=>l.status==='pending'&&searchMatch(l)));
+  loans=applySort(loans);
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('📭','No pending loans','Tap + to add a new loan')
@@ -759,10 +863,10 @@ function renderPending(c){
           <button class="btn btn-return" onclick="returnLoan('${l.id}')">↩ Return</button>
           <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
           ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
-        return compactLoanItem(l,actions,fmtShortDate(l.receiveDate),cls);
+        return compactLoanItem(l,actions,cls);
       }).join('');
   c.innerHTML=`
-    <div class="subtabs">${subtabsHtml()}</div>
+    ${filterSortBarHtml()}
     <div class="sec-head">
       <div class="sec-title">Pending Loans</div>
       <div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div>
@@ -770,11 +874,8 @@ function renderPending(c){
 }
 
 function renderSanctioned(c){
-  let loans=S.loans.filter(l=>l.status==='sanctioned')
-    .sort((a,b)=>(b.sanctionDate||'').localeCompare(a.sanctionDate||''));
-  if(S.sub!=='All') loans=loans.filter(l=>l.category===S.sub);
-  if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
-  if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
+  let loans=applyFilters(S.loans.filter(l=>l.status==='sanctioned'&&searchMatch(l)));
+  loans=applySort(loans);
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('🎉','No sanctioned loans yet','Sanction pending loans to see them here')
@@ -782,10 +883,10 @@ function renderSanctioned(c){
         const actions=`<button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
           <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
           ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
-        return compactLoanItem(l,actions,fmtShortDate(l.sanctionDate),'','sanctioned');
+        return compactLoanItem(l,actions,'','sanctioned');
       }).join('');
   c.innerHTML=`
-    <div class="subtabs">${subtabsHtml()}</div>
+    ${filterSortBarHtml()}
     <div class="sec-head">
       <div class="sec-title">Sanctioned Loans</div>
       <div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div>
@@ -793,10 +894,8 @@ function renderSanctioned(c){
 }
 
 function renderReturned(c){
-  let loans=S.loans.filter(l=>l.status==='returned')
-    .sort((a,b)=>(a.receiveDate||'').localeCompare(b.receiveDate||''));
-  if(S.myLoansOnly) loans=loans.filter(l=>l.allocatedTo===S.user);
-  if(S.search) loans=loans.filter(l=>(l.customerName||'').toLowerCase().includes(S.search)||(l.branch||'').toLowerCase().includes(S.search)||(l.allocatedTo||'').toLowerCase().includes(S.search));
+  let loans=applyFilters(S.loans.filter(l=>l.status==='returned'&&searchMatch(l)));
+  loans=applySort(loans);
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('📋','No returned loans','Returned loans will appear here')
@@ -805,10 +904,10 @@ function renderReturned(c){
           <button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
           <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
           ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
-        return compactLoanItem(l,actions,fmtShortDate(l.returnedDate),'','returned');
+        return compactLoanItem(l,actions,'','returned');
       }).join('');
   c.innerHTML=`
-    <div class="subtabs">${subtabsHtml()}</div>
+    ${filterSortBarHtml()}
     <div class="sec-head">
       <div class="sec-title">Returned Loans</div>
       <div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div>
@@ -936,8 +1035,16 @@ async function init(){
   const su=localStorage.getItem('lpUser');
   const sa=localStorage.getItem('lpAdmin')==='true';
   if(su){
-    S.user=su; S.isAdmin=sa; S.myLoansOnly=!sa;
-    document.getElementById('userAv').textContent=su==='Admin'?'🔒':initials(su);
+    S.user=su; S.isAdmin=sa;
+    S.filter={ category:'All', officer:sa?'All':'Mine' };
+    const av=document.getElementById('userAv');
+    if(su==='Admin'){
+      av.textContent='🔒';
+    } else {
+      av.textContent=initials(su);
+      av.style.background=officerColor(su).bg;
+      av.style.color='#fff';
+    }
   }
   subscribeLoans();
   subscribeNotifications();
