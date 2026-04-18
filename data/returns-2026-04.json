@@ -1,0 +1,17 @@
+{
+  "period": "2026-04",
+  "label": "April 2026 Returns",
+  "returnedDate": "2026-04-18",
+  "entries": [
+    { "allocatedTo": "Ritika", "branch": "1755 : PAONTA SAHIB",     "customerName": "AJAY SINGH CONTRACTOR", "amount": 2,   "category": "Agriculture", "remarks": "NOT ENOUGH WORK ORDERS WITH CUSTOMER" },
+    { "allocatedTo": "Ritika", "branch": "8117 : RAJPUR",            "customerName": "JAI MAA LAXMI SHG",     "amount": 1.5, "category": "Agriculture", "remarks": "PSS FROM JUNE" },
+    { "allocatedTo": "Ritika", "branch": "6784 : DHAULA KUAN",       "customerName": "MOHINDER SINGH",        "amount": 1,   "category": "Agriculture", "remarks": "FARD NOT CLEAR" },
+    { "allocatedTo": "Ritika", "branch": "6784 : DHAULA KUAN",       "customerName": "POOJA SHG",             "amount": 1.5, "category": "Agriculture", "remarks": "PSS PENDING" },
+    { "allocatedTo": "Ritika", "branch": "1755 : PAONTA SAHIB",     "customerName": "K S CONSTRUCTION",      "amount": 30,  "category": "SME",         "remarks": "NOT FEASIBLE" },
+    { "allocatedTo": "Nikita", "branch": "1680 : ADB PAONTA SAHIB", "customerName": "SATYA DAIRY FARM",      "amount": 10,  "category": "Agriculture", "remarks": "DOCUMENTS REQUIRED MAILED TO BRANCH, CURRENTLY NOT AT STAGE" },
+    { "allocatedTo": "Ritika", "branch": "1755 : PAONTA SAHIB",     "customerName": "SANDEEP KIRANA STORE",  "amount": 3,   "category": "SME",         "remarks": "CUSTOMER REFUSED" },
+    { "allocatedTo": "Ritika", "branch": "1755 : PAONTA SAHIB",     "customerName": "SUHAN KIRYANA STORE",   "amount": 1,   "category": "SME",         "remarks": "STATED ACTIVITY NOT AS PER PSS CONDUCTED" },
+    { "allocatedTo": "Ritika", "branch": "1755 : PAONTA SAHIB",     "customerName": "CHAUHAN FABRICATOR",    "amount": 5,   "category": "SME",         "remarks": "CMR-7, LOAN CANNOT BE PROCESSED" },
+    { "allocatedTo": "Nikita", "branch": "1680 : ADB PAONTA SAHIB", "customerName": "AJEET SINGH",           "amount": 1.8, "category": "Agriculture", "remarks": "CIBIL OVERDUE" }
+  ]
+}
