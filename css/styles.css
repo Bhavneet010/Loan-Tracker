@@ -443,10 +443,11 @@ body::after{
   border:1px solid rgba(255,255,255,0.85);border-radius:14px;
 }
 .loan-item.overdue .loan-row{border-left:4px solid #EF4444;}
-.loan-item.expanded .loan-row{border-radius:14px 14px 0 0;border-bottom-color:transparent;}
+.loan-item.expanded .loan-row{display:none;}
 .loan-detail{display:none;}
 .loan-item.expanded .loan-detail{display:block;}
-.loan-detail .loan-card{border-radius:0 0 14px 14px;border-top:none;margin-bottom:0;}
+.loan-detail .loan-card{margin-bottom:0;}
+.loan-collapse{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:6px;cursor:pointer;letter-spacing:0.5px;}
 .lr-info{display:flex;align-items:center;gap:7px;min-width:0;flex:1;overflow:hidden;}
 .lr-bcode{font-size:10px;font-weight:800;color:white;background:var(--p2);padding:2px 6px;border-radius:6px;white-space:nowrap;flex-shrink:0;}
 .lr-cat{flex-shrink:0;font-size:10px!important;padding:2px 7px!important;}

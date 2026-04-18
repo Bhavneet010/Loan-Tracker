@@ -455,7 +455,10 @@ function pendingLoanItem(loan){
         <span class="lr-chev">›</span>
       </div>
     </div>
-    <div class="loan-detail">${loanCard(loan,actions)}</div>
+    <div class="loan-detail">
+      <div class="loan-collapse" onclick="toggleExpand('${loan.id}')">▲ collapse</div>
+      ${loanCard(loan,actions)}
+    </div>
   </div>`;
 }
 
