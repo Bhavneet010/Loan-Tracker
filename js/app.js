@@ -431,16 +431,9 @@ window.toggleExpand = function(id){
   if(el) el.classList.toggle('expanded');
 };
 
-function pendingLoanItem(loan){
-  const days=daysPending(loan.receiveDate);
-  const overdueCls=days>7?' overdue':'';
-  const overdueTag=days>7?`<span class="tag overdue">⚠ ${days}d</span>`:'';
-  const actions=`
-    <button class="btn btn-sanction" onclick="sanctionLoan('${loan.id}')">✓ Sanction</button>
-    <button class="btn btn-return"   onclick="returnLoan('${loan.id}')">↩ Return</button>
-    <button class="btn btn-more"     onclick="editLoan('${loan.id}')">✎</button>
-    ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${loan.id}')">🗑</button>`:''}`;
-  return `<div class="loan-item${overdueCls}" id="li-${loan.id}">
+function compactLoanItem(loan, actions, dateStr, itemCls='', cardVariant=''){
+  const overdueTag=itemCls.includes('overdue')?`<span class="tag overdue">⚠ ${daysPending(loan.receiveDate)}d</span>`:'';
+  return `<div class="loan-item${itemCls?' '+itemCls:''}" id="li-${loan.id}">
     <div class="loan-row" onclick="toggleExpand('${loan.id}')">
       <div class="lr-info">
         <span class="lr-av">${initials(loan.allocatedTo)}</span>
@@ -450,14 +443,14 @@ function pendingLoanItem(loan){
       </div>
       <div class="lr-meta">
         ${overdueTag}
-        <span class="lr-date">${fmtShortDate(loan.receiveDate)}</span>
+        <span class="lr-date">${dateStr}</span>
         <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">›</span>
       </div>
     </div>
     <div class="loan-detail">
       <div class="loan-collapse" onclick="toggleExpand('${loan.id}')">▲ collapse</div>
-      ${loanCard(loan,actions)}
+      ${loanCard(loan,actions,cardVariant)}
     </div>
   </div>`;
 }
@@ -484,7 +477,15 @@ function renderPending(c){
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('📭','No pending loans','Tap + to add a new loan')
-    : loans.map(l=>pendingLoanItem(l)).join('');
+    : loans.map(l=>{
+        const days=daysPending(l.receiveDate);
+        const cls=days>7?'overdue':'';
+        const actions=`<button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
+          <button class="btn btn-return" onclick="returnLoan('${l.id}')">↩ Return</button>
+          <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
+          ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
+        return compactLoanItem(l,actions,fmtShortDate(l.receiveDate),cls);
+      }).join('');
   c.innerHTML=`
     <div class="subtabs">${subtabsHtml()}</div>
     <div class="sec-head">
@@ -502,11 +503,12 @@ function renderSanctioned(c){
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('🎉','No sanctioned loans yet','Sanction pending loans to see them here')
-    : loans.map(l=>loanCard(l,`
-        <button class="btn btn-return"  onclick="moveToPending('${l.id}')">↩ Pending</button>
-        <button class="btn btn-more"    onclick="editLoan('${l.id}')">✎</button>
-        ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`,
-      'sanctioned')).join('');
+    : loans.map(l=>{
+        const actions=`<button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
+          <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
+          ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
+        return compactLoanItem(l,actions,fmtShortDate(l.sanctionDate),'','sanctioned');
+      }).join('');
   c.innerHTML=`
     <div class="subtabs">${subtabsHtml()}</div>
     <div class="sec-head">
@@ -523,12 +525,13 @@ function renderReturned(c){
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
     ? emptyState('📋','No returned loans','Returned loans will appear here')
-    : loans.map(l=>loanCard(l,`
-        <button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
-        <button class="btn btn-return"   onclick="moveToPending('${l.id}')">↩ Pending</button>
-        <button class="btn btn-more"     onclick="editLoan('${l.id}')">✎</button>
-        ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`,
-      'returned')).join('');
+    : loans.map(l=>{
+        const actions=`<button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
+          <button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
+          <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
+          ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>`:''}`;
+        return compactLoanItem(l,actions,fmtShortDate(l.returnedDate),'','returned');
+      }).join('');
   c.innerHTML=`
     <div class="subtabs">${subtabsHtml()}</div>
     <div class="sec-head">
