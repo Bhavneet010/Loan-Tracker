@@ -21,7 +21,7 @@ const db  = getFirestore(app);
 const S = {
   user:null, isAdmin:false,
   tab:'pending', sub:'All', settingsTab:'officers', search:'', myLoansOnly:false, dark:false,
-  loans:[],
+  loans:[], notifications:[],
   officers:['Anchal','Nikita','Ritika'],
   branches:[
     '686 : NAHAN','1680 : ADB PAONTA SAHIB','1755 : PAONTA SAHIB',
@@ -123,9 +123,104 @@ function subscribeLoans() {
 }
 const newId   = ()=>'loan_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
 const ts      = ()=>({updatedAt:new Date().toISOString(),updatedBy:S.user});
-async function createLoan(data){ await setDoc(doc(db,'loans',newId()),{...data,status:'pending',createdAt:new Date().toISOString(),createdBy:S.user,...ts()}); }
+async function createLoan(data){ const id=newId(); await setDoc(doc(db,'loans',id),{...data,status:'pending',createdAt:new Date().toISOString(),createdBy:S.user,...ts()}); return id; }
 async function updateLoan(id,data){ await updateDoc(doc(db,'loans',id),{...data,...ts()}); }
 async function removeLoan(id){ await deleteDoc(doc(db,'loans',id)); }
+
+/* ── NOTIFICATIONS ── */
+async function createNotification(type, loan){
+  const id='n_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  await setDoc(doc(db,'notifications',id),{
+    type, loanId:loan.id||'',
+    customerName:loan.customerName||'', amount:loan.amount||0,
+    branch:loan.branch||'', category:loan.category||'',
+    allocatedTo:loan.allocatedTo||'',
+    by:S.user, timestamp:new Date().toISOString(), readBy:[]
+  });
+}
+function subscribeNotifications(){
+  let firstLoad=true;
+  onSnapshot(query(collection(db,'notifications'),orderBy('timestamp','desc')), snap=>{
+    S.notifications=[];
+    snap.forEach(d=>S.notifications.push({id:d.id,...d.data()}));
+    updateNotifBadge();
+    if(S.tab==='notifs') render();
+    if(firstLoad && S.user && !sessionStorage.getItem('actOverlayShown')){
+      sessionStorage.setItem('actOverlayShown','1');
+      showActivityOverlay();
+    }
+    firstLoad=false;
+  });
+}
+function visibleNotifs(){
+  if(S.isAdmin) return S.notifications;
+  return S.notifications.filter(n=>
+    n.allocatedTo===S.user&&(n.type==='added'||n.type==='sanctioned'||n.type==='returned')
+  );
+}
+function updateNotifBadge(){
+  const el=document.getElementById('b-notifs'); if(!el||!S.user) return;
+  const count=visibleNotifs().filter(n=>!(n.readBy||[]).includes(S.user)).length;
+  el.textContent=count||'';
+}
+async function markNotifsRead(){
+  const unread=visibleNotifs().filter(n=>!(n.readBy||[]).includes(S.user));
+  for(const n of unread){
+    updateDoc(doc(db,'notifications',n.id),{readBy:[...(n.readBy||[]),S.user]}).catch(()=>{});
+  }
+}
+function showActivityOverlay(){
+  const notifs=visibleNotifs().filter(n=>!(n.readBy||[]).includes(S.user));
+  if(!notifs.length) return;
+  const counts={};
+  notifs.forEach(n=>{ counts[n.type]=(counts[n.type]||0)+1; });
+  const icons={added:'➕',sanctioned:'✓',returned:'↩',edited:'✎'};
+  const labels={added:'loan added',sanctioned:'loan sanctioned',returned:'loan returned',edited:'loan updated'};
+  const lines=Object.entries(counts).map(([t,c])=>
+    `<div class="ab-line"><span class="ab-icon ${t}">${icons[t]||'•'}</span><span>${c} ${labels[t]||t}${c>1?'s':''}</span></div>`
+  ).join('');
+  const ov=document.createElement('div');
+  ov.id='activityOverlay';
+  ov.innerHTML=`<div class="activity-bubble">
+    <div class="ab-title">Recent Activity</div>
+    <div class="ab-lines">${lines}</div>
+    <div class="ab-hint">Tap anywhere to dismiss</div>
+  </div>`;
+  ov.onclick=()=>ov.remove();
+  document.body.appendChild(ov);
+}
+function renderNotifications(c){
+  const notifs=visibleNotifs();
+  if(!notifs.length){ c.innerHTML=emptyState('🔔','No notifications yet','Activity will appear here'); return; }
+  const typeIcon={added:'➕',sanctioned:'✓',returned:'↩',edited:'✎'};
+  const typeLabel={added:'New loan added',sanctioned:'Loan sanctioned',returned:'Loan returned',edited:'Loan updated'};
+  const typeCls={added:'notif-added',sanctioned:'notif-sanctioned',returned:'notif-returned',edited:'notif-edited'};
+  function timeAgo(ts){
+    if(!ts) return '';
+    const mins=Math.floor((Date.now()-new Date(ts).getTime())/60000);
+    if(mins<1) return 'just now';
+    if(mins<60) return `${mins}m ago`;
+    const hrs=Math.floor(mins/60);
+    if(hrs<24) return `${hrs}h ago`;
+    return `${Math.floor(hrs/24)}d ago`;
+  }
+  const cards=notifs.map(n=>{
+    const unread=!(n.readBy||[]).includes(S.user);
+    return `<div class="notif-card${unread?' unread':''}">
+      <div class="notif-icon ${typeCls[n.type]||''}">${typeIcon[n.type]||'•'}</div>
+      <div class="notif-body">
+        <div class="notif-label">${typeLabel[n.type]||n.type}</div>
+        <div class="notif-name">${esc(n.customerName)} · ₹${fmtAmt(n.amount)}L</div>
+        <div class="notif-meta">${esc(n.branch||'')} · ${esc(n.category||'')} · ${esc(n.allocatedTo||'')} · by ${esc(n.by||'')}</div>
+      </div>
+      <div class="notif-time">${timeAgo(n.timestamp)}</div>
+    </div>`;
+  }).join('');
+  c.innerHTML=`<div class="sec-head">
+    <div class="sec-title">Notifications</div>
+    <div class="sec-count">${notifs.length}</div>
+  </div>${cards}`;
+}
 
 /* ── BADGES ── */
 function updateBadges(){
@@ -305,8 +400,15 @@ window.saveLoan   = async function(e){
   const sd=document.getElementById('fSanction').value;
   if(sd) data.sanctionDate=sd;
   try {
-    if(id){ await updateLoan(id,data); toast('Loan updated ✓'); }
-    else  { await createLoan(data);    toast('Loan added ✓'); }
+    if(id){
+      await updateLoan(id,data);
+      createNotification('edited',{...data,id}).catch(()=>{});
+      toast('Loan updated ✓');
+    } else {
+      const nid=await createLoan(data);
+      createNotification('added',{...data,id:nid}).catch(()=>{});
+      toast('Loan added ✓');
+    }
     closeForm();
   } catch(err){ toast('Error saving'); console.error(err); }
 };
@@ -315,15 +417,21 @@ window.saveLoan   = async function(e){
 window.sanctionLoan = async function(id){
   const l=S.loans.find(x=>x.id===id); if(!l) return;
   if(!confirm(`Sanction loan for ${l.customerName}?\n₹${fmtAmt(l.amount)} Lakh`)) return;
-  try { await updateLoan(id,{status:'sanctioned',sanctionDate:todayStr()}); toast('Sanctioned ✓'); }
-  catch(e){ toast('Error'); }
+  try {
+    await updateLoan(id,{status:'sanctioned',sanctionDate:todayStr()});
+    createNotification('sanctioned',{...l,status:'sanctioned'}).catch(()=>{});
+    toast('Sanctioned ✓');
+  } catch(e){ toast('Error'); }
 };
 window.returnLoan = async function(id){
   const l=S.loans.find(x=>x.id===id); if(!l) return;
   const reason=prompt(`Reason for returning ${l.customerName}?`,l.remarks||'');
   if(reason===null) return;
-  try { await updateLoan(id,{status:'returned',remarks:reason,returnedDate:todayStr()}); toast('Marked as returned'); }
-  catch(e){ toast('Error'); }
+  try {
+    await updateLoan(id,{status:'returned',remarks:reason,returnedDate:todayStr()});
+    createNotification('returned',{...l,status:'returned'}).catch(()=>{});
+    toast('Marked as returned');
+  } catch(e){ toast('Error'); }
 };
 window.moveToPending = async function(id){
   const l=S.loans.find(x=>x.id===id); if(!l) return;
@@ -352,13 +460,14 @@ document.getElementById('mainTabs').addEventListener('click',e=>{
   btn.classList.add('active');
   S.tab=btn.dataset.tab; S.sub='All'; S.search='';
   const si=document.getElementById('searchInput'); if(si) si.value='';
+  if(S.tab==='notifs') markNotifsRead();
   render();
 });
 window.setSub = sub=>{ S.sub=sub; render(); };
 
 /* ── RENDER HELPERS ── */
 function updateHero(){
-  const titles={pending:'Pending',sanctioned:'Sanctioned',returned:'Returned',daily:'Performance'};
+  const titles={pending:'Pending',sanctioned:'Sanctioned',returned:'Returned',daily:'Performance',notifs:'Notifications'};
   const pending   = S.loans.filter(l=>l.status==='pending');
   const sanctioned= S.loans.filter(l=>l.status==='sanctioned');
   const returned  = S.loans.filter(l=>l.status==='returned');
@@ -460,12 +569,13 @@ function render(){
   if(!S.user){ showUserSelect(); return; }
   updateHero();
   const sw=document.getElementById('searchWrap');
-  if(sw) sw.style.display=S.tab==='daily'?'none':'';
+  if(sw) sw.style.display=(S.tab==='daily'||S.tab==='notifs')?'none':'';
   const c=document.getElementById('content');
-  if(S.tab==='pending')     renderPending(c);
+  if(S.tab==='pending')         renderPending(c);
   else if(S.tab==='sanctioned') renderSanctioned(c);
   else if(S.tab==='returned')   renderReturned(c);
   else if(S.tab==='daily')      renderDaily(c);
+  else if(S.tab==='notifs')     renderNotifications(c);
 }
 
 function renderPending(c){
@@ -666,6 +776,7 @@ async function init(){
     document.getElementById('userAv').textContent=su==='Admin'?'🔒':initials(su);
   }
   subscribeLoans();
+  subscribeNotifications();
   if(!S.user) showUserSelect();
 }
 
