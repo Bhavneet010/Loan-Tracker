@@ -31,14 +31,23 @@ if (mainTabs) {
 
 /* ── INIT ── */
 async function init() {
+  const status = (txt) => {
+    const el = document.querySelector('.loading-wrap span');
+    if (el) el.textContent = txt;
+    console.log('[INIT]', txt);
+  };
+
+  status('Loading configuration...');
   await loadSettings();
   
+  status('Applying theme...');
   const darkPref = localStorage.getItem('lpDark');
   if (darkPref === '1') {
     S.dark = true;
     document.body.classList.add('dark');
   }
   
+  status('Setting app mode...');
   const savedMode = localStorage.getItem('lpMode');
   if (savedMode === 'renewals') {
     S.appMode = 'renewals';
@@ -47,6 +56,7 @@ async function init() {
     if (mt) mt.style.display = 'none';
   }
   
+  status('Checking authentication...');
   const su = localStorage.getItem('lpUser');
   const sa = localStorage.getItem('lpAdmin') === 'true';
   if (su) {
@@ -65,11 +75,15 @@ async function init() {
     }
   }
   
+  status('Connecting to database...');
   subscribeLoans();
   subscribeNotifications();
   
   if (!S.user) {
+    status('Please select a user...');
     if (window.showUserSelect) window.showUserSelect();
+  } else {
+    status('Retrieving data...');
   }
   
   // Initial render

@@ -31,6 +31,7 @@ export async function removeLoan(id) {
 
 export function subscribeLoans() {
   onSnapshot(query(collection(db, 'loans'), orderBy('receiveDate', 'desc')), snap => {
+    console.log('[DB] Snapshot received:', snap.size, 'loans');
     if (notifReady && S.user && Notification.permission === 'granted') {
       snap.docChanges().forEach(change => {
         if (change.type === 'modified') {
