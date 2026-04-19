@@ -24,7 +24,8 @@ const S = {
   appMode:'fresh',
   filter:{ category:'All', officer:'All' },
   sort:{ field:'date', dir:'desc' },
-  renewalFilter:{ status:'All', officer:'All', branch:'All' },
+  renewalTab:'done',
+  renewalFilter:{ officer:'All', branch:'All' },
   renewalSort:{ field:'daysFromSanction', dir:'desc' },
   openPop:null,
   loans:[], notifications:[],
@@ -159,6 +160,7 @@ window.setAppMode = function(v){
   localStorage.setItem('lpMode',v);
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.id==='modeBtn-'+v));
   document.getElementById('mainTabs').style.display=v==='fresh'?'':'none';
+  document.getElementById('renewalTabs').style.display=v==='renewals'?'':'none';
   render();
 };
 
@@ -475,6 +477,14 @@ function updateBadges(){
   }).length;
   const rnwEl=document.getElementById('b-renewals');
   if(rnwEl) rnwEl.textContent=urgent||'';
+  // renewal tab badges
+  const thisMonth=todayStr().slice(0,7);
+  const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
+  const setB=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n||'';};
+  setB('b-rnw-done',    sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)).length);
+  setB('b-rnw-due-soon',sme.filter(l=>l._rs.status==='due-soon').length);
+  setB('b-rnw-overdue', sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa').length);
+  setB('b-rnw-npa-risk',sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30).length);
 }
 
 /* ── USER ── */
@@ -1019,13 +1029,9 @@ function renewalKpiHtml(counts,amounts){
 }
 
 function renewalFilterSortHtml(){
-  const fc=(S.renewalFilter.status!=='All'?1:0)+(S.renewalFilter.officer!=='All'?1:0)+(S.renewalFilter.branch!=='All'?1:0);
+  const fc=(S.renewalFilter.officer!=='All'?1:0)+(S.renewalFilter.branch!=='All'?1:0);
   const sl={daysFromSanction:'Days',amount:'Amount',officer:'Officer',branch:'Branch'};
   const sortLabel=`${sl[S.renewalSort.field]||'Days'} ${S.renewalSort.dir==='asc'?'↑':'↓'}`;
-  const statusOpts=[
-    {v:'All',label:'All statuses'},{v:'active',label:'Active'},
-    {v:'due-soon',label:'Due Soon (≤30d)'},{v:'pending-renewal',label:'Overdue'},{v:'npa',label:'NPA Risk'},
-  ];
   const officerOpts=[
     {v:'All',label:'All officers'},
     ...(S.user&&!S.isAdmin?[{v:'Mine',label:'Just me'}]:[]),
@@ -1043,8 +1049,7 @@ function renewalFilterSortHtml(){
     <button class="fs-btn${fc?' active':''}${S.openPop==='rnwFilter'?' open':''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">⚲ Filter<span class="fs-badge">${fc||''}</span></button>
     <button class="fs-btn${S.openPop==='rnwSort'?' open':''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">↕ Sort <span class="fs-label">${sortLabel}</span></button>
     <div class="fs-pop" style="${fs}">
-      <h4>Status</h4>${radio('status',statusOpts,S.renewalFilter.status)}
-      <hr><h4>Officer</h4>${radio('officer',officerOpts,S.renewalFilter.officer)}
+      <h4>Officer</h4>${radio('officer',officerOpts,S.renewalFilter.officer)}
       <hr><h4>Branch</h4>${radio('branch',branchOpts,S.renewalFilter.branch)}
     </div>
     <div class="fs-pop fs-pop-right" style="${ss}">
@@ -1056,7 +1061,6 @@ function renewalFilterSortHtml(){
 
 function applyRenewalFilters(enriched){
   let out=enriched;
-  if(S.renewalFilter.status!=='All') out=out.filter(l=>l._rs.status===S.renewalFilter.status);
   if(S.renewalFilter.officer==='Mine'&&S.user) out=out.filter(l=>l.allocatedTo===S.user);
   else if(S.renewalFilter.officer!=='All'&&S.renewalFilter.officer!=='Mine') out=out.filter(l=>l.allocatedTo===S.renewalFilter.officer);
   if(S.renewalFilter.branch!=='All') out=out.filter(l=>l.branch===S.renewalFilter.branch);
@@ -1128,20 +1132,22 @@ function renderRenewals(c){
     .filter(l=>l.category==='SME'&&l.sanctionDate)
     .map(l=>({...l,_rs:computeRenewalStatus(l)}))
     .filter(l=>l._rs);
-  let filtered=applyRenewalFilters(enriched);
-  let sorted=applyRenewalSort(filtered).filter(searchMatch);
-  const counts={active:0,'due-soon':0,'pending-renewal':0,npa:0};
-  const amounts={active:0,'due-soon':0,'pending-renewal':0,npa:0};
-  enriched.forEach(l=>{counts[l._rs.status]++;amounts[l._rs.status]+=parseFloat(l.amount)||0;});
+  const tabFiltered=applyRenewalTabFilter(enriched);
+  let sorted=applyRenewalSort(applyRenewalFilters(tabFiltered)).filter(searchMatch);
   const total=sorted.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
+  const tabMeta={
+    'done':     {title:'Done This Month',    empty:'♻','msg':'No SME renewals completed this month'},
+    'due-soon': {title:'Due for Renewal Soon',empty:'⏰',msg:'No accounts due within 30 days'},
+    'overdue':  {title:'Renewal Overdue',    empty:'⚠', msg:'No overdue renewal accounts'},
+    'npa-risk': {title:'NPA Risk (≤30 days)',empty:'🔴',msg:'No accounts approaching NPA threshold'},
+  }[S.renewalTab]||{title:'SME CC Renewals',empty:'♻',msg:'No renewals found'};
   const list=sorted.length===0
-    ?emptyState('♻','No SME renewals match filters','Import historical SME CC data or adjust filters')
+    ?emptyState(tabMeta.empty,tabMeta.title,tabMeta.msg)
     :sorted.map(l=>renewalItemHtml(l,l._rs)).join('');
   c.innerHTML=`
-    ${renewalKpiHtml(counts,amounts)}
     ${renewalFilterSortHtml()}
     <div class="sec-head">
-      <div class="sec-title">SME CC Renewals</div>
+      <div class="sec-title">${tabMeta.title}</div>
       <div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div>
     </div>
     ${list}`;
@@ -1156,6 +1162,19 @@ window.setRenewalSort = function(field,dir){
   if(dir)   S.renewalSort.dir=dir;
   render();
 };
+window.setRenewalTab = function(tab){
+  S.renewalTab=tab; S.openPop=null;
+  document.querySelectorAll('#renewalTabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.rtab===tab));
+  render();
+};
+function applyRenewalTabFilter(enriched){
+  const thisMonth=todayStr().slice(0,7);
+  if(S.renewalTab==='done')      return enriched.filter(l=>(l.sanctionDate||'').startsWith(thisMonth));
+  if(S.renewalTab==='due-soon')  return enriched.filter(l=>l._rs.status==='due-soon');
+  if(S.renewalTab==='overdue')   return enriched.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
+  if(S.renewalTab==='npa-risk')  return enriched.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
+  return enriched;
+}
 
 let currentCharts = [];
 let perfSeg = 'month';
@@ -1274,6 +1293,7 @@ async function init(){
     S.appMode='renewals';
     document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.id==='modeBtn-renewals'));
     document.getElementById('mainTabs').style.display='none';
+    document.getElementById('renewalTabs').style.display='';
   }
   const su=localStorage.getItem('lpUser');
   const sa=localStorage.getItem('lpAdmin')==='true';
