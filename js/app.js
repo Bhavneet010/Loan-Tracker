@@ -78,17 +78,45 @@ function isFreshCC(loan) {
 }
 
 function computeRenewalStatus(loan) {
-  if (!loan.sanctionDate) return null;
-  const days = Math.floor((Date.now() - new Date(loan.sanctionDate).getTime()) / 86400000);
-  const ms = new Date(loan.sanctionDate).getTime();
-  const dueDateStr = new Date(ms + 365*86400000).toISOString().slice(0,10);
-  const npaDateStr = new Date(ms + 546*86400000).toISOString().slice(0,10);
+  if (!loan.sanctionDate && !loan.limitExpiryDate) return null;
+  const now = Date.now();
+  let msDue, msStart;
+
+  if (loan.limitExpiryDate) {
+    msDue = new Date(loan.limitExpiryDate).getTime();
+    msStart = loan.sanctionDate ? new Date(loan.sanctionDate).getTime() : msDue - 365*86400000;
+  } else {
+    msStart = new Date(loan.sanctionDate).getTime();
+    msDue = msStart + 365*86400000;
+  }
+
+  const daysSinceSanction = Math.floor((now - msStart) / 86400000);
+  const msNpa = msDue + 181*86400000;
+  
+  const dueDateStr = new Date(msDue).toISOString().slice(0,10);
+  const npaDateStr = new Date(msNpa).toISOString().slice(0,10);
+  
+  const daysToDue = Math.floor((msDue - now) / 86400000);
+  
   let status, daysUntilDue=0, daysOverdue=0, daysUntilNpa=0;
-  if      (days < 335) { status='active';          daysUntilDue=365-days; daysUntilNpa=546-days; }
-  else if (days <=365) { status='due-soon';        daysUntilDue=365-days; daysUntilNpa=546-days; }
-  else if (days <=546) { status='pending-renewal'; daysOverdue=days-365;  daysUntilNpa=546-days; }
-  else                 { status='npa';             daysOverdue=days-365; }
-  return { status, daysSinceSanction:days, daysUntilDue, daysOverdue, daysUntilNpa, dueDateStr, npaDateStr };
+  
+  if (daysToDue > 30) {
+    status = 'active';
+    daysUntilDue = daysToDue;
+    daysUntilNpa = daysToDue + 181;
+  } else if (daysToDue >= 0) {
+    status = 'due-soon';
+    daysUntilDue = daysToDue;
+    daysUntilNpa = daysToDue + 181;
+  } else if (daysToDue > -181) {
+    status = 'pending-renewal';
+    daysOverdue = -daysToDue;
+    daysUntilNpa = 181 + daysToDue;
+  } else {
+    status = 'npa';
+    daysOverdue = -daysToDue;
+  }
+  return { status, daysSinceSanction, daysUntilDue, daysOverdue, daysUntilNpa, dueDateStr, npaDateStr };
 }
 
 async function requestNotifPermission(){
@@ -299,25 +327,34 @@ window.handleCsvUpload = function(e){
         cols.push(cur);
         cols = cols.map(c=>c.trim());
         
-        let obj = {};
+        let obj = { allocatedTo: '' }; // No officer assigned by default
+        
+        // Date parsing helper
+        const parseDate = (dStr) => {
+          if(!dStr) return '';
+          let s = dStr.trim();
+          if(s.match(/^\d{2}-\d{2}-\d{4}$/)) {
+             const p = s.split('-'); return `${p[2]}-${p[1]}-${p[0]}`;
+          } else if(s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+             const p = s.split('/'); return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+          }
+          return s; // Fallback
+        };
+
         header.forEach((h, idx)=> {
            const val = cols[idx] || '';
-           if(h.includes('NAME')) obj.customerName = val;
-           else if(h.includes('AMOUNT')) obj.amount = parseFloat(val.replace(/[^0-9.]/g,''))||0;
-           else if(h.includes('SANCTION') || h.includes('DATE')) obj.sanctionDate = val;
-           else if(h.includes('ALLOCATED') || h.includes('OFFICER')) obj.allocatedTo = val;
-           else if(h.includes('BRANCH')) obj.branch = val;
+           if(h === 'HOME BRANCH') obj.branch = val;
+           else if(h === 'AC NUMBER') obj.acNumber = val;
+           else if(h === 'CUSTOMER NAME') obj.customerName = val;
+           else if(h === 'LIMIT') obj.amount = parseFloat(val.replace(/[^0-9.]/g,''))||0;
+           else if(h === 'LMT EXPY DT') obj.limitExpiryDate = parseDate(val);
+           else if(h === 'RENEWAL DATE') obj.lastRenewalDate = parseDate(val);
         });
         
-        if(!obj.customerName || !obj.sanctionDate) continue;
+        if(!obj.customerName) continue;
         
-        // Convert dates if format is DD-MM-YYYY to YYYY-MM-DD
-        let sDate = obj.sanctionDate.trim();
-        if(sDate.match(/^\d{2}-\d{2}-\d{4}$/)) {
-           const p = sDate.split('-'); sDate = `${p[2]}-${p[1]}-${p[0]}`;
-        } else if(sDate.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-           const p = sDate.split('/'); sDate = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-        }
+        // Determine a base date for standard logic compatibility
+        const baseDate = obj.lastRenewalDate || obj.limitExpiryDate || '';
         
         const id=('import_sme_csv_'+slugifyId(obj.customerName)).replace(/-/g,'');
         const existing=await getDoc(doc(db,'loans',id));
@@ -325,10 +362,13 @@ window.handleCsvUpload = function(e){
         await setDoc(doc(db,'loans',id),{
           allocatedTo:obj.allocatedTo||'',
           category:'SME', branch:obj.branch||'',
+          acNumber:obj.acNumber||'',
           customerName:obj.customerName.toUpperCase(),
           amount:obj.amount||0,
-          receiveDate:sDate,
-          sanctionDate:sDate,
+          limitExpiryDate:obj.limitExpiryDate||'',
+          lastRenewalDate:obj.lastRenewalDate||'',
+          receiveDate:baseDate,
+          sanctionDate:baseDate,
           remarks:'Imported via CSV',
           status:'sanctioned',
           createdAt:new Date().toISOString(),createdBy:S.user||'import',
@@ -1237,7 +1277,7 @@ function renewalItemHtml(loan,rs){
       <div class="lr-info">
         <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
-        <span class="lr-name">${esc(loan.customerName||'')}</span>
+        <span class="lr-name">${esc(loan.customerName||'')} ${loan.acNumber?`<span style="opacity:0.6;font-size:11px;margin-left:4px;">A/C: ${esc(loan.acNumber)}</span>`:''}</span>
       </div>
       <div class="lr-meta">
         <span class="tag ${sm.cls}">${sm.label}</span>
@@ -1251,15 +1291,15 @@ function renewalItemHtml(loan,rs){
         <div class="lc-top">
           <div class="lc-left">
             <div class="lc-name">${esc(loan.customerName)}</div>
-            <div class="lc-branch">${esc(loan.branch||'')}</div>
+            <div class="lc-branch">${esc(loan.branch||'')} ${loan.acNumber?` • A/C: ${esc(loan.acNumber)}`:''}</div>
           </div>
           <div class="lc-amount">₹${fmtAmt(loan.amount)}<span class="u"> L</span></div>
         </div>
         <div class="lc-tags">
           <span class="tag sme">SME CC</span>
           <span class="tag officer">${esc(loan.allocatedTo)}</span>
-          <span class="tag date">Sanctioned ${fmtDate(loan.sanctionDate)}</span>
-          <span class="tag date">Due ${fmtDate(rs.dueDateStr)}</span>
+          <span class="tag date">Last Renewed ${fmtDate(loan.lastRenewalDate || loan.sanctionDate)}</span>
+          <span class="tag date">Limit Expires ${fmtDate(loan.limitExpiryDate || rs.dueDateStr)}</span>
           <span class="tag ${sm.cls}">${sm.label}</span>
           ${npaChip}
         </div>
