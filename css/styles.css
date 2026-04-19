@@ -834,12 +834,14 @@ body.dark .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.18)
 .stats-scroll.rnw-grid .stat{padding:7px 8px;}
 .stats-scroll.rnw-grid .stat-v{font-size:15px;}
 .stats-scroll.rnw-grid .stat-s{font-size:9px;}
-/* Renewal card gradients */
-.rnw-stat-card{border:none;color:#fff;}
-.rnw-stat-card .stat-l{color:rgba(255,255,255,0.75);}
-.rnw-stat-card .stat-s{color:rgba(255,255,255,0.7);}
-.rnw-grad-green  {background:linear-gradient(135deg,#10B981,#047857);}
-.rnw-grad-amber  {background:linear-gradient(135deg,#F59E0B,#B45309);}
-.rnw-grad-red    {background:linear-gradient(135deg,#EF4444,#B91C1C);}
-.rnw-grad-darkred{background:linear-gradient(135deg,#7F1D1D,#450a0a);}
-.stat.stat-rnw-active{box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(0,0,0,0.25);}
+/* Renewal card gradients — soft tints matching app's glass palette */
+.rnw-stat-card{border:1px solid rgba(255,255,255,0.55);}
+.rnw-grad-green  {background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(4,120,87,0.08));color:#065f46;}
+.rnw-grad-green .stat-l,.rnw-grad-green .stat-s{color:rgba(6,95,70,0.7);}
+.rnw-grad-amber  {background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(180,83,9,0.08));color:#92400e;}
+.rnw-grad-amber .stat-l,.rnw-grad-amber .stat-s{color:rgba(146,64,14,0.7);}
+.rnw-grad-red    {background:linear-gradient(135deg,rgba(239,68,68,0.18),rgba(185,28,28,0.08));color:#991b1b;}
+.rnw-grad-red .stat-l,.rnw-grad-red .stat-s{color:rgba(153,27,27,0.7);}
+.rnw-grad-darkred{background:linear-gradient(135deg,rgba(127,29,29,0.20),rgba(69,10,10,0.10));color:#7f1d1d;}
+.rnw-grad-darkred .stat-l,.rnw-grad-darkred .stat-s{color:rgba(127,29,29,0.7);}
+.stat.stat-rnw-active{box-shadow:0 0 0 2px currentColor;}
