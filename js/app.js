@@ -1188,7 +1188,7 @@ function searchMatch(l){
 }
 
 function renderPending(c){
-  let loans=applyFilters(S.loans.filter(l=>l.status==='pending'&&searchMatch(l)));
+  let loans=applyFilters(S.loans.filter(l=>l.status==='pending'&&isFreshCC(l)&&searchMatch(l)));
   loans=applySort(loans);
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
@@ -1211,7 +1211,7 @@ function renderPending(c){
 }
 
 function renderSanctioned(c){
-  let loans=applyFilters(S.loans.filter(l=>l.status==='sanctioned'&&searchMatch(l)));
+  let loans=applyFilters(S.loans.filter(l=>l.status==='sanctioned'&&isFreshCC(l)&&searchMatch(l)));
   loans=applySort(loans);
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
@@ -1231,7 +1231,7 @@ function renderSanctioned(c){
 }
 
 function renderReturned(c){
-  let loans=applyFilters(S.loans.filter(l=>l.status==='returned'&&searchMatch(l)));
+  let loans=applyFilters(S.loans.filter(l=>l.status==='returned'&&isFreshCC(l)&&searchMatch(l)));
   loans=applySort(loans);
   const total=loans.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const cards=loans.length===0
