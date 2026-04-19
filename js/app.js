@@ -767,6 +767,7 @@ function renderSettingsList(){
         Bulk-import loan data from the <code>data/</code> folder. Existing entries (matched by customer) are skipped, so each import is safe to re-run.
       </div>
       <button type="button" id="clearRenewalsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="clearAllSmeRenewals()">🗑️ Clear All SME Renewals Data</button>
+      <button type="button" id="wipeFreshBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#DC2626,#991B1B);" onclick="wipeSanctionedFreshLoans()">🗑️ Wipe All Sanctioned Fresh Loans</button>
       <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCsvUpload(event)">
       <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">📥 Upload CSV (CC Accounts)</button>`;
   }
@@ -820,6 +821,40 @@ window.clearAllSmeRenewals = async function(){
   } finally {
     const btn = document.getElementById('clearRenewalsBtn');
     if(btn) { btn.disabled=false; btn.textContent='🗑️ Clear All SME Renewals Data'; }
+  }
+};
+
+window.wipeSanctionedFreshLoans = async function(){
+  if(!S.isAdmin){toast('Admin only');return;}
+  if(!confirm('This will PERMANENTLY delete ALL manual (Fresh) Sanctioned loans. You will have to re-enter them. Are you sure?')) return;
+  
+  try{
+    const btn = document.getElementById('wipeFreshBtn');
+    if(btn) { btn.disabled=true; btn.textContent='Wiping Fresh Data...'; }
+    
+    const snap = await getDocs(query(collection(db,'loans')));
+    let deletedCount = 0;
+    
+    for(const docSnap of snap.docs){
+      const data = docSnap.data();
+      const id = docSnap.id;
+      // We target anything that is:
+      // 1. A manual/fresh loan (not imported)
+      // 2. Currently in 'sanctioned' status
+      if(isFreshCC({...data, id}) && data.status === 'sanctioned') {
+        await deleteDoc(doc(db,'loans',id));
+        deletedCount++;
+      }
+    }
+    
+    toast(`Successfully wiped ${deletedCount} fresh sanctioned records!`);
+    render(); // Refresh the UI
+  } catch(e) {
+    console.error(e);
+    toast('Error wiping data');
+  } finally {
+    const btn = document.getElementById('wipeFreshBtn');
+    if(btn) { btn.disabled=false; btn.textContent='🗑️ Wipe All Sanctioned Fresh Loans'; }
   }
 };
 
