@@ -87,9 +87,12 @@ function computeRenewalStatus(loan) {
   const now = Date.now();
   let msDue, msStart;
 
-  if (loan.limitExpiryDate) {
+  if (loan.renewalDueDate) {
+    msDue = new Date(loan.renewalDueDate).getTime();
+    msStart = msDue - 365*86400000;
+  } else if (loan.limitExpiryDate) {
     msDue = new Date(loan.limitExpiryDate).getTime();
-    msStart = loan.sanctionDate ? new Date(loan.sanctionDate).getTime() : msDue - 365*86400000;
+    msStart = msDue - 365*86400000;
   } else {
     msStart = new Date(loan.sanctionDate).getTime();
     msDue = msStart + 365*86400000;
@@ -353,9 +356,9 @@ window.handleCsvUpload = function(e){
            if(h === 'HOME BRANCH') obj.branch = val;
            else if(h === 'AC NUMBER') obj.acNumber = val;
            else if(h === 'CUSTOMER NAME') obj.customerName = val;
-           else if(h === 'LIMIT') obj.amount = parseFloat(val.replace(/[^0-9.]/g,''))||0;
+           else if(h === 'LIMIT') obj.amount = Number(((parseFloat(val.replace(/[^0-9.]/g,''))||0)/100000).toFixed(2));
            else if(h === 'LMT EXPY DT') obj.limitExpiryDate = parseDate(val);
-           else if(h === 'RENEWAL DATE') obj.lastRenewalDate = parseDate(val);
+           else if(h === 'RENEWAL DATE') obj.renewalDueDate = parseDate(val);
         });
         
         if(!obj.customerName) continue;
@@ -366,7 +369,7 @@ window.handleCsvUpload = function(e){
         }
         
         // Determine a base date for standard logic compatibility
-        const baseDate = obj.lastRenewalDate || obj.limitExpiryDate || '';
+        const baseDate = obj.limitExpiryDate || obj.renewalDueDate || '';
         
         const id=('import_sme_csv_'+slugifyId(obj.customerName)).replace(/-/g,'');
         const existing=await getDoc(doc(db,'loans',id));
@@ -378,7 +381,7 @@ window.handleCsvUpload = function(e){
           customerName:obj.customerName.toUpperCase(),
           amount:obj.amount||0,
           limitExpiryDate:obj.limitExpiryDate||'',
-          lastRenewalDate:obj.lastRenewalDate||'',
+          renewalDueDate:obj.renewalDueDate||'',
           receiveDate:baseDate,
           sanctionDate:baseDate,
           remarks:'Imported via CSV',
@@ -1323,8 +1326,8 @@ function renewalItemHtml(loan,rs){
         <div class="lc-tags">
           <span class="tag sme">SME CC</span>
           <span class="tag officer">${esc(loan.allocatedTo)}</span>
-          <span class="tag date">Last Renewed ${fmtDate(loan.lastRenewalDate || loan.sanctionDate)}</span>
-          <span class="tag date">Limit Expires ${fmtDate(loan.limitExpiryDate || rs.dueDateStr)}</span>
+          <span class="tag date">Renewal Due ${fmtDate(loan.renewalDueDate || rs.dueDateStr)}</span>
+          ${loan.limitExpiryDate ? `<span class="tag date">Limit Expires ${fmtDate(loan.limitExpiryDate)}</span>` : ''}
           <span class="tag ${sm.cls}">${sm.label}</span>
           ${npaChip}
         </div>
