@@ -106,8 +106,8 @@ export function renewalItemHtml(loan, rs) {
             <span class="tag officer">${esc(loan.allocatedTo)}</span>
           </div>
           <div class="tag-row status-row">
-            <span class="tag date">Renewal Due ${fmtDate(loan.renewalDueDate || rs.dueDateStr)}</span>
-            ${loan.limitExpiryDate ? `<span class="tag date">Limit Expires ${fmtDate(loan.limitExpiryDate)}</span>` : ''}
+            <span class="tag date">Due ${fmtDate(loan.renewalDueDate || rs.dueDateStr)}</span>
+            ${loan.limitExpiryDate ? `<span class="tag date">Exp ${fmtDate(loan.limitExpiryDate)}</span>` : ''}
             <span class="tag ${sm.cls}">${sm.label}</span>
             ${npaChip}
           </div>
