@@ -314,6 +314,12 @@ window.handleCsvUpload = function(e){
       const btn = document.getElementById('importCsvBtn');
       if(btn) { btn.disabled=true; btn.textContent='Importing...'; }
       
+      const branchOfficers = {
+        '2413': 'Ritika', '6784': 'Ritika', '1755': 'Ritika', '4590': 'Ritika',
+        '3399': 'Anchal', '4589': 'Anchal', '7459': 'Anchal', '50569': 'Anchal', '63982': 'Anchal',
+        '1680': 'Nikita', '686': 'Nikita', '8117': 'Nikita', '50536': 'Nikita'
+      };
+      
       for(let i=1; i<rows.length; i++){
         let cols = [];
         let cur = '', inQuote = false;
@@ -327,7 +333,7 @@ window.handleCsvUpload = function(e){
         cols.push(cur);
         cols = cols.map(c=>c.trim());
         
-        let obj = { allocatedTo: '' }; // No officer assigned by default
+        let obj = { allocatedTo: '' };
         
         // Date parsing helper
         const parseDate = (dStr) => {
@@ -352,6 +358,11 @@ window.handleCsvUpload = function(e){
         });
         
         if(!obj.customerName) continue;
+        
+        // Assign officer based on branch
+        if(obj.branch && branchOfficers[obj.branch]) {
+            obj.allocatedTo = branchOfficers[obj.branch];
+        }
         
         // Determine a base date for standard logic compatibility
         const baseDate = obj.lastRenewalDate || obj.limitExpiryDate || '';
