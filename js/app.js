@@ -35,7 +35,12 @@ const S = {
     '2413 : MAJRA','3399 : RAJBAN','4589 : SME TARUWALA',
     '4590 : KALA AMB','6784 : DHAULA KUAN','7459 : KAFOTA',
     '8117 : RAJPUR','50536 : BHAGANI','50569 : TIMBI','63982 : SHILLAI'
-  ]
+  ],
+  branchOfficers: {
+    '2413': 'Ritika', '6784': 'Ritika', '1755': 'Ritika', '4590': 'Ritika',
+    '3399': 'Anchal', '4589': 'Anchal', '7459': 'Anchal', '50569': 'Anchal', '63982': 'Anchal',
+    '1680': 'Nikita', '686': 'Nikita', '8117': 'Nikita', '50536': 'Nikita'
+  }
 };
 
 /* ── UTILS ── */
@@ -205,14 +210,15 @@ async function loadSettings() {
       const d=snap.data();
       if(d.officers?.length) S.officers=d.officers;
       if(d.branches?.length) S.branches=d.branches;
+      if(d.branchOfficers) S.branchOfficers={...S.branchOfficers, ...d.branchOfficers};
       if(d.adminPin) PIN=d.adminPin;
     } else {
-      await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,adminPin:PIN});
+      await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,branchOfficers:S.branchOfficers,adminPin:PIN});
     }
   } catch(e){console.error(e);}
 }
 async function saveSettings() {
-  try { await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,adminPin:PIN}); }
+  try { await setDoc(doc(db,'settings','config'),{officers:S.officers,branches:S.branches,branchOfficers:S.branchOfficers,adminPin:PIN}); }
   catch(e){ toast('Error saving'); }
 }
 
@@ -314,11 +320,6 @@ window.handleCsvUpload = function(e){
       const btn = document.getElementById('importCsvBtn');
       if(btn) { btn.disabled=true; btn.textContent='Importing...'; }
       
-      const branchOfficers = {
-        '2413': 'Ritika', '6784': 'Ritika', '1755': 'Ritika', '4590': 'Ritika',
-        '3399': 'Anchal', '4589': 'Anchal', '7459': 'Anchal', '50569': 'Anchal', '63982': 'Anchal',
-        '1680': 'Nikita', '686': 'Nikita', '8117': 'Nikita', '50536': 'Nikita'
-      };
       
       for(let i=1; i<rows.length; i++){
         let cols = [];
@@ -359,9 +360,9 @@ window.handleCsvUpload = function(e){
         
         if(!obj.customerName) continue;
         
-        // Assign officer based on branch
-        if(obj.branch && branchOfficers[obj.branch]) {
-            obj.allocatedTo = branchOfficers[obj.branch];
+        // Assign officer based on branch dynamically from settings
+        if(obj.branch && S.branchOfficers && S.branchOfficers[obj.branch]) {
+            obj.allocatedTo = S.branchOfficers[obj.branch];
         }
         
         // Determine a base date for standard logic compatibility
@@ -716,11 +717,18 @@ function renderSettingsList(){
   } else if(S.settingsTab==='branches'){
     el.innerHTML=`
       <div style="max-height:280px;overflow-y:auto;margin-bottom:8px;">
-        ${S.branches.map((b,i)=>`
-          <div class="setting-item">
-            <span style="font-size:13px;">${esc(b)}</span>
-            <button class="btn-sm-danger" onclick="removeBranch(${i})">Remove</button>
-          </div>`).join('')}
+        ${S.branches.map((b,i)=>{
+          const code = b.split(':')[0].trim();
+          const assigned = S.branchOfficers[code] || '';
+          const options = `<option value="" style="color:#000;">Unassigned</option>` + S.officers.map(o=>`<option value="${esc(o)}" style="color:#000;" ${assigned===o?'selected':''}>${esc(o)}</option>`).join('');
+          return `<div class="setting-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+            <span style="font-size:13px;flex:1;min-width:120px;">${esc(b)}</span>
+            <select class="input-light" style="flex:1;padding:6px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:transparent;color:inherit;" onchange="setBranchOfficer('${code}', this.value)">
+              ${options}
+            </select>
+            <button class="btn-sm-danger" onclick="removeBranch(${i})">X</button>
+          </div>`;
+        }).join('')}
       </div>
       <div style="display:flex;gap:8px;">
         <input type="text" id="newBranch" placeholder="e.g. 1234 : BRANCH NAME" style="flex:1;">
@@ -770,6 +778,12 @@ window.addBranch = async function(){
 window.removeBranch = async function(i){
   if(!confirm(`Remove ${S.branches[i]}?`)) return;
   S.branches.splice(i,1); await saveSettings(); renderSettingsList();
+};
+window.setBranchOfficer = async function(code, officer){
+  if(!S.branchOfficers) S.branchOfficers = {};
+  S.branchOfficers[code] = officer;
+  await saveSettings();
+  toast('Officer routed (' + (officer||'Unassigned') + ')');
 };
 
 /* ── FORM ── */
