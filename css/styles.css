@@ -827,3 +827,11 @@ body.dark .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.18)
 /* Stat badge color variants */
 .stat-badge-warn   {background:rgba(245,158,11,0.18);color:#B45309;}
 .stat-badge-danger {background:rgba(239,68,68,0.18);color:#B91C1C;}
+/* Renewal 2×2 grid layout */
+.stats-scroll.rnw-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  overflow-x:unset;padding:8px 10px 10px;gap:6px;
+}
+.stats-scroll.rnw-grid .stat{padding:7px 8px;}
+.stats-scroll.rnw-grid .stat-v{font-size:15px;}
+.stats-scroll.rnw-grid .stat-s{font-size:9px;}

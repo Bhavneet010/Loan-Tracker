@@ -845,6 +845,7 @@ function updateHero(){
         ${badge?`<div class="stat-badge ${badgeCls||''}">${badge}</div>`:''}
       </div>`;
     };
+    sc.classList.add('rnw-grid');
     sc.innerHTML=
       rnwStat('done',    'Done This Month', done,    done.length?'✓ Renewed':'',  '')+
       rnwStat('due-soon','Due Soon',        dueSoon, dueSoon.length?`${dueSoon.length} pending`:'', 'stat-badge-warn')+
@@ -852,6 +853,7 @@ function updateHero(){
       rnwStat('npa-risk','NPA Risk',        npaRisk, npaRisk.length?'⚠ Critical':'',   'stat-badge-danger');
     return;
   }
+  sc.classList.remove('rnw-grid');
   const pending   = S.loans.filter(l=>l.status==='pending');
   const sanctioned= S.loans.filter(l=>l.status==='sanctioned');
   const returned  = S.loans.filter(l=>l.status==='returned');
