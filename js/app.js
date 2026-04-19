@@ -470,7 +470,7 @@ function updateBadges(){
   document.getElementById('b-sanctioned').textContent = S.loans.filter(l=>l.status==='sanctioned').length;
   document.getElementById('b-returned').textContent   = S.loans.filter(l=>l.status==='returned').length;
   const urgent = S.loans.filter(l=>{
-    if(l.category!=='SME'||!l.sanctionDate) return false;
+    if(l.category!=='SME'||!l.sanctionDate||l.isTermLoan) return false;
     const rs=computeRenewalStatus(l);
     return rs && rs.status!=='active';
   }).length;
@@ -478,9 +478,9 @@ function updateBadges(){
   if(rnwEl) rnwEl.textContent=urgent||'';
   // renewal tab badges
   const thisMonth=todayStr().slice(0,7);
-  const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
+  const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate&&!l.isTermLoan).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
   const setB=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n||'';};
-  setB('b-rnw-done',    sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)).length);
+  setB('b-rnw-done',    sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!l.isFreshCC).length);
   setB('b-rnw-due-soon',sme.filter(l=>l._rs.status==='due-soon').length);
   setB('b-rnw-overdue', sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa').length);
   setB('b-rnw-npa-risk',sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30).length);
@@ -640,6 +640,12 @@ window.openForm = function(loan=null){
     document.getElementById('loanId').value=loan.id;
     document.getElementById('fOfficer').value=loan.allocatedTo||'';
     document.getElementById('fCategory').value=loan.category||'';
+    const tg=document.getElementById('fTermLoanGroup');
+    const tc=document.getElementById('fTermLoan');
+    if(tg && tc) {
+      tg.style.display=loan.category==='SME'?'flex':'none';
+      tc.checked=!!loan.isTermLoan;
+    }
     document.getElementById('fBranch').value=loan.branch||'';
     document.getElementById('fName').value=loan.customerName||'';
     document.getElementById('fAmount').value=loan.amount||'';
@@ -653,23 +659,47 @@ window.openForm = function(loan=null){
     document.getElementById('loanId').value='';
     document.getElementById('fReceive').value=todayStr();
     document.getElementById('fSanctionGroup').style.display='none';
+    const tg=document.getElementById('fTermLoanGroup');
+    const tc=document.getElementById('fTermLoan');
+    if(tg && tc) { tg.style.display='none'; tc.checked=false; }
     if(S.user&&!S.isAdmin) document.getElementById('fOfficer').value=S.user;
   }
   document.getElementById('formModal').style.display='flex';
 };
+};
 window.closeForm  = ()=>document.getElementById('formModal').style.display='none';
+window.toggleTermLoan = function(cat){
+  const el=document.getElementById('fTermLoanGroup');
+  if(el) el.style.display=cat==='SME'?'flex':'none';
+};
 window.saveLoan   = async function(e){
   e.preventDefault();
   const id=document.getElementById('loanId').value;
+  const cat=document.getElementById('fCategory').value;
+  let termLoan=false;
+  if(cat==='SME'){
+    const tc=document.getElementById('fTermLoan');
+    termLoan=tc?tc.checked:false;
+  }
+  
   const data={
     allocatedTo:document.getElementById('fOfficer').value,
-    category:document.getElementById('fCategory').value,
+    category:cat,
     branch:document.getElementById('fBranch').value,
     customerName:document.getElementById('fName').value.trim().toUpperCase(),
     amount:parseFloat(document.getElementById('fAmount').value),
     receiveDate:document.getElementById('fReceive').value,
     remarks:document.getElementById('fRemarks').value.trim()
   };
+  
+  if(cat==='SME'){
+    data.isTermLoan = termLoan;
+    const existing = id ? S.loans.find(x=>x.id===id) : null;
+    const isImportedRenewal = existing && existing.source && String(existing.source).includes('renewal');
+    if(!termLoan && !isImportedRenewal){
+      data.isFreshCC = true;
+    }
+  }
   const sd=document.getElementById('fSanction').value;
   if(sd) data.sanctionDate=sd;
   try {
@@ -831,8 +861,8 @@ function updateHero(){
   if(S.appMode==='renewals'){
     const thisMonth=todayStr().slice(0,7);
     const monthName='Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(thisMonth.slice(5))-1];
-    const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
-    const done    =sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth));
+    const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate&&!l.isTermLoan).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
+    const done    =sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!l.isFreshCC);
     const dueSoon =sme.filter(l=>l._rs.status==='due-soon');
     const overdue =sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
     const npaRisk =sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
@@ -848,7 +878,7 @@ function updateHero(){
     };
     sc.classList.add('rnw-grid');
     sc.innerHTML=
-      rnwStat('done',    `Renewals Done ${monthName}`, done,    'rnw-grad-green',  '',                                           '')+
+      rnwStat('done',    `Renewals Done ${monthName}`, done,    'rnw-grad-green',  '♻',                   '')+
       rnwStat('due-soon','Due Soon',                   dueSoon, 'rnw-grad-amber',  dueSoon.length?`${dueSoon.length} pending`:'','stat-badge-warn')+
       rnwStat('overdue', 'Overdue',                    overdue, 'rnw-grad-red',    overdue.length?'Action needed':'',             'stat-badge-danger')+
       rnwStat('npa-risk','NPA Risk',                   npaRisk, 'rnw-grad-darkred',npaRisk.length?'⚠ Critical':'',               'stat-badge-danger');
@@ -1155,7 +1185,7 @@ function renewalItemHtml(loan,rs){
 
 function renderRenewals(c){
   const enriched=S.loans
-    .filter(l=>l.category==='SME'&&l.sanctionDate)
+    .filter(l=>l.category==='SME'&&l.sanctionDate&&!l.isTermLoan)
     .map(l=>({...l,_rs:computeRenewalStatus(l)}))
     .filter(l=>l._rs);
   const tabFiltered=applyRenewalTabFilter(enriched);
@@ -1195,7 +1225,7 @@ window.setRenewalTab = function(tab){
 };
 function applyRenewalTabFilter(enriched){
   const thisMonth=todayStr().slice(0,7);
-  if(S.renewalTab==='done')      return enriched.filter(l=>(l.sanctionDate||'').startsWith(thisMonth));
+  if(S.renewalTab==='done')      return enriched.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!l.isFreshCC);
   if(S.renewalTab==='due-soon')  return enriched.filter(l=>l._rs.status==='due-soon');
   if(S.renewalTab==='overdue')   return enriched.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
   if(S.renewalTab==='npa-risk')  return enriched.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
