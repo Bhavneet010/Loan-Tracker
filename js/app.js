@@ -458,6 +458,52 @@ window.importMonthlyPending = async function(){
   finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 pending (SME)'; } }
 };
 
+/* ── SANCTIONED IMPORT ── */
+async function importSanctionedFromUrl(url){
+  const res=await fetch(url,{cache:'no-store'});
+  if(!res.ok) throw new Error('Failed to load '+url);
+  const payload=await res.json();
+  const period=payload.period||'unknown';
+  const entries=Array.isArray(payload.entries)?payload.entries:[];
+  let added=0, skipped=0;
+  for(const e of entries){
+    const id=`import_sanctioned_${period}_${slugifyId(e.customerName)}`.replace(/-/g,'');
+    const existing=await getDoc(doc(db,'loans',id));
+    if(existing.exists()){ skipped++; continue; }
+    await setDoc(doc(db,'loans',id),{
+      allocatedTo:e.allocatedTo,
+      category:e.category||'Agriculture',
+      branch:e.branch,
+      customerName:(e.customerName||'').toUpperCase(),
+      amount:parseFloat(e.amount)||0,
+      receiveDate:e.receiveDate||'',
+      sanctionDate:e.sanctionDate||'',
+      remarks:e.remarks||'',
+      status:'sanctioned',
+      isFreshCC:true,
+      manuallyCreated:false,
+      createdAt:new Date().toISOString(),
+      createdBy:S.user||'import',
+      source:`import:sanctioned:${period}`,
+      ...ts()
+    });
+    added++;
+  }
+  return {added, skipped, total:entries.length, label:payload.label||period};
+}
+window.importMonthlySanctioned = async function(){
+  if(!S.isAdmin){ toast('Admin only'); return; }
+  const url='data/sanctioned-2026-04.json';
+  if(!confirm('Import April 2026 sanctioned loans into Firestore? Existing entries (matched by customer) will be skipped.')) return;
+  const btn=document.getElementById('importSanctionedBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Importing…'; }
+  try {
+    const r=await importSanctionedFromUrl(url);
+    toast(`${r.label}: ${r.added} added, ${r.skipped} skipped`);
+  } catch(e){ console.error(e); toast('Import failed'); }
+  finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 sanctioned'; } }
+};
+
 /* ── SME CC RENEWAL IMPORT ── */
 async function importSmeRenewalsFromUrl(url){
   const res=await fetch(url,{cache:'no-store'});
@@ -768,6 +814,7 @@ function renderSettingsList(){
       </div>
       <button type="button" id="clearRenewalsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="clearAllSmeRenewals()">🗑️ Clear All SME Renewals Data</button>
       <button type="button" id="wipeFreshBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#DC2626,#991B1B);" onclick="wipeSanctionedFreshLoans()">🗑️ Wipe All Sanctioned Fresh Loans</button>
+      <button type="button" id="importSanctionedBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importMonthlySanctioned()">📥 Import April 2026 sanctioned</button>
       <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCsvUpload(event)">
       <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">📥 Upload CSV (CC Accounts)</button>`;
   }
