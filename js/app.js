@@ -760,6 +760,7 @@ function renderSettingsList(){
       <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>
       <button type="button" id="importPendingBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;" onclick="importMonthlyPending()">📥 Import April 2026 pending (SME)</button>
       <button type="button" id="importSmeRenewalsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importSmeRenewals()">📥 Import SME CC JSON</button>
+      <button type="button" id="migrateRenewalBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#047857);" onclick="migrateRenewalDates()">🔁 Migrate Renewal Dates</button>
       <button type="button" id="migrateAmountsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#F59E0B,#D97706);" onclick="migrateAmountsToLacs()">🔧 Migrate Amounts to Lacs</button>
       <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCsvUpload(event)">
       <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">📥 Upload CSV (CC Accounts)</button>`;
@@ -786,6 +787,22 @@ window.addBranch = async function(){
 window.removeBranch = async function(i){
   if(!confirm(`Remove ${S.branches[i]}?`)) return;
   S.branches.splice(i,1); await saveSettings(); renderSettingsList();
+};
+window.migrateRenewalDates = async function(){
+  if(!S.isAdmin){toast('Admin only');return;}
+  try{
+    const snap = await getDocs(collection(db,'loans'));
+    let updated=0,total=0;
+    for(const docSnap of snap.docs){
+      const data = docSnap.data();
+      if(data.lastRenewalDate && !data.renewalDueDate){
+        await updateDoc(doc(db,'loans',docSnap.id),{renewalDueDate:data.lastRenewalDate});
+        updated++;
+      }
+      total++;
+    }
+    toast(`Renewal migration complete: ${updated}/${total} records updated`);
+  }catch(e){console.error(e);toast('Renewal migration error');}
 };
 window.migrateAmountsToLacs = async function(){
   if(!S.isAdmin){toast('Admin only');return;}
