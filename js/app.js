@@ -1,6 +1,7 @@
 import { S, loadSettings } from "./state.js";
 import { initials, officerColor } from "./utils.js";
-import { subscribeLoans, subscribeNotifications } from "./db.js";
+import { subscribeLoans } from "./db.js";
+import { subscribeNotifications } from "./notifications.js";
 import { render } from "./ui-render.js";
 
 // Import modules to register window actions and side effects
