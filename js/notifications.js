@@ -1,7 +1,8 @@
 import { doc, setDoc, updateDoc, onSnapshot, query, collection, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S } from "./state.js";
-import { fmtAmt, esc, emptyState } from "./utils.js";
+import { fmtAmt, esc, toast } from "./utils.js";
+import { emptyState } from "./ui-components.js";
 import { render } from "./ui-render.js";
 
 export async function requestNotifPermission() {
