@@ -3,7 +3,6 @@ import { db } from "./config.js";
 import { S } from "./state.js";
 import { fmtAmt, esc, toast } from "./utils.js";
 import { emptyState } from "./ui-components.js";
-import { render } from "./ui-render.js";
 
 export async function requestNotifPermission() {
   if ('Notification' in window && Notification.permission === 'default')

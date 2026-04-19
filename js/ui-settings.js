@@ -1,6 +1,5 @@
 import { S, saveSettings } from "./state.js";
 import { esc, toast } from "./utils.js";
-import { render } from "./ui-render.js";
 
 /* ── SETTINGS UI ── */
 export function renderSettingsList() {

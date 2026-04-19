@@ -1,7 +1,7 @@
 import { S } from "./state.js";
 import { fmtAmt, isFreshCC, daysPending } from "./utils.js";
 import { emptyState, compactLoanItem } from "./ui-components.js";
-import { applyFilters, applySort, searchMatch, filterSortBarHtml } from "./ui-render.js";
+import { applyFilters, applySort, searchMatch, filterSortBarHtml } from "./ui-logic.js";
 
 export function renderPending(c) {
   let loans = applyFilters(S.loans.filter(l => l.status === 'pending' && isFreshCC(l) && searchMatch(l)));

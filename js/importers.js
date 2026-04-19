@@ -3,7 +3,7 @@ import { db } from "./config.js";
 import { S, saveSettings } from "./state.js";
 import { todayStr, slugifyId, toast, isFreshCC } from "./utils.js";
 import { ts } from "./db.js";
-import { render, renderSettingsList } from "./ui-render.js";
+import { renderSettingsList } from "./ui-settings.js";
 
 export async function importReturnsFromUrl(url) {
   const res = await fetch(url, { cache: 'no-store' });

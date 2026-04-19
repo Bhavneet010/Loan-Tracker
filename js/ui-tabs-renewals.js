@@ -1,7 +1,7 @@
 import { S } from "./state.js";
 import { todayStr, computeRenewalStatus, isFreshCC, esc, fmtAmt } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
-import { searchMatch, toggleFsMenu } from "./ui-render.js";
+import { searchMatch } from "./ui-logic.js";
 
 export function renderRenewals(c) {
   const enriched = S.loans

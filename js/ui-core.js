@@ -1,5 +1,6 @@
 import { S, PIN, saveSettings, loadSettings } from "./state.js";
-import { render, renderSettingsList, renderDaily } from "./ui-render.js";
+import { renderSettingsList } from "./ui-settings.js";
+import { renderDaily } from "./performance.js";
 import { toast, initials, officerColor, requestNotifPermission } from "./utils.js";
 import { subscribeLoans, subscribeNotifications } from "./db.js";
 

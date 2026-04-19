@@ -3,8 +3,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S, notifReady, setNotifReady } from "./state.js";
-import { updateBadges } from "./ui-render.js";
-import { render } from "./ui-render.js";
+import { updateBadges } from "./ui-stats.js";
 import { notifyLoanChange } from "./notifications.js";
 
 export const newId = () => 'loan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
