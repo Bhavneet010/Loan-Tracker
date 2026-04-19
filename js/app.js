@@ -388,7 +388,7 @@ window.handleCsvUpload = function(e){
           renewalDueDate:obj.renewalDueDate||'',
           receiveDate:baseDate,
           sanctionDate:baseDate,
-          remarks:'Imported via CSV',
+          remarks:'',
           status:'sanctioned',
           createdAt:new Date().toISOString(),createdBy:S.user||'import',
           source:'import:sme_renewal:csv',...ts()
