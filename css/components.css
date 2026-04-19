@@ -62,10 +62,11 @@
 }
 .notif-card.unread{background:rgba(123,111,212,0.05);border-color:rgba(123,111,212,0.15);}
 .notif-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--p-bg);font-size:16px;}
-.notif-body{flex:1;}
-.notif-label{font-size:13px;font-weight:700;color:var(--text1);}
-.notif-meta{font-size:11px;color:var(--text3);margin-top:2px;}
-.notif-time{font-size:10px;color:var(--text3);font-weight:600;}
+.notif-body{flex:1;min-width:0;}
+.notif-top-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px;}
+.notif-name{font-size:13px;font-weight:700;color:var(--text1);flex:1;min-width:0;word-break:break-word;}
+.notif-time{font-size:10px;color:var(--text3);font-weight:600;white-space:nowrap;flex-shrink:0;}
+.notif-meta{font-size:11px;color:var(--text3);white-space:normal;line-height:1.5;word-break:break-word;}
 
 /* ── PERFORMANCE ── */
 .perf-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}

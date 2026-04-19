@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S, saveSettings } from "./state.js";
 import { todayStr, slugifyId, toast, isFreshCC } from "./utils.js";
@@ -18,7 +18,10 @@ export async function importReturnsFromUrl(url) {
     const receiveDate = e.receiveDate || returnedDate;
     const id = `import_returns_${period}_${slugifyId(e.customerName)}`.replace(/-/g, '');
     const existing = await getDoc(doc(db, 'loans', id));
-    if (existing.exists()) { skipped++; continue; }
+    if (existing.exists()) {
+      if (existing.data().isFreshCC === undefined) await updateDoc(doc(db, 'loans', id), { isFreshCC: true, ...ts() });
+      skipped++; continue;
+    }
     await setDoc(doc(db, 'loans', id), {
       allocatedTo: e.allocatedTo,
       category: e.category,
@@ -28,6 +31,7 @@ export async function importReturnsFromUrl(url) {
       receiveDate, returnedDate,
       remarks: e.remarks || '',
       status: 'returned',
+      isFreshCC: true,
       createdAt: new Date().toISOString(),
       createdBy: S.user || 'import',
       source: `import:returns:${period}`,
@@ -186,4 +190,50 @@ window.wipeSanctionedFreshLoans = async function () {
     const btn = document.getElementById('wipeFreshBtn');
     if (btn) { btn.disabled = false; btn.textContent = '🗑️ Wipe All Sanctioned Fresh Loans'; }
   }
+};
+
+async function importSanctionedFromUrl(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to load ' + url);
+  const payload = await res.json();
+  const period = payload.period || 'unknown';
+  const entries = Array.isArray(payload.entries) ? payload.entries : [];
+  let added = 0, skipped = 0;
+  for (const e of entries) {
+    const id = `import_sanctioned_${period}_${slugifyId(e.customerName)}`.replace(/-/g, '');
+    const existing = await getDoc(doc(db, 'loans', id));
+    if (existing.exists()) { skipped++; continue; }
+    await setDoc(doc(db, 'loans', id), {
+      allocatedTo: e.allocatedTo,
+      category: e.category || 'Agriculture',
+      branch: e.branch,
+      customerName: (e.customerName || '').toUpperCase(),
+      amount: parseFloat(e.amount) || 0,
+      receiveDate: e.receiveDate || '',
+      sanctionDate: e.sanctionDate || '',
+      remarks: e.remarks || '',
+      status: 'sanctioned',
+      isFreshCC: true,
+      manuallyCreated: false,
+      createdAt: new Date().toISOString(),
+      createdBy: S.user || 'import',
+      source: `import:sanctioned:${period}`,
+      ...ts()
+    });
+    added++;
+  }
+  return { added, skipped, total: entries.length, label: payload.label || period };
+}
+
+window.importMonthlySanctioned = async function () {
+  if (!S.isAdmin) { toast('Admin only'); return; }
+  const url = 'data/sanctioned-2026-04.json';
+  if (!confirm('Import April 2026 sanctioned loans into Firestore? Existing entries (matched by customer) will be skipped.')) return;
+  const btn = document.getElementById('importSanctionedBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Importing...'; }
+  try {
+    const r = await importSanctionedFromUrl(url);
+    toast(`${r.label}: ${r.added} added, ${r.skipped} skipped`);
+  } catch (e) { console.error(e); toast('Import failed'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '📥 Import April 2026 sanctioned'; } }
 };

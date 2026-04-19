@@ -67,14 +67,16 @@ export function renderNotifOverlay() {
   }
   c.innerHTML = notifs.map(n => {
     const unread = !(n.readBy || []).includes(S.user);
+    const byWhom = n.by || n.allocatedTo || '';
     return `<div class="notif-card${unread ? ' unread' : ''}">
       <div class="notif-icon ${typeCls[n.type] || ''}">${typeIcon[n.type] || '•'}</div>
       <div class="notif-body">
-        <div class="notif-label">${typeLabel[n.type] || n.type}</div>
-        <div class="notif-name">${esc(n.customerName)} · ₹${fmtAmt(n.amount)}L</div>
-        <div class="notif-meta">${esc(n.branch || '')} · ${esc(n.category || '')} · ${esc(n.allocatedTo || '')} · by ${esc(n.by || '')}</div>
+        <div class="notif-top-row">
+          <div class="notif-name">${esc(n.customerName)}</div>
+          <div class="notif-time">${timeAgo(n.timestamp)}</div>
+        </div>
+        <div class="notif-meta">${typeLabel[n.type] || n.type} · ₹${fmtAmt(n.amount)}L · by ${esc(byWhom)}</div>
       </div>
-      <div class="notif-time">${timeAgo(n.timestamp)}</div>
     </div>`;
   }).join('');
 }
@@ -136,14 +138,16 @@ export function renderNotifications(c) {
   }
   const cards = notifs.map(n => {
     const unread = !(n.readBy || []).includes(S.user);
+    const byWhom = n.by || n.allocatedTo || '';
     return `<div class="notif-card${unread ? ' unread' : ''}">
       <div class="notif-icon ${typeCls[n.type] || ''}">${typeIcon[n.type] || '•'}</div>
       <div class="notif-body">
-        <div class="notif-label">${typeLabel[n.type] || n.type}</div>
-        <div class="notif-name">${esc(n.customerName)} · ₹${fmtAmt(n.amount)}L</div>
-        <div class="notif-meta">${esc(n.branch || '')} · ${esc(n.category || '')} · ${esc(n.allocatedTo || '')} · by ${esc(n.by || '')}</div>
+        <div class="notif-top-row">
+          <div class="notif-name">${esc(n.customerName)}</div>
+          <div class="notif-time">${timeAgo(n.timestamp)}</div>
+        </div>
+        <div class="notif-meta">${typeLabel[n.type] || n.type} · ₹${fmtAmt(n.amount)}L · by ${esc(byWhom)}</div>
       </div>
-      <div class="notif-time">${timeAgo(n.timestamp)}</div>
     </div>`;
   }).join('');
   c.innerHTML = `<div class="sec-head">
