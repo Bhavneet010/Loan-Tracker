@@ -798,7 +798,7 @@ window.clearAllSmeRenewals = async function(){
     
     for(const docSnap of snap.docs){
       const data = docSnap.data();
-      if(data.category === 'SME') {
+      if(data.category === 'SME' && !isFreshCC(data)) {
         await deleteDoc(doc(db,'loans',docSnap.id));
         deletedCount++;
       }
