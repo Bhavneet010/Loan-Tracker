@@ -1,5 +1,5 @@
-const CACHE = 'nirnay-v7';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './css/base.css', './css/layout.css', './css/components.css', './css/theme.css'];
+const CACHE = 'nirnay-v8';
+const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './css/styles.css'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
