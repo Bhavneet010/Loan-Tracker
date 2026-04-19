@@ -155,3 +155,12 @@ window.markRenewalDone = async function(id) {
     toast('Renewal marked done ✓');
   } catch (e) { toast('Error'); }
 };
+
+window.undoRenewalDone = async function(id) {
+  const l = S.loans.find(x => x.id === id); if (!l) return;
+  if (!confirm(`Undo renewal for ${l.customerName}? It will return to overdue/due-soon.`)) return;
+  try {
+    await updateLoan(id, { renewedDate: '' });
+    toast('Renewal undone');
+  } catch (e) { toast('Error'); }
+};

@@ -119,7 +119,7 @@ export function renewalItemHtml(loan, rs) {
           </button>
           <div class="rnw-sub-actions">
             <button class="btn btn-edit-icon" onclick="editLoan('${loan.id}')" title="Edit">✎</button>
-            ${S.isAdmin ? `<button class="btn btn-del-icon" onclick="deleteLoan('${loan.id}')" title="Delete">🗑</button>` : ''}
+            ${S.isAdmin ? `<button class="btn btn-del-icon" onclick="${S.renewalTab === 'done' ? `undoRenewalDone('${loan.id}')` : `deleteLoan('${loan.id}')`}" title="${S.renewalTab === 'done' ? 'Undo Renewal Done' : 'Delete'}">🗑</button>` : ''}
           </div>
         </div>
         <div class="loan-collapse" onclick="toggleExpand('${itemId}')">▲ hide details</div>
