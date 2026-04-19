@@ -831,9 +831,9 @@ body.dark .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.18)
   display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;
   overflow-x:unset;padding:8px 10px 10px;gap:6px;
 }
-.stats-scroll.rnw-grid .stat{padding:7px 8px;}
-.stats-scroll.rnw-grid .stat-v{font-size:15px;}
-.stats-scroll.rnw-grid .stat-s{font-size:9px;}
+.stats-scroll.rnw-grid .stat{padding:4px 6px;}
+.stats-scroll.rnw-grid .stat-v{font-size:14px;margin-top:1px;}
+.stats-scroll.rnw-grid .stat-s{font-size:8px;}
 /* Renewal card tints — match agri row palette, black text */
 .rnw-stat-card{color:#111;}
 .rnw-stat-card .stat-l{color:rgba(0,0,0,0.5);}

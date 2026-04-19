@@ -883,7 +883,7 @@ function updateHero(){
     };
     sc.classList.add('rnw-grid');
     sc.innerHTML=
-      rnwStat('done',    `Renewals Done ${monthName}`, done,    'rnw-grad-green',  '♻',                   '')+
+      rnwStat('done',    `Renewals Done ${monthName}`, done,    'rnw-grad-green',  '',                   '')+
       rnwStat('due-soon','Due Soon',                   dueSoon, 'rnw-grad-amber',  dueSoon.length?`${dueSoon.length} pending`:'','stat-badge-warn')+
       rnwStat('overdue', 'Overdue',                    overdue, 'rnw-grad-red',    overdue.length?'Action needed':'',             'stat-badge-danger')+
       rnwStat('npa-risk','NPA Risk',                   npaRisk, 'rnw-grad-darkred',npaRisk.length?'⚠ Critical':'',               'stat-badge-danger');
