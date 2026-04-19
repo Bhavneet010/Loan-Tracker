@@ -830,15 +830,16 @@ function updateHero(){
   const sc=document.getElementById('statsScroll');
   if(S.appMode==='renewals'){
     const thisMonth=todayStr().slice(0,7);
+    const monthName='Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(thisMonth.slice(5))-1];
     const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
     const done    =sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth));
     const dueSoon =sme.filter(l=>l._rs.status==='due-soon');
     const overdue =sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
     const npaRisk =sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
     const amt=arr=>arr.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
-    const rnwStat=(tab,label,arr,badge,badgeCls)=>{
+    const rnwStat=(tab,label,arr,gradCls,badge,badgeCls)=>{
       const active=S.renewalTab===tab;
-      return `<div class="stat${active?' stat-rnw-active':''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
+      return `<div class="stat rnw-stat-card ${gradCls}${active?' stat-rnw-active':''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
         <div class="stat-l">${label}</div>
         <div class="stat-v">₹${fmtAmt(amt(arr))}L</div>
         <div class="stat-s">${arr.length} accounts</div>
@@ -847,10 +848,10 @@ function updateHero(){
     };
     sc.classList.add('rnw-grid');
     sc.innerHTML=
-      rnwStat('done',    'Done This Month', done,    done.length?'✓ Renewed':'',  '')+
-      rnwStat('due-soon','Due Soon',        dueSoon, dueSoon.length?`${dueSoon.length} pending`:'', 'stat-badge-warn')+
-      rnwStat('overdue', 'Overdue',         overdue, overdue.length?'Action needed':'', 'stat-badge-danger')+
-      rnwStat('npa-risk','NPA Risk',        npaRisk, npaRisk.length?'⚠ Critical':'',   'stat-badge-danger');
+      rnwStat('done',    `Renewals Done ${monthName}`, done,    'rnw-grad-green',  '',                                           '')+
+      rnwStat('due-soon','Due Soon',                   dueSoon, 'rnw-grad-amber',  dueSoon.length?`${dueSoon.length} pending`:'','stat-badge-warn')+
+      rnwStat('overdue', 'Overdue',                    overdue, 'rnw-grad-red',    overdue.length?'Action needed':'',             'stat-badge-danger')+
+      rnwStat('npa-risk','NPA Risk',                   npaRisk, 'rnw-grad-darkred',npaRisk.length?'⚠ Critical':'',               'stat-badge-danger');
     return;
   }
   sc.classList.remove('rnw-grid');

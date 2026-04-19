@@ -822,16 +822,24 @@ body.dark .loan-item.rnw-s-due-soon > .loan-row {background:rgba(245,158,11,0.13
 body.dark .loan-item.rnw-s-pending  > .loan-row {background:rgba(239,68,68,0.13);}
 body.dark .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.18);}
 
-/* Renewal stat card active highlight */
-.stat.stat-rnw-active {box-shadow:0 0 0 2px var(--p2);background:var(--p-bg);}
+/* Renewal stat card active highlight (overridden by rnw-stat-card version below) */
 /* Stat badge color variants */
 .stat-badge-warn   {background:rgba(245,158,11,0.18);color:#B45309;}
 .stat-badge-danger {background:rgba(239,68,68,0.18);color:#B91C1C;}
 /* Renewal 2×2 grid layout */
 .stats-scroll.rnw-grid{
-  display:grid;grid-template-columns:1fr 1fr;
+  display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;
   overflow-x:unset;padding:8px 10px 10px;gap:6px;
 }
 .stats-scroll.rnw-grid .stat{padding:7px 8px;}
 .stats-scroll.rnw-grid .stat-v{font-size:15px;}
 .stats-scroll.rnw-grid .stat-s{font-size:9px;}
+/* Renewal card gradients */
+.rnw-stat-card{border:none;color:#fff;}
+.rnw-stat-card .stat-l{color:rgba(255,255,255,0.75);}
+.rnw-stat-card .stat-s{color:rgba(255,255,255,0.7);}
+.rnw-grad-green  {background:linear-gradient(135deg,#10B981,#047857);}
+.rnw-grad-amber  {background:linear-gradient(135deg,#F59E0B,#B45309);}
+.rnw-grad-red    {background:linear-gradient(135deg,#EF4444,#B91C1C);}
+.rnw-grad-darkred{background:linear-gradient(135deg,#7F1D1D,#450a0a);}
+.stat.stat-rnw-active{box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(0,0,0,0.25);}
