@@ -264,6 +264,89 @@ window.importMonthlyReturns = async function(){
   finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 returns'; } }
 };
 
+/* ── CSV UPLOADER ── */
+window.triggerCsvUpload = function(){
+  if(!S.isAdmin){toast('Admin only');return;}
+  const f = document.getElementById('csvFileInput');
+  if(f) { f.value=''; f.click(); }
+};
+
+window.handleCsvUpload = function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(ev){
+    try {
+      const text = ev.target.result;
+      const rows = text.split('\n').filter(Boolean);
+      if(rows.length < 2) { toast('Empty CSV'); return; }
+      
+      const header = rows[0].split(',').map(c=>c.toUpperCase().trim());
+      let added=0, skipped=0;
+      const btn = document.getElementById('importCsvBtn');
+      if(btn) { btn.disabled=true; btn.textContent='Importing...'; }
+      
+      for(let i=1; i<rows.length; i++){
+        let cols = [];
+        let cur = '', inQuote = false;
+        for(let j=0; j<rows[i].length; j++) {
+          const c=rows[i][j];
+          if(c==='"' && rows[i][j+1]==='"') { cur+='"'; j++; }
+          else if(c==='"') inQuote=!inQuote;
+          else if(c===',' && !inQuote) { cols.push(cur); cur=''; }
+          else cur+=c;
+        }
+        cols.push(cur);
+        cols = cols.map(c=>c.trim());
+        
+        let obj = {};
+        header.forEach((h, idx)=> {
+           const val = cols[idx] || '';
+           if(h.includes('NAME')) obj.customerName = val;
+           else if(h.includes('AMOUNT')) obj.amount = parseFloat(val.replace(/[^0-9.]/g,''))||0;
+           else if(h.includes('SANCTION') || h.includes('DATE')) obj.sanctionDate = val;
+           else if(h.includes('ALLOCATED') || h.includes('OFFICER')) obj.allocatedTo = val;
+           else if(h.includes('BRANCH')) obj.branch = val;
+        });
+        
+        if(!obj.customerName || !obj.sanctionDate) continue;
+        
+        // Convert dates if format is DD-MM-YYYY to YYYY-MM-DD
+        let sDate = obj.sanctionDate.trim();
+        if(sDate.match(/^\d{2}-\d{2}-\d{4}$/)) {
+           const p = sDate.split('-'); sDate = `${p[2]}-${p[1]}-${p[0]}`;
+        } else if(sDate.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+           const p = sDate.split('/'); sDate = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+        }
+        
+        const id=('import_sme_csv_'+slugifyId(obj.customerName)).replace(/-/g,'');
+        const existing=await getDoc(doc(db,'loans',id));
+        if(existing.exists()){skipped++;continue;}
+        await setDoc(doc(db,'loans',id),{
+          allocatedTo:obj.allocatedTo||'',
+          category:'SME', branch:obj.branch||'',
+          customerName:obj.customerName.toUpperCase(),
+          amount:obj.amount||0,
+          receiveDate:sDate,
+          sanctionDate:sDate,
+          remarks:'Imported via CSV',
+          status:'sanctioned',
+          createdAt:new Date().toISOString(),createdBy:S.user||'import',
+          source:'import:sme_renewal:csv',...ts()
+        });
+        added++;
+      }
+      toast(`CSV Import: ${added} added, ${skipped} skipped`);
+      if(btn) { btn.disabled=false; btn.textContent='📥 Upload CSV (CC Accounts)'; }
+    } catch(err) {
+      console.error(err); toast('Error parsing CSV');
+      const btn = document.getElementById('importCsvBtn');
+      if(btn) { btn.disabled=false; btn.textContent='📥 Upload CSV (CC Accounts)'; }
+    }
+  };
+  reader.readAsText(file);
+};
+
 async function importPendingFromUrl(url){
   const res=await fetch(url,{cache:'no-store'});
   if(!res.ok) throw new Error('Failed to load '+url);
@@ -489,7 +572,7 @@ function updateBadges(){
   setB('b-rnw-done',    sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!isFreshCC(l)).length);
   setB('b-rnw-due-soon',sme.filter(l=>l._rs.status==='due-soon').length);
   setB('b-rnw-overdue', sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa').length);
-  setB('b-rnw-npa-risk',sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30).length);
+  setB('b-rnw-all-cc',sme.length);
 }
 
 /* ── USER ── */
@@ -610,7 +693,9 @@ function renderSettingsList(){
       </div>
       <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>
       <button type="button" id="importPendingBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;" onclick="importMonthlyPending()">📥 Import April 2026 pending (SME)</button>
-      <button type="button" id="importSmeRenewalsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importSmeRenewals()">📥 Import SME CC Renewals</button>`;
+      <button type="button" id="importSmeRenewalsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importSmeRenewals()">📥 Import SME CC JSON</button>
+      <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCsvUpload(event)">
+      <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">📥 Upload CSV (CC Accounts)</button>`;
   }
 }
 window.addOfficer = async function(){
@@ -870,7 +955,7 @@ function updateHero(){
     const done    =sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!isFreshCC(l));
     const dueSoon =sme.filter(l=>l._rs.status==='due-soon');
     const overdue =sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
-    const npaRisk =sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
+    const allAccounts = sme;
     const amt=arr=>arr.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
     const rnwStat=(tab,label,arr,gradCls,badge,badgeCls)=>{
       const active=S.renewalTab===tab;
@@ -886,7 +971,7 @@ function updateHero(){
       rnwStat('done',    `Renewals Done ${monthName}`, done,    'rnw-grad-green',  '',                   '')+
       rnwStat('due-soon','Due Soon',                   dueSoon, 'rnw-grad-amber',  dueSoon.length?`${dueSoon.length} pending`:'','stat-badge-warn')+
       rnwStat('overdue', 'Overdue',                    overdue, 'rnw-grad-red',    overdue.length?'Action needed':'',             'stat-badge-danger')+
-      rnwStat('npa-risk','NPA Risk',                   npaRisk, 'rnw-grad-darkred',npaRisk.length?'⚠ Critical':'',               'stat-badge-danger');
+      rnwStat('all','All CC Accounts',               allAccounts, 'rnw-grad-darkred','','');
     return;
   }
   sc.classList.remove('rnw-grid');
@@ -1200,7 +1285,7 @@ function renderRenewals(c){
     'done':     {title:'Done This Month',    empty:'♻','msg':'No SME renewals completed this month'},
     'due-soon': {title:'Due for Renewal Soon',empty:'⏰',msg:'No accounts due within 30 days'},
     'overdue':  {title:'Renewal Overdue',    empty:'⚠', msg:'No overdue renewal accounts'},
-    'npa-risk': {title:'NPA Risk (≤30 days)',empty:'🔴',msg:'No accounts approaching NPA threshold'},
+    'all':      {title:'All CC Accounts',    empty:'📋',msg:'No CC accounts found'},
   }[S.renewalTab]||{title:'SME CC Renewals',empty:'♻',msg:'No renewals found'};
   const list=sorted.length===0
     ?emptyState(tabMeta.empty,tabMeta.title,tabMeta.msg)
@@ -1233,7 +1318,7 @@ function applyRenewalTabFilter(enriched){
   if(S.renewalTab==='done')      return enriched.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!isFreshCC(l));
   if(S.renewalTab==='due-soon')  return enriched.filter(l=>l._rs.status==='due-soon');
   if(S.renewalTab==='overdue')   return enriched.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
-  if(S.renewalTab==='npa-risk')  return enriched.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
+  if(S.renewalTab==='all')       return enriched;
   return enriched;
 }
 
