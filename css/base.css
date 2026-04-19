@@ -9,8 +9,7 @@
   --red:#B91C1C;   --red-bg:rgba(239,68,68,0.10);   --red-bd:rgba(239,68,68,0.25);
   --r:14px; --rl:20px;
   
-  /* Typography Scale */
-  --f-body: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  --f-body: 'Inter', -apple-system, sans-serif;
   --f-head: 'Outfit', sans-serif;
 }
 
@@ -23,7 +22,6 @@ html,body{
   color:var(--text1);
 }
 
-/* ── LAVENDER BACKGROUND ── */
 body::before{
   content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
@@ -33,12 +31,30 @@ body::before{
     linear-gradient(160deg,#C9C4EE 0%,#B8B0E2 60%,#C2BCE8 100%);
 }
 
-body::after{
-  content:'';position:fixed;top:0;left:0;right:0;height:50vh;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(circle at 15% 10%,#C4BCE8 0%,transparent 45%),
-    radial-gradient(circle at 90% 25%,#C8C0EC 0%,transparent 50%),
-    linear-gradient(160deg,#C9C4EE 0%,#B8B0E2 100%);
+#app{position:relative;z-index:1;max-width:700px;margin:0 auto;padding-bottom:90px;}
+
+/* ── COMMON UTILS ── */
+.tag{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;}
+.tag.sme  {background:var(--p-bg);color:var(--p1);border:1px solid var(--p-bd);}
+.tag.agri {background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.tag.edu  {background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.tag.date {background:rgba(107,95,191,0.06);color:var(--text3);border:1px solid rgba(107,95,191,0.12);}
+.tag.overdue {background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.tag.officer {background:rgba(255,255,255,0.6);border:1px solid rgba(107,95,191,0.15);color:var(--text2);}
+
+.btn{
+  padding:10px;border-radius:11px;font-size:12px;font-weight:700;
+  cursor:pointer;border:none;text-align:center;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn:active { transform: scale(0.95); }
+.btn-primary-full{
+  background:linear-gradient(135deg,var(--p2),var(--p1));
+  color:white;box-shadow:0 4px 12px rgba(107,95,191,0.3);
 }
 
-#app{position:relative;z-index:1;max-width:700px;margin:0 auto;padding-bottom:90px;}
+/* ── SECTION HEADER ── */
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;padding:16px 4px 10px;}
+.sec-title{font-size:18px;font-weight:800;color:var(--text2);font-family:var(--f-head);letter-spacing:-0.4px;}
+.sec-count{font-size:13px;color:var(--text3);font-weight:600;}

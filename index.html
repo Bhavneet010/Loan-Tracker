@@ -222,23 +222,6 @@
   </div>
 </div>
 
-<!-- DIAGNOSTIC -->
-<script>
-  window.onerror = function(msg, url, line, col, error) {
-    const errDiv = document.createElement('div');
-    errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:#fee2e2;color:#991b1b;padding:16px;z-index:99999;font-family:monospace;font-size:12px;border-bottom:2px solid #ef4444;';
-    errDiv.innerHTML = '<b>FATAL ERROR:</b> ' + msg + '<br><small>' + url + ':' + line + ':' + col + '</small>';
-    document.body.appendChild(errDiv);
-  };
-  window.onunhandledrejection = function(event) {
-    console.error('Unhandled rejection:', event.reason);
-    const errDiv = document.createElement('div');
-    errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:#ffedd5;color:#9a3412;padding:16px;z-index:99999;font-family:monospace;font-size:12px;border-bottom:2px solid #f97316;';
-    errDiv.innerHTML = '<b>PROMISE REJECTION:</b> ' + (event.reason ? event.reason.message || event.reason : 'Unknown error');
-    document.body.appendChild(errDiv);
-  };
-</script>
-
 <!-- FIREBASE + LOGIC -->
 <script type="module" src="js/app.js"></script>
 

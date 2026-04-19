@@ -1,55 +1,53 @@
-/* ── DARK MODE ── */
+/* ── DARK MODE OVERRIDES ── */
 body.dark{--text1:#E8E6F4;--text2:#B8B0E4;--text3:rgba(232,230,244,0.58);}
-body.dark::before,body.dark::after{
-  background:radial-gradient(circle at 15% 10%,#2A254E 0%,transparent 45%),
+
+body.dark::before{
+  background:
+    radial-gradient(circle at 15% 10%,#2A254E 0%,transparent 45%),
     radial-gradient(circle at 90% 25%,#201C42 0%,transparent 50%),
     linear-gradient(160deg,#1A1835 0%,#12102C 60%,#1C1A38 100%);
 }
-body.dark .header{background:rgba(18,16,40,0.8);}
-body.dark .panel{background:#1A1835;}
+
+body.dark .header{background:rgba(18,16,40,0.8);border-color:rgba(255,255,255,0.1);}
+body.dark .panel{background:#1A1835;box-shadow:0 -6px 20px rgba(0,0,0,0.3);}
+body.dark .tab{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);}
+body.dark .search-inp, body.dark .input-light{background:rgba(255,255,255,0.05);color:white;border-color:rgba(255,255,255,0.1);}
+body.dark .loan-row, body.dark .loan-card{background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08);}
+body.dark .stat{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);}
+body.dark .sheet, body.dark .modal-card{background:#1A1835;color:white;}
+body.dark .fs-btn{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:var(--text2);}
+body.dark .fs-pop{background:#2A254E;border-color:rgba(255,255,255,0.1);}
 
 /* ── SPLASH SCREEN ── */
 #nirnay-splash {
   position:fixed;inset:0;z-index:9999;
   background:linear-gradient(175deg,#06030f 0%,#130530 40%,#2a0f6e 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:20px;font-family: var(--f-head);transition:opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  gap:20px;font-family:var(--f-head);transition:opacity 0.8s ease;
 }
-
 .splash-logo {
   width:110px;height:110px;border-radius:27px;
   background:radial-gradient(circle at 30% 30%,#3a1586 0%,#0f0425 70%);
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 12px 36px rgba(138,92,255,0.5);
-  animation:nirnay-pop 1.2s cubic-bezier(0.34,1.56,0.64,1);
+  animation:splashPop 1.2s cubic-bezier(0.34,1.56,0.64,1);
 }
+@keyframes splashPop{0%{transform:scale(0.7);opacity:0;}100%{transform:scale(1);opacity:1;}}
 
-#nirnay-splash h1 { margin:0;font-size:32px;font-weight:800;color:#fff;letter-spacing:-0.8px; font-family: var(--f-head); }
+#nirnay-splash h1 { margin:0;font-size:32px;font-weight:800;color:#fff;letter-spacing:-0.8px; }
 #nirnay-splash h1 em { color:#c4b5fd;font-style:italic;font-weight:400; }
-#nirnay-splash p { margin:0;font-size:10px;color:#8b72d4;letter-spacing:4px;font-weight:600; text-transform: uppercase; }
+#nirnay-splash p { margin:0;font-size:10px;color:#8b72d4;letter-spacing:4px;font-weight:600;text-transform:uppercase; }
 
-.splash-loader {
-  width:56px;height:2px;background:rgba(255,255,255,0.1);
-  border-radius:10px;overflow:hidden;position:relative;
-}
-
+.splash-loader { width:56px;height:2px;background:rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;position:relative; }
 .splash-shimmer {
   position:absolute;top:0;left:-100%;width:50%;height:100%;
   background:linear-gradient(90deg,transparent,#a78bfa,transparent);
   animation:nirnay-shimmer 1.8s infinite;
 }
-
-@keyframes nirnay-pop{0%{transform:scale(0.7);opacity:0;}100%{transform:scale(1);opacity:1;}}
 @keyframes nirnay-shimmer{to{left:200%;}}
 
-/* ── MODE SPECIFIC TINTS ── */
-.rnw-grad-green  {background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.35);}
-.rnw-grad-amber  {background:rgba(245,158,11,0.18);  border:1px solid rgba(245,158,11,0.35);}
-.rnw-grad-red    {background:rgba(239,68,68,0.18);   border:1px solid rgba(239,68,68,0.35);}
-.rnw-grad-darkred{background:rgba(127,29,29,0.18);   border:1px solid rgba(127,29,29,0.35);}
-
-/* ── ANIMATIONS ── */
-.fade-up {
-  animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* ── MODE TINTS ── */
+.rnw-grad-green  {background:rgba(16,185,129,0.1);}
+.rnw-grad-amber  {background:rgba(245,158,11,0.1);}
+.rnw-grad-red    {background:rgba(239,68,68,0.1);}
+.rnw-grad-darkred{background:rgba(127,29,29,0.1);}
