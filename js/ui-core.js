@@ -2,8 +2,8 @@ import { S, PIN, saveSettings, loadSettings } from "./state.js";
 import { renderSettingsList } from "./ui-settings.js";
 import { renderDaily } from "./performance.js";
 import { toast, initials, officerColor } from "./utils.js";
-import { subscribeLoans, subscribeNotifications } from "./db.js";
-import { requestNotifPermission } from "./notifications.js";
+import { subscribeLoans } from "./db.js";
+import { requestNotifPermission, subscribeNotifications } from "./notifications.js";
 
 window.toggleDark = function () {
   S.dark = !S.dark;
