@@ -93,10 +93,14 @@ function computeRenewalStatus(loan) {
   } else if (loan.limitExpiryDate) {
     msDue = new Date(loan.limitExpiryDate).getTime();
     msStart = msDue - 365*86400000;
-  } else {
+  } else if (loan.sanctionDate) {
     msStart = new Date(loan.sanctionDate).getTime();
     msDue = msStart + 365*86400000;
+  } else {
+    return null;
   }
+
+  if (isNaN(msDue) || isNaN(msStart)) return null;
 
   const daysSinceSanction = Math.floor((now - msStart) / 86400000);
   const msNpa = msDue + 181*86400000;
