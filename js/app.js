@@ -1081,9 +1081,9 @@ function updateHero(){
     return;
   }
   sc.classList.remove('rnw-grid');
-  const pending   = S.loans.filter(l=>l.status==='pending');
-  const sanctioned= S.loans.filter(l=>l.status==='sanctioned');
-  const returned  = S.loans.filter(l=>l.status==='returned');
+  const pending   = S.loans.filter(l=>l.status==='pending' && isFreshCC(l));
+  const sanctioned= S.loans.filter(l=>l.status==='sanctioned' && isFreshCC(l));
+  const returned  = S.loans.filter(l=>l.status==='returned' && isFreshCC(l));
   const pAmt = pending.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const sAmt = sanctioned.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const rAmt = returned.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
@@ -1435,9 +1435,9 @@ let perfLbPeriod = 'month';
 
 function renderDaily(c){
   const td=todayStr(), thisMonth=td.slice(0,7);
-  const todayL=S.loans.filter(l=>l.status==='sanctioned'&&l.sanctionDate===td);
-  const monthL=S.loans.filter(l=>l.status==='sanctioned'&&(l.sanctionDate||'').startsWith(thisMonth));
-  const pendingL=S.loans.filter(l=>l.status==='pending');
+  const todayL=S.loans.filter(l=>l.status==='sanctioned'&&l.sanctionDate===td && isFreshCC(l));
+  const monthL=S.loans.filter(l=>l.status==='sanctioned'&&(l.sanctionDate||'').startsWith(thisMonth) && isFreshCC(l));
+  const pendingL=S.loans.filter(l=>l.status==='pending' && isFreshCC(l));
   const tAmt=todayL.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const mAmt=monthL.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const pAmt=pendingL.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
