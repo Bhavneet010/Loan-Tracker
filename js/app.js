@@ -21,8 +21,11 @@ const db  = getFirestore(app);
 const S = {
   user:null, isAdmin:false,
   tab:'pending', settingsTab:'officers', search:'', dark:false,
+  appMode:'fresh',
   filter:{ category:'All', officer:'All' },
   sort:{ field:'date', dir:'desc' },
+  renewalFilter:{ status:'All', officer:'All', branch:'All' },
+  renewalSort:{ field:'daysFromSanction', dir:'desc' },
   openPop:null,
   loans:[], notifications:[],
   officers:['Anchal','Nikita','Ritika'],
@@ -66,6 +69,20 @@ function toast(msg) {
 }
 
 const daysPending = d => !d ? 0 : Math.floor((Date.now()-new Date(d).getTime())/86400000);
+
+function computeRenewalStatus(loan) {
+  if (!loan.sanctionDate) return null;
+  const days = Math.floor((Date.now() - new Date(loan.sanctionDate).getTime()) / 86400000);
+  const ms = new Date(loan.sanctionDate).getTime();
+  const dueDateStr = new Date(ms + 365*86400000).toISOString().slice(0,10);
+  const npaDateStr = new Date(ms + 546*86400000).toISOString().slice(0,10);
+  let status, daysUntilDue=0, daysOverdue=0, daysUntilNpa=0;
+  if      (days < 335) { status='active';          daysUntilDue=365-days; daysUntilNpa=546-days; }
+  else if (days <=365) { status='due-soon';        daysUntilDue=365-days; daysUntilNpa=546-days; }
+  else if (days <=546) { status='pending-renewal'; daysOverdue=days-365;  daysUntilNpa=546-days; }
+  else                 { status='npa';             daysOverdue=days-365; }
+  return { status, daysSinceSanction:days, daysUntilDue, daysOverdue, daysUntilNpa, dueDateStr, npaDateStr };
+}
 
 async function requestNotifPermission(){
   if('Notification' in window && Notification.permission==='default')
@@ -136,6 +153,14 @@ window.clearNotifications = async function(){
   toast('Notifications cleared');
 };
 window.handleSearch = v=>{ S.search=v.toLowerCase().trim(); render(); };
+
+window.setAppMode = function(v){
+  S.appMode=v; S.openPop=null;
+  localStorage.setItem('lpMode',v);
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.id==='modeBtn-'+v));
+  document.getElementById('mainTabs').style.display=v==='fresh'?'':'none';
+  render();
+};
 
 /* ── FIREBASE SETTINGS ── */
 async function loadSettings() {
@@ -275,6 +300,47 @@ window.importMonthlyPending = async function(){
   finally { if(btn){ btn.disabled=false; btn.textContent='📥 Import April 2026 pending (SME)'; } }
 };
 
+/* ── SME CC RENEWAL IMPORT ── */
+async function importSmeRenewalsFromUrl(url){
+  const res=await fetch(url,{cache:'no-store'});
+  if(!res.ok) throw new Error('Failed to load '+url);
+  const payload=await res.json();
+  const period=payload.period||'unknown';
+  const entries=Array.isArray(payload.entries)?payload.entries:[];
+  let added=0,skipped=0,errors=0;
+  for(const e of entries){
+    if(!e.sanctionDate){errors++;continue;}
+    const id=('import_sme_renewal_'+period+'_'+slugifyId(e.customerName)).replace(/-/g,'');
+    const existing=await getDoc(doc(db,'loans',id));
+    if(existing.exists()){skipped++;continue;}
+    await setDoc(doc(db,'loans',id),{
+      allocatedTo:e.allocatedTo,category:'SME',branch:e.branch,
+      customerName:(e.customerName||'').toUpperCase(),
+      amount:parseFloat(e.amount)||0,
+      receiveDate:e.receiveDate||e.sanctionDate,
+      sanctionDate:e.sanctionDate,
+      remarks:e.remarks||'',status:'sanctioned',
+      createdAt:new Date().toISOString(),createdBy:S.user||'import',
+      source:'import:sme_renewal:'+period,...ts()
+    });
+    added++;
+  }
+  return{added,skipped,errors,total:entries.length,label:payload.label||period};
+}
+window.importSmeRenewals = async function(){
+  if(!S.isAdmin){toast('Admin only');return;}
+  const url=prompt('Enter JSON file path (e.g. data/renewals-sme-2025.json):');
+  if(!url) return;
+  if(!confirm('Import SME CC historical sanctions from:\n'+url+'\n\nExisting entries will be skipped.')) return;
+  const btn=document.getElementById('importSmeRenewalsBtn');
+  if(btn){btn.disabled=true;btn.textContent='Importing…';}
+  try{
+    const r=await importSmeRenewalsFromUrl(url);
+    toast(`${r.label}: ${r.added} added, ${r.skipped} skipped${r.errors?', '+r.errors+' missing sanction date':''}`);
+  }catch(e){console.error(e);toast('Import failed: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='📥 Import SME CC Renewals';}}
+};
+
 /* ── NOTIFICATIONS ── */
 async function createNotification(type, loan){
   const id='n_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
@@ -402,6 +468,13 @@ function updateBadges(){
   document.getElementById('b-pending').textContent    = S.loans.filter(l=>l.status==='pending').length;
   document.getElementById('b-sanctioned').textContent = S.loans.filter(l=>l.status==='sanctioned').length;
   document.getElementById('b-returned').textContent   = S.loans.filter(l=>l.status==='returned').length;
+  const urgent = S.loans.filter(l=>{
+    if(l.category!=='SME'||!l.sanctionDate) return false;
+    const rs=computeRenewalStatus(l);
+    return rs && rs.status!=='active';
+  }).length;
+  const rnwEl=document.getElementById('b-renewals');
+  if(rnwEl) rnwEl.textContent=urgent||'';
 }
 
 /* ── USER ── */
@@ -518,10 +591,11 @@ function renderSettingsList(){
   } else if(S.settingsTab==='import'){
     el.innerHTML=`
       <div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.5;">
-        Bulk-import April 2026 data from the <code>data/</code> folder. Existing entries (matched by customer) are skipped, so each import is safe to re-run.
+        Bulk-import loan data from the <code>data/</code> folder. Existing entries (matched by customer) are skipped, so each import is safe to re-run.
       </div>
       <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>
-      <button type="button" id="importPendingBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;" onclick="importMonthlyPending()">📥 Import April 2026 pending (SME)</button>`;
+      <button type="button" id="importPendingBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;margin-bottom:10px;" onclick="importMonthlyPending()">📥 Import April 2026 pending (SME)</button>
+      <button type="button" id="importSmeRenewalsBtn" class="btn btn-primary-full" style="width:100%;padding:13px;font-size:15px;border-radius:13px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importSmeRenewals()">📥 Import SME CC Renewals</button>`;
   }
 }
 window.addOfficer = async function(){
@@ -837,6 +911,7 @@ function render(){
   const sw=document.getElementById('searchWrap');
   if(sw) sw.style.display=(S.tab==='notifs')?'none':'';
   const c=document.getElementById('content');
+  if(S.appMode==='renewals'){ renderRenewals(c); return; }
   if(S.tab==='pending')         renderPending(c);
   else if(S.tab==='sanctioned') renderSanctioned(c);
   else if(S.tab==='returned')   renderReturned(c);
@@ -913,6 +988,174 @@ function renderReturned(c){
       <div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div>
     </div>${cards}`;
 }
+
+/* ── RENEWALS DASHBOARD ── */
+function renewalBadge(rs){
+  if(!rs) return {label:'',cls:''};
+  return {
+    'active':          {label:'Active',                      cls:'rnw-chip-active'},
+    'due-soon':        {label:`Due in ${rs.daysUntilDue}d`,  cls:'rnw-chip-due-soon'},
+    'pending-renewal': {label:`${rs.daysOverdue}d overdue`,  cls:'rnw-chip-pending'},
+    'npa':             {label:'NPA',                         cls:'rnw-chip-npa'},
+  }[rs.status]||{label:'',cls:''};
+}
+
+function renewalKpiHtml(counts,amounts){
+  const kpis=[
+    {key:'active',          label:'Active',   cls:'rnw-active'},
+    {key:'due-soon',        label:'Due Soon', cls:'rnw-due-soon'},
+    {key:'pending-renewal', label:'Overdue',  cls:'rnw-pending'},
+    {key:'npa',             label:'NPA Risk', cls:'rnw-npa'},
+  ];
+  return `<div class="perf-kpi-row">
+    ${kpis.map(k=>`
+      <div class="perf-kpi ${k.cls}" onclick="setRenewalFilter('status','${k.key}')"
+           style="cursor:pointer;${S.renewalFilter.status===k.key?'box-shadow:0 0 0 2px var(--p2);':''}">
+        <div class="perf-kpi-label">${k.label}</div>
+        <div class="perf-kpi-value">${counts[k.key]}</div>
+        <div class="perf-kpi-sub">₹${fmtAmt(amounts[k.key])}L</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function renewalFilterSortHtml(){
+  const fc=(S.renewalFilter.status!=='All'?1:0)+(S.renewalFilter.officer!=='All'?1:0)+(S.renewalFilter.branch!=='All'?1:0);
+  const sl={daysFromSanction:'Days',amount:'Amount',officer:'Officer',branch:'Branch'};
+  const sortLabel=`${sl[S.renewalSort.field]||'Days'} ${S.renewalSort.dir==='asc'?'↑':'↓'}`;
+  const statusOpts=[
+    {v:'All',label:'All statuses'},{v:'active',label:'Active'},
+    {v:'due-soon',label:'Due Soon (≤30d)'},{v:'pending-renewal',label:'Overdue'},{v:'npa',label:'NPA Risk'},
+  ];
+  const officerOpts=[
+    {v:'All',label:'All officers'},
+    ...(S.user&&!S.isAdmin?[{v:'Mine',label:'Just me'}]:[]),
+    ...S.officers.map(o=>({v:o,label:o}))
+  ];
+  const branchOpts=[{v:'All',label:'All branches'},...S.branches.map(b=>({v:b,label:b}))];
+  const sortFields=[
+    {v:'daysFromSanction',label:'Days from sanction'},{v:'amount',label:'Amount'},
+    {v:'officer',label:'Officer'},{v:'branch',label:'Branch'},
+  ];
+  const radio=(name,opts,cur)=>opts.map(o=>`<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur===o.v?'checked':''} onchange="${name==='sortField'?`setRenewalSort('${esc(o.v)}',null)`:name==='sortDir'?`setRenewalSort(null,'${esc(o.v)}')`:`setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
+  const fs=S.openPop==='rnwFilter'?'':'display:none;';
+  const ss=S.openPop==='rnwSort'?'':'display:none;';
+  return `<div class="fs-bar" onclick="event.stopPropagation();">
+    <button class="fs-btn${fc?' active':''}${S.openPop==='rnwFilter'?' open':''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">⚲ Filter<span class="fs-badge">${fc||''}</span></button>
+    <button class="fs-btn${S.openPop==='rnwSort'?' open':''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">↕ Sort <span class="fs-label">${sortLabel}</span></button>
+    <div class="fs-pop" style="${fs}">
+      <h4>Status</h4>${radio('status',statusOpts,S.renewalFilter.status)}
+      <hr><h4>Officer</h4>${radio('officer',officerOpts,S.renewalFilter.officer)}
+      <hr><h4>Branch</h4>${radio('branch',branchOpts,S.renewalFilter.branch)}
+    </div>
+    <div class="fs-pop fs-pop-right" style="${ss}">
+      <h4>Sort by</h4>${radio('sortField',sortFields,S.renewalSort.field)}
+      <hr><h4>Direction</h4>${radio('sortDir',[{v:'desc',label:'Descending'},{v:'asc',label:'Ascending'}],S.renewalSort.dir)}
+    </div>
+  </div>`;
+}
+
+function applyRenewalFilters(enriched){
+  let out=enriched;
+  if(S.renewalFilter.status!=='All') out=out.filter(l=>l._rs.status===S.renewalFilter.status);
+  if(S.renewalFilter.officer==='Mine'&&S.user) out=out.filter(l=>l.allocatedTo===S.user);
+  else if(S.renewalFilter.officer!=='All'&&S.renewalFilter.officer!=='Mine') out=out.filter(l=>l.allocatedTo===S.renewalFilter.officer);
+  if(S.renewalFilter.branch!=='All') out=out.filter(l=>l.branch===S.renewalFilter.branch);
+  return out;
+}
+
+function applyRenewalSort(enriched){
+  const dir=S.renewalSort.dir==='asc'?1:-1;
+  return [...enriched].sort((a,b)=>{
+    let av,bv;
+    if(S.renewalSort.field==='daysFromSanction'){av=a._rs.daysSinceSanction;bv=b._rs.daysSinceSanction;}
+    else if(S.renewalSort.field==='amount'){av=parseFloat(a.amount)||0;bv=parseFloat(b.amount)||0;}
+    else if(S.renewalSort.field==='officer'){av=(a.allocatedTo||'').toLowerCase();bv=(b.allocatedTo||'').toLowerCase();}
+    else if(S.renewalSort.field==='branch'){av=(a.branch||'').toLowerCase();bv=(b.branch||'').toLowerCase();}
+    if(av<bv)return -1*dir;if(av>bv)return 1*dir;return 0;
+  });
+}
+
+function renewalItemHtml(loan,rs){
+  const sm=renewalBadge(rs);
+  const statusCls={active:'rnw-s-active','due-soon':'rnw-s-due-soon','pending-renewal':'rnw-s-pending',npa:'rnw-s-npa'}[rs.status]||'';
+  const npaChip=rs.daysUntilNpa>0
+    ?`<span class="tag rnw-chip-npa-cd">${rs.daysUntilNpa}d to NPA</span>`
+    :(rs.status==='npa'?`<span class="tag rnw-chip-npa">NPA</span>`:'');
+  const itemId='rnw-'+loan.id;
+  return `<div class="loan-item ${statusCls}" id="li-${itemId}">
+    <div class="loan-row" onclick="toggleExpand('${itemId}')">
+      <div class="lr-info">
+        <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
+        <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
+        <span class="lr-name">${esc(loan.customerName||'')}</span>
+      </div>
+      <div class="lr-meta">
+        <span class="tag ${sm.cls}">${sm.label}</span>
+        <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
+        <span class="lr-chev">›</span>
+      </div>
+    </div>
+    <div class="loan-detail">
+      <div class="loan-collapse" onclick="toggleExpand('${itemId}')">▲ collapse</div>
+      <div class="loan-card">
+        <div class="lc-top">
+          <div class="lc-left">
+            <div class="lc-name">${esc(loan.customerName)}</div>
+            <div class="lc-branch">${esc(loan.branch||'')}</div>
+          </div>
+          <div class="lc-amount">₹${fmtAmt(loan.amount)}<span class="u"> L</span></div>
+        </div>
+        <div class="lc-tags">
+          <span class="tag sme">SME CC</span>
+          <span class="tag officer">${esc(loan.allocatedTo)}</span>
+          <span class="tag date">Sanctioned ${fmtDate(loan.sanctionDate)}</span>
+          <span class="tag date">Due ${fmtDate(rs.dueDateStr)}</span>
+          <span class="tag ${sm.cls}">${sm.label}</span>
+          ${npaChip}
+        </div>
+        ${loan.remarks?`<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>`:''}
+        <div class="lc-actions">
+          <button class="btn btn-more" onclick="editLoan('${loan.id}')">✎ Edit</button>
+          ${S.isAdmin?`<button class="btn btn-danger" onclick="deleteLoan('${loan.id}')">🗑</button>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderRenewals(c){
+  const enriched=S.loans
+    .filter(l=>l.category==='SME'&&l.sanctionDate)
+    .map(l=>({...l,_rs:computeRenewalStatus(l)}))
+    .filter(l=>l._rs);
+  let filtered=applyRenewalFilters(enriched);
+  let sorted=applyRenewalSort(filtered).filter(searchMatch);
+  const counts={active:0,'due-soon':0,'pending-renewal':0,npa:0};
+  const amounts={active:0,'due-soon':0,'pending-renewal':0,npa:0};
+  enriched.forEach(l=>{counts[l._rs.status]++;amounts[l._rs.status]+=parseFloat(l.amount)||0;});
+  const total=sorted.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
+  const list=sorted.length===0
+    ?emptyState('♻','No SME renewals match filters','Import historical SME CC data or adjust filters')
+    :sorted.map(l=>renewalItemHtml(l,l._rs)).join('');
+  c.innerHTML=`
+    ${renewalKpiHtml(counts,amounts)}
+    ${renewalFilterSortHtml()}
+    <div class="sec-head">
+      <div class="sec-title">SME CC Renewals</div>
+      <div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div>
+    </div>
+    ${list}`;
+}
+
+window.setRenewalFilter = function(key,val){
+  S.renewalFilter[key]=S.renewalFilter[key]===val?'All':val;
+  render();
+};
+window.setRenewalSort = function(field,dir){
+  if(field) S.renewalSort.field=field;
+  if(dir)   S.renewalSort.dir=dir;
+  render();
+};
 
 let currentCharts = [];
 let perfSeg = 'month';
@@ -1025,6 +1268,12 @@ async function init(){
   if(darkPref==='1'){
     S.dark=true;
     document.body.classList.add('dark');
+  }
+  const savedMode=localStorage.getItem('lpMode');
+  if(savedMode==='renewals'){
+    S.appMode='renewals';
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.id==='modeBtn-renewals'));
+    document.getElementById('mainTabs').style.display='none';
   }
   const su=localStorage.getItem('lpUser');
   const sa=localStorage.getItem('lpAdmin')==='true';

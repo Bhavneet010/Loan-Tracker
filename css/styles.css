@@ -748,3 +748,76 @@ body.dark .loan-detail .loan-card{border-color:rgba(80,70,130,0.3);}
 body.dark .notif-card{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);}
 body.dark .notif-card.unread{background:rgba(107,95,191,0.12);}
 body.dark .activity-bubble{background:rgba(30,28,58,0.95);border-color:rgba(80,70,130,0.3);}
+
+/* ── MODE TOGGLE BAR ── */
+.mode-toggle-bar{
+  display:flex;gap:0;margin-top:10px;
+  background:rgba(107,95,191,0.07);
+  border:1px solid rgba(107,95,191,0.13);
+  border-radius:11px;padding:3px;
+}
+.mode-btn{
+  flex:1;padding:8px 10px;border:none;border-radius:8px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  background:transparent;color:var(--text3);
+  transition:all 0.2s ease;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.mode-btn.active{
+  background:linear-gradient(135deg,var(--p2),var(--p3));
+  color:white;box-shadow:0 2px 8px rgba(107,95,191,0.3);
+}
+.mode-btn.active.renewals-btn{
+  background:linear-gradient(135deg,#10B981,#047857);
+  box-shadow:0 2px 8px rgba(16,185,129,0.35);
+}
+.mode-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:16px;height:16px;border-radius:8px;
+  background:rgba(239,68,68,0.85);color:white;
+  font-size:9px;font-weight:800;padding:0 3px;line-height:1;
+}
+.mode-badge:empty{display:none;}
+body.dark .mode-toggle-bar{background:rgba(107,95,191,0.10);border-color:rgba(107,95,191,0.22);}
+body.dark .mode-btn{color:var(--text3);}
+body.dark .mode-btn.active{background:linear-gradient(135deg,var(--p2),var(--p3));}
+body.dark .mode-btn.active.renewals-btn{background:linear-gradient(135deg,#10B981,#047857);}
+
+/* ── RENEWALS DASHBOARD ── */
+:root{
+  --rnw-active-bg:rgba(16,185,129,0.08);  --rnw-active-bd:rgba(16,185,129,0.22);  --rnw-active-fg:#047857;
+  --rnw-soon-bg:rgba(245,158,11,0.10);    --rnw-soon-bd:rgba(245,158,11,0.28);    --rnw-soon-fg:#B45309;
+  --rnw-pending-bg:rgba(239,68,68,0.10);  --rnw-pending-bd:rgba(239,68,68,0.28);  --rnw-pending-fg:#B91C1C;
+  --rnw-npa-bg:rgba(127,29,29,0.12);      --rnw-npa-bd:rgba(127,29,29,0.30);      --rnw-npa-fg:#7F1D1D;
+}
+
+/* KPI card accent bars */
+.perf-kpi.rnw-active::before   {background:linear-gradient(90deg,#10B981,#34D399);}
+.perf-kpi.rnw-due-soon::before {background:linear-gradient(90deg,#F59E0B,#FBBF24);}
+.perf-kpi.rnw-pending::before  {background:linear-gradient(90deg,#EF4444,#F87171);}
+.perf-kpi.rnw-npa::before      {background:linear-gradient(90deg,#7F1D1D,#B91C1C);}
+
+/* Status chips */
+.tag.rnw-chip-active   {background:var(--rnw-active-bg);  color:var(--rnw-active-fg);  border:1px solid var(--rnw-active-bd);}
+.tag.rnw-chip-due-soon {background:var(--rnw-soon-bg);    color:var(--rnw-soon-fg);    border:1px solid var(--rnw-soon-bd);}
+.tag.rnw-chip-pending  {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
+.tag.rnw-chip-npa      {background:var(--rnw-npa-bg);     color:var(--rnw-npa-fg);     border:1px solid var(--rnw-npa-bd);  font-weight:800;}
+.tag.rnw-chip-npa-cd   {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
+
+/* Left-rail accent on compact rows */
+.loan-item.rnw-s-active   > .loan-row::before {background:linear-gradient(180deg,#10B981,#34D399);}
+.loan-item.rnw-s-due-soon > .loan-row::before {background:linear-gradient(180deg,#F59E0B,#FBBF24);}
+.loan-item.rnw-s-pending  > .loan-row::before {background:linear-gradient(180deg,#EF4444,#F87171);}
+.loan-item.rnw-s-npa      > .loan-row::before {background:linear-gradient(180deg,#7F1D1D,#B91C1C);}
+
+/* Row background tint */
+.loan-item.rnw-s-active   > .loan-row {background:rgba(16,185,129,0.08);}
+.loan-item.rnw-s-due-soon > .loan-row {background:rgba(245,158,11,0.09);}
+.loan-item.rnw-s-pending  > .loan-row {background:rgba(239,68,68,0.09);}
+.loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.10);}
+
+/* Dark mode */
+body.dark .loan-item.rnw-s-active   > .loan-row {background:rgba(16,185,129,0.13);}
+body.dark .loan-item.rnw-s-due-soon > .loan-row {background:rgba(245,158,11,0.13);}
+body.dark .loan-item.rnw-s-pending  > .loan-row {background:rgba(239,68,68,0.13);}
+body.dark .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.18);}
