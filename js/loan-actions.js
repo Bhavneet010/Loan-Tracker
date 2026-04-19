@@ -124,7 +124,7 @@ window.saveLoan = async function(e) {
     data.isTermLoan = termLoan;
     const existing = id ? S.loans.find(x => x.id === id) : null;
     const isImported = (existing && existing.isImported) || (id && id.startsWith('import_sme_csv_'));
-    if (!termLoan && !isImported) { data.isFreshCC = true; data.manuallyCreated = true; }
+    if (!isImported) { data.isFreshCC = true; data.manuallyCreated = true; }
     else { data.isFreshCC = false; data.isImported = true; }
     
     const rd = document.getElementById('fRenewalDue');
