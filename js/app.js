@@ -666,7 +666,6 @@ window.openForm = function(loan=null){
   }
   document.getElementById('formModal').style.display='flex';
 };
-};
 window.closeForm  = ()=>document.getElementById('formModal').style.display='none';
 window.toggleTermLoan = function(cat){
   const el=document.getElementById('fTermLoanGroup');
