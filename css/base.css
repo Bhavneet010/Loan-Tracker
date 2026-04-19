@@ -1,0 +1,44 @@
+/* ── TOKENS ── */
+:root {
+  --p1:#5A4EAF; --p2:#7B6FD4; --p3:#9B8FE4;
+  --p-bg:rgba(107,95,191,0.10); --p-bd:rgba(107,95,191,0.22);
+  --glass:rgba(255,255,255,0.65); --glass-bd:rgba(255,255,255,0.85);
+  --text1:#1E1B3A; --text2:#3D3480; --text3:rgba(30,27,58,0.65);
+  --green:#047857; --green-bg:rgba(16,185,129,0.10); --green-bd:rgba(16,185,129,0.25);
+  --amber:#B45309; --amber-bg:rgba(245,158,11,0.10); --amber-bd:rgba(245,158,11,0.25);
+  --red:#B91C1C;   --red-bg:rgba(239,68,68,0.10);   --red-bd:rgba(239,68,68,0.25);
+  --r:14px; --rl:20px;
+  
+  /* Typography Scale */
+  --f-body: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  --f-head: 'Outfit', sans-serif;
+}
+
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  margin:0;padding:0;min-height:100%;
+  font-family: var(--f-body);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  color:var(--text1);
+}
+
+/* ── LAVENDER BACKGROUND ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 15% 10%,#C4BCE8 0%,transparent 45%),
+    radial-gradient(circle at 90% 25%,#C8C0EC 0%,transparent 50%),
+    radial-gradient(circle at 50% 35%,#BAB2E0 0%,transparent 55%),
+    linear-gradient(160deg,#C9C4EE 0%,#B8B0E2 60%,#C2BCE8 100%);
+}
+
+body::after{
+  content:'';position:fixed;top:0;left:0;right:0;height:50vh;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 15% 10%,#C4BCE8 0%,transparent 45%),
+    radial-gradient(circle at 90% 25%,#C8C0EC 0%,transparent 50%),
+    linear-gradient(160deg,#C9C4EE 0%,#B8B0E2 100%);
+}
+
+#app{position:relative;z-index:1;max-width:700px;margin:0 auto;padding-bottom:90px;}

@@ -1,0 +1,145 @@
+import { S, PIN, saveSettings, loadSettings } from "./state.js";
+import { render, renderSettingsList, renderDaily } from "./ui-render.js";
+import { toast, initials, officerColor, requestNotifPermission } from "./utils.js";
+import { subscribeLoans, subscribeNotifications } from "./db.js";
+
+window.toggleDark = function () {
+  S.dark = !S.dark;
+  document.body.classList.toggle('dark', S.dark);
+  localStorage.setItem('lpDark', S.dark ? '1' : '0');
+};
+
+window.toggleUserMenu = function () {
+  const menu = document.getElementById('userMenu');
+  if (menu.style.display === 'none') {
+    menu.innerHTML = `
+      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">⚙️ Settings</button>` : ''}
+      <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark ? '☀️ Light theme' : '🌙 Dark theme'}</button>
+      <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">👤 Change officer</button>`;
+    menu.style.display = 'block';
+    setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
+  } else {
+    menu.style.display = 'none';
+  }
+};
+
+window.closeUserMenu = () => {
+  const menu = document.getElementById('userMenu');
+  if (menu) menu.style.display = 'none';
+};
+
+function _closeMenuOutside(e) {
+  const menu = document.getElementById('userMenu');
+  if (menu && !menu.contains(e.target)) menu.style.display = 'none';
+}
+
+window.showNotifOverlay = function () {
+  document.getElementById('notifOverlay').style.display = 'flex';
+  import("./notifications.js").then(module => {
+    module.renderNotifOverlay();
+    module.markNotifsRead();
+  });
+};
+
+window.closeNotifOverlay = () => {
+  document.getElementById('notifOverlay').style.display = 'none';
+};
+
+window.showPerfOverlay = function () {
+  document.getElementById('perfOverlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  renderDaily(document.getElementById('perfOverlayContent'));
+};
+
+window.closePerfOverlay = function () {
+  const perfOverlay = document.getElementById('perfOverlay');
+  if (perfOverlay) perfOverlay.style.display = 'none';
+  document.body.style.overflow = '';
+  // Charts are handled in performance.js
+};
+
+window.handleSearch = v => { 
+  S.search = v.toLowerCase().trim(); 
+  render(); 
+};
+
+window.setAppMode = function (v) {
+  S.appMode = v; S.openPop = null;
+  localStorage.setItem('lpMode', v);
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-' + v));
+  const mainTabs = document.getElementById('mainTabs');
+  if (mainTabs) mainTabs.style.display = v === 'fresh' ? '' : 'none';
+  render();
+};
+
+window.showUserSelect = function () {
+  document.getElementById('userList').innerHTML = S.officers.map(o => {
+    const n = S.loans.filter(l => l.status === 'pending' && l.allocatedTo === o).length;
+    const badge = n ? `<span class="officer-count">${n}</span>` : '';
+    return `<button class="user-btn" onclick="selectUser('${o}')">
+      <div class="av" style="background:${officerColor(o).bg};">${initials(o)}</div><span>${o}</span>${badge}
+    </button>`;
+  }).join('');
+  document.getElementById('userModal').style.display = 'flex';
+};
+
+window.selectUser = function (name) {
+  S.user = name; S.isAdmin = false;
+  S.filter = { category: 'All', officer: 'Mine' };
+  localStorage.setItem('lpUser', name); localStorage.setItem('lpAdmin', 'false');
+  const av = document.getElementById('userAv');
+  av.textContent = initials(name);
+  av.style.background = officerColor(name).bg;
+  av.style.color = '#fff';
+  document.getElementById('userModal').style.display = 'none';
+  requestNotifPermission();
+  render();
+};
+
+window.promptAdmin = function () {
+  document.getElementById('userModal').style.display = 'none';
+  document.getElementById('pinModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('pinInput').focus(), 100);
+};
+
+window.checkPin = function () {
+  if (document.getElementById('pinInput').value === PIN) {
+    S.user = 'Admin'; S.isAdmin = true;
+    S.filter = { category: 'All', officer: 'All' };
+    localStorage.setItem('lpUser', 'Admin'); localStorage.setItem('lpAdmin', 'true');
+    const av = document.getElementById('userAv');
+    av.textContent = '🔒'; av.style.background = ''; av.style.color = '';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinModal').style.display = 'none';
+    requestNotifPermission();
+    toast('Admin mode active'); render();
+  } else {
+    toast('Incorrect PIN'); document.getElementById('pinInput').value = '';
+  }
+};
+
+window.closePinModal = function () { 
+  document.getElementById('pinInput').value = ''; 
+  document.getElementById('pinModal').style.display = 'none'; 
+};
+
+window.handleSettings = function () {
+  if (!S.isAdmin) { toast('Admin access required'); return; }
+  S.settingsTab = 'officers';
+  renderSettingsList();
+  document.getElementById('settingsModal').style.display = 'flex';
+};
+
+window.closeSettings = function () { 
+  document.getElementById('settingsModal').style.display = 'none'; 
+};
+
+window.setSettingsTab = function (tab) { 
+  S.settingsTab = tab; 
+  renderSettingsList(); 
+};
+
+window.toggleExpand = function (id) {
+  const el = document.getElementById('li-' + id);
+  if (el) el.classList.toggle('expanded');
+};
