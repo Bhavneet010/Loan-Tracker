@@ -77,9 +77,16 @@ function toast(msg) {
 const daysPending = d => !d ? 0 : Math.floor((Date.now()-new Date(d).getTime())/86400000);
 
 function isFreshCC(loan) {
-  if (loan.isFreshCC !== undefined) return loan.isFreshCC;
-  const isImportedRenewal = loan.source && String(loan.source).includes('renewal');
-  return !isImportedRenewal;
+  // 1. Explicit flag check (Strongest)
+  if (loan.isFreshCC === true) return true;
+  if (loan.isFreshCC === false) return false;
+  
+  // 2. ID Prefix check (Firewall)
+  if (loan.id && String(loan.id).startsWith('import_sme_csv_')) return false;
+  
+  // 3. Source check (Fallback)
+  const isImported = loan.source && String(loan.source).includes('import');
+  return !isImported;
 }
 
 function computeRenewalStatus(loan) {
@@ -390,6 +397,8 @@ window.handleCsvUpload = function(e){
           sanctionDate:baseDate,
           remarks:'',
           status:'sanctioned',
+          isFreshCC: false, // FIREWALL: Explicitly marked as NOT a fresh loan
+          isImported: true,
           createdAt:new Date().toISOString(),createdBy:S.user||'import',
           source:'import:sme_renewal:csv',...ts()
         });
@@ -878,9 +887,13 @@ window.saveLoan   = async function(e){
   if(cat==='SME'){
     data.isTermLoan = termLoan;
     const existing = id ? S.loans.find(x=>x.id===id) : null;
-    const isImportedRenewal = existing && existing.source && String(existing.source).includes('renewal');
-    if(!termLoan && !isImportedRenewal){
+    const isImported = (existing && existing.isImported) || (id && id.startsWith('import_sme_csv_'));
+    if(!termLoan && !isImported){
       data.isFreshCC = true;
+      data.manuallyCreated = true;
+    } else {
+      data.isFreshCC = false;
+      data.isImported = true;
     }
   }
   const sd=document.getElementById('fSanction').value;
