@@ -29,8 +29,8 @@ export function updateBadges() {
   
   const setB = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n || ''; };
   setB('b-rnw-done', sme.filter(l => (l.renewedDate || '').startsWith(thisMonth) && !isFreshCC(l)).length);
-  setB('b-rnw-due-soon', sme.filter(l => l._rs.status === 'due-soon').length);
-  setB('b-rnw-overdue', sme.filter(l => l._rs.status === 'pending-renewal' || l._rs.status === 'npa').length);
+  setB('b-rnw-due-soon', sme.filter(l => l._rs.status === 'due-soon' && !l.renewedDate).length);
+  setB('b-rnw-overdue', sme.filter(l => (l._rs.status === 'pending-renewal' || l._rs.status === 'npa') && !l.renewedDate).length);
   setB('b-rnw-all-cc', sme.length);
 }
 
@@ -48,8 +48,8 @@ export function updateHero() {
       .filter(l => l._rs);
     
     const done = sme.filter(l => (l.renewedDate || '').startsWith(thisMonth) && !isFreshCC(l));
-    const dueSoon = sme.filter(l => l._rs.status === 'due-soon');
-    const overdue = sme.filter(l => l._rs.status === 'pending-renewal' || l._rs.status === 'npa');
+    const dueSoon = sme.filter(l => l._rs.status === 'due-soon' && !l.renewedDate);
+    const overdue = sme.filter(l => (l._rs.status === 'pending-renewal' || l._rs.status === 'npa') && !l.renewedDate);
     const allAccounts = sme;
     const amt = arr => arr.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
     
