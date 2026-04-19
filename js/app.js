@@ -71,6 +71,12 @@ function toast(msg) {
 
 const daysPending = d => !d ? 0 : Math.floor((Date.now()-new Date(d).getTime())/86400000);
 
+function isFreshCC(loan) {
+  if (loan.isFreshCC !== undefined) return loan.isFreshCC;
+  const isImportedRenewal = loan.source && String(loan.source).includes('renewal');
+  return !isImportedRenewal;
+}
+
 function computeRenewalStatus(loan) {
   if (!loan.sanctionDate) return null;
   const days = Math.floor((Date.now() - new Date(loan.sanctionDate).getTime()) / 86400000);
@@ -480,7 +486,7 @@ function updateBadges(){
   const thisMonth=todayStr().slice(0,7);
   const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate&&!l.isTermLoan).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
   const setB=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n||'';};
-  setB('b-rnw-done',    sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!l.isFreshCC).length);
+  setB('b-rnw-done',    sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!isFreshCC(l)).length);
   setB('b-rnw-due-soon',sme.filter(l=>l._rs.status==='due-soon').length);
   setB('b-rnw-overdue', sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa').length);
   setB('b-rnw-npa-risk',sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30).length);
@@ -861,7 +867,7 @@ function updateHero(){
     const thisMonth=todayStr().slice(0,7);
     const monthName='Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(thisMonth.slice(5))-1];
     const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate&&!l.isTermLoan).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
-    const done    =sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!l.isFreshCC);
+    const done    =sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!isFreshCC(l));
     const dueSoon =sme.filter(l=>l._rs.status==='due-soon');
     const overdue =sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
     const npaRisk =sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
@@ -1224,7 +1230,7 @@ window.setRenewalTab = function(tab){
 };
 function applyRenewalTabFilter(enriched){
   const thisMonth=todayStr().slice(0,7);
-  if(S.renewalTab==='done')      return enriched.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!l.isFreshCC);
+  if(S.renewalTab==='done')      return enriched.filter(l=>(l.sanctionDate||'').startsWith(thisMonth)&&!isFreshCC(l));
   if(S.renewalTab==='due-soon')  return enriched.filter(l=>l._rs.status==='due-soon');
   if(S.renewalTab==='overdue')   return enriched.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
   if(S.renewalTab==='npa-risk')  return enriched.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
