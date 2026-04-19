@@ -4,13 +4,13 @@ import { fmtAmt, todayStr, computeRenewalStatus, isFreshCC } from "./utils.js";
 /* ── BADGES ── */
 export function updateBadges() {
   const bPending = document.getElementById('b-pending');
-  if (bPending) bPending.textContent = S.loans.filter(l => l.status === 'pending').length;
+  if (bPending) bPending.textContent = S.loans.filter(l => l.status === 'pending' && isFreshCC(l)).length;
   
   const bSanctioned = document.getElementById('b-sanctioned');
-  if (bSanctioned) bSanctioned.textContent = S.loans.filter(l => l.status === 'sanctioned').length;
+  if (bSanctioned) bSanctioned.textContent = S.loans.filter(l => l.status === 'sanctioned' && isFreshCC(l)).length;
   
   const bReturned = document.getElementById('b-returned');
-  if (bReturned) bReturned.textContent = S.loans.filter(l => l.status === 'returned').length;
+  if (bReturned) bReturned.textContent = S.loans.filter(l => l.status === 'returned' && isFreshCC(l)).length;
   
   const urgent = S.loans.filter(l => {
     if (l.category !== 'SME' || !l.sanctionDate || l.isTermLoan) return false;
