@@ -160,7 +160,6 @@ window.setAppMode = function(v){
   localStorage.setItem('lpMode',v);
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.id==='modeBtn-'+v));
   document.getElementById('mainTabs').style.display=v==='fresh'?'':'none';
-  document.getElementById('renewalTabs').style.display=v==='renewals'?'':'none';
   render();
 };
 
@@ -828,14 +827,38 @@ document.addEventListener('click', e => {
 
 /* ── RENDER HELPERS ── */
 function updateHero(){
-  const titles={pending:'Pending',sanctioned:'Sanctioned',returned:'Returned',daily:'Performance',notifs:'Notifications'};
+  const sc=document.getElementById('statsScroll');
+  if(S.appMode==='renewals'){
+    const thisMonth=todayStr().slice(0,7);
+    const sme=S.loans.filter(l=>l.category==='SME'&&l.sanctionDate).map(l=>({...l,_rs:computeRenewalStatus(l)})).filter(l=>l._rs);
+    const done    =sme.filter(l=>(l.sanctionDate||'').startsWith(thisMonth));
+    const dueSoon =sme.filter(l=>l._rs.status==='due-soon');
+    const overdue =sme.filter(l=>l._rs.status==='pending-renewal'||l._rs.status==='npa');
+    const npaRisk =sme.filter(l=>l._rs.daysUntilNpa>0&&l._rs.daysUntilNpa<=30);
+    const amt=arr=>arr.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
+    const rnwStat=(tab,label,arr,badge,badgeCls)=>{
+      const active=S.renewalTab===tab;
+      return `<div class="stat${active?' stat-rnw-active':''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
+        <div class="stat-l">${label}</div>
+        <div class="stat-v">₹${fmtAmt(amt(arr))}L</div>
+        <div class="stat-s">${arr.length} accounts</div>
+        ${badge?`<div class="stat-badge ${badgeCls||''}">${badge}</div>`:''}
+      </div>`;
+    };
+    sc.innerHTML=
+      rnwStat('done',    'Done This Month', done,    done.length?'✓ Renewed':'',  '')+
+      rnwStat('due-soon','Due Soon',        dueSoon, dueSoon.length?`${dueSoon.length} pending`:'', 'stat-badge-warn')+
+      rnwStat('overdue', 'Overdue',         overdue, overdue.length?'Action needed':'', 'stat-badge-danger')+
+      rnwStat('npa-risk','NPA Risk',        npaRisk, npaRisk.length?'⚠ Critical':'',   'stat-badge-danger');
+    return;
+  }
   const pending   = S.loans.filter(l=>l.status==='pending');
   const sanctioned= S.loans.filter(l=>l.status==='sanctioned');
   const returned  = S.loans.filter(l=>l.status==='returned');
   const pAmt = pending.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const sAmt = sanctioned.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const rAmt = returned.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
-  document.getElementById('statsScroll').innerHTML=`
+  sc.innerHTML=`
     <div class="stat">
       <div class="stat-l">Pending</div>
       <div class="stat-v">₹${fmtAmt(pAmt)}L</div>
@@ -1293,7 +1316,6 @@ async function init(){
     S.appMode='renewals';
     document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.id==='modeBtn-renewals'));
     document.getElementById('mainTabs').style.display='none';
-    document.getElementById('renewalTabs').style.display='';
   }
   const su=localStorage.getItem('lpUser');
   const sa=localStorage.getItem('lpAdmin')==='true';

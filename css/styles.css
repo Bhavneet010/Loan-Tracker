@@ -822,12 +822,8 @@ body.dark .loan-item.rnw-s-due-soon > .loan-row {background:rgba(245,158,11,0.13
 body.dark .loan-item.rnw-s-pending  > .loan-row {background:rgba(239,68,68,0.13);}
 body.dark .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.18);}
 
-/* Renewal tab badge colors */
-#b-rnw-overdue  {background:rgba(239,68,68,0.18);color:#B91C1C;}
-#b-rnw-npa-risk {background:rgba(127,29,29,0.20);color:#7F1D1D;}
-#b-rnw-due-soon {background:rgba(245,158,11,0.18);color:#B45309;}
-
-/* Renewal tab active state colors */
-#renewalTabs .tab[data-rtab="due-soon"].active  {background:linear-gradient(135deg,#F59E0B,#B45309);}
-#renewalTabs .tab[data-rtab="overdue"].active   {background:linear-gradient(135deg,#EF4444,#B91C1C);}
-#renewalTabs .tab[data-rtab="npa-risk"].active  {background:linear-gradient(135deg,#7F1D1D,#450a0a);}
+/* Renewal stat card active highlight */
+.stat.stat-rnw-active {box-shadow:0 0 0 2px var(--p2);background:var(--p-bg);}
+/* Stat badge color variants */
+.stat-badge-warn   {background:rgba(245,158,11,0.18);color:#B45309;}
+.stat-badge-danger {background:rgba(239,68,68,0.18);color:#B91C1C;}
