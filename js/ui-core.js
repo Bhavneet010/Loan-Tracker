@@ -61,7 +61,7 @@ window.closePerfOverlay = function () {
 
 window.handleSearch = v => { 
   S.search = v.toLowerCase().trim(); 
-  render(); 
+  window.render(); 
 };
 
 window.setAppMode = function (v) {
@@ -70,7 +70,7 @@ window.setAppMode = function (v) {
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-' + v));
   const mainTabs = document.getElementById('mainTabs');
   if (mainTabs) mainTabs.style.display = v === 'fresh' ? '' : 'none';
-  render();
+  window.render();
 };
 
 window.showUserSelect = function () {
@@ -94,7 +94,7 @@ window.selectUser = function (name) {
   av.style.color = '#fff';
   document.getElementById('userModal').style.display = 'none';
   requestNotifPermission();
-  render();
+  window.render();
 };
 
 window.promptAdmin = function () {
@@ -113,7 +113,7 @@ window.checkPin = function () {
     document.getElementById('pinInput').value = '';
     document.getElementById('pinModal').style.display = 'none';
     requestNotifPermission();
-    toast('Admin mode active'); render();
+    toast('Admin mode active'); window.render();
   } else {
     toast('Incorrect PIN'); document.getElementById('pinInput').value = '';
   }

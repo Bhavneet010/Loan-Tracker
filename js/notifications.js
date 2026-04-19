@@ -35,7 +35,7 @@ export function subscribeNotifications() {
     S.notifications = [];
     snap.forEach(d => S.notifications.push({ id: d.id, ...d.data() }));
     updateNotifBadge();
-    if (S.tab === 'notifs') render();
+    if (S.tab === 'notifs') window.render();
     if (firstLoad && S.user && !sessionStorage.getItem('actOverlayShown')) {
       sessionStorage.setItem('actOverlayShown', '1');
       showActivityOverlay();

@@ -180,7 +180,7 @@ window.wipeSanctionedFreshLoans = async function () {
       }
     }
     toast(`Successfully wiped ${deletedCount} fresh sanctioned records!`);
-    render();
+    window.render();
   } catch (e) { console.error(e); toast('Error wiping data'); }
   finally {
     const btn = document.getElementById('wipeFreshBtn');

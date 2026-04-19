@@ -46,11 +46,11 @@ window.addOfficer = async function() {
   const v = document.getElementById('newOfficer').value.trim();
   if (!v) return; if (S.officers.includes(v)) { toast('Already exists'); return; }
   S.officers.push(v); await saveSettings();
-  document.getElementById('newOfficer').value = ''; renderSettingsList(); render(); toast('Officer added');
+  document.getElementById('newOfficer').value = ''; renderSettingsList(); window.render(); toast('Officer added');
 };
 window.removeOfficer = async function(i) {
   if (!confirm(`Remove ${S.officers[i]}?`)) return;
-  S.officers.splice(i, 1); await saveSettings(); renderSettingsList(); render();
+  S.officers.splice(i, 1); await saveSettings(); renderSettingsList(); window.render();
 };
 window.addBranch = async function() {
   const v = document.getElementById('newBranch').value.trim();

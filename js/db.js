@@ -45,7 +45,7 @@ export function subscribeLoans() {
     const syncDot = document.getElementById('syncDot');
     if (syncDot) syncDot.classList.remove('off');
     updateBadges(); 
-    render();
+    window.render();
   }, err => {
     const syncDot = document.getElementById('syncDot');
     if (syncDot) syncDot.classList.add('off');
