@@ -114,7 +114,7 @@ export function renewalItemHtml(loan, rs) {
         </div>
         ${loan.remarks ? `<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>` : ''}
         <div class="rnw-action-group">
-          <button class="btn btn-rnw-done" onclick="editLoan('${loan.id}', true)">
+          <button class="btn btn-rnw-done" onclick="markRenewalDone('${loan.id}')">
             ♻ Renewal Done
           </button>
           <div class="rnw-sub-actions">

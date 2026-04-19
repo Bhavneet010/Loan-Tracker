@@ -11,7 +11,7 @@ export function renderRenewals(c) {
     
   const thisMonth = todayStr().slice(0, 7);
   let tabFiltered = enriched;
-  if (S.renewalTab === 'done') tabFiltered = enriched.filter(l => (l.sanctionDate || '').startsWith(thisMonth) && !isFreshCC(l));
+  if (S.renewalTab === 'done') tabFiltered = enriched.filter(l => (l.renewedDate || '').startsWith(thisMonth) && !isFreshCC(l));
   else if (S.renewalTab === 'due-soon') tabFiltered = enriched.filter(l => l._rs.status === 'due-soon');
   else if (S.renewalTab === 'overdue') tabFiltered = enriched.filter(l => l._rs.status === 'pending-renewal' || l._rs.status === 'npa');
   

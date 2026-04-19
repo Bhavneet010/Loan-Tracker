@@ -146,3 +146,12 @@ window.saveLoan = async function(e) {
     window.closeForm();
   } catch (err) { toast('Error saving'); console.error(err); }
 };
+
+window.markRenewalDone = async function(id) {
+  const l = S.loans.find(x => x.id === id); if (!l) return;
+  if (!confirm(`Mark renewal done for ${l.customerName}?`)) return;
+  try {
+    await updateLoan(id, { renewedDate: todayStr() });
+    toast('Renewal marked done ✓');
+  } catch (e) { toast('Error'); }
+};
