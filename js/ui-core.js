@@ -1,9 +1,8 @@
-import { S, PIN, saveSettings, loadSettings } from "./state.js";
+import { S, PIN } from "./state.js";
 import { renderSettingsList } from "./ui-settings.js";
-import { renderDaily } from "./performance.js";
 import { toast, initials, officerColor } from "./utils.js";
-import { subscribeLoans } from "./db.js";
-import { requestNotifPermission, subscribeNotifications } from "./notifications.js";
+import { getLoanMetrics } from "./derived.js";
+import { requestNotifPermission } from "./notifications.js";
 
 window.toggleDark = function () {
   S.dark = !S.dark;
@@ -47,9 +46,12 @@ window.closeNotifOverlay = () => {
   document.getElementById('notifOverlay').style.display = 'none';
 };
 
-window.showPerfOverlay = function () {
+window.showPerfOverlay = async function () {
   document.getElementById('perfOverlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
+  const target = document.getElementById('perfOverlayContent');
+  if (target) target.innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading performance...</span></div>';
+  const { renderDaily } = await import("./performance.js");
   renderDaily(document.getElementById('perfOverlayContent'));
 };
 
@@ -75,8 +77,9 @@ window.setAppMode = function (v) {
 };
 
 window.showUserSelect = function () {
+  const pending = getLoanMetrics().pending;
   document.getElementById('userList').innerHTML = S.officers.map(o => {
-    const n = S.loans.filter(l => l.status === 'pending' && l.allocatedTo === o).length;
+    const n = pending.filter(l => l.allocatedTo === o).length;
     const badge = n ? `<span class="officer-count">${n}</span>` : '';
     return `<button class="user-btn" onclick="selectUser('${o}')">
       <div class="av" style="background:${officerColor(o).bg};">${initials(o)}</div><span>${o}</span>${badge}

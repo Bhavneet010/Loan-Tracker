@@ -22,9 +22,6 @@ if (mainTabs) {
     S.search = '';
     const si = document.getElementById('searchInput');
     if (si) si.value = '';
-    if (S.tab === 'notifs') {
-      import("./notifications.js").then(m => m.markNotifsRead());
-    }
     render();
   });
 }

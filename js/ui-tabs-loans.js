@@ -1,12 +1,13 @@
 import { S } from "./state.js";
-import { fmtAmt, isFreshCC, daysPending } from "./utils.js";
+import { getLoanMetrics, sumAmount } from "./derived.js";
+import { fmtAmt, daysPending } from "./utils.js";
 import { emptyState, compactLoanItem } from "./ui-components.js";
 import { applyFilters, applySort, searchMatch, filterSortBarHtml } from "./ui-logic.js";
 
 export function renderPending(c) {
-  let loans = applyFilters(S.loans.filter(l => l.status === 'pending' && isFreshCC(l) && searchMatch(l)));
+  let loans = applyFilters(getLoanMetrics().pending.filter(searchMatch));
   loans = applySort(loans);
-  const total = loans.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const total = sumAmount(loans);
   const cards = loans.length === 0
     ? emptyState('📭', 'No pending loans', 'Tap + to add a new loan')
     : loans.map(l => {
@@ -22,9 +23,9 @@ export function renderPending(c) {
 }
 
 export function renderSanctioned(c) {
-  let loans = applyFilters(S.loans.filter(l => l.status === 'sanctioned' && isFreshCC(l) && searchMatch(l)));
+  let loans = applyFilters(getLoanMetrics().sanctioned.filter(searchMatch));
   loans = applySort(loans);
-  const total = loans.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const total = sumAmount(loans);
   const cards = loans.length === 0
     ? emptyState('🎉', 'No sanctioned loans yet', 'Sanction pending loans to see them here')
     : loans.map(l => {
@@ -38,9 +39,9 @@ export function renderSanctioned(c) {
 }
 
 export function renderReturned(c) {
-  let loans = applyFilters(S.loans.filter(l => l.status === 'returned' && isFreshCC(l) && searchMatch(l)));
+  let loans = applyFilters(getLoanMetrics().returned.filter(searchMatch));
   loans = applySort(loans);
-  const total = loans.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const total = sumAmount(loans);
   const cards = loans.length === 0
     ? emptyState('📋', 'No returned loans', 'Returned loans will appear here')
     : loans.map(l => {

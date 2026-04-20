@@ -3,7 +3,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S, notifReady, setNotifReady } from "./state.js";
-import { updateBadges } from "./ui-stats.js";
+import { scheduleRender } from "./ui-render.js";
 import { notifyLoanChange } from "./notifications.js";
 
 export const newId = () => 'loan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -41,12 +41,14 @@ export function subscribeLoans() {
       });
     }
     setNotifReady(true);
-    S.loans = [];
-    snap.forEach(d => S.loans.push({ id: d.id, ...d.data() }));
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') S.loanMap.delete(change.doc.id);
+      else S.loanMap.set(change.doc.id, { id: change.doc.id, ...change.doc.data() });
+    });
+    S.loans = Array.from(S.loanMap.values()).sort((a, b) => (b.receiveDate || '').localeCompare(a.receiveDate || ''));
     const syncDot = document.getElementById('syncDot');
     if (syncDot) syncDot.classList.remove('off');
-    updateBadges(); 
-    window.render();
+    scheduleRender();
   }, err => {
     const syncDot = document.getElementById('syncDot');
     if (syncDot) syncDot.classList.add('off');

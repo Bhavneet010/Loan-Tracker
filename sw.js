@@ -1,5 +1,30 @@
 const CACHE = 'nirnay-v13';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './css/styles.css'];
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './css/styles.css',
+  './js/app.js',
+  './js/config.js',
+  './js/db.js',
+  './js/derived.js',
+  './js/importers.js',
+  './js/loan-actions.js',
+  './js/notifications.js',
+  './js/performance.js',
+  './js/state.js',
+  './js/ui-components.js',
+  './js/ui-core.js',
+  './js/ui-logic.js',
+  './js/ui-render.js',
+  './js/ui-settings.js',
+  './js/ui-stats.js',
+  './js/ui-tabs-loans.js',
+  './js/ui-tabs-renewals.js',
+  './js/utils.js',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
@@ -13,9 +38,6 @@ self.addEventListener('activate', e => {
     )
   );
   self.clients.claim();
-  self.clients.matchAll({ type: 'window' }).then(clients => {
-    clients.forEach(client => client.navigate(client.url));
-  });
 });
 
 self.addEventListener('fetch', e => {

@@ -1,26 +1,22 @@
 import { S } from "./state.js";
-import { esc } from "./utils.js";
-import { renderNotifications } from "./notifications.js";
 
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
 import { renderRenewals } from "./ui-tabs-renewals.js";
 
-// Import shared logic
-import { searchMatch, applyFilters, applySort, filterSortBarHtml } from "./ui-logic.js";
+let renderQueued = false;
 
-/* ── RENDER MAIN ── */
 export function render() {
   if (!S.user) { 
     if (typeof window.showUserSelect === 'function') window.showUserSelect(); 
     return; 
   }
   updateHero();
-  updateBadges(); // Ensure badges are updated too
+  updateBadges();
   
   const sw = document.getElementById('searchWrap');
-  if (sw) sw.style.display = (S.tab === 'notifs') ? 'none' : '';
+  if (sw) sw.style.display = '';
   const c = document.getElementById('content');
   if (!c) return;
 
@@ -29,11 +25,20 @@ export function render() {
   if (S.tab === 'pending') renderPending(c);
   else if (S.tab === 'sanctioned') renderSanctioned(c);
   else if (S.tab === 'returned') renderReturned(c);
-  else if (S.tab === 'notifs') renderNotifications(c);
+}
+
+export function scheduleRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    render();
+  });
 }
 
 // Expose render globally so other modules can trigger refreshes without a circular import
 window.render = render;
+window.scheduleRender = scheduleRender;
 
 /* ── WINDOW ACTION WRAPPERS ── */
 export const toggleFsMenu = function(which) { S.openPop = S.openPop === which ? null : which; render(); };

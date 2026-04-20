@@ -1,19 +1,16 @@
 import { S } from "./state.js";
-import { todayStr, computeRenewalStatus, isFreshCC, esc, fmtAmt } from "./utils.js";
+import { getLoanMetrics, sumAmount } from "./derived.js";
+import { esc, fmtAmt } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
 
 export function renderRenewals(c) {
-  const enriched = S.loans
-    .filter(l => l.category === 'SME' && l.sanctionDate && !l.isTermLoan)
-    .map(l => ({ ...l, _rs: computeRenewalStatus(l) }))
-    .filter(l => l._rs);
-    
-  const thisMonth = todayStr().slice(0, 7);
+  const metrics = getLoanMetrics();
+  const enriched = metrics.renewals;
   let tabFiltered = enriched;
-  if (S.renewalTab === 'done') tabFiltered = enriched.filter(l => (l.renewedDate || '').startsWith(thisMonth) && !isFreshCC(l));
-  else if (S.renewalTab === 'due-soon') tabFiltered = enriched.filter(l => l._rs.status === 'due-soon' && !l.renewedDate);
-  else if (S.renewalTab === 'overdue') tabFiltered = enriched.filter(l => (l._rs.status === 'pending-renewal' || l._rs.status === 'npa') && !l.renewedDate);
+  if (S.renewalTab === 'done') tabFiltered = metrics.renewalDoneThisMonth;
+  else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
+  else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
   
   const sl = { daysFromSanction: 'Days', amount: 'Amount', officer: 'Officer', branch: 'Branch' };
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
@@ -26,7 +23,7 @@ export function renderRenewals(c) {
     if (av < bv) return -1 * dir; if (av > bv) return 1 * dir; return 0;
   }).filter(searchMatch);
   
-  const total = sorted.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const total = sumAmount(sorted);
   const tabMeta = {
     'done': { title: 'Done This Month', empty: '♻', msg: 'No SME renewals completed this month' },
     'due-soon': { title: 'Due for Renewal Soon', empty: '⏰', msg: 'No accounts due within 30 days' },

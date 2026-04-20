@@ -1,19 +1,36 @@
 import { S } from "./state.js";
-import { todayStr, fmtAmt, fmtDate, esc, isFreshCC } from "./utils.js";
+import { getLoanMetrics, sumAmount } from "./derived.js";
+import { fmtAmt, fmtDate, esc } from "./utils.js";
 
 let currentCharts = [];
 let perfSeg = 'month';
 let perfChart = 'cats';
 let perfLbPeriod = 'month';
+let chartLoadPromise = null;
 
-export function renderDaily(c) {
-  const td = todayStr(), thisMonth = td.slice(0, 7);
-  const todayL = S.loans.filter(l => l.status === 'sanctioned' && l.sanctionDate === td && isFreshCC(l));
-  const monthL = S.loans.filter(l => l.status === 'sanctioned' && (l.sanctionDate || '').startsWith(thisMonth) && isFreshCC(l));
-  const pendingL = S.loans.filter(l => l.status === 'pending' && isFreshCC(l));
-  const tAmt = todayL.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-  const mAmt = monthL.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-  const pAmt = pendingL.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+function ensureChartJs() {
+  if (window.Chart) return Promise.resolve();
+  if (chartLoadPromise) return chartLoadPromise;
+  chartLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return chartLoadPromise;
+}
+
+export async function renderDaily(c) {
+  const metrics = getLoanMetrics();
+  const td = metrics.day;
+  const todayL = metrics.sanctionedToday;
+  const monthL = metrics.sanctionedThisMonth;
+  const pendingL = metrics.pending;
+  const tAmt = sumAmount(todayL);
+  const mAmt = sumAmount(monthL);
+  const pAmt = sumAmount(pendingL);
   const cats = ['Agriculture', 'SME', 'Education'];
   const catColors = ['rgba(16,185,129,0.75)', 'rgba(107,95,191,0.75)', 'rgba(245,158,11,0.75)'];
 
@@ -130,6 +147,12 @@ export function renderDaily(c) {
     if (ci !== -1) { catAmts[ci] += a; catCnts[ci]++; }
     if (offAmts[l.allocatedTo] !== undefined) offAmts[l.allocatedTo] += a;
   });
+
+  try {
+    await ensureChartJs();
+  } catch (err) {
+    console.warn('[Performance] Chart.js failed to load:', err);
+  }
 
   if (window.Chart) {
     const ce = document.getElementById('catChart');

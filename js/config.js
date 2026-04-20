@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { enableIndexedDbPersistence, getFirestore } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const FB = {
   apiKey: "AIzaSyDY0AMy0eZI_74nJSoy46uHqgKvh9NkKw8",
@@ -12,3 +12,7 @@ const FB = {
 
 export const app = initializeApp(FB);
 export const db = getFirestore(app);
+
+enableIndexedDbPersistence(db).catch(err => {
+  console.warn('[Firebase] Offline persistence unavailable:', err?.code || err);
+});

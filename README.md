@@ -1,103 +1,55 @@
-# Loan Progress PWA
+# Nirnay Loan Tracker PWA
 
-A Progressive Web App for tracking loan applications across Pending → Sanctioned → Returned states, with real-time sync via Firebase.
+A static Progressive Web App for tracking loan applications across Pending, Sanctioned, Returned, and SME Renewal workflows with Firebase Firestore sync.
 
 ## Features
 
-- ✅ **3 user roles**: Anchal, Nikita, Ritika (editable via Admin) + separate Admin
-- ✅ **Real-time sync**: All users see updates instantly (via Firebase Firestore)
-- ✅ **Pending tab** with sub-tabs: Agriculture / SME / Education / All
-- ✅ **Sanction flow**: One tap sanctions a loan, auto-fills today's date
-- ✅ **Returned tab**: Stays until manually moved back to pending
-- ✅ **Daily Report**: Today / This Month / Pending summary by officer × category
-- ✅ **Admin-only delete**: Protected by PIN (147258)
-- ✅ **Admin settings**: Add/remove officers and branches anytime
-- ✅ **Installable**: Add to home screen on phone, works like a native app
-- ✅ **Offline-capable**: App loads offline (data syncs when online)
+- Officer and Admin modes with configurable officers, branches, branch ownership, and Admin PIN.
+- Realtime Firestore sync for loan changes and notifications.
+- Fresh loan tracking across Pending, Sanctioned, and Returned states.
+- SME CC renewal dashboard with Done, Due Soon, Overdue, and All account views.
+- Performance dashboard loaded on demand so the main tracking view stays lightweight.
+- Installable PWA shell with local app assets cached for offline launch.
+- Firestore offline persistence when supported by the browser.
 
-## Admin PIN
-**147258** — keep this safe. You can change it by editing `index.html` (search for `ADMIN_PIN`).
+## Local Testing
 
----
+This app has no build step. Serve the repository root with any static server, then open the local URL in a browser.
 
-## How to Deploy (Pick ONE option)
-
-### 🟢 Option 1: Netlify Drop (Easiest, 30 seconds, FREE)
-
-1. Go to https://app.netlify.com/drop
-2. Sign up with Google (free)
-3. Drag the **entire `loan-progress` folder** (not zipped) onto the page
-4. Done — you get a URL like `https://loan-progress-abc123.netlify.app`
-5. Share the URL with Anchal, Nikita, Ritika
-6. On phone: open the URL in Chrome → tap menu → "Install app" / "Add to Home screen"
-
-### 🟢 Option 2: GitHub Pages (FREE)
-
-1. Create a free GitHub account if you don't have one
-2. Create a new public repo, e.g., `loan-progress`
-3. Upload all files (`index.html`, `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`)
-4. Go to repo Settings → Pages → Source: `main` branch / root → Save
-5. Your app is live at `https://<your-username>.github.io/loan-progress/`
-
-### 🟢 Option 3: Firebase Hosting (Same Firebase account, FREE)
-
-In your Firebase console → Build → Hosting → Get started. Follow the CLI instructions to deploy the folder.
-
----
-
-## How to Install on Phone
-
-1. Open the deployed URL in **Chrome** (Android) or **Safari** (iOS)
-2. **Android**: Tap menu (⋮) → "Install app" or "Add to Home screen"
-3. **iOS**: Tap Share button → "Add to Home Screen"
-4. App icon appears on home screen — tap to launch like any app
-
-## How to Use
-
-1. First launch → pick your name from the list (or tap Admin + enter PIN)
-2. Tap the **+** button (bottom right) to add a new loan
-3. In the **Pending** tab: tap **✓ Sanction** to move a loan to Sanctioned, or **↩ Return** to mark as returned
-4. All changes sync instantly to other users' devices
-5. **Daily Report** tab shows the full performance tracker summary
-
-## Admin Features (after PIN unlock)
-
-- Delete any loan entry (regular users cannot)
-- Tap **⚙️ Admin Settings** in Daily Report tab to:
-  - Add/remove processing officers
-  - Add/remove branches
-
-## Firebase Firestore Rules
-
-Make sure Firestore is in "test mode" or has these rules:
+```bash
+python -m http.server 4173
 ```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
+
+Recommended lightweight test data volume: up to 50 representative loan records across officers, branches, categories, statuses, and renewal states.
+
+## Deployment
+
+You can deploy the repository root to any static host, including GitHub Pages, Netlify, or Firebase Hosting. Required runtime files include `index.html`, `manifest.json`, `sw.js`, `css/styles.css`, `js/`, and the icon files.
+
+## Admin And Settings
+
+The default Admin PIN and officer/branch defaults are defined in `js/state.js`, then persisted in the Firestore `settings/config` document after first launch. Use the in-app Admin Settings screen for normal changes.
+
+## Firestore Notes
+
+The app uses the Firebase project configured in `js/config.js`. For real usage, avoid open test-mode rules and protect reads/writes with Firebase Auth and role-aware Firestore rules.
 
 ## File Structure
 
+```text
+.
+├── index.html
+├── manifest.json
+├── sw.js
+├── css/styles.css
+├── js/
+│   ├── app.js
+│   ├── config.js
+│   ├── db.js
+│   ├── derived.js
+│   ├── notifications.js
+│   ├── performance.js
+│   └── ui-*.js
+├── data/
+└── icon-192.png / icon-512.png
 ```
-loan-progress/
-├── index.html       (main app)
-├── manifest.json    (PWA manifest)
-├── sw.js           (service worker for offline)
-├── icon-192.png    (app icon)
-├── icon-512.png    (app icon, large)
-└── README.md       (this file)
-```
-
-## Need to change something?
-
-- **Admin PIN**: Edit `index.html`, find `const ADMIN_PIN = "147258"`, change the number
-- **Default officers**: Edit `index.html`, find `officers: ['Anchal', 'Nikita', 'Ritika']`
-- **Default branches**: Edit `index.html`, find `branches: [...]`
-
-All data lives in Firebase — you can view/edit raw data anytime at:
-https://console.firebase.google.com/project/loan-tracker-4af27/firestore

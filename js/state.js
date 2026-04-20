@@ -19,6 +19,7 @@ export const S = {
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },
   openPop: null,
   loans: [],
+  loanMap: new Map(),
   notifications: [],
   officers: ['Anchal', 'Nikita', 'Ritika'],
   branches: [
