@@ -130,6 +130,7 @@
     <h2 id="formTitle">Add New Loan</h2>
     <form id="loanForm" onsubmit="saveLoan(event)">
       <input type="hidden" id="loanId">
+      <input type="hidden" id="formMode" value="">
       <div class="form-group">
         <label>Allocated To *</label>
         <select id="fOfficer" required><option value="">Select officer</option></select>
@@ -161,7 +162,7 @@
         <label>Amount (in Lakhs) *</label>
         <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35">
       </div>
-      <div class="form-group">
+      <div class="form-group" id="fReceiveGroup">
         <label>Receive Date *</label>
         <input type="date" id="fReceive" required>
       </div>
@@ -170,8 +171,12 @@
         <input type="date" id="fSanction">
       </div>
       <div class="form-group" id="fRenewalGroup" style="display:none;">
-        <label>Renewal Due Date *</label>
+        <label>Renewal Due Date</label>
         <input type="date" id="fRenewalDue">
+      </div>
+      <div class="form-group" id="fLimitExpiryGroup" style="display:none;">
+        <label>Limit Expiry Date</label>
+        <input type="date" id="fLimitExpiry">
       </div>
       <div class="form-group">
         <label>Remarks</label>

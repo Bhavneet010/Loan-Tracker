@@ -47,18 +47,20 @@ window.deleteLoan = async function(id) {
   } catch (e) { toast('Error'); }
 };
 
-window.openForm = function(loan = null) {
+window.openForm = function(loan = null, mode = null) {
   if (!S.user) { if (window.showUserSelect) window.showUserSelect(); return; }
   document.getElementById('fOfficer').innerHTML = '<option value="">Select officer</option>' + S.officers.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
   document.getElementById('fBranch').innerHTML = '<option value="">Select branch</option>' + S.branches.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  const modeInput = document.getElementById('formMode');
+  if (modeInput) modeInput.value = mode || '';
   if (loan) {
-    document.getElementById('formTitle').textContent = 'Edit Loan';
+    document.getElementById('formTitle').textContent = mode === 'renewal-done' ? 'Update Renewal' : 'Edit Loan';
     document.getElementById('loanId').value = loan.id;
     document.getElementById('fOfficer').value = loan.allocatedTo || '';
     document.getElementById('fCategory').value = loan.category || '';
     const tg = document.getElementById('fTermLoanGroup'), tc = document.getElementById('fTermLoan');
     if (tg && tc) { tg.style.display = loan.category === 'SME' ? 'flex' : 'none'; tc.checked = !!loan.isTermLoan; }
-    
+
     // Renewal Group
     const rg = document.getElementById('fRenewalGroup');
     if (rg) {
@@ -66,16 +68,39 @@ window.openForm = function(loan = null) {
       const rd = document.getElementById('fRenewalDue');
       if (rd) rd.value = loan.renewalDueDate || '';
     }
+    // Limit Expiry Group
+    const leg = document.getElementById('fLimitExpiryGroup');
+    if (leg) {
+      leg.style.display = loan.category === 'SME' ? 'block' : 'none';
+      const le = document.getElementById('fLimitExpiry');
+      if (le) le.value = loan.limitExpiryDate || '';
+    }
 
-    document.getElementById('fBranch').value = loan.branch || '';
+    // Branch: try exact match first, then code-prefix match for imported loans
+    const branchSel = document.getElementById('fBranch');
+    branchSel.value = loan.branch || '';
+    if (!branchSel.value && loan.branch) {
+      const code = String(loan.branch).trim().split(/\s*[:]/)[0].trim();
+      const match = S.branches.find(b => b.split(/\s*[:]/)[0].trim() === code);
+      if (match) branchSel.value = match;
+    }
+
     document.getElementById('fName').value = loan.customerName || '';
     document.getElementById('fAmount').value = loan.amount || '';
     document.getElementById('fReceive').value = loan.receiveDate || '';
     document.getElementById('fSanction').value = loan.sanctionDate || '';
     document.getElementById('fRemarks').value = loan.remarks || '';
-    document.getElementById('fSanctionGroup').style.display = loan.status === 'sanctioned' ? 'block' : 'none';
-    
-    if (arguments[1] === true) { // isRenewal flag
+
+    // Show/hide date groups based on mode
+    if (mode === 'renewal-done') {
+      document.getElementById('fReceiveGroup').style.display = 'none';
+      document.getElementById('fSanctionGroup').style.display = 'none';
+    } else {
+      document.getElementById('fReceiveGroup').style.display = '';
+      document.getElementById('fSanctionGroup').style.display = loan.status === 'sanctioned' ? 'block' : 'none';
+    }
+
+    if (mode === 'renewal') {
       const rd = document.getElementById('fRenewalDue');
       if (rd) {
         rd.focus();
@@ -88,9 +113,12 @@ window.openForm = function(loan = null) {
     document.getElementById('formTitle').textContent = 'Add New Loan';
     document.getElementById('loanId').value = '';
     document.getElementById('fReceive').value = todayStr();
+    document.getElementById('fReceiveGroup').style.display = '';
     document.getElementById('fSanctionGroup').style.display = 'none';
     const tg = document.getElementById('fTermLoanGroup'), tc = document.getElementById('fTermLoan');
     if (tg && tc) { tg.style.display = 'none'; tc.checked = false; }
+    const rg = document.getElementById('fRenewalGroup'); if (rg) rg.style.display = 'none';
+    const leg = document.getElementById('fLimitExpiryGroup'); if (leg) leg.style.display = 'none';
     if (S.user && !S.isAdmin) document.getElementById('fOfficer').value = S.user;
   }
   document.getElementById('formModal').style.display = 'flex';
@@ -100,8 +128,12 @@ window.closeForm = () => document.getElementById('formModal').style.display = 'n
 window.editLoan = id => { const l = S.loans.find(x => x.id === id); if (l) window.openForm(l); };
 
 window.toggleTermLoan = function(cat) {
-  const el = document.getElementById('fTermLoanGroup');
-  if (el) el.style.display = cat === 'SME' ? 'flex' : 'none';
+  const tg = document.getElementById('fTermLoanGroup');
+  if (tg) tg.style.display = cat === 'SME' ? 'flex' : 'none';
+  const rg = document.getElementById('fRenewalGroup');
+  if (rg) rg.style.display = cat === 'SME' ? 'block' : 'none';
+  const leg = document.getElementById('fLimitExpiryGroup');
+  if (leg) leg.style.display = cat === 'SME' ? 'block' : 'none';
 };
 
 window.saveLoan = async function(e) {
@@ -126,9 +158,11 @@ window.saveLoan = async function(e) {
     const isImported = (existing && existing.isImported) || (id && id.startsWith('import_sme_csv_'));
     if (!isImported) { data.isFreshCC = true; data.manuallyCreated = true; }
     else { data.isFreshCC = false; data.isImported = true; }
-    
+
     const rd = document.getElementById('fRenewalDue');
-    if (rd && rd.value) data.renewalDueDate = rd.value;
+    data.renewalDueDate = (rd && rd.value) ? rd.value : '';
+    const le = document.getElementById('fLimitExpiry');
+    data.limitExpiryDate = (le && le.value) ? le.value : '';
   }
   const sd = document.getElementById('fSanction').value;
   if (sd) data.sanctionDate = sd;
@@ -149,10 +183,10 @@ window.saveLoan = async function(e) {
 
 window.markRenewalDone = async function(id) {
   const l = S.loans.find(x => x.id === id); if (!l) return;
-  if (!confirm(`Mark renewal done for ${l.customerName}?`)) return;
   try {
     await updateLoan(id, { renewedDate: todayStr() });
     toast('Renewal marked done ✓');
+    window.openForm({ ...l, renewedDate: todayStr() }, 'renewal-done');
   } catch (e) { toast('Error'); }
 };
 

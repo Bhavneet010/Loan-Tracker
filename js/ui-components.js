@@ -69,7 +69,9 @@ export function renewalBadge(rs) {
 
 export function renewalItemHtml(loan, rs) {
   const sm = renewalBadge(rs);
-  const statusCls = { active: 'rnw-s-active', 'due-soon': 'rnw-s-due-soon', 'pending-renewal': 'rnw-s-pending', npa: 'rnw-s-npa' }[rs.status] || '';
+  const statusCls = loan.renewedDate
+    ? 'rnw-s-done'
+    : ({ active: 'rnw-s-active', 'due-soon': 'rnw-s-due-soon', 'pending-renewal': 'rnw-s-pending', npa: 'rnw-s-npa' }[rs.status] || '');
   
   // Only show npaChip if not already marked as NPA by status badge to avoid duplication
   const npaChip = (rs.status !== 'npa' && rs.daysUntilNpa <= 30 && rs.daysUntilNpa > 0)
