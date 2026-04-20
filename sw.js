@@ -1,4 +1,4 @@
-const CACHE = 'nirnay-v12';
+const CACHE = 'nirnay-v13';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './css/styles.css'];
 
 self.addEventListener('install', e => {
