@@ -691,6 +691,21 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 }
 .back-btn:hover{background:rgba(107,95,191,0.08);}
 .perf-overlay-title{font-weight:700;font-size:1.1rem;color:var(--text1);}
+.perf-export-btn{
+  margin-left:auto;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(135deg,var(--p2),var(--p3));
+  color:white;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(107,95,191,0.24);
+}
+@media(max-width:390px){
+  .perf-export-btn{padding:7px 9px;font-size:11px;}
+}
 body.dark .perf-overlay{background:#1A1835;}
 body.dark .perf-overlay-header{background:#1A1835;border-color:rgba(107,95,191,0.25);}
 body.dark .back-btn:hover{background:rgba(107,95,191,0.15);}

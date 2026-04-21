@@ -92,11 +92,11 @@ function buildOfficerTotals(loans) {
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 }
 
-function buildTrendDatasets(metrics, buckets) {
+function buildTrendDatasets(metrics, buckets, mode = perfTrendMode) {
   const freshMonth = metrics.sanctionedThisMonth;
   const renewalMonth = metrics.renewalDoneThisMonth;
 
-  if (perfTrendMode === "all") {
+  if (mode === "all") {
     return {
       labels: buckets.labels,
       datasets: [
@@ -120,8 +120,8 @@ function buildTrendDatasets(metrics, buckets) {
     };
   }
 
-  const source = perfTrendMode === "fresh-officers" ? freshMonth : renewalMonth;
-  const dateKey = perfTrendMode === "fresh-officers" ? "sanctionDate" : "renewedDate";
+  const source = mode === "fresh-officers" ? freshMonth : renewalMonth;
+  const dateKey = mode === "fresh-officers" ? "sanctionDate" : "renewedDate";
   const palette = [TREND_COLORS.officerA, TREND_COLORS.officerB, TREND_COLORS.officerC, TREND_COLORS.officerD];
 
   return {
@@ -181,7 +181,7 @@ const visibleValueLabelsPlugin = {
   },
 };
 
-function buildLeaderboard(loans, kind) {
+function buildLeaderboardRows(loans, kind) {
   const byOfficer = new Map();
   S.officers.forEach(officer => byOfficer.set(officer, {
     name: officer,
@@ -223,10 +223,14 @@ function buildLeaderboard(loans, kind) {
   const ranked = Array.from(byOfficer.values())
     .sort((a, b) => b.total - a.total || b.count - a.count || a.name.localeCompare(b.name));
   const max = ranked.length ? ranked[0].total : 1;
+  return ranked.map((row, index) => ({ ...row, rank: index + 1, pct: max > 0 ? Math.round(row.total / max * 100) : 0 }));
+}
+
+function buildLeaderboard(loans, kind) {
+  const ranked = buildLeaderboardRows(loans, kind);
   const rankClasses = ["gold", "silver", "bronze"];
 
   return ranked.map((row, index) => {
-    const pct = max > 0 ? Math.round(row.total / max * 100) : 0;
     const chips = kind === "renewal"
       ? `<span class="perf-lb-cat sme">Done ${row.count} | Rs ${fmtAmt(row.total)}L</span>${row.due ? `<span class="perf-lb-cat due">Due ${row.due}</span>` : ""}${row.od ? `<span class="perf-lb-cat od">OD ${row.od}</span>` : ""}`
       : CATS.map(cat => {
@@ -240,7 +244,7 @@ function buildLeaderboard(loans, kind) {
       <div class="perf-lb-info">
         <div class="perf-lb-name">${esc(row.name)}</div>
         <div class="perf-lb-cats">${chips || '<span class="perf-lb-cat">No activity</span>'}</div>
-        <div class="perf-lb-bar-wrap"><div class="perf-lb-bar" style="width:${pct}%"></div></div>
+        <div class="perf-lb-bar-wrap"><div class="perf-lb-bar" style="width:${row.pct}%"></div></div>
       </div>
       <div class="perf-lb-amt">Rs ${fmtAmt(row.total)}L<small>${row.count} ${kind === "renewal" ? "done" : "loans"}</small></div>
     </div>`;
@@ -281,6 +285,152 @@ function mkSummary(loans, title) {
 
 function emptyMessage() {
   return '<div style="text-align:center;padding:12px;font-size:13px;color:#7B7A9A;">No data yet</div>';
+}
+
+function summaryRows(loans) {
+  const rows = S.officers.map(officer => ({
+    officer,
+    total: 0,
+    count: 0,
+    cats: Object.fromEntries(CATS.map(cat => [cat, { count: 0, amount: 0 }])),
+  }));
+  const byOfficer = new Map(rows.map(row => [row.officer, row]));
+  const ensure = officer => {
+    const key = officer || "Unassigned";
+    if (!byOfficer.has(key)) {
+      const row = { officer: key, total: 0, count: 0, cats: Object.fromEntries(CATS.map(cat => [cat, { count: 0, amount: 0 }])) };
+      byOfficer.set(key, row);
+      rows.push(row);
+    }
+    return byOfficer.get(key);
+  };
+
+  loans.forEach(loan => {
+    const row = ensure(loan.allocatedTo);
+    const amount = amountOf(loan);
+    row.total += amount;
+    row.count++;
+    if (row.cats[loan.category]) {
+      row.cats[loan.category].count++;
+      row.cats[loan.category].amount += amount;
+    }
+  });
+
+  return rows;
+}
+
+function reportCell(value, cls = "") {
+  return `<td${cls ? ` class="${cls}"` : ""}>${esc(value)}</td>`;
+}
+
+function metricBox(label, value, sub, cls = "") {
+  return `<div class="snap-metric ${cls}"><span>${esc(label)}</span><b>${esc(value)}</b><small>${esc(sub)}</small></div>`;
+}
+
+function trendTable(metrics, scale, mode) {
+  const buckets = trendBuckets(metrics.thisMonth, scale);
+  const trend = buildTrendDatasets(metrics, buckets, mode);
+  const modeTitle = {
+    all: "All Sanctions",
+    "fresh-officers": "Fresh Officers",
+    "renewal-officers": "Renewal Officers",
+  }[mode];
+  const head = `<tr><th>Series</th>${trend.labels.map(label => `<th>${esc(label)}</th>`).join("")}<th>Total</th></tr>`;
+  const rows = trend.datasets.map(dataset => {
+    const total = dataset.data.reduce((sum, value) => sum + (Number(value) || 0), 0);
+    return `<tr><th>${esc(dataset.label)}</th>${dataset.data.map(value => reportCell(`Rs ${fmtAmt(value)}L`, "num")).join("")}${reportCell(`Rs ${fmtAmt(total)}L`, "num strong")}</tr>`;
+  }).join("");
+  return `<section class="snap-section"><h2>${esc(modeTitle)} - ${scale === "weekly" ? "Weekly" : "Daily"} Trend</h2><table>${head}${rows || '<tr><td colspan="2">No trend data</td></tr>'}</table></section>`;
+}
+
+function performerTable(title, rows, kind) {
+  const body = rows.map(row => {
+    const detail = kind === "renewal"
+      ? `Done ${row.count}; Due ${row.due}; OD ${row.od}`
+      : CATS.map(cat => {
+        const item = row.cats[cat];
+        return `${shortCat(cat)} ${item.count} / Rs ${fmtAmt(item.amount)}L`;
+      }).join("; ");
+    return `<tr>
+      ${reportCell(row.rank)}
+      ${reportCell(row.name)}
+      ${reportCell(detail)}
+      ${reportCell(`Rs ${fmtAmt(row.total)}L`, "num strong")}
+    </tr>`;
+  }).join("");
+  return `<section class="snap-section"><h2>${esc(title)}</h2><table><tr><th>Rank</th><th>Officer</th><th>Details</th><th>Total</th></tr>${body || '<tr><td colspan="4">No data</td></tr>'}</table></section>`;
+}
+
+function summaryTable(title, loans) {
+  const rows = summaryRows(loans);
+  const body = rows.map(row => `<tr>
+    ${reportCell(row.officer)}
+    ${reportCell(row.count, "num")}
+    ${CATS.map(cat => {
+      const item = row.cats[cat];
+      return reportCell(`${item.count} / Rs ${fmtAmt(item.amount)}L`, "num");
+    }).join("")}
+    ${reportCell(`Rs ${fmtAmt(row.total)}L`, "num strong")}
+  </tr>`).join("");
+  return `<section class="snap-section"><h2>${esc(title)}</h2><table><tr><th>Officer</th><th>Count</th><th>Agri</th><th>SME</th><th>Edu</th><th>Total</th></tr>${body}</table></section>`;
+}
+
+function buildSnapshotHtml() {
+  const metrics = getLoanMetrics();
+  const renewalToday = metrics.renewalDoneThisMonth.filter(loan => loan.renewedDate === metrics.day);
+  const freshTodayAmt = sumAmount(metrics.sanctionedToday);
+  const freshMonthAmt = sumAmount(metrics.sanctionedThisMonth);
+  const pendingAmt = sumAmount(metrics.pending);
+  const renewalTodayAmt = sumAmount(renewalToday);
+  const renewalMonthAmt = sumAmount(metrics.renewalDoneThisMonth);
+  const renewalOverdueAmt = sumAmount(metrics.renewalOverdue);
+  const generatedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+
+  const freshMonthRows = buildLeaderboardRows(metrics.sanctionedThisMonth, "fresh");
+  const freshTodayRows = buildLeaderboardRows(metrics.sanctionedToday, "fresh");
+  const renewalMonthRows = buildLeaderboardRows(metrics.renewalDoneThisMonth, "renewal");
+  const renewalTodayRows = buildLeaderboardRows(renewalToday, "renewal");
+
+  const css = `
+    *{box-sizing:border-box} body{margin:0;background:#F5F3FC;color:#25213D;font-family:Inter,Arial,sans-serif}
+    .snap{max-width:1100px;margin:0 auto;padding:28px} .snap-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
+    h1{font-size:28px;margin:0 0 6px} h2{font-size:16px;margin:0 0 10px}.muted{color:#756F91;font-size:12px;font-weight:700}
+    .print-btn{border:0;border-radius:10px;background:#6B5FBF;color:white;padding:10px 14px;font-weight:800;cursor:pointer}
+    .snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}.snap-card,.snap-section{background:white;border:1px solid #E7E0F8;border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(62,47,125,.05)}
+    .snap-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.snap-metric{border-radius:9px;background:#F8F6FF;border-top:4px solid #6B5FBF;padding:10px}.snap-metric.green{border-color:#10B981}.snap-metric.amber{border-color:#F59E0B}.snap-metric.red{border-color:#EF4444}
+    .snap-metric span{display:block;color:#756F91;font-size:10px;font-weight:900;text-transform:uppercase}.snap-metric b{display:block;font-size:20px;margin-top:4px}.snap-metric small{display:block;color:#756F91;font-size:11px;margin-top:4px}
+    table{width:100%;border-collapse:collapse;font-size:11px} th,td{border-bottom:1px solid #ECE7FA;padding:7px;text-align:left;vertical-align:top} th{background:#F8F6FF;color:#51498A;font-size:10px;text-transform:uppercase}.num{text-align:right;white-space:nowrap}.strong{font-weight:900;color:#25213D}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.page-break{break-before:page}
+    @media(max-width:760px){.snap{padding:16px}.snap-grid,.two{grid-template-columns:1fr}.snap-head{display:block}.print-btn{margin-top:10px}.snap-metrics{grid-template-columns:1fr}}
+    @media print{body{background:white}.snap{max-width:none;padding:0}.print-btn{display:none}.snap-card,.snap-section{box-shadow:none;break-inside:avoid} th{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+  `;
+
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Performance Snapshot</title><style>${css}</style></head>
+  <body><main class="snap">
+    <header class="snap-head"><div><h1>Performance Snapshot</h1><div class="muted">Generated ${esc(generatedAt)} | User ${esc(S.user || "Admin")} | Month ${esc(metrics.thisMonth)}</div></div><button class="print-btn" onclick="window.print()">Save as PDF / Print</button></header>
+    <div class="snap-grid">
+      <section class="snap-card"><h2>Fresh Loans</h2><div class="snap-metrics">
+        ${metricBox("Today", `Rs ${fmtAmt(freshTodayAmt)}L`, `${metrics.sanctionedToday.length} loans`)}
+        ${metricBox("This Month", `Rs ${fmtAmt(freshMonthAmt)}L`, `${metrics.sanctionedThisMonth.length} sanctioned`, "green")}
+        ${metricBox("Pending", `Rs ${fmtAmt(pendingAmt)}L`, `${metrics.pending.length} in pipeline`, "amber")}
+      </div></section>
+      <section class="snap-card"><h2>Renewals</h2><div class="snap-metrics">
+        ${metricBox("Today Done", `Rs ${fmtAmt(renewalTodayAmt)}L`, `${renewalToday.length} renewals`)}
+        ${metricBox("This Month", `Rs ${fmtAmt(renewalMonthAmt)}L`, `${metrics.renewalDoneThisMonth.length} done`, "green")}
+        ${metricBox("Overdue", `Rs ${fmtAmt(renewalOverdueAmt)}L`, `${metrics.renewalOverdue.length} accounts`, "red")}
+      </div></section>
+    </div>
+    ${["weekly", "daily"].map(scale => ["all", "fresh-officers", "renewal-officers"].map(mode => trendTable(metrics, scale, mode)).join("")).join("")}
+    <div class="two page-break">
+      ${performerTable("Fresh Top Performers - This Month", freshMonthRows, "fresh")}
+      ${performerTable("Fresh Top Performers - Today", freshTodayRows, "fresh")}
+      ${performerTable("Renewal Top Performers - This Month", renewalMonthRows, "renewal")}
+      ${performerTable("Renewal Top Performers - Today", renewalTodayRows, "renewal")}
+    </div>
+    ${summaryTable("Fresh Summary - Today", metrics.sanctionedToday)}
+    ${summaryTable("Fresh Summary - This Month", metrics.sanctionedThisMonth)}
+    ${summaryTable("Fresh Summary - Pending", metrics.pending)}
+  </main><script>setTimeout(()=>window.print(),400)</script></body></html>`;
 }
 
 export async function renderDaily(c) {
@@ -460,3 +610,28 @@ window.setPerfLbKind = function (value) {
   const target = document.getElementById("perfOverlayContent");
   if (target && document.getElementById("perfOverlay").style.display !== "none") renderDaily(target);
 };
+
+window.exportPerformanceSnapshot = function () {
+  const html = buildSnapshotHtml();
+  const report = window.open("", "_blank");
+  if (report) {
+    report.document.open();
+    report.document.write(html);
+    report.document.close();
+    return;
+  }
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `performance-snapshot-${todayFileName()}.html`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+function todayFileName() {
+  return new Date().toISOString().slice(0, 10);
+}
