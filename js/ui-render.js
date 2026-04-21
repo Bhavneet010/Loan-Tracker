@@ -48,6 +48,16 @@ window.setSort = function(f, d) { if (f) S.sort.field = f; if (d) S.sort.dir = d
 window.setRenewalFilter = function(k, v) { S.renewalFilter[k] = S.renewalFilter[k] === v ? 'All' : v; render(); };
 window.setRenewalSort = function(f, d) { if (f) S.renewalSort.field = f; if (d) S.renewalSort.dir = d; render(); };
 window.setRenewalTab = function(t) { S.renewalTab = t; S.openPop = null; render(); };
+window.setRenewalOfficer = function(officer) {
+  S.renewalFilter.officer = S.renewalFilter.officer === officer ? 'All' : officer;
+  S.openPop = null;
+  render();
+};
+
+window.toggleRenewalOfficers = function() {
+  S.renewalOfficersExpanded = !S.renewalOfficersExpanded;
+  render();
+};
 
 // Export specifically for importer.js
 export { renderSettingsList } from "./ui-settings.js";

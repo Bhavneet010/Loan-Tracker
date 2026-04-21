@@ -33,6 +33,14 @@ export function getLoanMetrics() {
     loan => (loan._rs.status === "pending-renewal" || loan._rs.status === "npa") && !loan.renewedDate
   );
   const urgentRenewals = renewals.filter(loan => loan._rs.status !== "active");
+  const renewalOfficerRows = buildRenewalOfficerRows(renewals, renewalDueSoon, renewalOverdue);
+  const renewalOfficerSummary = {
+    activeOfficers: renewalOfficerRows.filter(row => row.total > 0).length,
+    total: renewals.length,
+    od: renewalOverdue.length,
+    due: renewalDueSoon.length,
+    rows: renewalOfficerRows,
+  };
 
   cache = {
     day,
@@ -48,8 +56,30 @@ export function getLoanMetrics() {
     renewalDueSoon,
     renewalOverdue,
     urgentRenewals,
+    renewalOfficerSummary,
   };
   cacheLoans = S.loans;
   cacheDay = day;
   return cache;
+}
+
+function buildRenewalOfficerRows(renewals, dueSoon, overdue) {
+  const byOfficer = new Map();
+  S.officers.forEach(officer => {
+    byOfficer.set(officer, { officer, total: 0, od: 0, due: 0 });
+  });
+
+  const ensure = officer => {
+    const key = officer || "Unassigned";
+    if (!byOfficer.has(key)) byOfficer.set(key, { officer: key, total: 0, od: 0, due: 0 });
+    return byOfficer.get(key);
+  };
+
+  renewals.forEach(loan => ensure(loan.allocatedTo).total++);
+  dueSoon.forEach(loan => ensure(loan.allocatedTo).due++);
+  overdue.forEach(loan => ensure(loan.allocatedTo).od++);
+
+  return Array.from(byOfficer.values()).sort((a, b) =>
+    (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.officer.localeCompare(b.officer)
+  );
 }

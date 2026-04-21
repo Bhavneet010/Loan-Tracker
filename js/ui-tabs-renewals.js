@@ -1,6 +1,6 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
-import { esc, fmtAmt } from "./utils.js";
+import { esc, fmtAmt, initials, officerColor } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
 
@@ -52,8 +52,9 @@ export function renderRenewals(c) {
     </div>
   </div>`;
 
+  const officerViewer = renewalOfficerViewerHtml(metrics.renewalOfficerSummary);
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
-  c.innerHTML = `${fsBar}<div class="sec-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div></div>${list}`;
+  c.innerHTML = `${officerViewer}${fsBar}<div class="sec-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div></div>${list}`;
 }
 
 export function applyRenewalFilters(enriched) {
@@ -62,4 +63,35 @@ export function applyRenewalFilters(enriched) {
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') out = out.filter(l => l.branch === S.renewalFilter.branch);
   return out;
+}
+
+function renewalOfficerViewerHtml(summary) {
+  const selected = S.renewalFilter.officer;
+  const expanded = S.renewalOfficersExpanded;
+  const rows = expanded ? summary.rows.map(row => {
+    const active = selected === row.officer;
+    return `<button class="rnw-officer-row ${active ? 'active' : ''}" onclick="setRenewalOfficer('${esc(row.officer)}')" type="button">
+      <span class="rnw-officer-name">
+        <span class="rnw-officer-av" style="background:${officerColor(row.officer).bg};">${initials(row.officer)}</span>
+        <span>${esc(row.officer)}</span>
+      </span>
+      <span>${row.total}</span>
+      <span class="rnw-officer-od">${row.od}</span>
+      <span class="rnw-officer-due">${row.due}</span>
+    </button>`;
+  }).join('') : '';
+
+  return `<section class="rnw-officer-card ${expanded ? '' : 'collapsed'}" aria-label="Renewal officer summary">
+    <button class="rnw-officer-summary" onclick="toggleRenewalOfficers()" type="button" aria-expanded="${expanded}">
+      <div class="rnw-officer-title"><span>👥</span><span><b>Officers</b><small>${summary.activeOfficers} active</small></span></div>
+      <div><b>${summary.total}</b><small>Total</small></div>
+      <div class="rnw-officer-od"><b>${summary.od}</b><small>OD</small></div>
+      <div class="rnw-officer-due"><b>${summary.due}</b><small>Due</small></div>
+      <div class="rnw-officer-caret">${expanded ? '⌃' : '⌄'}</div>
+    </button>
+    ${expanded ? `<div class="rnw-officer-table">
+      <div class="rnw-officer-head"><span>Officer</span><span>Total</span><span>OD</span><span>Due</span></div>
+      ${rows}
+    </div>` : ''}
+  </section>`;
 }
