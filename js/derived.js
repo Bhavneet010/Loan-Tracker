@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { computeRenewalStatus, isFreshCC, todayStr } from "./utils.js";
+import { computeRenewalStatus, isFreshCC, isRenewalDatesMissing, todayStr } from "./utils.js";
 
 let cache = null;
 let cacheLoans = null;
@@ -28,6 +28,7 @@ export function getLoanMetrics() {
   const renewalDoneThisMonth = renewals.filter(
     loan => (loan.renewedDate || "").startsWith(thisMonth) && !isFreshCC(loan)
   );
+  const renewalDatesMissing = renewals.filter(isRenewalDatesMissing);
   const renewalDueSoon = renewals.filter(loan => loan._rs.status === "due-soon" && !loan.renewedDate);
   const renewalOverdue = renewals.filter(
     loan => (loan._rs.status === "pending-renewal" || loan._rs.status === "npa") && !loan.renewedDate
@@ -53,6 +54,7 @@ export function getLoanMetrics() {
     sanctionedThisMonth,
     renewals,
     renewalDoneThisMonth,
+    renewalDatesMissing,
     renewalDueSoon,
     renewalOverdue,
     urgentRenewals,

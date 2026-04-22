@@ -15,7 +15,7 @@ export const S = {
   filter: { category: 'All', officer: 'All' },
   sort: { field: 'date', dir: 'desc' },
   renewalTab: 'done',
-  renewalFilter: { officer: 'All', branch: 'All' },
+  renewalFilter: { officer: 'All', branch: 'All', completion: 'All' },
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },
   renewalOfficersExpanded: false,
   openPop: null,

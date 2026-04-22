@@ -99,6 +99,14 @@ export function computeRenewalStatus(loan) {
   return { status, daysSinceSanction, daysUntilDue, daysOverdue, daysUntilNpa, dueDateStr, npaDateStr };
 }
 
+export function isRenewalDatesMissing(loan) {
+  return !!loan.renewedDate && (
+    loan.renewalDatesPending === true ||
+    !loan.renewalDueDate ||
+    !loan.limitExpiryDate
+  );
+}
+
 export function showUndoToast(msg, undoFn) {
   document.querySelectorAll('.toast').forEach(e => e.remove());
   const t = document.createElement('div'); t.className = 'toast toast-undo';

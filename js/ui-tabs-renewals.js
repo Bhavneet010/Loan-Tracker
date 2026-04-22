@@ -9,6 +9,7 @@ export function renderRenewals(c) {
   const enriched = metrics.renewals;
   let tabFiltered = enriched;
   if (S.renewalTab === 'done') tabFiltered = metrics.renewalDoneThisMonth;
+  else if (S.renewalTab === 'dates-missing') tabFiltered = metrics.renewalDatesMissing;
   else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
   
@@ -25,13 +26,14 @@ export function renderRenewals(c) {
   
   const total = sumAmount(sorted);
   const tabMeta = {
+    'dates-missing': { title: 'Renewal Dates Missing', empty: '!', msg: 'No completed renewals need date updates' },
     'done': { title: 'Done This Month', empty: '♻', msg: 'No SME renewals completed this month' },
     'due-soon': { title: 'Due for Renewal Soon', empty: '⏰', msg: 'No accounts due within 30 days' },
     'overdue': { title: 'Renewal Overdue', empty: '⚠', msg: 'No overdue renewal accounts' },
     'all': { title: 'All CC Accounts', empty: '📋', msg: 'No CC accounts found' },
   }[S.renewalTab] || { title: 'SME CC Renewals', empty: '♻', msg: 'No renewals found' };
   
-  const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) + (S.renewalFilter.branch !== 'All' ? 1 : 0);
+  const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) + (S.renewalFilter.branch !== 'All' ? 1 : 0) + (S.renewalFilter.completion !== 'All' ? 1 : 0);
   const sortLabel = `${sl[S.renewalSort.field] || 'Days'} ${S.renewalSort.dir === 'asc' ? '↑' : '↓'}`;
   
   const radio = (name, opts, cur) => opts.map(o => `<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur === o.v ? 'checked' : ''} onchange="${name === 'sortField' ? `setRenewalSort('${esc(o.v)}',null)` : name === 'sortDir' ? `setRenewalSort(null,'${esc(o.v)}')` : `setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
@@ -43,7 +45,8 @@ export function renderRenewals(c) {
     <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">⚲ Filter<span class="fs-badge">${fc || ''}</span></button>
     <button class="fs-btn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">↕ Sort <span class="fs-label">${sortLabel}</span></button>
     <div class="fs-pop" style="${filterStyle}">
-      <h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}
+      <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Dates missing' }, { v: 'Complete', label: 'Dates complete' }], S.renewalFilter.completion)}
+      <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}
       <hr><h4>Branch</h4>${radio('branch', [{ v: 'All', label: 'All branches' }, ...S.branches.map(b => ({ v: b, label: b }))], S.renewalFilter.branch)}
     </div>
     <div class="fs-pop fs-pop-right" style="${sortStyle}">
@@ -62,7 +65,13 @@ export function applyRenewalFilters(enriched) {
   if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => l.allocatedTo === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') out = out.filter(l => l.branch === S.renewalFilter.branch);
+  if (S.renewalFilter.completion === 'DatesMissing') out = out.filter(hasMissingRenewalDates);
+  else if (S.renewalFilter.completion === 'Complete') out = out.filter(l => !l.renewedDate || !hasMissingRenewalDates(l));
   return out;
+}
+
+function hasMissingRenewalDates(loan) {
+  return !!loan.renewedDate && (loan.renewalDatesPending === true || !loan.renewalDueDate || !loan.limitExpiryDate);
 }
 
 function renewalOfficerViewerHtml(summary) {

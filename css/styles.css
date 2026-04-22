@@ -846,6 +846,19 @@ body.dark .mode-btn.active.renewals-btn{background:linear-gradient(135deg,#10B98
 .tag.rnw-chip-pending  {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
 .tag.rnw-chip-npa      {background:var(--rnw-npa-bg);     color:var(--rnw-npa-fg);     border:1px solid var(--rnw-npa-bd);  font-weight:800;}
 .tag.rnw-chip-npa-cd   {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
+.tag.rnw-chip-done     {background:var(--rnw-active-bg);  color:var(--rnw-active-fg);  border:1px solid var(--rnw-active-bd);}
+.tag.rnw-chip-dates-missing{background:var(--rnw-soon-bg);color:var(--rnw-soon-fg);border:1px solid var(--rnw-soon-bd);}
+.rnw-date-warning{
+  margin:10px 0 0;
+  padding:9px 10px;
+  border-left:4px solid #F59E0B;
+  border-radius:10px;
+  background:rgba(245,158,11,0.12);
+  color:#92400E;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.35;
+}
 
 .loan-item.rnw-s-active   > .loan-row::before {background:linear-gradient(180deg,#10B981,#34D399);}
 .loan-item.rnw-s-due-soon > .loan-row::before {background:linear-gradient(180deg,#F59E0B,#FBBF24);}

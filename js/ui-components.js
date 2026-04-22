@@ -1,4 +1,4 @@
-import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus } from "./utils.js";
+import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing } from "./utils.js";
 import { S } from "./state.js";
 
 export function loanCard(loan, actions, variant = '') {
@@ -69,6 +69,7 @@ export function renewalBadge(rs) {
 
 export function renewalItemHtml(loan, rs) {
   const sm = renewalBadge(rs);
+  const datesMissing = isRenewalDatesMissing(loan);
   const statusCls = loan.renewedDate
     ? 'rnw-s-done'
     : ({ active: 'rnw-s-active', 'due-soon': 'rnw-s-due-soon', 'pending-renewal': 'rnw-s-pending', npa: 'rnw-s-npa' }[rs.status] || '');
@@ -77,6 +78,9 @@ export function renewalItemHtml(loan, rs) {
   const npaChip = (rs.status !== 'npa' && rs.daysUntilNpa <= 30 && rs.daysUntilNpa > 0)
     ? `<span class="tag rnw-chip-npa-cd">${rs.daysUntilNpa}d to NPA</span>`
     : '';
+  const doneChip = loan.renewedDate ? '<span class="tag rnw-chip-done">Done</span>' : '';
+  const missingChip = datesMissing ? '<span class="tag rnw-chip-dates-missing">Dates pending</span>' : '';
+  const oldDueChip = datesMissing ? `<span class="tag rnw-chip-pending">${sm.label}</span>` : '';
     
   const itemId = 'rnw-' + loan.id;
   
@@ -88,7 +92,9 @@ export function renewalItemHtml(loan, rs) {
         <span class="lr-name">${esc(loan.customerName || '')} ${loan.acNumber ? `<span class="ac-sub">A/C: ${esc(loan.acNumber)}</span>` : ''}</span>
       </div>
       <div class="lr-meta">
-        <span class="tag ${sm.cls}">${sm.label}</span>
+        ${doneChip || `<span class="tag ${sm.cls}">${sm.label}</span>`}
+        ${missingChip}
+        ${oldDueChip}
         <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">›</span>
       </div>
@@ -110,10 +116,13 @@ export function renewalItemHtml(loan, rs) {
           <div class="tag-row status-row">
             <span class="tag date">Due ${fmtDate(loan.renewalDueDate || rs.dueDateStr)}</span>
             ${loan.limitExpiryDate ? `<span class="tag date">Exp ${fmtDate(loan.limitExpiryDate)}</span>` : ''}
-            <span class="tag ${sm.cls}">${sm.label}</span>
+            ${doneChip || `<span class="tag ${sm.cls}">${sm.label}</span>`}
+            ${missingChip}
+            ${loan.renewedDate && datesMissing ? `<span class="tag ${sm.cls}">${sm.label}</span>` : ''}
             ${npaChip}
           </div>
         </div>
+        ${datesMissing ? `<div class="rnw-date-warning">New limit expiry date and next renewal due date are pending. Old due warning is retained until the next due date is entered.</div>` : ''}
         ${loan.remarks ? `<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>` : ''}
         <div class="rnw-action-group">
           <button class="btn btn-rnw-done" onclick="markRenewalDone('${loan.id}')">

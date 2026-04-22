@@ -54,7 +54,7 @@ window.openForm = function(loan = null, mode = null) {
   const modeInput = document.getElementById('formMode');
   if (modeInput) modeInput.value = mode || '';
   if (loan) {
-    document.getElementById('formTitle').textContent = mode === 'renewal-done' ? 'Update Renewal' : 'Edit Loan';
+    document.getElementById('formTitle').textContent = mode === 'renewal-done' ? 'Mark Renewal Done' : 'Edit Loan';
     document.getElementById('loanId').value = loan.id;
     document.getElementById('fOfficer').value = loan.allocatedTo || '';
     document.getElementById('fCategory').value = loan.category || '';
@@ -66,14 +66,14 @@ window.openForm = function(loan = null, mode = null) {
     if (rg) {
       rg.style.display = loan.category === 'SME' ? 'block' : 'none';
       const rd = document.getElementById('fRenewalDue');
-      if (rd) rd.value = loan.renewalDueDate || '';
+      if (rd) rd.value = mode === 'renewal-done' ? '' : (loan.renewalDueDate || '');
     }
     // Limit Expiry Group
     const leg = document.getElementById('fLimitExpiryGroup');
     if (leg) {
       leg.style.display = loan.category === 'SME' ? 'block' : 'none';
       const le = document.getElementById('fLimitExpiry');
-      if (le) le.value = loan.limitExpiryDate || '';
+      if (le) le.value = mode === 'renewal-done' ? '' : (loan.limitExpiryDate || '');
     }
 
     // Branch: try exact match first, then code-prefix match for imported loans
@@ -95,6 +95,10 @@ window.openForm = function(loan = null, mode = null) {
     if (mode === 'renewal-done') {
       document.getElementById('fReceiveGroup').style.display = 'none';
       document.getElementById('fSanctionGroup').style.display = 'none';
+      const rd = document.getElementById('fRenewalDue');
+      const le = document.getElementById('fLimitExpiry');
+      if (rd) rd.placeholder = 'Optional - enter official next due date';
+      if (le) le.placeholder = 'Optional - enter official new expiry date';
     } else {
       document.getElementById('fReceiveGroup').style.display = '';
       document.getElementById('fSanctionGroup').style.display = loan.status === 'sanctioned' ? 'block' : 'none';
@@ -139,6 +143,7 @@ window.toggleTermLoan = function(cat) {
 window.saveLoan = async function(e) {
   e.preventDefault();
   const id = document.getElementById('loanId').value;
+  const mode = document.getElementById('formMode')?.value || '';
   const cat = document.getElementById('fCategory').value;
   let termLoan = false;
   if (cat === 'SME') { const tc = document.getElementById('fTermLoan'); termLoan = tc ? tc.checked : false; }
@@ -160,9 +165,19 @@ window.saveLoan = async function(e) {
     else { data.isFreshCC = false; data.isImported = true; }
 
     const rd = document.getElementById('fRenewalDue');
-    data.renewalDueDate = (rd && rd.value) ? rd.value : '';
     const le = document.getElementById('fLimitExpiry');
-    data.limitExpiryDate = (le && le.value) ? le.value : '';
+    if (mode === 'renewal-done') {
+      const hasRenewalDue = !!(rd && rd.value);
+      const hasLimitExpiry = !!(le && le.value);
+      data.renewedDate = todayStr();
+      data.renewalDatesPending = !(hasRenewalDue && hasLimitExpiry);
+      if (hasRenewalDue) data.renewalDueDate = rd.value;
+      if (hasLimitExpiry) data.limitExpiryDate = le.value;
+    } else {
+      data.renewalDueDate = (rd && rd.value) ? rd.value : '';
+      data.limitExpiryDate = (le && le.value) ? le.value : '';
+      if (id && data.renewalDueDate && data.limitExpiryDate) data.renewalDatesPending = false;
+    }
   }
   const sd = document.getElementById('fSanction').value;
   if (sd) data.sanctionDate = sd;
@@ -183,18 +198,14 @@ window.saveLoan = async function(e) {
 
 window.markRenewalDone = async function(id) {
   const l = S.loans.find(x => x.id === id); if (!l) return;
-  try {
-    await updateLoan(id, { renewedDate: todayStr() });
-    toast('Renewal marked done ✓');
-    window.openForm({ ...l, renewedDate: todayStr() }, 'renewal-done');
-  } catch (e) { toast('Error'); }
+  window.openForm({ ...l, renewedDate: l.renewedDate || todayStr() }, 'renewal-done');
 };
 
 window.undoRenewalDone = async function(id) {
   const l = S.loans.find(x => x.id === id); if (!l) return;
   if (!confirm(`Undo renewal for ${l.customerName}? It will return to overdue/due-soon.`)) return;
   try {
-    await updateLoan(id, { renewedDate: '' });
+    await updateLoan(id, { renewedDate: '', renewalDatesPending: false });
     toast('Renewal undone');
   } catch (e) { toast('Error'); }
 };
