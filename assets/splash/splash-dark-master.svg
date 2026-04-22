@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="bgDark" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#06030f"/>
+      <stop offset="40%" stop-color="#130530"/>
+      <stop offset="100%" stop-color="#2a0f6e"/>
+    </linearGradient>
+    <radialGradient id="glowCenter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8a5cff" stop-opacity="0.22"/>
+      <stop offset="65%" stop-color="#8a5cff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowBottom" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.15"/>
+      <stop offset="70%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="iconBgDark" cx="30%" cy="30%" r="85%">
+      <stop offset="0%" stop-color="#3a1586"/>
+      <stop offset="70%" stop-color="#0f0425"/>
+    </radialGradient>
+    <radialGradient id="iconGlowDark" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#a78bfa" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background gradient -->
+  <rect x="0" y="0" width="1080" height="1920" fill="url(#bgDark)"/>
+
+  <!-- Ambient glows -->
+  <circle cx="540" cy="780" r="700" fill="url(#glowCenter)"/>
+  <circle cx="1050" cy="1900" r="360" fill="url(#glowBottom)"/>
+
+  <!-- ═══ ICON (centered, upper-middle) ═══ -->
+  <g transform="translate(420, 700)">
+    <!-- Rounded square -->
+    <rect x="0" y="0" width="240" height="240" rx="54" ry="54" fill="url(#iconBgDark)"/>
+    <!-- Icon glow orb -->
+    <circle cx="192" cy="46" r="75" fill="url(#iconGlowDark)"/>
+    <!-- Balance glyph -->
+    <g transform="translate(57, 57) scale(2.32)">
+      <line x1="28" y1="12" x2="28" y2="44" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <line x1="12" y1="22" x2="44" y2="22" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="14" cy="32" r="6" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)"/>
+      <circle cx="42" cy="32" r="6" fill="white"/>
+      <path d="M28 22 L22 16 L34 16 Z" fill="white" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- ═══ Wordmark ═══ -->
+  <text x="540" y="1060"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="96"
+        font-weight="700"
+        fill="#ffffff"
+        text-anchor="middle"
+        letter-spacing="-2">Nir<tspan fill="#c4b5fd" font-style="italic" font-weight="400">nay</tspan></text>
+
+  <!-- Tagline -->
+  <text x="540" y="1130"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="26"
+        font-weight="600"
+        fill="#8b72d4"
+        text-anchor="middle"
+        letter-spacing="10">DECISIONS · DELIVERED</text>
+
+  <!-- Loader bar -->
+  <rect x="470" y="1200" width="140" height="5" rx="2.5" fill="rgba(255,255,255,0.1)"/>
+  <rect x="470" y="1200" width="70" height="5" rx="2.5" fill="#a78bfa">
+    <animate attributeName="x" from="470" to="540" dur="1.8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Bottom credit -->
+  <text x="540" y="1780"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="22"
+        font-weight="500"
+        fill="#4a4068"
+        text-anchor="middle"
+        letter-spacing="5">LOAN PERFORMANCE INTELLIGENCE</text>
+</svg>

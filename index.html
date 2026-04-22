@@ -8,6 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preload" as="image" href="assets/splash/splash-dark.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Nirnay">
@@ -23,9 +24,9 @@
   <div class="header">
     <div class="header-top">
       <div class="brand">
-        <div class="brand-av splash-logo">
-            <svg viewBox="0 0 56 56" width="28" height="28"><line x1="28" y1="12" x2="28" y2="44" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><line x1="12" y1="22" x2="44" y2="22" stroke="white" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="32" r="6" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)"/><circle cx="42" cy="32" r="6" fill="white"/><path d="M28 22 L22 16 L34 16 Z" fill="white" opacity="0.5"/></svg>
-          </div>
+        <div class="brand-av">
+          <img src="icon-192.png" alt="" width="38" height="38">
+        </div>
         <div>
           <div class="brand-name">निर्णय</div>
           <div class="brand-sub">AMCC Paonta Sahib</div>
@@ -228,21 +229,18 @@
 <script type="module" src="js/app.js"></script>
 
 <div id="nirnay-splash">
-  <div class="splash-logo">
-    <svg viewBox="0 0 56 56" width="64" height="64"><line x1="28" y1="12" x2="28" y2="44" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><line x1="12" y1="22" x2="44" y2="22" stroke="white" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="32" r="6" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)"/><circle cx="42" cy="32" r="6" fill="white"/><path d="M28 22 L22 16 L34 16 Z" fill="white" opacity="0.5"/></svg>
-  </div>
-  <h1>Nir<em>nay</em></h1>
-  <p>DECISIONS · DELIVERED</p>
-  <div class="splash-loader">
-    <div class="splash-shimmer"></div>
+  <div class="splash-fallback">
+    <img src="icon-192.png" alt="">
+    <strong>Nirnay</strong>
   </div>
 </div>
 
 <script>
 (function(){
   var s=document.getElementById('nirnay-splash');
+  if(!s) return;
   setTimeout(function(){s.style.opacity='0';},1400);
-  setTimeout(function(){s.remove();},2200);
+  setTimeout(function(){if(s && s.parentNode) s.remove();},2200);
 })();
 </script>
 </body>

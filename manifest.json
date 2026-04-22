@@ -1,7 +1,7 @@
 {
   "name": "Nirnay",
   "short_name": "Nirnay",
-  "description": "Nirnay — Track loan applications across Pending, Sanctioned, and Returned states",
+  "description": "Nirnay - Track loan applications across Pending, Sanctioned, and Returned states",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -20,6 +20,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/ic_launcher_1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

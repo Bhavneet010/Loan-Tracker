@@ -1,10 +1,16 @@
-const CACHE = 'nirnay-v13';
+const CACHE = 'nirnay-v14';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './assets/icons/ic_launcher_1024.png',
+  './assets/icons/nirnay-icon-master.svg',
+  './assets/splash/splash-dark.png',
+  './assets/splash/splash-light.png',
+  './assets/splash/splash-dark-master.svg',
+  './assets/splash/splash-light-master.svg',
   './css/styles.css',
   './js/app.js',
   './js/config.js',

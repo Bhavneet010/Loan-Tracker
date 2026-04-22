@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bgGrad" cx="30%" cy="30%" r="85%">
+      <stop offset="0%" stop-color="#3a1586"/>
+      <stop offset="70%" stop-color="#0f0425"/>
+    </radialGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#a78bfa" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="innerHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square (iOS-style superellipse approximation via large radius) -->
+  <rect x="0" y="0" width="1024" height="1024" rx="230" ry="230" fill="url(#bgGrad)"/>
+
+  <!-- Glow orb top-right -->
+  <circle cx="820" cy="200" r="320" fill="url(#glowGrad)"/>
+
+  <!-- Inner top highlight for depth -->
+  <rect x="0" y="0" width="1024" height="1024" rx="230" ry="230" fill="url(#innerHighlight)"/>
+
+  <!-- ═══ BALANCE GLYPH ═══ -->
+  <!-- Scaled up from 56x56 viewBox to render inside 1024 canvas, centered -->
+  <!-- Mapping: glyph occupies ~560px, centered at (512, 512) -->
+  <g transform="translate(232, 232) scale(10)">
+    <!-- Vertical stand (fulcrum column) -->
+    <line x1="28" y1="12" x2="28" y2="44"
+          stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+    <!-- Horizontal beam -->
+    <line x1="12" y1="22" x2="44" y2="22"
+          stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Left pan — pending (outlined) -->
+    <circle cx="14" cy="32" r="6"
+            stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)"/>
+    <!-- Right pan — approved (filled) -->
+    <circle cx="42" cy="32" r="6" fill="white"/>
+    <!-- Fulcrum triangle -->
+    <path d="M28 22 L22 16 L34 16 Z" fill="white" opacity="0.5"/>
+  </g>
+</svg>
