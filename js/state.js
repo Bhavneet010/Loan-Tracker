@@ -17,6 +17,7 @@ export const S = {
   renewalTab: 'done',
   renewalFilter: { officer: 'All', branch: 'All', completion: 'All' },
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },
+  renewalShowNpa: true,
   renewalOfficersExpanded: false,
   openPop: null,
   loans: [],

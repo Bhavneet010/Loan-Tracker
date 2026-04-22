@@ -59,6 +59,11 @@ window.toggleRenewalOfficers = function() {
   render();
 };
 
+window.toggleRenewalNpa = function(show) {
+  S.renewalShowNpa = !!show;
+  render();
+};
+
 // Export specifically for importer.js
 export { renderSettingsList } from "./ui-settings.js";
 export { updateBadges, updateHero };

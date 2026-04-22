@@ -12,6 +12,8 @@ export function renderRenewals(c) {
   else if (S.renewalTab === 'dates-missing') tabFiltered = metrics.renewalDatesMissing;
   else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
+  const canToggleNpa = ['due-soon', 'overdue', 'all'].includes(S.renewalTab);
+  if (canToggleNpa && !S.renewalShowNpa) tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
   
   const sl = { daysFromSanction: 'Days', amount: 'Amount', officer: 'Officer', branch: 'Branch' };
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
@@ -44,6 +46,10 @@ export function renderRenewals(c) {
   const fsBar = `<div class="fs-bar" onclick="event.stopPropagation();">
     <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">⚲ Filter<span class="fs-badge">${fc || ''}</span></button>
     <button class="fs-btn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">↕ Sort <span class="fs-label">${sortLabel}</span></button>
+    ${canToggleNpa ? `<label class="rnw-npa-toggle" title="Show NPA accounts">
+      <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
+      <span>Show NPA</span>
+    </label>` : ''}
     <div class="fs-pop" style="${filterStyle}">
       <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Dates missing' }, { v: 'Complete', label: 'Dates complete' }], S.renewalFilter.completion)}
       <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}

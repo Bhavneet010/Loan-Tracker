@@ -195,6 +195,13 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 .fs-badge{background:var(--p1);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;line-height:1.4;}
 .fs-badge:empty{display:none;}
 .fs-label{color:var(--text3);font-weight:600;}
+.rnw-npa-toggle{
+  padding:7px 12px;border-radius:20px;
+  background:rgba(255,255,255,0.7);border:1px solid rgba(107,95,191,0.15);
+  color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.rnw-npa-toggle input{accent-color:var(--p1);margin:0;}
 .fs-pop{
   position:absolute;top:calc(100% - 2px);left:0;z-index:120;
   background:rgba(242,240,250,0.97);backdrop-filter:blur(24px);
@@ -739,6 +746,7 @@ body.dark .header{background:rgba(18,16,40,0.8);}
 body.dark .panel{background:#1A1835;}
 body.dark .tab{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.25);}
 body.dark .fs-btn{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.25);}
+body.dark .rnw-npa-toggle{background:rgba(36,32,64,0.85);color:#9B8FE4;border-color:rgba(107,95,191,0.25);}
 body.dark .fs-pop{background:rgba(30,28,58,0.97);border-color:rgba(80,70,130,0.3);}
 body.dark .loan-item.cat-agri > .loan-row{background:rgba(16,185,129,0.14);}
 body.dark .loan-item.cat-sme  > .loan-row{background:rgba(107,95,191,0.20);}
