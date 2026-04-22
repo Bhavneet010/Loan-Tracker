@@ -62,7 +62,7 @@ export function renewalBadge(rs) {
   return {
     'active': { label: 'Active', cls: 'rnw-chip-active' },
     'due-soon': { label: `Due in ${rs.daysUntilDue}d`, cls: 'rnw-chip-due-soon' },
-    'pending-renewal': { label: `${rs.daysOverdue}d overdue`, cls: 'rnw-chip-pending' },
+    'pending-renewal': { label: `${rs.daysOverdue}d OD`, cls: 'rnw-chip-pending' },
     'npa': { label: 'NPA', cls: 'rnw-chip-npa' },
   }[rs.status] || { label: '', cls: '' };
 }
