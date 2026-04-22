@@ -873,8 +873,6 @@ body.dark .mode-btn.active.renewals-btn{background:linear-gradient(135deg,#10B98
 .tag.rnw-chip-pending  {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
 .tag.rnw-chip-npa      {background:var(--rnw-npa-bg);     color:var(--rnw-npa-fg);     border:1px solid var(--rnw-npa-bd);  font-weight:800;}
 .tag.rnw-chip-npa-cd   {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
-.tag.rnw-chip-done     {background:var(--rnw-active-bg);  color:var(--rnw-active-fg);  border:1px solid var(--rnw-active-bd);}
-.tag.rnw-chip-dates-missing{background:var(--rnw-soon-bg);color:var(--rnw-soon-fg);border:1px solid var(--rnw-soon-bd);}
 .rnw-date-warning{
   margin:10px 0 0;
   padding:9px 10px;
@@ -892,18 +890,21 @@ body.dark .mode-btn.active.renewals-btn{background:linear-gradient(135deg,#10B98
 .loan-item.rnw-s-pending  > .loan-row::before {background:linear-gradient(180deg,#EF4444,#F87171);}
 .loan-item.rnw-s-npa      > .loan-row::before {background:linear-gradient(180deg,#7F1D1D,#B91C1C);}
 .loan-item.rnw-s-done     > .loan-row::before {background:linear-gradient(180deg,#10B981,#34D399);}
+.loan-item.rnw-s-dates-missing > .loan-row::before {background:linear-gradient(180deg,#F59E0B,#FBBF24);}
 
 .loan-item.rnw-s-active   > .loan-row {background:rgba(16,185,129,0.08);}
 .loan-item.rnw-s-due-soon > .loan-row {background:rgba(245,158,11,0.09);}
 .loan-item.rnw-s-pending  > .loan-row {background:rgba(239,68,68,0.09);}
 .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.10);}
 .loan-item.rnw-s-done     > .loan-row {background:rgba(16,185,129,0.18);border:1px solid rgba(16,185,129,0.35);}
+.loan-item.rnw-s-dates-missing > .loan-row {background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.32);}
 
 body.dark .loan-item.rnw-s-active   > .loan-row {background:rgba(16,185,129,0.13);}
 body.dark .loan-item.rnw-s-due-soon > .loan-row {background:rgba(245,158,11,0.13);}
 body.dark .loan-item.rnw-s-pending  > .loan-row {background:rgba(239,68,68,0.13);}
 body.dark .loan-item.rnw-s-npa      > .loan-row {background:rgba(127,29,29,0.18);}
 body.dark .loan-item.rnw-s-done     > .loan-row {background:rgba(16,185,129,0.22);border-color:rgba(16,185,129,0.40);}
+body.dark .loan-item.rnw-s-dates-missing > .loan-row {background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.34);}
 
 .stat-badge-warn   {background:rgba(245,158,11,0.18);color:#B45309;}
 .stat-badge-danger {background:rgba(239,68,68,0.18);color:#B91C1C;}

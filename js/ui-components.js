@@ -71,15 +71,13 @@ export function renewalItemHtml(loan, rs) {
   const sm = renewalBadge(rs);
   const datesMissing = isRenewalDatesMissing(loan);
   const statusCls = loan.renewedDate
-    ? 'rnw-s-done'
+    ? (datesMissing ? 'rnw-s-dates-missing' : 'rnw-s-done')
     : ({ active: 'rnw-s-active', 'due-soon': 'rnw-s-due-soon', 'pending-renewal': 'rnw-s-pending', npa: 'rnw-s-npa' }[rs.status] || '');
   
   // Only show npaChip if not already marked as NPA by status badge to avoid duplication
   const npaChip = (rs.status !== 'npa' && rs.daysUntilNpa <= 30 && rs.daysUntilNpa > 0)
     ? `<span class="tag rnw-chip-npa-cd">${rs.daysUntilNpa}d to NPA</span>`
     : '';
-  const doneChip = loan.renewedDate ? '<span class="tag rnw-chip-done">Done</span>' : '';
-  const missingChip = datesMissing ? '<span class="tag rnw-chip-dates-missing">Dates pending</span>' : '';
   const oldDueChip = datesMissing ? `<span class="tag rnw-chip-pending">${sm.label}</span>` : '';
     
   const itemId = 'rnw-' + loan.id;
@@ -92,8 +90,7 @@ export function renewalItemHtml(loan, rs) {
         <span class="lr-name">${esc(loan.customerName || '')} ${loan.acNumber ? `<span class="ac-sub">A/C: ${esc(loan.acNumber)}</span>` : ''}</span>
       </div>
       <div class="lr-meta">
-        ${doneChip || `<span class="tag ${sm.cls}">${sm.label}</span>`}
-        ${missingChip}
+        ${loan.renewedDate ? '' : `<span class="tag ${sm.cls}">${sm.label}</span>`}
         ${oldDueChip}
         <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">›</span>
@@ -116,8 +113,7 @@ export function renewalItemHtml(loan, rs) {
           <div class="tag-row status-row">
             <span class="tag date">Due ${fmtDate(loan.renewalDueDate || rs.dueDateStr)}</span>
             ${loan.limitExpiryDate ? `<span class="tag date">Exp ${fmtDate(loan.limitExpiryDate)}</span>` : ''}
-            ${doneChip || `<span class="tag ${sm.cls}">${sm.label}</span>`}
-            ${missingChip}
+            ${loan.renewedDate ? '' : `<span class="tag ${sm.cls}">${sm.label}</span>`}
             ${loan.renewedDate && datesMissing ? `<span class="tag ${sm.cls}">${sm.label}</span>` : ''}
             ${npaChip}
           </div>
