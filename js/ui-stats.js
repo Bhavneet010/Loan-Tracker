@@ -46,7 +46,6 @@ export function updateHero() {
     sc.classList.add('rnw-grid');
     sc.innerHTML = 
       rnwStat('done', `Renewals Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green', '', '') +
-      rnwStat('dates-missing', 'Dates Missing', metrics.renewalDatesMissing, 'rnw-grad-amber', metrics.renewalDatesMissing.length ? 'Update needed' : '', 'stat-badge-warn') +
       rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber', metrics.renewalDueSoon.length ? `${metrics.renewalDueSoon.length} pending` : '', 'stat-badge-warn') +
       rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red', metrics.renewalOverdue.length ? 'Action needed' : '', 'stat-badge-danger') +
       rnwStat('all', 'All CC Accounts', metrics.renewals, 'rnw-grad-darkred', '', '');
