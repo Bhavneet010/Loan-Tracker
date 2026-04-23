@@ -1,11 +1,12 @@
 import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode } from "./utils.js";
+import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls } from "./utils.js";
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const RECENT_BRANCHES_KEY = 'lpRecentBranches';
+let duplicateDecisionResolve = null;
 
 function getBranchSearchInput() {
   return document.getElementById('fBranchSearch');
@@ -13,6 +14,10 @@ function getBranchSearchInput() {
 
 function getBranchValueInput() {
   return document.getElementById('fBranch');
+}
+
+function getCategorySelect() {
+  return document.getElementById('fCategory');
 }
 
 function normalizeName(name) {
@@ -51,6 +56,28 @@ function branchLabel(branch) {
   return code ? `${code} · ${name}` : normalized;
 }
 
+function duplicateCardHtml(loan) {
+  const status = (loan.status || 'pending').replace(/^\w/, c => c.toUpperCase());
+  const amount = fmtAmt(loan.amount);
+  const receiveDate = loan.receiveDate ? fmtDate(loan.receiveDate) : '';
+  return `<div class="duplicate-card">
+    <div class="duplicate-card-top">
+      <div>
+        <div class="duplicate-name">${esc(loan.customerName || '')}</div>
+        <div class="duplicate-meta">${esc(loan.branch || '')}</div>
+      </div>
+      <div class="duplicate-amt">₹${amount}L</div>
+    </div>
+    <div class="duplicate-tags">
+      <span class="tag ${catCls(loan.category)}">${esc(loan.category || 'Loan')}</span>
+      <span class="tag officer">${esc(loan.allocatedTo || 'Unassigned')}</span>
+      <span class="tag date">${esc(status)}</span>
+      ${receiveDate ? `<span class="tag date">Recd ${receiveDate}</span>` : ''}
+    </div>
+    <button type="button" class="btn btn-outline duplicate-open-btn" onclick="openDuplicateExisting('${loan.id}')">Open Existing</button>
+  </div>`;
+}
+
 function populateFormOptions() {
   const officerSelect = document.getElementById('fOfficer');
   const branchOptions = document.getElementById('branchOptions');
@@ -60,6 +87,38 @@ function populateFormOptions() {
   if (branchOptions) {
     branchOptions.innerHTML = S.branches.map(branch => `<option value="${esc(branch)}"></option>`).join('');
   }
+}
+
+function renderCategoryChips(activeCategory = '') {
+  const container = document.getElementById('categoryChips');
+  if (!container) return;
+
+  const categories = ['Agriculture', 'SME', 'Education'];
+  container.innerHTML = categories.map(category => {
+    const active = category === activeCategory ? ' active' : '';
+    const chipClass = catCls(category) || '';
+    return `<button type="button" class="category-chip ${chipClass}${active}" onclick="selectCategory('${category}')">${category}</button>`;
+  }).join('');
+}
+
+function updateCategoryHint(category) {
+  const hint = document.getElementById('categoryHint');
+  if (!hint) return;
+  if (category) {
+    hint.style.display = 'none';
+    hint.textContent = '';
+    return;
+  }
+  hint.style.display = 'block';
+  hint.textContent = 'Pick a category to continue.';
+}
+
+function setCategoryValue(category) {
+  const select = getCategorySelect();
+  if (select) select.value = category || '';
+  renderCategoryChips(category || '');
+  updateCategoryHint(category || '');
+  window.toggleTermLoan(category || '');
 }
 
 function matchBranchOption(branch) {
@@ -217,12 +276,8 @@ function setBranchValue(branch, { allowFallbackUser = true, rawText = '' } = {})
   renderBranchQuickPicks(normalized);
 }
 
-function applyBranchAssignment(branch, { allowFallbackUser = true } = {}) {
-  setBranchValue(branch, { allowFallbackUser, rawText: branch });
-}
-
 function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
-  document.getElementById('fCategory').value = loan.category || '';
+  setCategoryValue(loan.category || '');
   const termLoanGroup = document.getElementById('fTermLoanGroup');
   const termLoanCheckbox = document.getElementById('fTermLoan');
   if (termLoanGroup && termLoanCheckbox) {
@@ -267,17 +322,23 @@ function getDuplicateMatches({ id = '', customerName = '', branch = '' }) {
   });
 }
 
-function confirmPotentialDuplicate({ id = '', customerName = '', branch = '' }) {
+function showDuplicateModal(matches) {
+  const modal = document.getElementById('duplicateModal');
+  const list = document.getElementById('duplicateList');
+  if (!modal || !list) return Promise.resolve(false);
+
+  list.innerHTML = matches.map(duplicateCardHtml).join('');
+  modal.style.display = 'flex';
+
+  return new Promise(resolve => {
+    duplicateDecisionResolve = resolve;
+  });
+}
+
+async function confirmPotentialDuplicate({ id = '', customerName = '', branch = '' }) {
   const matches = getDuplicateMatches({ id, customerName, branch });
   if (!matches.length) return true;
-
-  const summary = matches.slice(0, 3).map(loan =>
-    `• ${loan.status || 'pending'} | ${loan.category || 'Loan'} | ${loan.allocatedTo || 'Unassigned'}`
-  ).join('\n');
-  const extra = matches.length > 3 ? `\n…and ${matches.length - 3} more.` : '';
-  return confirm(
-    `A loan with the same customer name and branch already exists.\n\n${summary}${extra}\n\nDo you still want to save this loan?`
-  );
+  return showDuplicateModal(matches);
 }
 
 /* CORE LOAN ACTIONS */
@@ -336,12 +397,30 @@ window.toggleAdvancedFields = function(force) {
   if (officerGroup) officerGroup.style.display = (entryMode === 'quick' && !visible) ? 'none' : '';
 };
 
+window.selectCategory = function(category) {
+  setCategoryValue(category);
+};
+
 window.pickBranch = function(branch) {
   setBranchValue(branch, { allowFallbackUser: true, rawText: branch });
 };
 
 window.handleBranchSearch = function(branch) {
   setBranchValue(branch, { allowFallbackUser: true, rawText: branch });
+};
+
+window.closeDuplicateModal = function(saveAnyway) {
+  const modal = document.getElementById('duplicateModal');
+  if (modal) modal.style.display = 'none';
+  const resolve = duplicateDecisionResolve;
+  duplicateDecisionResolve = null;
+  if (resolve) resolve(!!saveAnyway);
+};
+
+window.openDuplicateExisting = function(id) {
+  window.closeDuplicateModal(false);
+  const loan = S.loans.find(item => item.id === id);
+  if (loan) window.openForm(loan, '', { entryMode: 'full' });
 };
 
 window.openForm = function(loan = null, mode = null, options = {}) {
@@ -357,6 +436,7 @@ window.openForm = function(loan = null, mode = null, options = {}) {
   populateFormOptions();
   renderBranchQuickPicks('');
   setFormEntryMode(entryMode, { duplicateSource: !!prefills });
+  setCategoryValue('');
   if (modeInput) modeInput.value = mode || '';
 
   document.getElementById('loanId').value = isEdit ? loan.id : '';
@@ -396,8 +476,7 @@ window.openForm = function(loan = null, mode = null, options = {}) {
   }
 
   if (entryMode === 'quick' && !prefills) {
-    const input = getBranchSearchInput();
-    if (input) input.focus();
+    document.getElementById('categoryChips')?.querySelector('button')?.focus();
   } else if (mode === 'renewal') {
     const renewalInput = document.getElementById('fRenewalDue');
     if (renewalInput) {
@@ -446,13 +525,19 @@ window.saveLoan = async function(e) {
 
   const id = document.getElementById('loanId').value;
   const mode = document.getElementById('formMode')?.value || '';
-  const cat = document.getElementById('fCategory').value;
+  const cat = getCategorySelect()?.value || '';
   const branchSearch = getBranchSearchInput()?.value || '';
   const branch = getBranchValueInput()?.value || matchBranchOption(branchSearch);
   const assignedOfficer = assignedOfficerForBranch(branch);
   const selectedOfficer = document.getElementById('fOfficer').value || assignedOfficer || (S.user && !S.isAdmin ? S.user : '');
   const receiveDate = document.getElementById('fReceive').value || todayStr();
   const customerName = normalizeName(document.getElementById('fName').value);
+
+  if (!cat) {
+    updateCategoryHint('');
+    toast('Pick a category first');
+    return;
+  }
 
   if (!branch) {
     toast('Pick a valid branch first');
@@ -466,7 +551,7 @@ window.saveLoan = async function(e) {
     return;
   }
 
-  if (!confirmPotentialDuplicate({ id, customerName, branch })) return;
+  if (!await confirmPotentialDuplicate({ id, customerName, branch })) return;
 
   let termLoan = false;
   if (cat === 'SME') {
