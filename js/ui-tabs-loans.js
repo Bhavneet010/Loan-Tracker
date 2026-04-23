@@ -4,6 +4,10 @@ import { fmtAmt, daysPending } from "./utils.js";
 import { emptyState, compactLoanItem } from "./ui-components.js";
 import { applyFilters, applySort, searchMatch, filterSortBarHtml } from "./ui-logic.js";
 
+function copyAction(id) {
+  return `<button class="btn btn-outline" onclick="duplicateLoan('${id}')">Copy</button>`;
+}
+
 export function renderPending(c) {
   let loans = applyFilters(getLoanMetrics().pending.filter(searchMatch));
   loans = applySort(loans);
@@ -14,11 +18,12 @@ export function renderPending(c) {
       const days = daysPending(l.receiveDate);
       const actions = `<button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
         <button class="btn btn-return" onclick="returnLoan('${l.id}')">↩ Return</button>
+        ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
       return compactLoanItem(l, actions, days > 7 ? 'overdue' : '');
     }).join('');
-    
+
   c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div></div>${cards}`;
 }
 
@@ -30,11 +35,12 @@ export function renderSanctioned(c) {
     ? emptyState('🎉', 'No sanctioned loans yet', 'Sanction pending loans to see them here')
     : loans.map(l => {
       const actions = `<button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
+        ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
       return compactLoanItem(l, actions, '', 'sanctioned');
     }).join('');
-    
+
   c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div></div>${cards}`;
 }
 
@@ -47,10 +53,11 @@ export function renderReturned(c) {
     : loans.map(l => {
       const actions = `<button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
         <button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
+        ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
       return compactLoanItem(l, actions, '', 'returned');
     }).join('');
-    
+
   c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div></div>${cards}`;
 }
