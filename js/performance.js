@@ -935,16 +935,8 @@ function buildDailySnapshotPageHtml() {
   const current = DAILY_SNAPSHOT;
 
   return `<div class="report-mockup-gallery report-mockup-gallery-single">
-    <div class="perf-snapshot-page-head">
-      <div>
-        <div class="share-snap-modal-kicker">Performance</div>
-        <h2>Daily Snapshot</h2>
-        <p>Share-focused one-page report using the finalized portrait layout.</p>
-      </div>
-      <div class="perf-snapshot-page-actions">
-        <button class="share-snap-close perf-snapshot-share-btn" type="button" onclick="shareDailySnapshotJpeg()">Share JPEG</button>
-        <button class="share-snap-close" type="button" onclick="showPerformanceDashboard()">Back to Performance</button>
-      </div>
+    <div class="perf-snapshot-share-row">
+      <button class="perf-snapshot-share-btn" type="button" onclick="shareDailySnapshotJpeg()">Share JPEG</button>
     </div>
     <div class="report-mockup-preview-wrap">
       ${buildReportMockupHtml(current, report)}
@@ -1164,12 +1156,24 @@ window.exportPerformanceSnapshot = function () {
 
 window.showDailySnapshot = function () {
   perfPage = "snapshot";
+  const backBtn = document.querySelector("#perfOverlay .back-btn");
+  const overlayTitle = document.querySelector("#perfOverlay .perf-overlay-title");
+  const overlayActions = document.querySelector("#perfOverlay .perf-overlay-actions");
+  if (backBtn) backBtn.setAttribute("onclick", "showPerformanceDashboard()");
+  if (overlayTitle) overlayTitle.textContent = "Daily Snapshot";
+  if (overlayActions) overlayActions.style.display = "none";
   const content = document.getElementById("perfOverlayContent");
   renderPerformanceView(content);
 };
 
 window.showPerformanceDashboard = function () {
   perfPage = "dashboard";
+  const backBtn = document.querySelector("#perfOverlay .back-btn");
+  const overlayTitle = document.querySelector("#perfOverlay .perf-overlay-title");
+  const overlayActions = document.querySelector("#perfOverlay .perf-overlay-actions");
+  if (backBtn) backBtn.setAttribute("onclick", "closePerfOverlay()");
+  if (overlayTitle) overlayTitle.textContent = "Performance";
+  if (overlayActions) overlayActions.style.display = "";
   const content = document.getElementById("perfOverlayContent");
   renderPerformanceView(content);
 };
