@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Snapshot 10/10 Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Noto+Sans+Devanagari:wght@700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#151228;
+      --muted:#716b8f;
+      --line:rgba(35,28,70,.09);
+      --paper:#fbfaff;
+      --panel:#fff;
+      --violet:#5a4eaf;
+      --violet-2:#7b6fd4;
+      --green:#047857;
+      --green-bg:#e8f7ef;
+      --red:#b91c1c;
+      --red-bg:#fde9e9;
+      --rose:#9d174d;
+      --rose-bg:#f8edf1;
+      --gold:#d97706;
+      --silver:#64748b;
+      --bronze:#92400e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:start center;
+      padding:24px;
+      background:#111;
+      font-family:Inter,system-ui,sans-serif;
+      color:var(--ink);
+    }
+    .snapshot{
+      width:min(100%,680px);
+      overflow:hidden;
+      border-radius:32px;
+      background:linear-gradient(180deg,#fbfaff 0%,#f1eff8 100%);
+      box-shadow:0 26px 70px rgba(0,0,0,.26);
+    }
+    .top{
+      padding:24px 26px 20px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg,#fff 0%,#f6f3fb 100%);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:13px;
+    }
+    .brand img{
+      width:42px;
+      height:42px;
+      border-radius:13px;
+      box-shadow:0 8px 20px rgba(28,20,70,.12);
+    }
+    .brand strong{
+      font-family:"Noto Sans Devanagari",Inter,sans-serif;
+      font-size:30px;
+      line-height:1;
+      letter-spacing:0;
+    }
+    .hero{
+      margin-top:22px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:20px;
+      align-items:end;
+    }
+    h1{
+      margin:0;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:38px;
+      line-height:.95;
+      letter-spacing:0;
+    }
+    .date{
+      margin-top:8px;
+      font-size:16px;
+      font-weight:800;
+      color:var(--muted);
+    }
+    .fresh-mtd{
+      text-align:right;
+      min-width:155px;
+    }
+    .eyebrow{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.11em;
+      text-transform:uppercase;
+      color:#8a85aa;
+    }
+    .fresh-mtd strong{
+      display:block;
+      margin-top:5px;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:32px;
+      line-height:1;
+    }
+    .fresh-mtd span{
+      display:block;
+      margin-top:5px;
+      color:var(--green);
+      font-size:14px;
+      font-weight:900;
+    }
+    .summary{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:1.22fr 1fr 1fr;
+      gap:12px;
+    }
+    .summary-card{
+      min-width:0;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(255,255,255,.82);
+      padding:15px;
+      box-shadow:0 8px 20px rgba(42,32,100,.045);
+    }
+    .summary-card.primary{
+      background:linear-gradient(135deg,#151228,#30235f);
+      color:#fff;
+      border-color:transparent;
+    }
+    .summary-card label{
+      display:block;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.09em;
+      text-transform:uppercase;
+      color:#8a85aa;
+    }
+    .summary-card.primary label{color:rgba(255,255,255,.62)}
+    .summary-card strong{
+      display:block;
+      margin-top:7px;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:22px;
+      line-height:1;
+    }
+    .summary-card span{
+      display:block;
+      margin-top:6px;
+      color:#4a4470;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.25;
+    }
+    .summary-card.primary span{color:rgba(255,255,255,.78)}
+    .section{
+      padding:18px 22px 0;
+    }
+    .section-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .section-title h2{
+      margin:0;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:24px;
+      line-height:1;
+      letter-spacing:0;
+    }
+    .section-title span{
+      color:var(--muted);
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .leaders{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    .leader-card,
+    .officer{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:0 8px 24px rgba(45,34,100,.055);
+    }
+    .leader-card{
+      padding:16px;
+    }
+    .leader-card .eyebrow{font-size:10px}
+    .leader-card h3{
+      margin:5px 0 13px;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:18px;
+      line-height:1.05;
+    }
+    .leader-row + .leader-row{margin-top:12px}
+    .leader-top{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .rank{
+      width:30px;
+      height:22px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:#f0edfb;
+      color:var(--violet);
+      font-size:11px;
+      font-weight:900;
+      flex:none;
+    }
+    .leader-name{
+      min-width:0;
+      flex:1;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-size:15px;
+      font-weight:900;
+    }
+    .leader-value{
+      font-size:14px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .bar{
+      margin-top:7px;
+      height:7px;
+      overflow:hidden;
+      border-radius:999px;
+      background:#eeeaf8;
+    }
+    .bar i{
+      display:block;
+      height:100%;
+      border-radius:inherit;
+      background:linear-gradient(90deg,var(--violet),var(--violet-2));
+    }
+    .leader-sub{
+      margin-top:6px;
+      font-size:12px;
+      font-weight:800;
+      color:var(--muted);
+    }
+    .officers{
+      display:grid;
+      gap:11px;
+      padding:0 22px 22px;
+      margin-top:14px;
+    }
+    .officer{
+      padding:14px;
+    }
+    .officer-head{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      align-items:center;
+      gap:11px;
+    }
+    .place{
+      width:42px;
+      height:30px;
+      border-radius:9px;
+      display:grid;
+      place-items:center;
+      color:#fff;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:13px;
+      font-weight:900;
+    }
+    .place.gold{background:linear-gradient(135deg,#f59e0b,#d97706)}
+    .place.silver{background:linear-gradient(135deg,#94a3b8,#64748b)}
+    .place.bronze{background:linear-gradient(135deg,#b45309,#92400e)}
+    .officer-name{
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:24px;
+      line-height:1;
+      font-weight:700;
+    }
+    .officer-total{
+      text-align:right;
+      min-width:120px;
+    }
+    .officer-total strong{
+      display:block;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:23px;
+      line-height:1;
+    }
+    .officer-total span{
+      display:block;
+      margin-top:4px;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--green);
+    }
+    .subhead{
+      display:flex;
+      justify-content:space-between;
+      margin:12px 2px 6px;
+      color:var(--muted);
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:.09em;
+      text-transform:uppercase;
+    }
+    .metric-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:6px;
+    }
+    .mini{
+      min-width:0;
+      border:1px solid var(--line);
+      border-radius:9px;
+      padding:7px 8px;
+      background:#f8f7fc;
+    }
+    .mini.agri{background:#e9f6f2}
+    .mini.sme{background:#f0eef8}
+    .mini.edu{background:#fbf1e9}
+    .mini.today.ok{background:var(--green-bg);border-color:rgba(4,120,87,.26)}
+    .mini.today.nil{background:var(--red-bg);border-color:rgba(185,28,28,.24)}
+    .mini label{
+      display:block;
+      color:#716b8f;
+      font-size:8px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .mini strong{
+      display:inline-block;
+      margin-top:4px;
+      font-family:Outfit,Inter,sans-serif;
+      font-size:18px;
+      line-height:1;
+      font-weight:900;
+    }
+    .mini small{
+      margin-left:4px;
+      color:#4a4470;
+      font-size:10px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .mini.today.nil strong,
+    .mini.today.nil label{color:var(--red)}
+    .renewal{
+      margin-top:8px;
+      display:grid;
+      grid-template-columns:1.1fr repeat(3,1fr);
+      gap:7px;
+      align-items:stretch;
+      border-radius:11px;
+      padding:8px;
+      background:var(--rose-bg);
+    }
+    .renewal-title{
+      display:flex;
+      align-items:center;
+      color:var(--rose);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .renewal .mini{
+      padding:6px 7px;
+      background:transparent;
+      border-color:transparent;
+    }
+    .renewal .mini.today.nil{
+      background:#f5d8dd;
+      border-color:rgba(185,28,28,.18);
+    }
+    .footer{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:0 26px 22px;
+      color:#8a85aa;
+      font-size:11px;
+      font-weight:800;
+    }
+    @media(max-width:520px){
+      body{padding:0;background:#000}
+      .snapshot{
+        width:100%;
+        border-radius:0;
+      }
+      .top{padding:20px 20px 16px}
+      h1{font-size:31px}
+      .brand strong{font-size:28px}
+      .fresh-mtd strong{font-size:26px}
+      .summary{gap:8px}
+      .summary-card{padding:12px 10px;border-radius:15px}
+      .summary-card strong{font-size:18px}
+      .summary-card span{font-size:10px}
+      .section{padding-left:18px;padding-right:18px}
+      .leaders{gap:9px}
+      .leader-card{padding:12px}
+      .leader-card h3{font-size:15px}
+      .leader-name{font-size:13px}
+      .leader-value{font-size:12px}
+      .officers{padding-left:18px;padding-right:18px}
+      .officer{padding:12px}
+      .place{width:36px}
+      .officer-name{font-size:20px}
+      .officer-total{min-width:104px}
+      .officer-total strong{font-size:20px}
+      .mini{padding:6px}
+      .mini strong{font-size:16px}
+      .mini small{font-size:8.5px}
+      .renewal{grid-template-columns:1fr repeat(3,1fr);gap:5px}
+      .footer{padding-left:20px;padding-right:20px}
+    }
+  </style>
+</head>
+<body>
+  <main class="snapshot">
+    <section class="top">
+      <div class="brand">
+        <img src="../icon-192.png" alt="">
+        <strong>निर्णय</strong>
+      </div>
+      <div class="hero">
+        <div>
+          <h1>Daily Performance</h1>
+          <div class="date">25 April 2026</div>
+        </div>
+        <div class="fresh-mtd">
+          <div class="eyebrow">Fresh MTD</div>
+          <strong>Rs 111.12L</strong>
+          <span>29 sanctioned</span>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="summary-card primary">
+          <label>Top Fresh Performer</label>
+          <strong>Nikita</strong>
+          <span>Rs 58.25L · 16 cases</span>
+        </div>
+        <div class="summary-card">
+          <label>Pending Pipeline</label>
+          <strong>14</strong>
+          <span>Rs 141.38L in queue</span>
+        </div>
+        <div class="summary-card">
+          <label>Renewals Done</label>
+          <strong>25</strong>
+          <span>Rs 266.22L this month</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>Leaders This Month</h2>
+        <span>MTD ranking</span>
+      </div>
+      <div class="leaders">
+        <article class="leader-card">
+          <div class="eyebrow">Fresh MTD</div>
+          <h3>Fresh Sanctioned</h3>
+          <div class="leader-row">
+            <div class="leader-top"><span class="rank">#1</span><span class="leader-name">Nikita</span><span class="leader-value">Rs 58.25L</span></div>
+            <div class="bar"><i style="width:100%"></i></div>
+            <div class="leader-sub">16 cases this month</div>
+          </div>
+          <div class="leader-row">
+            <div class="leader-top"><span class="rank">#2</span><span class="leader-name">Anchal</span><span class="leader-value">Rs 46.92L</span></div>
+            <div class="bar"><i style="width:81%"></i></div>
+            <div class="leader-sub">10 cases this month</div>
+          </div>
+          <div class="leader-row">
+            <div class="leader-top"><span class="rank">#3</span><span class="leader-name">Ritika</span><span class="leader-value">Rs 5.95L</span></div>
+            <div class="bar"><i style="width:10%"></i></div>
+            <div class="leader-sub">3 cases this month</div>
+          </div>
+        </article>
+
+        <article class="leader-card">
+          <div class="eyebrow">Renewal MTD</div>
+          <h3>Renewal Sanctioned</h3>
+          <div class="leader-row">
+            <div class="leader-top"><span class="rank">#1</span><span class="leader-name">Anchal</span><span class="leader-value">9 cases</span></div>
+            <div class="bar"><i style="width:100%"></i></div>
+            <div class="leader-sub">Rs 80L this month</div>
+          </div>
+          <div class="leader-row">
+            <div class="leader-top"><span class="rank">#2</span><span class="leader-name">Ritika</span><span class="leader-value">8 cases</span></div>
+            <div class="bar"><i style="width:89%"></i></div>
+            <div class="leader-sub">Rs 115.42L this month</div>
+          </div>
+          <div class="leader-row">
+            <div class="leader-top"><span class="rank">#3</span><span class="leader-name">Nikita</span><span class="leader-value">8 cases</span></div>
+            <div class="bar"><i style="width:89%"></i></div>
+            <div class="leader-sub">Rs 70.8L this month</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="officers">
+      <article class="officer">
+        <div class="officer-head">
+          <div class="place gold">1st</div>
+          <div class="officer-name">Nikita</div>
+          <div class="officer-total"><strong>Rs 58.25L</strong><span>16 sanctioned</span></div>
+        </div>
+        <div class="subhead"><span>Sanctioned by category</span><span>Count / Rs lakhs</span></div>
+        <div class="metric-grid">
+          <div class="mini agri"><label>Agri</label><strong>14</strong><small>Rs 51.4L</small></div>
+          <div class="mini sme"><label>SME</label><strong>1</strong><small>Rs 1.84L</small></div>
+          <div class="mini edu"><label>Edu</label><strong>1</strong><small>Rs 5L</small></div>
+          <div class="mini"><label>Pending</label><strong>5</strong><small>Rs 81.45L</small></div>
+          <div class="mini"><label>Returned</label><strong>3</strong><small>Rs 21.7L</small></div>
+          <div class="mini today nil"><label>Fresh Today</label><strong>0</strong><small>None</small></div>
+        </div>
+        <div class="renewal">
+          <div class="renewal-title">Renewal Book</div>
+          <div class="mini"><label>Overdue</label><strong>80</strong><small>Rs 734.56L</small></div>
+          <div class="mini"><label>Done MTD</label><strong>8</strong><small>Rs 70.8L</small></div>
+          <div class="mini today nil"><label>Done Today</label><strong>0</strong><small>None</small></div>
+        </div>
+      </article>
+
+      <article class="officer">
+        <div class="officer-head">
+          <div class="place silver">2nd</div>
+          <div class="officer-name">Anchal</div>
+          <div class="officer-total"><strong>Rs 46.92L</strong><span>10 sanctioned</span></div>
+        </div>
+        <div class="subhead"><span>Sanctioned by category</span><span>Count / Rs lakhs</span></div>
+        <div class="metric-grid">
+          <div class="mini agri"><label>Agri</label><strong>8</strong><small>Rs 19.4L</small></div>
+          <div class="mini sme"><label>SME</label><strong>1</strong><small>Rs 22.31L</small></div>
+          <div class="mini edu"><label>Edu</label><strong>1</strong><small>Rs 5.2L</small></div>
+          <div class="mini"><label>Pending</label><strong>5</strong><small>Rs 16.56L</small></div>
+          <div class="mini"><label>Returned</label><strong>1</strong><small>Rs 50L</small></div>
+          <div class="mini today nil"><label>Fresh Today</label><strong>0</strong><small>None</small></div>
+        </div>
+        <div class="renewal">
+          <div class="renewal-title">Renewal Book</div>
+          <div class="mini"><label>Overdue</label><strong>68</strong><small>Rs 656.16L</small></div>
+          <div class="mini"><label>Done MTD</label><strong>9</strong><small>Rs 80L</small></div>
+          <div class="mini today nil"><label>Done Today</label><strong>0</strong><small>None</small></div>
+        </div>
+      </article>
+
+      <article class="officer">
+        <div class="officer-head">
+          <div class="place bronze">3rd</div>
+          <div class="officer-name">Ritika</div>
+          <div class="officer-total"><strong>Rs 5.95L</strong><span>3 sanctioned</span></div>
+        </div>
+        <div class="subhead"><span>Sanctioned by category</span><span>Count / Rs lakhs</span></div>
+        <div class="metric-grid">
+          <div class="mini agri"><label>Agri</label><strong>2</strong><small>Rs 2.7L</small></div>
+          <div class="mini sme"><label>SME</label><strong>1</strong><small>Rs 3.25L</small></div>
+          <div class="mini edu"><label>Edu</label><strong>—</strong><small>No fresh</small></div>
+          <div class="mini"><label>Pending</label><strong>4</strong><small>Rs 43.37L</small></div>
+          <div class="mini"><label>Returned</label><strong>8</strong><small>Rs 45L</small></div>
+          <div class="mini today nil"><label>Fresh Today</label><strong>0</strong><small>None</small></div>
+        </div>
+        <div class="renewal">
+          <div class="renewal-title">Renewal Book</div>
+          <div class="mini"><label>Overdue</label><strong>50</strong><small>Rs 504.23L</small></div>
+          <div class="mini"><label>Done MTD</label><strong>8</strong><small>Rs 115.42L</small></div>
+          <div class="mini today nil"><label>Done Today</label><strong>0</strong><small>None</small></div>
+        </div>
+      </article>
+    </section>
+    <footer class="footer">
+      <span>Generated from Nirnay by Bhavneet</span>
+      <span>AMCC Paonta Sahib</span>
+    </footer>
+  </main>
+</body>
+</html>

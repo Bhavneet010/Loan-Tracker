@@ -836,7 +836,7 @@ function renderEditorialOfficerCard(card, index) {
         </div>
       </div>
       <div class="editorial-status-card daily today-highlight ${freshTodayCount ? "active" : "empty"}">
-        <label>Today</label>
+        <label>Fresh Today</label>
         <div class="editorial-status-values">
           <strong>${esc(freshTodayCount)}</strong>
           <span>${freshTodayCount ? `Rs ${esc(fmtAmt(card.daily.total.amount))}L` : noneText}</span>
@@ -848,7 +848,7 @@ function renderEditorialOfficerCard(card, index) {
         <span>Renewal Book</span>
       </div>
       <div class="editorial-renewal-metrics">
-        <div class="editorial-renewal-metric"><label>Pending</label><strong>${esc(renewal.queue.count || 0)}</strong><span>${renewal.queue.count ? `Rs ${esc(fmtAmt(renewal.queue.amount))}L` : noneText}</span></div>
+        <div class="editorial-renewal-metric"><label>Overdue</label><strong>${esc(renewal.queue.count || 0)}</strong><span>${renewal.queue.count ? `Rs ${esc(fmtAmt(renewal.queue.amount))}L` : noneText}</span></div>
         <div class="editorial-renewal-metric"><label>Done MTD</label><strong>${esc(renewal.monthDone.count || 0)}</strong><span>${renewal.monthDone.count ? `Rs ${esc(fmtAmt(renewal.monthDone.amount))}L` : noneText}</span></div>
         <div class="editorial-renewal-metric today-highlight ${renewalTodayCount ? "active" : "empty"}"><label>Done Today</label><strong>${esc(renewalTodayCount)}</strong><span>${renewalTodayCount ? `Rs ${esc(fmtAmt(renewal.todayDone.amount))}L` : noneText}</span></div>
       </div>
@@ -905,7 +905,10 @@ function buildEditorialShareMockupHtml(mockup, report) {
       </div>
     </header>
     <section class="editorial-leaders-wrap">
-      <div class="editorial-section-title">Leaders This Month</div>
+      <div class="editorial-section-title">
+        <h2>Leaders This Month</h2>
+        <span>MTD ranking</span>
+      </div>
       <div class="editorial-leaders-grid">
         ${renderLeaderChartCard("Fresh Sanctioned", "Fresh MTD", freshLeaders, row => row.sanctioned.total)}
         ${renderLeaderChartCard("Renewal Sanctioned", "Renewal MTD", renewalLeaders, row => row.renewals.monthDone, "count")}
@@ -914,6 +917,10 @@ function buildEditorialShareMockupHtml(mockup, report) {
     <section class="editorial-cards-stack">
       ${report.officerCards.map((card, index) => renderEditorialOfficerCard(card, index)).join("")}
     </section>
+    <footer class="editorial-footer">
+      <span>Generated from Nirnay by Bhavneet</span>
+      <span>AMCC Paonta Sahib</span>
+    </footer>
   </div>`;
 }
 
