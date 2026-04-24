@@ -729,8 +729,16 @@ function buildReportMockupData() {
   };
 }
 
-function renderLeaderChartCard(title, kicker, rows, metricKey) {
-  const maxAmount = Math.max(1, ...rows.map(row => metricKey(row).amount));
+function ordinal(n) {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  const suffix = { 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th";
+  return `${n}${suffix}`;
+}
+
+function renderLeaderChartCard(title, kicker, rows, metricKey, rankBy = "amount") {
+  const valueOf = metric => rankBy === "count" ? metric.count : metric.amount;
+  const maxValue = Math.max(1, ...rows.map(row => valueOf(metricKey(row))));
   return `<section class="editorial-leader-card">
     <div class="editorial-leader-head">
       <div class="editorial-leader-kicker">${esc(kicker)}</div>
@@ -739,19 +747,31 @@ function renderLeaderChartCard(title, kicker, rows, metricKey) {
     <div class="editorial-leader-list">
       ${rows.map((row, index) => {
         const metric = metricKey(row);
-        const width = maxAmount > 0 ? Math.max(8, metric.amount / maxAmount * 100) : 0;
-        return `<div class="editorial-leader-row">
-          <div class="editorial-leader-row-top">
-            <div class="editorial-leader-name-wrap">
+        const width = maxValue > 0 ? Math.max(8, valueOf(metric) / maxValue * 100) : 0;
+        const nameWrapHtml = rankBy === "count"
+          ? `<div class="editorial-leader-name-wrap">
               <span class="editorial-leader-rank">#${index + 1}</span>
               <span class="editorial-leader-name">${esc(row.name)}</span>
-            </div>
-            <div class="editorial-leader-metric">Rs ${esc(fmtAmt(metric.amount))}L</div>
+            </div>`
+          : `<div class="editorial-leader-name-wrap">
+              <span class="editorial-leader-rank">#${index + 1}</span>
+              <span class="editorial-leader-name">${esc(row.name)}</span>
+            </div>`;
+        const metricHtml = rankBy === "count"
+          ? `<div class="editorial-leader-metric count">${esc(metric.count)} cases</div>`
+          : `<div class="editorial-leader-metric">Rs ${esc(fmtAmt(metric.amount))}L</div>`;
+        const subHtml = rankBy === "count"
+          ? `Rs ${esc(fmtAmt(metric.amount))}L this month`
+          : `${esc(metric.count)} cases this month`;
+        return `<div class="editorial-leader-row">
+          <div class="editorial-leader-row-top ${rankBy === "count" ? "is-count" : ""}">
+            ${nameWrapHtml}
+            ${metricHtml}
           </div>
           <div class="editorial-leader-bar-track">
             <div class="editorial-leader-bar" style="width:${width}%"></div>
           </div>
-          <div class="editorial-leader-sub">${esc(metric.count)} cases this month</div>
+          <div class="editorial-leader-sub">${subHtml}</div>
         </div>`;
       }).join("")}
     </div>
@@ -775,14 +795,16 @@ function renderEditorialCategoryPills(card) {
 function renderEditorialOfficerCard(card, index) {
   const renewal = card.renewals;
   const noneText = "None";
+  const rank = index + 1;
+  const freshTodayCount = card.daily.total.count || 0;
+  const renewalTodayCount = renewal.todayDone.count || 0;
   return `<article class="editorial-officer-card">
     <div class="editorial-officer-top">
-      <div class="editorial-officer-id">${esc(card.name.charAt(0) || "?")}</div>
+      <div class="editorial-officer-id rank-${rank}">${esc(ordinal(rank))}</div>
       <div class="editorial-officer-main">
         <div class="editorial-officer-headline">
           <div>
             <div class="editorial-officer-name">${esc(card.name)}</div>
-            <div class="editorial-officer-rank">#${index + 1} officer this month</div>
           </div>
           <div class="editorial-officer-hero-metric">
             <strong>Rs ${esc(fmtAmt(card.sanctioned.total.amount))}L</strong>
@@ -813,23 +835,22 @@ function renderEditorialOfficerCard(card, index) {
           <span>${card.returned.total.count ? `Rs ${esc(fmtAmt(card.returned.total.amount))}L` : noneText}</span>
         </div>
       </div>
-      <div class="editorial-status-card daily">
+      <div class="editorial-status-card daily today-highlight ${freshTodayCount ? "active" : "empty"}">
         <label>Today</label>
         <div class="editorial-status-values">
-          <strong>${esc(card.daily.total.count || 0)}</strong>
-          <span>${card.daily.total.count ? `Rs ${esc(fmtAmt(card.daily.total.amount))}L` : noneText}</span>
+          <strong>${esc(freshTodayCount)}</strong>
+          <span>${freshTodayCount ? `Rs ${esc(fmtAmt(card.daily.total.amount))}L` : noneText}</span>
         </div>
       </div>
     </div>
     <div class="editorial-renewal-row">
       <div class="editorial-renewal-bookmark">
         <span>Renewal Book</span>
-        <small>queue vs month done vs today</small>
       </div>
       <div class="editorial-renewal-metrics">
         <div class="editorial-renewal-metric"><label>Pending</label><strong>${esc(renewal.queue.count || 0)}</strong><span>${renewal.queue.count ? `Rs ${esc(fmtAmt(renewal.queue.amount))}L` : noneText}</span></div>
         <div class="editorial-renewal-metric"><label>Done MTD</label><strong>${esc(renewal.monthDone.count || 0)}</strong><span>${renewal.monthDone.count ? `Rs ${esc(fmtAmt(renewal.monthDone.amount))}L` : noneText}</span></div>
-        <div class="editorial-renewal-metric"><label>Done Today</label><strong>${esc(renewal.todayDone.count || 0)}</strong><span>${renewal.todayDone.count ? `Rs ${esc(fmtAmt(renewal.todayDone.amount))}L` : noneText}</span></div>
+        <div class="editorial-renewal-metric today-highlight ${renewalTodayCount ? "active" : "empty"}"><label>Done Today</label><strong>${esc(renewalTodayCount)}</strong><span>${renewalTodayCount ? `Rs ${esc(fmtAmt(renewal.todayDone.amount))}L` : noneText}</span></div>
       </div>
     </div>
   </article>`;
@@ -840,7 +861,7 @@ function buildEditorialShareMockupHtml(mockup, report) {
     .sort((a, b) => b.sanctioned.total.amount - a.sanctioned.total.amount || a.name.localeCompare(b.name))
     .slice(0, 3);
   const renewalLeaders = [...report.officerCards]
-    .sort((a, b) => b.renewals.monthDone.amount - a.renewals.monthDone.amount || a.name.localeCompare(b.name))
+    .sort((a, b) => b.renewals.monthDone.count - a.renewals.monthDone.count || b.renewals.monthDone.amount - a.renewals.monthDone.amount || a.name.localeCompare(b.name))
     .slice(0, 3);
   const topFresh = freshLeaders[0];
 
@@ -851,12 +872,12 @@ function buildEditorialShareMockupHtml(mockup, report) {
           <img src="icon-192.png" alt="Nirnay logo">
         </div>
         <div class="editorial-brand-copy">
-          <strong><span>निर्णय</span> Performance</strong>
+          <strong><span>निर्णय</span></strong>
         </div>
       </div>
       <div class="editorial-hero-row">
         <div>
-          <div class="editorial-hero-title">Daily Review</div>
+          <div class="editorial-hero-title">Daily Performance</div>
           <div class="editorial-hero-sub">${esc(report.dateLabel)}</div>
         </div>
         <div class="editorial-hero-mtd">
@@ -887,7 +908,7 @@ function buildEditorialShareMockupHtml(mockup, report) {
       <div class="editorial-section-title">Leaders This Month</div>
       <div class="editorial-leaders-grid">
         ${renderLeaderChartCard("Fresh Sanctioned", "Fresh MTD", freshLeaders, row => row.sanctioned.total)}
-        ${renderLeaderChartCard("Renewal Sanctioned", "Renewal MTD", renewalLeaders, row => row.renewals.monthDone)}
+        ${renderLeaderChartCard("Renewal Sanctioned", "Renewal MTD", renewalLeaders, row => row.renewals.monthDone, "count")}
       </div>
     </section>
     <section class="editorial-cards-stack">
