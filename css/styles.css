@@ -858,11 +858,38 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 }
 .back-btn:hover{background:rgba(107,95,191,0.08);}
 .perf-overlay-title{font-weight:700;font-size:1.1rem;color:var(--text1);}
+.perf-overlay-header.snapshot-mode{
+  justify-content:space-between;
+}
+.perf-overlay-header.snapshot-mode .back-btn,
+.perf-overlay-header.snapshot-mode .perf-overlay-actions{
+  position:relative;
+  z-index:1;
+}
+.perf-overlay-header.snapshot-mode .perf-overlay-title{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  text-align:center;
+  font-size:1.05rem;
+  font-weight:800;
+}
 .perf-overlay-actions{
   margin-left:auto;
   display:flex;
   align-items:center;
   gap:8px;
+}
+.perf-header-share-btn{
+  border:1px solid rgba(107,95,191,0.18);
+  border-radius:999px;
+  background:rgba(255,255,255,0.76);
+  color:var(--p1);
+  padding:7px 13px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(107,95,191,0.10);
 }
 .perf-export-btn{
   border:none;
@@ -1824,7 +1851,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   gap:4px;
 }
 .editorial-pill{
-  padding:5px 7px;
+  padding:4px 7px;
   border-radius:6px;
   background:#F6F4FB;
   border:1px solid rgba(30,20,80,0.06);
@@ -1856,14 +1883,15 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 }
 .editorial-pill strong{
   font-family:'Outfit','Inter',sans-serif;
-  font-size:13px;
+  font-size:15px;
   line-height:1;
   color:#14112E;
   flex:none;
+  font-weight:900;
 }
 .editorial-pill small{
-  font-size:8px;
-  font-weight:800;
+  font-size:8.5px;
+  font-weight:900;
   color:#4A4470;
   line-height:1.1;
   min-width:0;
@@ -1878,7 +1906,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   margin-top:5px;
 }
 .editorial-status-card{
-  padding:5px 7px;
+  padding:4px 7px;
   border-radius:6px;
   background:#FBFAFE;
   border:1px solid rgba(30,20,80,0.08);
@@ -1907,15 +1935,16 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 .editorial-status-card strong,
 .editorial-renewal-metrics strong{
   font-family:'Outfit','Inter',sans-serif;
-  font-size:13px;
+  font-size:15px;
   line-height:1;
   color:#14112E;
   flex:none;
+  font-weight:900;
 }
 .editorial-status-card span,
 .editorial-renewal-metrics span{
-  font-size:8px;
-  font-weight:800;
+  font-size:8.5px;
+  font-weight:900;
   color:#4A4470;
   line-height:1.1;
   overflow:hidden;
@@ -1980,7 +2009,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 .editorial-renewal-metric.today-highlight{
   border:1px solid transparent;
   border-radius:5px;
-  padding:3px 4px;
+  padding:2px 4px;
 }
 .editorial-renewal-metric label{
   color:#6E6890;
@@ -2082,6 +2111,14 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   .perf-overlay-actions{
     width:100%;
     margin-left:0;
+  }
+  .perf-overlay-header.snapshot-mode{
+    flex-wrap:nowrap;
+    align-items:center;
+  }
+  .perf-overlay-header.snapshot-mode .perf-overlay-actions{
+    width:auto;
+    margin-left:auto;
   }
   .perf-export-btn{
     flex:1;

@@ -509,7 +509,7 @@ function buildOfficerCategoryRows(loans, officerNames) {
 }
 
 function buildOfficerRenewalRows(metrics, officerNames) {
-  const queueLoans = metrics.renewals.filter(loan => !loan.renewedDate);
+  const queueLoans = metrics.renewals.filter(loan => !loan.renewedDate && loan._rs?.status === "pending-renewal");
   const todayDone = metrics.renewalDoneThisMonth.filter(loan => loan.renewedDate === metrics.day);
   const rows = officerNames.map(name => ({
     name,
@@ -956,9 +956,6 @@ function buildDailySnapshotPageHtml() {
   const current = DAILY_SNAPSHOT;
 
   return `<div class="report-mockup-gallery report-mockup-gallery-single">
-    <div class="perf-snapshot-share-row">
-      <button class="perf-snapshot-share-btn" type="button" onclick="shareDailySnapshotJpeg()">Share JPEG</button>
-    </div>
     ${buildReportMockupHtml(current, report)}
   </div>`;
 }
@@ -1176,11 +1173,16 @@ window.exportPerformanceSnapshot = function () {
 window.showDailySnapshot = function () {
   perfPage = "snapshot";
   const backBtn = document.querySelector("#perfOverlay .back-btn");
+  const overlayHeader = document.querySelector("#perfOverlay .perf-overlay-header");
   const overlayTitle = document.querySelector("#perfOverlay .perf-overlay-title");
   const overlayActions = document.querySelector("#perfOverlay .perf-overlay-actions");
+  if (overlayHeader) overlayHeader.classList.add("snapshot-mode");
   if (backBtn) backBtn.setAttribute("onclick", "showPerformanceDashboard()");
   if (overlayTitle) overlayTitle.textContent = "Daily Snapshot";
-  if (overlayActions) overlayActions.style.display = "none";
+  if (overlayActions) {
+    overlayActions.style.display = "";
+    overlayActions.innerHTML = '<button class="perf-header-share-btn" type="button" onclick="shareDailySnapshotJpeg()">Share</button>';
+  }
   const content = document.getElementById("perfOverlayContent");
   if (content) content.style.padding = "0";
   renderPerformanceView(content);
@@ -1189,11 +1191,16 @@ window.showDailySnapshot = function () {
 window.showPerformanceDashboard = function () {
   perfPage = "dashboard";
   const backBtn = document.querySelector("#perfOverlay .back-btn");
+  const overlayHeader = document.querySelector("#perfOverlay .perf-overlay-header");
   const overlayTitle = document.querySelector("#perfOverlay .perf-overlay-title");
   const overlayActions = document.querySelector("#perfOverlay .perf-overlay-actions");
+  if (overlayHeader) overlayHeader.classList.remove("snapshot-mode");
   if (backBtn) backBtn.setAttribute("onclick", "closePerfOverlay()");
   if (overlayTitle) overlayTitle.textContent = "Performance";
-  if (overlayActions) overlayActions.style.display = "";
+  if (overlayActions) {
+    overlayActions.style.display = "";
+    overlayActions.innerHTML = '<button class="perf-export-btn perf-export-btn-secondary" onclick="showDailySnapshot()">Daily Snapshot</button><button class="perf-export-btn" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button>';
+  }
   const content = document.getElementById("perfOverlayContent");
   if (content) content.style.padding = "";
   renderPerformanceView(content);
@@ -1244,7 +1251,7 @@ window.shareDailySnapshotJpeg = async function () {
       await navigator.share({
         files: [file],
         title: "Daily Snapshot",
-        text: "Daily review snapshot",
+        text: `Daily Performance Update ${formatShareDate(new Date())}`,
       });
       return;
     }
@@ -1266,4 +1273,12 @@ window.shareDailySnapshotJpeg = async function () {
 
 function todayFileName() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function formatShareDate(date) {
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
