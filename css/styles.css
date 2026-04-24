@@ -2096,14 +2096,25 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
     padding-top:18px;
   }
   .editorial-hero-row{
-    flex-direction:column;
-    align-items:flex-start;
+    align-items:flex-end;
+    gap:8px;
   }
   .editorial-hero-title{
-    font-size:30px;
+    font-size:27px;
+    max-width:175px;
   }
   .editorial-hero-mtd{
-    text-align:left;
+    text-align:right;
+  }
+  .editorial-hero-mtd label{
+    font-size:8px;
+    letter-spacing:0.08em;
+  }
+  .editorial-hero-mtd strong{
+    font-size:19px;
+  }
+  .editorial-hero-mtd span{
+    font-size:9px;
   }
   .editorial-callout-row{
     grid-template-columns:minmax(0,1.15fr) minmax(0,0.92fr) minmax(0,0.92fr);

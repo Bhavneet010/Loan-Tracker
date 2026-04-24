@@ -857,7 +857,7 @@ function buildEditorialShareMockupHtml(mockup, report) {
       <div class="editorial-hero-row">
         <div>
           <div class="editorial-hero-title">Daily Review</div>
-          <div class="editorial-hero-sub">${esc(report.dateLabel)} | ${esc(report.viewerLabel)}</div>
+          <div class="editorial-hero-sub">${esc(report.dateLabel)}</div>
         </div>
         <div class="editorial-hero-mtd">
           <label>Fresh MTD</label>
@@ -1187,13 +1187,33 @@ window.shareDailySnapshotJpeg = async function () {
 
   try {
     await ensureHtml2Canvas();
-    const canvas = await window.html2canvas(card, {
-      backgroundColor: "#f1eff8",
-      scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
-      useCORS: true,
-    });
+    const exportWidth = 600;
+    const exportHost = document.createElement("div");
+    const exportCard = card.cloneNode(true);
+    exportHost.style.position = "fixed";
+    exportHost.style.left = "-10000px";
+    exportHost.style.top = "0";
+    exportHost.style.width = `${exportWidth}px`;
+    exportHost.style.pointerEvents = "none";
+    exportCard.style.width = `${exportWidth}px`;
+    exportCard.style.maxWidth = "none";
+    exportHost.appendChild(exportCard);
+    document.body.appendChild(exportHost);
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
+    let canvas;
+    try {
+      canvas = await window.html2canvas(exportCard, {
+        backgroundColor: "#f1eff8",
+        scale: Math.min(4, Math.max(3, window.devicePixelRatio || 2)),
+        useCORS: true,
+        width: exportWidth,
+        windowWidth: exportWidth,
+      });
+    } finally {
+      exportHost.remove();
+    }
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.98));
     if (!blob) throw new Error("JPEG export failed");
 
     const fileName = `daily-snapshot-${todayFileName()}.jpg`;
