@@ -51,14 +51,15 @@ window.showPerfOverlay = async function () {
   document.body.style.overflow = 'hidden';
   const target = document.getElementById('perfOverlayContent');
   if (target) target.innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading performance...</span></div>';
-  const { renderDaily } = await import("./performance.js");
-  renderDaily(document.getElementById('perfOverlayContent'));
+  await import("./performance.js");
+  if (typeof window.showPerformanceDashboard === 'function') {
+    window.showPerformanceDashboard();
+  }
 };
 
 window.closePerfOverlay = function () {
   const perfOverlay = document.getElementById('perfOverlay');
   if (perfOverlay) perfOverlay.style.display = 'none';
-  if (typeof window.closeCompactSnapshotMockup === 'function') window.closeCompactSnapshotMockup();
   document.body.style.overflow = '';
   // Charts are handled in performance.js
 };

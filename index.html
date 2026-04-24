@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Nirnay">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@500;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -89,25 +89,11 @@
     <button class="back-btn" onclick="closePerfOverlay()">← Back</button>
     <span class="perf-overlay-title">Performance</span>
     <div class="perf-overlay-actions">
-      <button class="perf-export-btn perf-export-btn-secondary" onclick="showCompactSnapshotMockup()">Report Mockups</button>
+      <button class="perf-export-btn perf-export-btn-secondary" onclick="showDailySnapshot()">Daily Snapshot</button>
       <button class="perf-export-btn" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button>
     </div>
   </div>
   <div id="perfOverlayContent" style="padding:14px;"></div>
-</div>
-
-<div class="overlay center" id="compactSnapshotModal" style="display:none;">
-  <div class="share-snap-modal-box">
-    <div class="share-snap-modal-head">
-      <div>
-        <div class="share-snap-modal-kicker">One-Page Report Concepts</div>
-        <h2>Report Mockups</h2>
-        <p>These stay local for review and use the same live data in three different presentation styles.</p>
-      </div>
-      <button class="share-snap-close" type="button" onclick="closeCompactSnapshotMockup()">Close</button>
-    </div>
-    <div id="compactSnapshotContent"></div>
-  </div>
 </div>
 
 <!-- NOTIFICATIONS OVERLAY -->

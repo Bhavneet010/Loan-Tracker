@@ -1,6 +1,6 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
-import { catCls, esc, fmtAmt, fmtDate, shortCat } from "./utils.js";
+import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
 
 let currentCharts = [];
 let perfSeg = "month";
@@ -8,8 +8,9 @@ let perfTrendMode = "all";
 let perfTrendScale = "weekly";
 let perfLbPeriod = "month";
 let perfLbKind = "fresh";
-let perfMockupIndex = 0;
+let perfPage = "dashboard";
 let chartLoadPromise = null;
+let html2canvasLoadPromise = null;
 
 const CATS = ["Agriculture", "SME", "Education"];
 const TREND_COLORS = {
@@ -434,26 +435,26 @@ function buildSnapshotHtml() {
   </main><script>setTimeout(()=>window.print(),400)</script></body></html>`;
 }
 
-const REPORT_MOCKUPS = [
-  {
-    label: "Mockup 1",
-    title: "Ribbon Sheet",
-    description: "Closest to your current one-pager, but cleaner, softer, and easier to scan on mobile.",
-    className: "report-mockup-a",
-  },
-  {
-    label: "Mockup 2",
-    title: "Section Cards",
-    description: "Breaks the same data into stronger cards so each block is easier to read when shared in chat.",
-    className: "report-mockup-b",
-  },
-  {
-    label: "Mockup 3",
-    title: "Executive Board",
-    description: "Bolder top header and tighter matrices for a more management-style daily report image.",
-    className: "report-mockup-c",
-  },
-];
+function ensureHtml2Canvas() {
+  if (window.html2canvas) return Promise.resolve();
+  if (html2canvasLoadPromise) return html2canvasLoadPromise;
+  html2canvasLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return html2canvasLoadPromise;
+}
+
+const DAILY_SNAPSHOT = {
+  label: "Daily Snapshot",
+  title: "Ribbon Sheet",
+  description: "One-page share view using the final readable portrait layout.",
+  className: "report-mockup-a",
+};
 
 function officerNamesFromMetrics(metrics) {
   const seen = new Set(S.officers);
@@ -846,15 +847,16 @@ function buildEditorialShareMockupHtml(mockup, report) {
   return `<div class="report-mockup report-mockup-a editorial-phone-report">
     <header class="editorial-top">
       <div class="editorial-brand-row">
-        <div class="editorial-brand-mark">N</div>
+        <div class="editorial-brand-mark">
+          <img src="icon-192.png" alt="Nirnay logo">
+        </div>
         <div class="editorial-brand-copy">
-          <span>${esc(mockup.label)} | ${esc(mockup.title)}</span>
-          <strong>Nirnay Performance</strong>
+          <strong><span>निर्णय</span> Performance</strong>
         </div>
       </div>
       <div class="editorial-hero-row">
         <div>
-          <div class="editorial-hero-title">Daily Share Snapshot</div>
+          <div class="editorial-hero-title">Daily Review</div>
           <div class="editorial-hero-sub">${esc(report.dateLabel)} | ${esc(report.viewerLabel)}</div>
         </div>
         <div class="editorial-hero-mtd">
@@ -883,7 +885,6 @@ function buildEditorialShareMockupHtml(mockup, report) {
     </header>
     <section class="editorial-leaders-wrap">
       <div class="editorial-section-title">Leaders This Month</div>
-      <div class="editorial-section-sub">Readable comparison for fresh sanctioned and renewal sanctioned this month.</div>
       <div class="editorial-leaders-grid">
         ${renderLeaderChartCard("Fresh Sanctioned", "Fresh MTD", freshLeaders, row => row.sanctioned.total)}
         ${renderLeaderChartCard("Renewal Sanctioned", "Renewal MTD", renewalLeaders, row => row.renewals.monthDone)}
@@ -892,11 +893,6 @@ function buildEditorialShareMockupHtml(mockup, report) {
     <section class="editorial-cards-stack">
       ${report.officerCards.map((card, index) => renderEditorialOfficerCard(card, index)).join("")}
     </section>
-    <footer class="editorial-footer">
-      <span>Figures in Rs Lakhs</span>
-      <span>Portrait share format</span>
-      <span>More readable adaptation of the editorial card concept</span>
-    </footer>
   </div>`;
 }
 
@@ -934,22 +930,37 @@ function buildReportMockupHtml(mockup, report) {
   </div>`;
 }
 
-function buildReportMockupGalleryHtml() {
+function buildDailySnapshotPageHtml() {
   const report = buildReportMockupData();
-  const current = REPORT_MOCKUPS[perfMockupIndex] || REPORT_MOCKUPS[0];
+  const current = DAILY_SNAPSHOT;
 
-  return `<div class="report-mockup-gallery">
-    <div class="report-mockup-toolbar">
-      ${REPORT_MOCKUPS.map((mockup, index) => `<button class="report-mockup-tab ${index === perfMockupIndex ? "active" : ""}" onclick="setCompactSnapshotMockup(${index})">${esc(mockup.label)}</button>`).join("")}
-    </div>
-    <div class="report-mockup-caption">
-      <h3>${esc(current.title)}</h3>
-      <p>${esc(current.description)}</p>
+  return `<div class="report-mockup-gallery report-mockup-gallery-single">
+    <div class="perf-snapshot-page-head">
+      <div>
+        <div class="share-snap-modal-kicker">Performance</div>
+        <h2>Daily Snapshot</h2>
+        <p>Share-focused one-page report using the finalized portrait layout.</p>
+      </div>
+      <div class="perf-snapshot-page-actions">
+        <button class="share-snap-close perf-snapshot-share-btn" type="button" onclick="shareDailySnapshotJpeg()">Share JPEG</button>
+        <button class="share-snap-close" type="button" onclick="showPerformanceDashboard()">Back to Performance</button>
+      </div>
     </div>
     <div class="report-mockup-preview-wrap">
       ${buildReportMockupHtml(current, report)}
     </div>
   </div>`;
+}
+
+function renderPerformanceView(target) {
+  if (!target) return;
+  if (perfPage === "snapshot") {
+    currentCharts.forEach(chart => chart.destroy());
+    currentCharts = [];
+    target.innerHTML = buildDailySnapshotPageHtml();
+    return;
+  }
+  return renderDaily(target);
 }
 
 export async function renderDaily(c) {
@@ -1103,31 +1114,31 @@ export async function renderDaily(c) {
 window.setPerfSeg = function (value) {
   perfSeg = value;
   const target = document.getElementById("perfOverlayContent");
-  if (target && document.getElementById("perfOverlay").style.display !== "none") renderDaily(target);
+  if (target && document.getElementById("perfOverlay").style.display !== "none") renderPerformanceView(target);
 };
 
 window.setPerfTrendMode = function (value) {
   perfTrendMode = value;
   const target = document.getElementById("perfOverlayContent");
-  if (target && document.getElementById("perfOverlay").style.display !== "none") renderDaily(target);
+  if (target && document.getElementById("perfOverlay").style.display !== "none") renderPerformanceView(target);
 };
 
 window.setPerfTrendScale = function (value) {
   perfTrendScale = value;
   const target = document.getElementById("perfOverlayContent");
-  if (target && document.getElementById("perfOverlay").style.display !== "none") renderDaily(target);
+  if (target && document.getElementById("perfOverlay").style.display !== "none") renderPerformanceView(target);
 };
 
 window.setPerfLbPeriod = function (value) {
   perfLbPeriod = value;
   const target = document.getElementById("perfOverlayContent");
-  if (target && document.getElementById("perfOverlay").style.display !== "none") renderDaily(target);
+  if (target && document.getElementById("perfOverlay").style.display !== "none") renderPerformanceView(target);
 };
 
 window.setPerfLbKind = function (value) {
   perfLbKind = value;
   const target = document.getElementById("perfOverlayContent");
-  if (target && document.getElementById("perfOverlay").style.display !== "none") renderDaily(target);
+  if (target && document.getElementById("perfOverlay").style.display !== "none") renderPerformanceView(target);
 };
 
 window.exportPerformanceSnapshot = function () {
@@ -1151,25 +1162,61 @@ window.exportPerformanceSnapshot = function () {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-window.showCompactSnapshotMockup = function () {
-  const modal = document.getElementById("compactSnapshotModal");
-  const content = document.getElementById("compactSnapshotContent");
-  if (!modal || !content) return;
-  content.innerHTML = buildReportMockupGalleryHtml();
-  modal.style.display = "flex";
+window.showDailySnapshot = function () {
+  perfPage = "snapshot";
+  const content = document.getElementById("perfOverlayContent");
+  renderPerformanceView(content);
 };
 
-window.setCompactSnapshotMockup = function (index) {
-  perfMockupIndex = index;
-  const content = document.getElementById("compactSnapshotContent");
-  if (!content) return;
-  content.innerHTML = buildReportMockupGalleryHtml();
+window.showPerformanceDashboard = function () {
+  perfPage = "dashboard";
+  const content = document.getElementById("perfOverlayContent");
+  renderPerformanceView(content);
 };
 
-window.closeCompactSnapshotMockup = function () {
-  const modal = document.getElementById("compactSnapshotModal");
-  if (!modal) return;
-  modal.style.display = "none";
+window.shareDailySnapshotJpeg = async function () {
+  const card = document.querySelector(".editorial-phone-report");
+  if (!card) {
+    toast("Snapshot is not ready yet");
+    return;
+  }
+
+  try {
+    await ensureHtml2Canvas();
+    const canvas = await window.html2canvas(card, {
+      backgroundColor: "#f1eff8",
+      scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
+      useCORS: true,
+    });
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
+    if (!blob) throw new Error("JPEG export failed");
+
+    const fileName = `daily-snapshot-${todayFileName()}.jpg`;
+    const file = new File([blob], fileName, { type: "image/jpeg" });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "Daily Snapshot",
+        text: "Daily review snapshot",
+      });
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("JPEG downloaded");
+  } catch (err) {
+    console.warn("[Performance] Snapshot share failed:", err);
+    toast("Unable to share snapshot right now");
+  }
 };
 
 function todayFileName() {
