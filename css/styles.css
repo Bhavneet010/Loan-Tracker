@@ -1548,7 +1548,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 }
 .editorial-callout-row{
   display:grid;
-  grid-template-columns:1.2fr 1fr 1fr;
+  grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);
   gap:8px;
   margin-top:10px;
 }
@@ -1557,6 +1557,8 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   border-radius:14px;
   background:#fff;
   border:1px solid rgba(30,20,80,0.08);
+  overflow:hidden;
+  min-width:0;
 }
 .editorial-callout.primary{
   background:linear-gradient(135deg,#14112E,#2D235E);
@@ -1607,7 +1609,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 }
 .editorial-leaders-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   gap:8px;
   margin-top:8px;
 }
@@ -1616,6 +1618,8 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   border-radius:14px;
   background:#fff;
   border:1px solid rgba(30,20,80,0.08);
+  overflow:hidden;
+  min-width:0;
 }
 .editorial-leader-kicker{
   font-size:10px;
@@ -1646,32 +1650,38 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 .editorial-leader-name-wrap{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:6px;
   min-width:0;
+  flex:1;
+  overflow:hidden;
 }
 .editorial-leader-rank{
   flex:none;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-width:32px;
-  height:24px;
+  min-width:22px;
+  height:18px;
   border-radius:999px;
   background:rgba(90,78,175,0.10);
   color:#5A4EAF;
-  font-size:11px;
+  font-size:9px;
   font-weight:900;
 }
 .editorial-leader-name{
-  font-size:14px;
+  font-size:12px;
   font-weight:800;
   color:#14112E;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 .editorial-leader-metric{
   flex:none;
-  font-size:13px;
+  font-size:11px;
   font-weight:900;
   color:#14112E;
+  white-space:nowrap;
 }
 .editorial-leader-bar-track{
   margin-top:4px;
@@ -1904,7 +1914,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   border-radius:6px;
   background:#F4EDEF;
   display:grid;
-  grid-template-columns:1.35fr repeat(3,minmax(0,1fr));
+  grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,1fr));
   gap:5px;
   align-items:center;
 }
