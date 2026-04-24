@@ -58,6 +58,7 @@ window.showPerfOverlay = async function () {
 window.closePerfOverlay = function () {
   const perfOverlay = document.getElementById('perfOverlay');
   if (perfOverlay) perfOverlay.style.display = 'none';
+  if (typeof window.closeCompactSnapshotMockup === 'function') window.closeCompactSnapshotMockup();
   document.body.style.overflow = '';
   // Charts are handled in performance.js
 };

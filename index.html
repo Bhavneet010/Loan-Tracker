@@ -88,9 +88,26 @@
   <div class="perf-overlay-header">
     <button class="back-btn" onclick="closePerfOverlay()">← Back</button>
     <span class="perf-overlay-title">Performance</span>
-    <button class="perf-export-btn" onclick="exportPerformanceSnapshot()">Export Snapshot</button>
+    <div class="perf-overlay-actions">
+      <button class="perf-export-btn perf-export-btn-secondary" onclick="showCompactSnapshotMockup()">Report Mockups</button>
+      <button class="perf-export-btn" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button>
+    </div>
   </div>
   <div id="perfOverlayContent" style="padding:14px;"></div>
+</div>
+
+<div class="overlay center" id="compactSnapshotModal" style="display:none;">
+  <div class="share-snap-modal-box">
+    <div class="share-snap-modal-head">
+      <div>
+        <div class="share-snap-modal-kicker">One-Page Report Concepts</div>
+        <h2>Report Mockups</h2>
+        <p>These stay local for review and use the same live data in three different presentation styles.</p>
+      </div>
+      <button class="share-snap-close" type="button" onclick="closeCompactSnapshotMockup()">Close</button>
+    </div>
+    <div id="compactSnapshotContent"></div>
+  </div>
 </div>
 
 <!-- NOTIFICATIONS OVERLAY -->
