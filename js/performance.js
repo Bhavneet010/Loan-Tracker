@@ -938,9 +938,7 @@ function buildDailySnapshotPageHtml() {
     <div class="perf-snapshot-share-row">
       <button class="perf-snapshot-share-btn" type="button" onclick="shareDailySnapshotJpeg()">Share JPEG</button>
     </div>
-    <div class="report-mockup-preview-wrap">
-      ${buildReportMockupHtml(current, report)}
-    </div>
+    ${buildReportMockupHtml(current, report)}
   </div>`;
 }
 
@@ -1163,6 +1161,7 @@ window.showDailySnapshot = function () {
   if (overlayTitle) overlayTitle.textContent = "Daily Snapshot";
   if (overlayActions) overlayActions.style.display = "none";
   const content = document.getElementById("perfOverlayContent");
+  if (content) content.style.padding = "0";
   renderPerformanceView(content);
 };
 
@@ -1175,6 +1174,7 @@ window.showPerformanceDashboard = function () {
   if (overlayTitle) overlayTitle.textContent = "Performance";
   if (overlayActions) overlayActions.style.display = "";
   const content = document.getElementById("perfOverlayContent");
+  if (content) content.style.padding = "";
   renderPerformanceView(content);
 };
 
