@@ -879,12 +879,15 @@ function buildEditorialShareMockupHtml(mockup, report) {
   return `<div class="report-mockup report-mockup-a editorial-phone-report">
     <header class="editorial-top">
       <div class="editorial-brand-row">
-        <div class="editorial-brand-mark">
-          <img src="icon-192.png" alt="Nirnay logo">
+        <div class="editorial-brand-lock">
+          <div class="editorial-brand-mark">
+            <img src="icon-192.png" alt="Nirnay logo">
+          </div>
+          <div class="editorial-brand-copy">
+            <strong><span>निर्णय</span></strong>
+          </div>
         </div>
-        <div class="editorial-brand-copy">
-          <strong><span>निर्णय</span></strong>
-        </div>
+        <div class="editorial-tagline">Decisions | Delivered</div>
       </div>
       <div class="editorial-hero-row">
         <div>

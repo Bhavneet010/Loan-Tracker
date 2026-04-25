@@ -1496,7 +1496,14 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 .editorial-brand-row{
   display:flex;
   align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.editorial-brand-lock{
+  display:flex;
+  align-items:center;
   gap:12px;
+  min-width:0;
 }
 .editorial-brand-mark{
   width:42px;
@@ -1523,6 +1530,14 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 .editorial-brand-copy strong span{
   font-family:'Noto Sans Devanagari','Mangal','Inter',sans-serif;
   font-size:1.02em;
+}
+.editorial-tagline{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:#6B5FBF;
+  white-space:nowrap;
 }
 .editorial-hero-row{
   display:flex;
@@ -2418,6 +2433,10 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 }
 .editorial-phone-report.snapshot-export .editorial-brand-copy strong{
   font-size:28px;
+}
+.editorial-phone-report.snapshot-export .editorial-tagline{
+  font-size:10px;
+  letter-spacing:0.14em;
 }
 .editorial-phone-report.snapshot-export .editorial-hero-row{
   gap:18px;
