@@ -169,7 +169,9 @@ function buildNpaAlertTable(metrics) {
         <h3>⚠ Accounts Turning NPA in Next 15 Days</h3>
         <span>0 accounts</span>
       </div>
-      <div class="pdf-npa-empty">No accounts approaching NPA in the next 15 days.</div>
+      <div class="pdf-npa-body">
+        <div class="pdf-npa-empty">No accounts approaching NPA in the next 15 days.</div>
+      </div>
     </div>`;
   }
 
@@ -191,18 +193,20 @@ function buildNpaAlertTable(metrics) {
       <h3>⚠ Accounts Turning NPA in Next 15 Days</h3>
       <span>${esc(npa15.length)} account${npa15.length === 1 ? '' : 's'}</span>
     </div>
-    <table class="pdf-npa-table">
-      <thead><tr>
-        <th class="npa-num">#</th>
-        <th class="npa-customer">Customer</th>
-        <th class="npa-officer">Officer</th>
-        <th class="npa-branch">Branch</th>
-        <th class="npa-amount">Rs L</th>
-        <th class="npa-days">Days</th>
-      </tr></thead>
-      <tbody>${tableRows}</tbody>
-    </table>
-    ${npa15.length > 10 ? `<div class="pdf-npa-more">+ ${npa15.length - 10} more accounts (see officer detail pages)</div>` : ''}
+    <div class="pdf-npa-body">
+      <table class="pdf-npa-table">
+        <thead><tr>
+          <th class="npa-num">#</th>
+          <th class="npa-customer">Customer</th>
+          <th class="npa-officer">Officer</th>
+          <th class="npa-branch">Branch</th>
+          <th class="npa-amount">Rs L</th>
+          <th class="npa-days">Days</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      ${npa15.length > 10 ? `<div class="pdf-npa-more">+ ${npa15.length - 10} more accounts (see officer detail pages)</div>` : ''}
+    </div>
   </div>`;
 }
 
@@ -725,10 +729,11 @@ function detailedSnapshotPdfCss() {
     .pdf-insight-card.blue{background:#EFF6FF;color:#1D4ED8}
     .pdf-insight-tip{font-size:7px;font-weight:700;color:#64748B;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 8px;line-height:1.4}
 
-    .pdf-npa-alert-section{margin:8px 0 0;background:#fff;border:1.5px solid #FECACA;border-radius:12px;padding:10px 12px;box-shadow:0 4px 12px rgba(185,28,28,.06)}
-    .pdf-npa-alert-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
-    .pdf-npa-alert-head h3{margin:0;font-size:11px;font-weight:950;color:#B91C1C}
-    .pdf-npa-alert-head span{font-size:9px;font-weight:900;color:#DC2626;background:#FEF2F2;padding:2px 8px;border-radius:6px}
+    .pdf-npa-alert-section{margin:8px 0 0;background:#fff;border:2px solid #7F1D1D;border-radius:12px;overflow:hidden;box-shadow:0 6px 16px rgba(127,29,29,.12)}
+    .pdf-npa-alert-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:#7F1D1D;color:#fff}
+    .pdf-npa-alert-head h3{margin:0;font-size:12px;font-weight:950;color:#fff;letter-spacing:0.02em}
+    .pdf-npa-alert-head span{font-size:10px;font-weight:900;color:#7F1D1D;background:#fff;padding:3px 10px;border-radius:6px}
+    .pdf-npa-body{padding:0 12px 10px}
     .pdf-npa-empty{font-size:9px;font-weight:800;color:#64748B;text-align:center;padding:8px}
     .pdf-npa-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.4px;color:#15122D}
     .pdf-npa-table thead th{padding:4px 4px 3px;border-bottom:1.5px solid #FECACA;font-size:7px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;color:#991B1B;text-align:left;background:transparent}
