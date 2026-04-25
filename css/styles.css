@@ -2192,21 +2192,21 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
     gap:8px;
   }
   .editorial-hero-title{
-    font-size:31px;
-    max-width:210px;
+    font-size:28px;
+    max-width:190px;
   }
   .editorial-hero-mtd{
     text-align:right;
   }
   .editorial-hero-mtd label{
-    font-size:8px;
-    letter-spacing:0.08em;
+    font-size:7px;
+    letter-spacing:0.06em;
   }
   .editorial-hero-mtd strong{
-    font-size:26px;
+    font-size:21px;
   }
   .editorial-hero-mtd span{
-    font-size:11px;
+    font-size:9px;
   }
   .editorial-callout-row{
     grid-template-columns:minmax(0,1.15fr) minmax(0,0.92fr) minmax(0,0.92fr);
@@ -2225,7 +2225,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   }
   .editorial-callout strong{
     margin-top:6px;
-    font-size:18px;
+    font-size:15px;
     line-height:1.08;
     overflow-wrap:anywhere;
   }
@@ -2234,13 +2234,20 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
     font-size:8px;
     line-height:1.25;
   }
+  .editorial-section-title h2{
+    font-size:19px;
+  }
+  .editorial-section-title span{
+    font-size:8px;
+    letter-spacing:0.06em;
+  }
   .editorial-leaders-grid{
     grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-    gap:9px;
+    gap:7px;
   }
   .editorial-leader-card{
-    padding:12px;
-    border-radius:16px;
+    padding:9px 8px;
+    border-radius:14px;
     min-width:0;
   }
   .editorial-leader-kicker{
@@ -2249,10 +2256,11 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
     letter-spacing:0.05em;
   }
   .editorial-leader-head h4{
-    font-size:15px;
+    font-size:12px;
+    line-height:1.08;
   }
   .editorial-leader-list{
-    gap:9px;
+    gap:7px;
   }
   .editorial-leader-row-top{
     gap:5px;
@@ -2261,21 +2269,21 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
     gap:5px;
   }
   .editorial-leader-rank{
-    min-width:24px;
-    height:19px;
-    font-size:9px;
+    min-width:22px;
+    height:17px;
+    font-size:8px;
   }
   .editorial-leader-name{
-    font-size:13px;
+    font-size:10px;
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
   }
   .editorial-leader-metric{
-    font-size:12px;
+    font-size:9px;
   }
   .editorial-leader-sub{
-    font-size:9px;
+    font-size:8px;
   }
   .editorial-officer-hero-metric{
     text-align:left;
