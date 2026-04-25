@@ -52,9 +52,7 @@ window.showPerfOverlay = async function () {
   const target = document.getElementById('perfOverlayContent');
   if (target) target.innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading performance...</span></div>';
   await import("./performance.js");
-  if (typeof window.showPerformanceDashboard === 'function') {
-    window.showPerformanceDashboard();
-  }
+  if (typeof window.showDailySnapshot === 'function') window.showDailySnapshot();
 };
 
 window.closePerfOverlay = function () {
