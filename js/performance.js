@@ -1222,7 +1222,7 @@ window.shareDailySnapshotJpeg = async function () {
 
   try {
     await ensureHtml2Canvas();
-    const exportWidth = 600;
+    const exportWidth = 680;
     const exportHost = document.createElement("div");
     const exportCard = card.cloneNode(true);
     exportHost.style.position = "fixed";
@@ -1230,6 +1230,7 @@ window.shareDailySnapshotJpeg = async function () {
     exportHost.style.top = "0";
     exportHost.style.width = `${exportWidth}px`;
     exportHost.style.pointerEvents = "none";
+    exportCard.classList.add("snapshot-export");
     exportCard.style.width = `${exportWidth}px`;
     exportCard.style.maxWidth = "none";
     exportHost.appendChild(exportCard);

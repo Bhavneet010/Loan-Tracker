@@ -1,4 +1,4 @@
-const CACHE = 'nirnay-v23';
+const CACHE = 'nirnay-v24';
 const ASSETS = [
   './',
   './index.html',
