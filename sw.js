@@ -1,4 +1,4 @@
-const CACHE = 'nirnay-v37';
+const CACHE = 'nirnay-v38';
 const ASSETS = [
   './',
   './index.html',
@@ -12,15 +12,21 @@ const ASSETS = [
   './assets/splash/splash-dark-master.svg',
   './assets/splash/splash-light-master.svg',
   './assets/snapshot/top-performer-bg.png',
-  './css/styles.css',
+  './css/core.css',
+  './css/performance.css',
+  './css/notifications.css',
+  './css/renewals.css',
   './js/app.js',
   './js/config.js',
   './js/db.js',
   './js/derived.js',
   './js/importers.js',
   './js/loan-actions.js',
+  './js/ui-forms.js',
   './js/notifications.js',
   './js/performance.js',
+  './js/performance-utils.js',
+  './js/performance-templates.js',
   './js/state.js',
   './js/ui-components.js',
   './js/ui-core.js',
