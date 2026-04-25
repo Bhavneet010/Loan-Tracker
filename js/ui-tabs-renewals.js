@@ -61,7 +61,7 @@ export function renderRenewals(c) {
     </div>
   </div>`;
 
-  const officerViewer = renewalOfficerViewerHtml(metrics.renewalOfficerSummary);
+  const officerViewer = renewalOfficerViewerHtml(buildVisibleRenewalOfficerSummary(metrics));
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
   c.innerHTML = `${officerViewer}${fsBar}<div class="sec-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div></div>${list}`;
 }
@@ -78,6 +78,40 @@ export function applyRenewalFilters(enriched) {
 
 function hasMissingRenewalDates(loan) {
   return !!loan.renewedDate && (loan.renewalDatesPending === true || !loan.renewalDueDate || !loan.limitExpiryDate);
+}
+
+function buildVisibleRenewalOfficerSummary(metrics) {
+  const includeLoan = loan => S.renewalShowNpa || loan._rs?.status !== 'npa';
+  const renewals = metrics.renewals.filter(includeLoan);
+  const dueSoon = metrics.renewalDueSoon.filter(includeLoan);
+  const overdue = metrics.renewalOverdue.filter(includeLoan);
+  const rowsByOfficer = new Map();
+
+  S.officers.forEach(officer => {
+    rowsByOfficer.set(officer, { officer, total: 0, od: 0, due: 0 });
+  });
+
+  const ensure = officer => {
+    const key = officer || 'Unassigned';
+    if (!rowsByOfficer.has(key)) rowsByOfficer.set(key, { officer: key, total: 0, od: 0, due: 0 });
+    return rowsByOfficer.get(key);
+  };
+
+  renewals.forEach(loan => ensure(loan.allocatedTo).total++);
+  dueSoon.forEach(loan => ensure(loan.allocatedTo).due++);
+  overdue.forEach(loan => ensure(loan.allocatedTo).od++);
+
+  const rows = Array.from(rowsByOfficer.values()).sort((a, b) =>
+    (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.officer.localeCompare(b.officer)
+  );
+
+  return {
+    activeOfficers: rows.filter(row => row.total > 0).length,
+    total: renewals.length,
+    od: overdue.length,
+    due: dueSoon.length,
+    rows,
+  };
 }
 
 function renewalOfficerViewerHtml(summary) {
