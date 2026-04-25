@@ -296,7 +296,7 @@ function sortRenewalRisk(loans) {
 }
 
 function riskWatchForOfficer(metrics, officer) {
-  const unrenewed = loansForOfficer(metrics.renewals, officer).filter(loan => !loan.renewedDate);
+  const unrenewed = loansForOfficer(metrics.renewals, officer).filter(loan => !loan.renewedDate && loan._rs?.status !== 'npa');
   const npaRisk = sortRenewalRisk(unrenewed.filter(loan => {
     const days = Number(loan._rs?.daysUntilNpa) || 0;
     return days > 0 && days <= 30;
