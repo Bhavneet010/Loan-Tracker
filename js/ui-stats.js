@@ -2,7 +2,7 @@ import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { fmtAmt } from "./utils.js";
 
-/* ── BADGES ── */
+/* BADGES */
 export function updateBadges() {
   const metrics = getLoanMetrics();
   const bPending = document.getElementById('b-pending');
@@ -24,7 +24,7 @@ export function updateBadges() {
   setB('b-rnw-all-cc', metrics.renewals.length);
 }
 
-/* ── HERO STATS ── */
+/* HERO STATS */
 export function updateHero() {
   const sc = document.getElementById('statsScroll');
   if (!sc) return;
@@ -37,7 +37,7 @@ export function updateHero() {
       const active = S.renewalTab === tab;
       return `<div class="stat rnw-stat-card ${gradCls} ${active ? 'stat-rnw-active' : ''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
         <div class="stat-l">${label}</div>
-        <div class="stat-v">₹${fmtAmt(sumAmount(arr))}L</div>
+        <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
         <div class="stat-s">${arr.length} accounts</div>
         ${badge ? `<div class="stat-badge ${badgeCls || ''}">${badge}</div>` : ''}
       </div>`;
@@ -53,23 +53,18 @@ export function updateHero() {
   }
   
   sc.classList.remove('rnw-grid');
+  const freshStat = (tab, label, arr, subtitle, badge = '') => {
+    const active = S.tab === tab;
+    return `<button type="button" class="stat fresh-stat-card ${active ? 'stat-fresh-active' : ''}" onclick="setFreshTab('${tab}')" aria-pressed="${active}">
+      <div class="stat-l">${label}</div>
+      <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
+      <div class="stat-s">${subtitle}</div>
+      ${badge ? `<div class="stat-badge">${badge}</div>` : ''}
+    </button>`;
+  };
   
-  sc.innerHTML = `
-    <div class="stat">
-      <div class="stat-l">Pending</div>
-      <div class="stat-v">₹${fmtAmt(sumAmount(metrics.pending))}L</div>
-      <div class="stat-s">${metrics.pending.length} loans</div>
-      ${metrics.pending.length ? `<div class="stat-badge">↗ Active</div>` : ''}
-    </div>
-    <div class="stat">
-      <div class="stat-l">This Month</div>
-      <div class="stat-v">₹${fmtAmt(sumAmount(metrics.sanctionedThisMonth))}L</div>
-      <div class="stat-s">${metrics.sanctionedThisMonth.length} sanctioned</div>
-      <div class="stat-badge">Month total</div>
-    </div>
-    <div class="stat">
-      <div class="stat-l">Returned</div>
-      <div class="stat-v">₹${fmtAmt(sumAmount(metrics.returned))}L</div>
-      <div class="stat-s">${metrics.returned.length} items</div>
-    </div>`;
+  sc.innerHTML =
+    freshStat('pending', 'Pending', metrics.pending, `${metrics.pending.length} loans`, metrics.pending.length ? '&nearr; Active' : '') +
+    freshStat('sanctioned', 'This Month', metrics.sanctionedThisMonth, `${metrics.sanctionedThisMonth.length} sanctioned`, 'Month total') +
+    freshStat('returned', 'Returned', metrics.returned, `${metrics.returned.length} items`);
 }

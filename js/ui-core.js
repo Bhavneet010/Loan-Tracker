@@ -67,6 +67,15 @@ window.handleSearch = v => {
   window.render(); 
 };
 
+window.setFreshTab = function (tab) {
+  S.tab = tab;
+  S.openPop = null;
+  S.search = '';
+  const si = document.getElementById('searchInput');
+  if (si) si.value = '';
+  window.render();
+};
+
 window.setAppMode = function (v) {
   S.appMode = v; S.openPop = null;
   localStorage.setItem('lpMode', v);
