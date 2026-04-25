@@ -8,7 +8,18 @@ on:
     - cron: '30 13 * * *'
     # 7:30 PM IST = 2:00 PM UTC
     - cron: '0 14 * * *'
-  workflow_dispatch: # Allows you to manually trigger it from GitHub Actions tab
+  workflow_dispatch: 
+    inputs:
+      force_run:
+        description: 'Force run a specific alert for testing'
+        required: false
+        default: 'none'
+        type: choice
+        options:
+          - none
+          - prompt
+          - reminder
+          - alerts
 
 jobs:
   run-alerts:
@@ -29,4 +40,5 @@ jobs:
       - name: Run Push Script
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FORCE_RUN: ${{ github.event.inputs.force_run }}
         run: node ./.github/scripts/send-alerts.js

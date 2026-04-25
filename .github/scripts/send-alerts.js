@@ -44,11 +44,12 @@ async function getOfficerTokens(officer) {
 // --- Main Logic based on UTC Hour ---
 const now = new Date();
 const hoursUTC = now.getUTCHours();
+const forceRun = process.env.FORCE_RUN || 'none';
 
 async function run() {
   // 1. 9:00 AM IST (3:30 AM UTC) - Officer Warnings
-  if (hoursUTC === 3) {
-    console.log("Running 9:00 AM IST Officer Alerts...");
+  if (hoursUTC === 3 || forceRun === 'alerts') {
+    console.log("Running Officer Alerts...");
     const today = new Date();
     today.setUTCHours(today.getUTCHours() + 5, today.getUTCMinutes() + 30); // IST Offset
     today.setHours(0,0,0,0);
@@ -88,15 +89,15 @@ async function run() {
   }
 
   // 2. 7:00 PM IST (13:30 UTC) - Daily Admin Prompt
-  if (hoursUTC === 13) {
-    console.log("Running 7:00 PM IST Admin Prompt...");
+  if (hoursUTC === 13 || forceRun === 'prompt') {
+    console.log("Running Admin Prompt...");
     const tokens = await getAdminTokens();
     await sendMulticast(tokens, "Daily Snapshot Time 📊", "It's 7:00 PM. Please generate and share today's daily snapshot with the team.");
   }
 
   // 3. 7:30 PM IST (14:00 UTC) - Admin Reminder
-  if (hoursUTC === 14) {
-    console.log("Running 7:30 PM IST Admin Reminder...");
+  if (hoursUTC === 14 || forceRun === 'reminder') {
+    console.log("Running Admin Reminder...");
     const today = new Date();
     today.setUTCHours(today.getUTCHours() + 5, today.getUTCMinutes() + 30);
     const dateStr = today.toISOString().split("T")[0];
