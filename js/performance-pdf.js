@@ -3,6 +3,203 @@ import { getLoanMetrics, sumAmount } from "./derived.js";
 import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
 import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
 
+function coverMetricHtml(label, loans, tone, iconSvg) {
+  const total = totalMetric(loans);
+  return `<div class="pdf-metric-v2 ${tone}">
+    <div class="pdf-metric-v2-icon">${iconSvg}</div>
+    <div class="pdf-metric-v2-body">
+      <span>${esc(label)}</span>
+      <strong>${esc(total.count)}</strong>
+      <small>Rs ${esc(fmtAmt(total.amount))}L</small>
+    </div>
+  </div>`;
+}
+
+const METRIC_ICONS = {
+  sanctioned: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  pending: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+  returned: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`,
+  renewals: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+  dueSoon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  overdue: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+};
+
+function buildDonutChartSvg(rows, totalRiskWatch) {
+  const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  const cx = 80, cy = 80, R = 60, r = 38;
+  let cumAngle = -90;
+  const slices = [];
+  const labels = [];
+
+  rows.forEach((row, i) => {
+    const count = row.riskWatch.loans.length;
+    if (!count) return;
+    const pct = count / Math.max(1, totalRiskWatch);
+    const angle = pct * 360;
+    const startRad = (cumAngle * Math.PI) / 180;
+    const endRad = ((cumAngle + angle) * Math.PI) / 180;
+    const midRad = ((cumAngle + angle / 2) * Math.PI) / 180;
+    const largeArc = angle > 180 ? 1 : 0;
+
+    const x1o = cx + R * Math.cos(startRad), y1o = cy + R * Math.sin(startRad);
+    const x2o = cx + R * Math.cos(endRad), y2o = cy + R * Math.sin(endRad);
+    const x1i = cx + r * Math.cos(endRad), y1i = cy + r * Math.sin(endRad);
+    const x2i = cx + r * Math.cos(startRad), y2i = cy + r * Math.sin(startRad);
+
+    const color = COLORS[i % COLORS.length];
+    slices.push(`<path d="M${x1o},${y1o} A${R},${R} 0 ${largeArc},1 ${x2o},${y2o} L${x1i},${y1i} A${r},${r} 0 ${largeArc},0 ${x2i},${y2i} Z" fill="${color}"/>`);
+
+    const labelR = R + 14;
+    const lx = cx + labelR * Math.cos(midRad);
+    const ly = cy + labelR * Math.sin(midRad);
+    const anchor = Math.cos(midRad) >= 0 ? 'start' : 'end';
+    labels.push(`<text x="${lx}" y="${ly}" text-anchor="${anchor}" font-size="8" font-weight="850" fill="#333">${esc(row.name)}</text>`);
+    labels.push(`<text x="${lx}" y="${ly + 10}" text-anchor="${anchor}" font-size="8" font-weight="900" fill="${color}">${esc(count)}</text>`);
+
+    cumAngle += angle;
+  });
+
+  const legendY = 175;
+  const legendItems = rows.filter(r => r.riskWatch.loans.length > 0).map((row, i) => {
+    const color = COLORS[i % COLORS.length];
+    const y = legendY + i * 14;
+    return `<circle cx="30" cy="${y}" r="4" fill="${color}"/>
+      <text x="38" y="${y + 3}" font-size="8.5" font-weight="800" fill="#444">${esc(row.name)}</text>
+      <text x="140" y="${y + 3}" font-size="8.5" font-weight="900" fill="#222" text-anchor="end">${esc(row.riskWatch.loans.length)}</text>`;
+  });
+
+  return `<svg width="160" height="${legendY + rows.filter(r => r.riskWatch.loans.length > 0).length * 14 + 8}" viewBox="0 0 160 ${legendY + rows.filter(r => r.riskWatch.loans.length > 0).length * 14 + 8}" xmlns="http://www.w3.org/2000/svg">
+    <text x="80" y="12" text-anchor="middle" font-size="10" font-weight="950" fill="#1E293B">Risk-Watch Rows</text>
+    <g transform="translate(0,20)">${slices.join('')}${labels.join('')}
+      <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="24" font-weight="950" fill="#1E293B">${esc(totalRiskWatch)}</text>
+      <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="8" font-weight="800" fill="#64748B">TOTAL</text>
+    </g>
+    ${legendItems.join('')}
+  </svg>`;
+}
+
+function buildBarChartSvg(rows, dateLabel) {
+  const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  const categories = ['Sanctioned', 'Renewals Done', 'Risk Watch'];
+  const getData = (row, cat) => {
+    if (cat === 'Sanctioned') return row.sanctioned.length;
+    if (cat === 'Renewals Done') return row.renewalsDone.length;
+    if (cat === 'Risk Watch') return row.riskWatch.loans.length;
+    return 0;
+  };
+
+  const maxVal = Math.max(1, ...rows.flatMap(row => categories.map(cat => getData(row, cat))));
+  const chartW = 340, chartH = 160, padL = 30, padB = 30, padT = 30;
+  const groupW = (chartW - padL) / categories.length;
+  const barW = Math.min(24, (groupW - 20) / rows.length);
+
+  const gridLines = [];
+  const step = Math.ceil(maxVal / 4);
+  for (let v = 0; v <= maxVal + step; v += step || 1) {
+    const y = padT + chartH - (v / (maxVal + step)) * chartH;
+    gridLines.push(`<line x1="${padL}" y1="${y}" x2="${padL + chartW - padL}" y2="${y}" stroke="#E2E8F0" stroke-width="0.5"/>`);
+    gridLines.push(`<text x="${padL - 4}" y="${y + 3}" text-anchor="end" font-size="7" fill="#94A3B8">${v}</text>`);
+  }
+
+  const bars = [];
+  categories.forEach((cat, ci) => {
+    const gx = padL + ci * groupW + groupW / 2;
+    bars.push(`<text x="${gx}" y="${padT + chartH + 14}" text-anchor="middle" font-size="7.5" font-weight="800" fill="#475569">${cat}</text>`);
+    rows.forEach((row, ri) => {
+      const val = getData(row, cat);
+      const bh = (val / (maxVal + step)) * chartH;
+      const bx = gx - (rows.length * barW) / 2 + ri * barW + 1;
+      const by = padT + chartH - bh;
+      const color = COLORS[ri % COLORS.length];
+      bars.push(`<rect x="${bx}" y="${by}" width="${barW - 2}" height="${bh}" rx="2" fill="${color}"/>`);
+      if (val > 0) bars.push(`<text x="${bx + (barW - 2) / 2}" y="${by - 3}" text-anchor="middle" font-size="7" font-weight="900" fill="${color}">${val}</text>`);
+    });
+  });
+
+  const legendX = padL + 10;
+  const legendItems = rows.map((row, i) => {
+    const x = legendX + i * 70;
+    const color = COLORS[i % COLORS.length];
+    return `<rect x="${x}" y="4" width="8" height="8" rx="2" fill="${color}"/>
+      <text x="${x + 11}" y="11" font-size="7.5" font-weight="800" fill="#475569">${esc(row.name)}</text>`;
+  });
+
+  const shortDate = dateLabel;
+
+  return `<svg width="${chartW}" height="${padT + chartH + padB + 10}" viewBox="0 0 ${chartW} ${padT + chartH + padB + 10}" xmlns="http://www.w3.org/2000/svg">
+    <text x="4" y="14" font-size="11" font-weight="950" fill="#1E293B">Officer Key Metrics Comparison</text>
+    <text x="4" y="24" font-size="7" font-weight="700" fill="#94A3B8">Sanctioned, Renewals Done and Risk Watch | ${esc(shortDate)}</text>
+    ${legendItems.join('')}
+    ${gridLines.join('')}
+    ${bars.join('')}
+  </svg>`;
+}
+
+function buildKeyInsightsSvg(rows) {
+  const sanctionedLeader = [...rows].sort((a, b) => b.sanctioned.length - a.sanctioned.length)[0];
+  const renewalLeader = [...rows].sort((a, b) => b.renewalsDone.length - a.renewalsDone.length)[0];
+  const riskLeader = [...rows].sort((a, b) => b.riskWatch.loans.length - a.riskWatch.loans.length)[0];
+
+  const insightH = 50;
+  const totalH = 20 + 3 * insightH + 60;
+
+  const insights = [
+    { icon: '📊', label: 'Highest Sanctioned:', name: sanctionedLeader?.name || '—', value: sanctionedLeader?.sanctioned.length || 0, bg: '#ECFDF5', border: '#A7F3D0', color: '#047857' },
+    { icon: '🔄', label: 'Renewal Lead:', name: renewalLeader?.name || '—', value: renewalLeader?.renewalsDone.length || 0, bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C' },
+    { icon: '⚡', label: 'Risk Watch Lead:', name: riskLeader?.name || '—', value: riskLeader?.riskWatch.loans.length || 0, bg: '#EFF6FF', border: '#BFDBFE', color: '#1D4ED8' },
+  ];
+
+  const cards = insights.map((ins, i) => {
+    const y = 22 + i * insightH;
+    return `<rect x="4" y="${y}" width="142" height="${insightH - 6}" rx="8" fill="${ins.bg}" stroke="${ins.border}" stroke-width="1"/>
+      <text x="16" y="${y + 16}" font-size="8" font-weight="800" fill="#64748B">${ins.label}</text>
+      <text x="16" y="${y + 30}" font-size="12" font-weight="950" fill="${ins.color}">${esc(ins.name)} ${esc(ins.value)}</text>`;
+  });
+
+  const tipY = 22 + 3 * insightH + 4;
+
+  return `<svg width="150" height="${totalH}" viewBox="0 0 150 ${totalH}" xmlns="http://www.w3.org/2000/svg">
+    <text x="75" y="14" text-anchor="middle" font-size="10" font-weight="950" fill="#1E293B">Key Insights</text>
+    ${cards.join('')}
+    <rect x="4" y="${tipY}" width="142" height="40" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="14" y="${tipY + 14}" font-size="6.5" font-weight="700" fill="#64748B">Focus on returned and risk</text>
+    <text x="14" y="${tipY + 22}" font-size="6.5" font-weight="700" fill="#64748B">watch accounts to reduce</text>
+    <text x="14" y="${tipY + 30}" font-size="6.5" font-weight="700" fill="#64748B">potential losses and improve</text>
+    <text x="14" y="${tipY + 38}" font-size="6.5" font-weight="700" fill="#64748B">renewal outcomes.</text>
+  </svg>`;
+}
+
+function coverOfficerRowV2(row) {
+  const riskTone = row.riskWatch.npaRiskCount ? 'danger' : row.riskWatch.loans.length ? 'warn' : 'calm';
+  const metrics = [
+    { label: 'SANCTIONED', count: row.sanctioned.length, amount: sumAmount(row.sanctioned), tone: 'good' },
+    { label: 'PENDING', count: row.pending.length, amount: sumAmount(row.pending), tone: 'warn' },
+    { label: 'RETURNED', count: row.returned.length, amount: sumAmount(row.returned), tone: 'soft-danger' },
+    { label: 'RENEWALS DONE', count: row.renewalsDone.length, amount: sumAmount(row.renewalsDone), tone: 'blue' },
+    { label: 'RISK WATCH', count: row.riskWatch.loans.length, amount: sumAmount(row.riskWatch.loans), tone: riskTone },
+  ];
+
+  const metricCells = metrics.map(m => `
+    <div class="pdf-cv2-metric ${m.tone}">
+      <span>${esc(m.label)}</span>
+      <strong>${esc(m.count)}</strong>
+      <small>Rs ${esc(fmtAmt(m.amount))}L</small>
+    </div>`).join('');
+
+  return `<div class="pdf-cv2-row">
+    <div class="pdf-cv2-officer">
+      <div class="pdf-cv2-avatar">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </div>
+      <div>
+        <strong>${esc(row.name)}</strong>
+        <span>${esc(row.riskWatch.mode)}</span>
+      </div>
+    </div>
+    <div class="pdf-cv2-metrics">${metricCells}</div>
+  </div>`;
+}
+
 function buildDetailedSnapshotPdfHtml() {
   const metrics = getLoanMetrics();
   const rows = officerPdfData(metrics);
@@ -18,13 +215,17 @@ function buildDetailedSnapshotPdfHtml() {
   const totalGlobalPages = 1 + officerPartCounts.reduce((sum, n) => sum + n, 0);
   const ctx = { runningPage: 2, totalGlobalPages };
 
+  const donutSvg = buildDonutChartSvg(rows, totalRiskWatch);
+  const barChartSvg = buildBarChartSvg(rows, dateLabel);
+  const keyInsightsSvg = buildKeyInsightsSvg(rows);
+
   return `<div class="pdf-report">
     <style>${detailedSnapshotPdfCss()}</style>
     <section class="pdf-page pdf-cover-page">
       <header class="pdf-brand-row">
         <div>
           <div class="pdf-brand">Nirnay</div>
-          <div class="pdf-tagline">Decisions | Delivered</div>
+          <div class="pdf-tagline">DECISIONS | DELIVERED</div>
         </div>
         <div class="pdf-date">${esc(dateLabel)}</div>
       </header>
@@ -34,21 +235,34 @@ function buildDetailedSnapshotPdfHtml() {
           <p>Account wise Performance data of all Officers</p>
         </div>
         <div class="pdf-risk-badge">
-          <span>NPA Risk</span>
+          <span>NPA RISK</span>
           <strong>${esc(totalNpaRisk)}</strong>
-          <small>${esc(totalRiskWatch)} risk-watch rows</small>
+          <small>${esc(totalRiskWatch)} RISK-WATCH ROWS</small>
         </div>
       </div>
-      <div class="pdf-cover-metrics">
-        ${metricHtml("Sanctioned MTD", metrics.sanctionedThisMonth, "good")}
-        ${metricHtml("Pending", metrics.pending, "warn")}
-        ${metricHtml("Returned", metrics.returned, "soft-danger")}
-        ${metricHtml("Renewals Done", metrics.renewalDoneThisMonth, "blue")}
-        ${metricHtml("Due Soon", metrics.renewalDueSoon, "warn")}
-        ${metricHtml("Overdue / NPA", metrics.renewalOverdue, "danger")}
+      <div class="pdf-cover-metrics-v2">
+        ${coverMetricHtml("Sanctioned MTD", metrics.sanctionedThisMonth, "good", METRIC_ICONS.sanctioned)}
+        ${coverMetricHtml("Pending", metrics.pending, "warn", METRIC_ICONS.pending)}
+        ${coverMetricHtml("Returned", metrics.returned, "soft-danger", METRIC_ICONS.returned)}
+        ${coverMetricHtml("Renewals Done", metrics.renewalDoneThisMonth, "blue", METRIC_ICONS.renewals)}
+        ${coverMetricHtml("Due Soon", metrics.renewalDueSoon, "warn-alt", METRIC_ICONS.dueSoon)}
+        ${coverMetricHtml("Overdue / NPA", metrics.renewalOverdue, "danger", METRIC_ICONS.overdue)}
       </div>
-      <div class="pdf-cover-table">
-        ${rows.map(coverOfficerRow).join("")}
+      <div class="pdf-cover-body-grid">
+        <div class="pdf-cover-officers-col">
+          ${rows.map(coverOfficerRowV2).join("")}
+        </div>
+        <div class="pdf-cover-donut-col">
+          ${donutSvg}
+        </div>
+      </div>
+      <div class="pdf-cover-bottom-grid">
+        <div class="pdf-cover-bar-col">
+          ${barChartSvg}
+        </div>
+        <div class="pdf-cover-insights-col">
+          ${keyInsightsSvg}
+        </div>
       </div>
       <footer class="pdf-footer">
         <span class="pdf-footer-brand"><span class="pdf-footer-logo">न</span>Nirnay Loan Tracker</span>
@@ -415,6 +629,51 @@ function detailedSnapshotPdfCss() {
     .pdf-risk-badge{border-radius:24px;background:linear-gradient(150deg,#7F1D1D,#F59E0B);color:#fff;padding:18px;text-align:center;box-shadow:0 18px 36px rgba(127,29,29,.18)}
     .pdf-risk-badge span,.pdf-risk-badge small{display:block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;opacity:.82}
     .pdf-risk-badge strong{display:block;font-size:46px;line-height:1;margin:10px 0 6px}
+    .pdf-cover-metrics-v2{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:18px 0 14px}
+    .pdf-metric-v2{display:flex;align-items:center;gap:8px;border-radius:12px;padding:8px 10px;background:#F4F1FB;border:1px solid rgba(107,95,191,.10);min-width:0}
+    .pdf-metric-v2-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#fff;flex-shrink:0}
+    .pdf-metric-v2-body{min-width:0}
+    .pdf-metric-v2-body span{display:block;font-size:7px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#756F91;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-metric-v2-body strong{display:block;font-size:20px;line-height:1;margin-top:2px}
+    .pdf-metric-v2-body small{display:block;margin-top:2px;font-size:8px;font-weight:850;color:#4D4868;white-space:nowrap}
+    .pdf-metric-v2.good{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+    .pdf-metric-v2.good .pdf-metric-v2-icon{background:#D1FAE5;color:#047857}
+    .pdf-metric-v2.warn{background:#FFF7ED;border-color:#FED7AA;color:#C2410C}
+    .pdf-metric-v2.warn .pdf-metric-v2-icon{background:#FFEDD5;color:#C2410C}
+    .pdf-metric-v2.warn-alt{background:#FFFBEB;border-color:#FDE68A;color:#92400E}
+    .pdf-metric-v2.warn-alt .pdf-metric-v2-icon{background:#FEF3C7;color:#92400E}
+    .pdf-metric-v2.danger{background:#FEF2F2;border-color:#FECACA;color:#B91C1C}
+    .pdf-metric-v2.danger .pdf-metric-v2-icon{background:#FEE2E2;color:#B91C1C}
+    .pdf-metric-v2.soft-danger{background:#FFF1F2;border-color:#FFE1E5;color:#DC2626}
+    .pdf-metric-v2.soft-danger .pdf-metric-v2-icon{background:#FFE4E6;color:#DC2626}
+    .pdf-metric-v2.blue{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+    .pdf-metric-v2.blue .pdf-metric-v2-icon{background:#DBEAFE;color:#1D4ED8}
+    .pdf-metric-v2.good strong,.pdf-metric-v2.warn strong,.pdf-metric-v2.warn-alt strong,.pdf-metric-v2.danger strong,.pdf-metric-v2.soft-danger strong,.pdf-metric-v2.blue strong{color:inherit}
+
+    .pdf-cover-body-grid{display:grid;grid-template-columns:1fr 180px;gap:14px;margin:10px 0 10px}
+    .pdf-cover-officers-col{display:flex;flex-direction:column;gap:7px}
+    .pdf-cover-donut-col{display:flex;align-items:flex-start;justify-content:center;padding:6px 0}
+
+    .pdf-cv2-row{display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center;background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:12px;padding:8px 10px;box-shadow:0 4px 10px rgba(45,35,85,.035)}
+    .pdf-cv2-officer{display:flex;align-items:center;gap:8px}
+    .pdf-cv2-avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#F1F5F9;flex-shrink:0}
+    .pdf-cv2-officer strong{display:block;font-size:13px;font-weight:950;color:#1E293B;line-height:1.15}
+    .pdf-cv2-officer span{display:block;margin-top:2px;font-size:7px;font-weight:900;color:#8B5E00;text-transform:uppercase;letter-spacing:.06em;line-height:1.1}
+    .pdf-cv2-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+    .pdf-cv2-metric{border-radius:8px;padding:6px 7px;background:#F4F1FB;border:1px solid rgba(107,95,191,.10);min-width:0}
+    .pdf-cv2-metric span{display:block;font-size:6.5px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;color:#756F91;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-cv2-metric strong{display:block;font-size:17px;line-height:1;margin-top:1px}
+    .pdf-cv2-metric small{display:block;margin-top:1px;font-size:7.5px;font-weight:850;color:#4D4868;white-space:nowrap}
+    .pdf-cv2-metric.good{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+    .pdf-cv2-metric.warn{background:#FFF7ED;border-color:#FED7AA;color:#C2410C}
+    .pdf-cv2-metric.danger{background:#FEF2F2;border-color:#FECACA;color:#B91C1C}
+    .pdf-cv2-metric.soft-danger{background:#FFF1F2;border-color:#FFE1E5;color:#DC2626}
+    .pdf-cv2-metric.blue{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+    .pdf-cv2-metric.calm{background:#F8FAFC;border-color:#E2E8F0;color:#475569}
+    .pdf-cv2-metric.good strong,.pdf-cv2-metric.warn strong,.pdf-cv2-metric.danger strong,.pdf-cv2-metric.soft-danger strong,.pdf-cv2-metric.blue strong,.pdf-cv2-metric.calm strong{color:inherit}
+
+    .pdf-cover-bottom-grid{display:grid;grid-template-columns:1fr 170px;gap:14px;margin:8px 0 0;background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(45,35,85,.035)}
+
     .pdf-cover-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:24px 0 18px}
     .pdf-cover-table{display:flex;flex-direction:column;gap:9px}
     .pdf-cover-row{display:grid;grid-template-columns:1.24fr repeat(5,1fr);gap:7px;align-items:stretch;background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:14px;padding:8px;box-shadow:0 6px 14px rgba(45,35,85,.04)}

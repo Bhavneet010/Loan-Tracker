@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nirnay Performance Chart Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #11142d;
+  --muted: #6b6e83;
+  --line: #e8ebf2;
+  --paper: #f7f8fb;
+  --panel: #ffffff;
+  --green: #06966f;
+  --green-soft: #dff8ee;
+  --amber: #bf6d00;
+  --amber-soft: #fff0d7;
+  --red: #c7334b;
+  --red-soft: #ffe7ec;
+  --blue: #2367c8;
+  --blue-soft: #e5f1ff;
+  --gold: #8a6400;
+  --gold-soft: #fff6db;
+  --shadow: 0 18px 44px rgba(23, 25, 50, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, Arial, sans-serif;
+}
+
+.page {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 34px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.brand {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.tagline {
+  margin-top: 3px;
+  color: #58518e;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.date {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(36px, 5vw, 62px);
+  line-height: 0.95;
+}
+
+.intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.subtitle {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.hero-risk {
+  min-width: 230px;
+  border-radius: 24px;
+  padding: 24px 28px;
+  color: #fff;
+  background: linear-gradient(135deg, #a33c14, #f0a400);
+  box-shadow: var(--shadow);
+}
+
+.hero-risk .label {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.hero-risk .value {
+  margin: 8px 0;
+  font-size: 64px;
+  line-height: 0.95;
+  font-weight: 800;
+}
+
+.hero-risk .note {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.kpi {
+  min-height: 105px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 15px;
+  background: var(--panel);
+}
+
+.kpi.green { background: var(--green-soft); border-color: #b8ead7; }
+.kpi.amber { background: var(--amber-soft); border-color: #f5d7a9; }
+.kpi.red { background: var(--red-soft); border-color: #f4c8d0; }
+.kpi.blue { background: var(--blue-soft); border-color: #bdd9f8; }
+.kpi.gold { background: var(--gold-soft); border-color: #f0dfa2; }
+
+.kpi .label,
+.mini-label {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.kpi .num {
+  margin-top: 8px;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.kpi .money {
+  margin-top: 10px;
+  color: #272b3f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mockup {
+  margin-top: 28px;
+  padding: 24px;
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.mockup-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.mockup-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.mockup-sub {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot.green { background: var(--green); }
+.dot.amber { background: var(--amber); }
+.dot.red { background: var(--red); }
+.dot.blue { background: var(--blue); }
+.dot.gold { background: var(--gold); }
+
+.officer-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.stack-row {
+  display: grid;
+  grid-template-columns: 170px 1fr 70px;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.officer-name {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.officer-note {
+  margin-top: 5px;
+  color: var(--gold);
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.stack-bar {
+  display: flex;
+  width: 100%;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #eef1f6;
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.segment.green { background: var(--green); }
+.segment.amber { background: var(--amber); }
+.segment.red { background: var(--red); }
+.segment.blue { background: var(--blue); }
+.segment.risk { background: #9f2d43; }
+
+.row-total {
+  text-align: right;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.row-total span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.heat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: 120px repeat(5, 1fr);
+  gap: 8px;
+}
+
+.heat-cell,
+.heat-head,
+.name-cell {
+  min-height: 88px;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.heat-head {
+  min-height: 48px;
+  color: var(--muted);
+  background: #f1f3f8;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.name-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #f7f8fb;
+  font-weight: 800;
+}
+
+.heat-cell {
+  border: 1px solid transparent;
+}
+
+.heat-cell .count {
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.heat-cell .cash {
+  margin-top: 9px;
+  color: #2b2d3f;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.g1 { background: #dff8ee; border-color: #b8ead7; color: var(--green); }
+.g2 { background: #c8f1e2; border-color: #97ddc5; color: var(--green); }
+.g3 { background: #a9e7d2; border-color: #7fd6ba; color: var(--green); }
+.a1 { background: #fff4e3; border-color: #f3ddb8; color: var(--amber); }
+.a2 { background: #ffe8bd; border-color: #f0c984; color: var(--amber); }
+.r1 { background: #ffeef2; border-color: #f2cad1; color: var(--red); }
+.r2 { background: #ffdce4; border-color: #eaa8b6; color: var(--red); }
+.b1 { background: #eaf4ff; border-color: #c4ddf6; color: var(--blue); }
+.b2 { background: #d9ebff; border-color: #a9cef3; color: var(--blue); }
+
+.risk-panel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  background: #fbfcff;
+}
+
+.donut {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 8px auto 18px;
+  border-radius: 50%;
+  background: conic-gradient(#9f2d43 0 40%, #c7334b 40% 75%, #df7a8d 75% 100%);
+}
+
+.donut::after {
+  content: "";
+  position: absolute;
+  inset: 37px;
+  border-radius: 50%;
+  background: #fbfcff;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font-weight: 800;
+}
+
+.donut-center strong {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.rank-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rank-line {
+  display: grid;
+  grid-template-columns: 70px 1fr 34px;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.thin-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eef1f6;
+}
+
+.thin-bar div {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--red);
+}
+
+.exposure-layout {
+  display: grid;
+  grid-template-columns: 38% 1fr;
+  gap: 24px;
+}
+
+.pipeline {
+  display: grid;
+  gap: 10px;
+}
+
+.pipe-row {
+  display: grid;
+  grid-template-columns: 128px 1fr 84px;
+  gap: 12px;
+  align-items: center;
+}
+
+.pipe-row .label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pipe-track {
+  height: 26px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #eef1f6;
+}
+
+.pipe-fill {
+  height: 100%;
+  border-radius: 7px;
+}
+
+.pipe-fill.green { background: var(--green); }
+.pipe-fill.amber { background: var(--amber); }
+.pipe-fill.red { background: var(--red); }
+.pipe-fill.blue { background: var(--blue); }
+.pipe-fill.gold { background: var(--gold); }
+
+.pipe-value {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.amount-chart {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fbfcff;
+}
+
+.amount-row {
+  display: grid;
+  grid-template-columns: 86px repeat(5, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.amount-name {
+  align-self: center;
+  font-weight: 800;
+}
+
+.amount-group {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  align-items: end;
+  justify-items: center;
+  min-height: 150px;
+  gap: 8px;
+}
+
+.amount-bar {
+  width: min(54px, 100%);
+  min-height: 8px;
+  border-radius: 8px 8px 3px 3px;
+}
+
+.amount-bar.green { background: var(--green); }
+.amount-bar.amber { background: var(--amber); }
+.amount-bar.red { background: var(--red); }
+.amount-bar.blue { background: var(--blue); }
+.amount-bar.risk { background: #9f2d43; }
+
+.amount-label {
+  color: var(--muted);
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.amount-money {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+@media (max-width: 980px) {
+  .page { padding: 20px; }
+  .intro,
+  .heat-layout,
+  .exposure-layout {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+  .stack-row {
+    grid-template-columns: 1fr;
+  }
+  .row-total {
+    text-align: left;
+  }
+  .heatmap {
+    grid-template-columns: 88px repeat(5, minmax(96px, 1fr));
+    overflow-x: auto;
+  }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="topbar">
+    <div>
+      <div class="brand">Nirnay</div>
+      <div class="tagline">Decisions | Delivered</div>
+    </div>
+    <div class="date">25 April 2026</div>
+  </header>
+
+  <section class="intro">
+    <div>
+      <h1>Granular Performance Matrix</h1>
+      <div class="subtitle">Account wise Performance data of all Officers</div>
+    </div>
+    <aside class="hero-risk">
+      <div class="label">NPA Risk</div>
+      <div class="value">16</div>
+      <div class="note">20 Risk-Watch Rows</div>
+    </aside>
+  </section>
+
+  <section class="summary-grid" aria-label="Portfolio summary">
+    <div class="kpi green"><div class="label">Sanctioned MTD</div><div class="num">29</div><div class="money">Rs 111.12L</div></div>
+    <div class="kpi amber"><div class="label">Pending</div><div class="num">18</div><div class="money">Rs 161.68L</div></div>
+    <div class="kpi red"><div class="label">Returned</div><div class="num">12</div><div class="money">Rs 116.7L</div></div>
+    <div class="kpi blue"><div class="label">Renewals Done</div><div class="num">25</div><div class="money">Rs 266.22L</div></div>
+    <div class="kpi gold"><div class="label">Due Soon</div><div class="num">31</div><div class="money">Rs 221.08L</div></div>
+    <div class="kpi red"><div class="label">Overdue / NPA</div><div class="num">216</div><div class="money">Rs 1,965.27L</div></div>
+  </section>
+
+  <section class="mockup">
+    <div class="mockup-head">
+      <div>
+        <h2 class="mockup-title">Mockup 1: Officer Workload Mix</h2>
+        <div class="mockup-sub">Best for comparing each officer's account count distribution at a glance.</div>
+      </div>
+      <div class="legend">
+        <span><i class="dot green"></i>Sanctioned</span>
+        <span><i class="dot amber"></i>Pending</span>
+        <span><i class="dot red"></i>Returned</span>
+        <span><i class="dot blue"></i>Renewals</span>
+        <span><i class="dot red"></i>Risk Watch</span>
+      </div>
+    </div>
+
+    <div class="officer-stack">
+      <div class="stack-row">
+        <div>
+          <div class="officer-name">Nikita</div>
+          <div class="officer-note">NPA Risk in Next 30 Days</div>
+        </div>
+        <div class="stack-bar" aria-label="Nikita count mix total 42">
+          <div class="segment green" style="width:38.1%">16</div>
+          <div class="segment amber" style="width:16.7%">7</div>
+          <div class="segment red" style="width:7.1%">3</div>
+          <div class="segment blue" style="width:19%">8</div>
+          <div class="segment risk" style="width:19%">8</div>
+        </div>
+        <div class="row-total">42<span>Total</span></div>
+      </div>
+
+      <div class="stack-row">
+        <div>
+          <div class="officer-name">Ritika</div>
+          <div class="officer-note">NPA Risk in Next 30 Days</div>
+        </div>
+        <div class="stack-bar" aria-label="Ritika count mix total 30">
+          <div class="segment green" style="width:10%">3</div>
+          <div class="segment amber" style="width:13.3%">4</div>
+          <div class="segment red" style="width:26.7%">8</div>
+          <div class="segment blue" style="width:26.7%">8</div>
+          <div class="segment risk" style="width:23.3%">7</div>
+        </div>
+        <div class="row-total">30<span>Total</span></div>
+      </div>
+
+      <div class="stack-row">
+        <div>
+          <div class="officer-name">Anchal</div>
+          <div class="officer-note">Next Renewals Due</div>
+        </div>
+        <div class="stack-bar" aria-label="Anchal count mix total 32">
+          <div class="segment green" style="width:31.3%">10</div>
+          <div class="segment amber" style="width:21.9%">7</div>
+          <div class="segment red" style="width:3.1%">1</div>
+          <div class="segment blue" style="width:28.1%">9</div>
+          <div class="segment risk" style="width:15.6%">5</div>
+        </div>
+        <div class="row-total">32<span>Total</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mockup">
+    <div class="mockup-head">
+      <div>
+        <h2 class="mockup-title">Mockup 2: Risk Heatmap</h2>
+        <div class="mockup-sub">Best for spotting concentration quickly across officers and metric types.</div>
+      </div>
+      <div class="legend">
+        <span><i class="dot green"></i>Good flow</span>
+        <span><i class="dot amber"></i>Attention</span>
+        <span><i class="dot red"></i>Risk</span>
+        <span><i class="dot blue"></i>Renewal progress</span>
+      </div>
+    </div>
+
+    <div class="heat-layout">
+      <div class="heatmap" aria-label="Officer performance heatmap">
+        <div class="heat-head"></div>
+        <div class="heat-head">Sanctioned</div>
+        <div class="heat-head">Pending</div>
+        <div class="heat-head">Returned</div>
+        <div class="heat-head">Renewals Done</div>
+        <div class="heat-head">Risk Watch</div>
+
+        <div class="name-cell">Nikita</div>
+        <div class="heat-cell g3"><div class="count">16</div><div class="cash">Rs 58.25L</div></div>
+        <div class="heat-cell a2"><div class="count">7</div><div class="cash">Rs 88.75L</div></div>
+        <div class="heat-cell r1"><div class="count">3</div><div class="cash">Rs 21.7L</div></div>
+        <div class="heat-cell b1"><div class="count">8</div><div class="cash">Rs 70.8L</div></div>
+        <div class="heat-cell r2"><div class="count">8</div><div class="cash">Rs 119.65L</div></div>
+
+        <div class="name-cell">Ritika</div>
+        <div class="heat-cell g1"><div class="count">3</div><div class="cash">Rs 5.95L</div></div>
+        <div class="heat-cell a1"><div class="count">4</div><div class="cash">Rs 43.37L</div></div>
+        <div class="heat-cell r2"><div class="count">8</div><div class="cash">Rs 45L</div></div>
+        <div class="heat-cell b2"><div class="count">8</div><div class="cash">Rs 115.42L</div></div>
+        <div class="heat-cell r2"><div class="count">7</div><div class="cash">Rs 121.18L</div></div>
+
+        <div class="name-cell">Anchal</div>
+        <div class="heat-cell g2"><div class="count">10</div><div class="cash">Rs 46.92L</div></div>
+        <div class="heat-cell a2"><div class="count">7</div><div class="cash">Rs 29.56L</div></div>
+        <div class="heat-cell r1"><div class="count">1</div><div class="cash">Rs 50L</div></div>
+        <div class="heat-cell b2"><div class="count">9</div><div class="cash">Rs 80L</div></div>
+        <div class="heat-cell r1"><div class="count">5</div><div class="cash">Rs 48.88L</div></div>
+      </div>
+
+      <aside class="risk-panel">
+        <div class="mini-label">Risk-watch split</div>
+        <div class="donut" aria-label="Risk watch distribution Nikita 8 Ritika 7 Anchal 5">
+          <div class="donut-center"><strong>20</strong><span>rows</span></div>
+        </div>
+        <div class="rank-list">
+          <div class="rank-line"><span>Nikita</span><div class="thin-bar"><div style="width:100%"></div></div><strong>8</strong></div>
+          <div class="rank-line"><span>Ritika</span><div class="thin-bar"><div style="width:87.5%"></div></div><strong>7</strong></div>
+          <div class="rank-line"><span>Anchal</span><div class="thin-bar"><div style="width:62.5%"></div></div><strong>5</strong></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="mockup">
+    <div class="mockup-head">
+      <div>
+        <h2 class="mockup-title">Mockup 3: Exposure and Pipeline</h2>
+        <div class="mockup-sub">Best for executive review where money exposure matters more than row count.</div>
+      </div>
+      <div class="legend">
+        <span><i class="dot green"></i>Sanctioned amount</span>
+        <span><i class="dot amber"></i>Pipeline amount</span>
+        <span><i class="dot red"></i>Risk amount</span>
+        <span><i class="dot blue"></i>Renewal amount</span>
+      </div>
+    </div>
+
+    <div class="exposure-layout">
+      <div class="pipeline" aria-label="Summary amount pipeline">
+        <div class="pipe-row">
+          <div class="label">Overdue / NPA</div>
+          <div class="pipe-track"><div class="pipe-fill red" style="width:100%"></div></div>
+          <div class="pipe-value">Rs 1,965.27L</div>
+        </div>
+        <div class="pipe-row">
+          <div class="label">Renewals Done</div>
+          <div class="pipe-track"><div class="pipe-fill blue" style="width:13.5%"></div></div>
+          <div class="pipe-value">Rs 266.22L</div>
+        </div>
+        <div class="pipe-row">
+          <div class="label">Due Soon</div>
+          <div class="pipe-track"><div class="pipe-fill gold" style="width:11.3%"></div></div>
+          <div class="pipe-value">Rs 221.08L</div>
+        </div>
+        <div class="pipe-row">
+          <div class="label">Pending</div>
+          <div class="pipe-track"><div class="pipe-fill amber" style="width:8.2%"></div></div>
+          <div class="pipe-value">Rs 161.68L</div>
+        </div>
+        <div class="pipe-row">
+          <div class="label">Returned</div>
+          <div class="pipe-track"><div class="pipe-fill red" style="width:5.9%"></div></div>
+          <div class="pipe-value">Rs 116.7L</div>
+        </div>
+        <div class="pipe-row">
+          <div class="label">Sanctioned MTD</div>
+          <div class="pipe-track"><div class="pipe-fill green" style="width:5.7%"></div></div>
+          <div class="pipe-value">Rs 111.12L</div>
+        </div>
+      </div>
+
+      <div class="amount-chart" aria-label="Officer amount bars">
+        <div class="amount-row">
+          <div class="amount-name">Nikita</div>
+          <div class="amount-group">
+            <div class="amount-bar green" style="height:50px"></div>
+            <div class="amount-label">Sanctioned</div>
+            <div class="amount-money">Rs 58.25L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar amber" style="height:76px"></div>
+            <div class="amount-label">Pending</div>
+            <div class="amount-money">Rs 88.75L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar red" style="height:18px"></div>
+            <div class="amount-label">Returned</div>
+            <div class="amount-money">Rs 21.7L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar blue" style="height:61px"></div>
+            <div class="amount-label">Renewals</div>
+            <div class="amount-money">Rs 70.8L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar risk" style="height:102px"></div>
+            <div class="amount-label">Risk Watch</div>
+            <div class="amount-money">Rs 119.65L</div>
+          </div>
+        </div>
+
+        <div class="amount-row">
+          <div class="amount-name">Ritika</div>
+          <div class="amount-group">
+            <div class="amount-bar green" style="height:8px"></div>
+            <div class="amount-label">Sanctioned</div>
+            <div class="amount-money">Rs 5.95L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar amber" style="height:37px"></div>
+            <div class="amount-label">Pending</div>
+            <div class="amount-money">Rs 43.37L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar red" style="height:38px"></div>
+            <div class="amount-label">Returned</div>
+            <div class="amount-money">Rs 45L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar blue" style="height:98px"></div>
+            <div class="amount-label">Renewals</div>
+            <div class="amount-money">Rs 115.42L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar risk" style="height:104px"></div>
+            <div class="amount-label">Risk Watch</div>
+            <div class="amount-money">Rs 121.18L</div>
+          </div>
+        </div>
+
+        <div class="amount-row">
+          <div class="amount-name">Anchal</div>
+          <div class="amount-group">
+            <div class="amount-bar green" style="height:40px"></div>
+            <div class="amount-label">Sanctioned</div>
+            <div class="amount-money">Rs 46.92L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar amber" style="height:25px"></div>
+            <div class="amount-label">Pending</div>
+            <div class="amount-money">Rs 29.56L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar red" style="height:43px"></div>
+            <div class="amount-label">Returned</div>
+            <div class="amount-money">Rs 50L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar blue" style="height:68px"></div>
+            <div class="amount-label">Renewals</div>
+            <div class="amount-money">Rs 80L</div>
+          </div>
+          <div class="amount-group">
+            <div class="amount-bar risk" style="height:42px"></div>
+            <div class="amount-label">Risk Watch</div>
+            <div class="amount-money">Rs 48.88L</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>
