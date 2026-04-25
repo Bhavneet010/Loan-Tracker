@@ -1623,6 +1623,7 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
 }
 .editorial-callout.primary label{
   color:rgba(255,236,190,0.82);
+  white-space:nowrap;
 }
 .editorial-callout strong{
   display:block;
@@ -2446,7 +2447,15 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   padding:10px 12px;
 }
 .editorial-phone-report.snapshot-export .editorial-callout.primary{
-  padding-right:88px;
+  padding-right:28px;
+}
+.editorial-phone-report.snapshot-export .editorial-callout.primary label{
+  font-size:9px;
+  letter-spacing:0.08em;
+}
+.editorial-phone-report.snapshot-export .editorial-callout.primary strong{
+  font-size:26px;
+  letter-spacing:-0.02em;
 }
 .editorial-phone-report.snapshot-export .editorial-callout.primary::after{
   width:76px;
