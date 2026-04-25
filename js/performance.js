@@ -1,8 +1,9 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
-import { catCls, esc, fmtAmt, shortCat, toast } from "./utils.js";
+import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
 
 let html2canvasLoadPromise = null;
+let jsPdfLoadPromise = null;
 
 const CATS = ["Agriculture", "SME", "Education"];
 const TREND_COLORS = {
@@ -250,62 +251,568 @@ function summaryTable(title, loans) {
   return `<section class="snap-section"><h2>${esc(title)}</h2><table><tr><th>Officer</th><th>Count</th><th>Agri</th><th>SME</th><th>Edu</th><th>Total</th></tr>${body}</table></section>`;
 }
 
-function buildSnapshotHtml() {
+const PDF_PAGE_WIDTH = 794;
+const PDF_PAGE_HEIGHT = 1123;
+
+function loanOfficer(loan) {
+  return loan.allocatedTo || "Unassigned";
+}
+
+function loansForOfficer(loans, officer) {
+  return loans.filter(loan => loanOfficer(loan) === officer);
+}
+
+function totalMetric(loans) {
+  return { count: loans.length, amount: sumAmount(loans) };
+}
+
+function metricHtml(label, loans, tone = "") {
+  const total = totalMetric(loans);
+  return `<div class="pdf-metric ${tone}">
+    <span>${esc(label)}</span>
+    <strong>${esc(total.count)}</strong>
+    <small>Rs ${esc(fmtAmt(total.amount))}L</small>
+  </div>`;
+}
+
+function statusRank(status) {
+  return { npa: 0, "pending-renewal": 1, "due-soon": 2, active: 3 }[status] ?? 4;
+}
+
+function renewalUrgencyValue(loan) {
+  const rs = loan._rs || {};
+  if (rs.status === "npa") return -100000 - (rs.daysOverdue || 0);
+  if (rs.status === "pending-renewal") return -10000 + (rs.daysUntilNpa || 999);
+  if (rs.status === "due-soon") return rs.daysUntilDue ?? 999;
+  return rs.daysUntilDue ?? 9999;
+}
+
+function sortRenewalRisk(loans) {
+  return [...loans].sort((a, b) =>
+    statusRank(a._rs?.status) - statusRank(b._rs?.status) ||
+    renewalUrgencyValue(a) - renewalUrgencyValue(b) ||
+    (a.customerName || "").localeCompare(b.customerName || "")
+  );
+}
+
+function riskWatchForOfficer(metrics, officer) {
+  const unrenewed = loansForOfficer(metrics.renewals, officer).filter(loan => !loan.renewedDate);
+  const npaRisk = sortRenewalRisk(unrenewed.filter(loan => {
+    const days = Number(loan._rs?.daysUntilNpa) || 0;
+    return days > 0 && days <= 30;
+  }));
+  const nextDue = sortRenewalRisk(unrenewed).slice(0, 5);
+  const useNpaRisk = npaRisk.length > nextDue.length;
+  return {
+    mode: useNpaRisk ? "NPA risk in next 30 days" : "Next renewals due",
+    loans: useNpaRisk ? npaRisk : nextDue,
+    npaRiskCount: npaRisk.length,
+    nextDueCount: nextDue.length,
+  };
+}
+
+function detailOfficerNames(metrics) {
+  const seen = new Set(S.officers);
+  const extra = [];
+  [
+    metrics.pending,
+    metrics.sanctionedThisMonth,
+    metrics.returned,
+    metrics.renewalDoneThisMonth,
+    metrics.renewals,
+  ].flat().forEach(loan => {
+    const name = loanOfficer(loan);
+    if (!seen.has(name)) {
+      seen.add(name);
+      extra.push(name);
+    }
+  });
+  return [...S.officers, ...extra];
+}
+
+function officerPdfData(metrics) {
+  return detailOfficerNames(metrics).map(name => {
+    const pending = loansForOfficer(metrics.pending, name);
+    const sanctioned = loansForOfficer(metrics.sanctionedThisMonth, name);
+    const returned = loansForOfficer(metrics.returned, name);
+    const renewalsDone = loansForOfficer(metrics.renewalDoneThisMonth, name);
+    const riskWatch = riskWatchForOfficer(metrics, name);
+    return {
+      name,
+      pending,
+      sanctioned,
+      returned,
+      renewalsDone,
+      riskWatch,
+      totalWork: pending.length + sanctioned.length + returned.length + renewalsDone.length + riskWatch.loans.length,
+    };
+  }).sort((a, b) =>
+    b.riskWatch.npaRiskCount - a.riskWatch.npaRiskCount ||
+    b.pending.length - a.pending.length ||
+    b.sanctioned.length - a.sanctioned.length ||
+    a.name.localeCompare(b.name)
+  );
+}
+
+function freshLoanLine(loan, dateLabel, dateValue) {
+  return `<div class="pdf-loan-row">
+    <div class="pdf-loan-customer">
+      <strong>${esc(loan.customerName || "Unnamed customer")}</strong>
+      <span>${esc(loan.branch || "No branch")} · ${esc(loan.category || "Loan")}</span>
+    </div>
+    <div class="pdf-loan-branch">${esc(loan.branch || "No branch")}</div>
+    <div class="pdf-loan-amount">Rs ${esc(fmtAmt(loan.amount))}L</div>
+    <div class="pdf-loan-date">${esc(dateLabel)} ${esc(fmtDate(dateValue) || "-")}</div>
+  </div>`;
+}
+
+function renewalLoanLine(loan, mode = "done") {
+  const rs = loan._rs || {};
+  const status = mode === "done"
+    ? `Renewed ${fmtDate(loan.renewedDate) || "-"}`
+    : riskStatusText(loan);
+  const ac = loan.acNumber ? ` · A/C ${esc(loan.acNumber)}` : "";
+  const remarks = loan.remarks ? `<div class="pdf-loan-remarks">${esc(loan.remarks)}</div>` : "";
+  return `<div class="pdf-loan-row risk-${esc(rs.status || "done")}">
+    <div class="pdf-loan-main">
+      <strong>${esc(loan.customerName || "Unnamed customer")}</strong>
+      <span>${esc(loan.branch || "No branch")}${ac}</span>
+      <span>Due ${esc(fmtDate(loan.renewalDueDate || rs.dueDateStr) || "-")} · Exp ${esc(fmtDate(loan.limitExpiryDate) || "-")}</span>
+      ${remarks}
+    </div>
+    <div class="pdf-loan-side">
+      <b>Rs ${esc(fmtAmt(loan.amount))}L</b>
+      <span>${esc(status)}</span>
+    </div>
+  </div>`;
+}
+
+function riskStatusText(loan) {
+  const rs = loan._rs || {};
+  if (rs.status === "npa") return "NPA";
+  if (rs.status === "pending-renewal") return `${rs.daysOverdue || 0}d OD · ${rs.daysUntilNpa || 0}d to NPA`;
+  if (rs.status === "due-soon") return `Due in ${rs.daysUntilDue || 0}d · ${rs.daysUntilNpa || 0}d to NPA`;
+  return `${rs.daysUntilDue || 0}d to due`;
+}
+
+function compactBranch(branch) {
+  const value = branch || "No branch";
+  return value.split(":")[0].trim() || value;
+}
+
+function pdfSection(title, loans, renderer, tone = "", sub = "") {
+  return `<section class="pdf-section ${tone}">
+    <div class="pdf-section-head">
+      <h3>${esc(title)}</h3>
+      <span>${esc(loans.length)} item${loans.length === 1 ? "" : "s"}${sub ? ` · ${esc(sub)}` : ""}</span>
+    </div>
+    <div class="pdf-loan-list">
+      ${loans.length ? loans.map(renderer).join("") : '<div class="pdf-empty">No accounts in this section</div>'}
+    </div>
+  </section>`;
+}
+
+function coverOfficerRow(row) {
+  const riskTone = row.riskWatch.npaRiskCount ? "danger" : row.riskWatch.loans.length ? "warn" : "calm";
+  return `<div class="pdf-cover-row">
+    <div class="pdf-cover-officer">
+      <strong>${esc(row.name)}</strong>
+      <span>${esc(row.riskWatch.mode)}</span>
+    </div>
+    <div>${metricHtml("Sanctioned", row.sanctioned, "good")}</div>
+    <div>${metricHtml("Pending", row.pending, "warn")}</div>
+    <div>${metricHtml("Returned", row.returned, "soft-danger")}</div>
+    <div>${metricHtml("Renewals Done", row.renewalsDone, "good")}</div>
+    <div>${metricHtml("Risk Watch", row.riskWatch.loans, riskTone)}</div>
+  </div>`;
+}
+
+function buildDetailedSnapshotPdfHtml() {
   const metrics = getLoanMetrics();
-  const renewalToday = metrics.renewalDoneThisMonth.filter(loan => loan.renewedDate === metrics.day);
-  const freshTodayAmt = sumAmount(metrics.sanctionedToday);
-  const freshMonthAmt = sumAmount(metrics.sanctionedThisMonth);
-  const pendingAmt = sumAmount(metrics.pending);
-  const renewalTodayAmt = sumAmount(renewalToday);
-  const renewalMonthAmt = sumAmount(metrics.renewalDoneThisMonth);
-  const renewalOverdueAmt = sumAmount(metrics.renewalOverdue);
+  const rows = officerPdfData(metrics);
   const generatedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  const dateLabel = new Date(`${metrics.day}T12:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const totalNpaRisk = rows.reduce((sum, row) => sum + row.riskWatch.npaRiskCount, 0);
+  const totalRiskWatch = rows.reduce((sum, row) => sum + row.riskWatch.loans.length, 0);
 
-  const freshMonthRows = buildLeaderboardRows(metrics.sanctionedThisMonth, "fresh");
-  const freshTodayRows = buildLeaderboardRows(metrics.sanctionedToday, "fresh");
-  const renewalMonthRows = buildLeaderboardRows(metrics.renewalDoneThisMonth, "renewal");
-  const renewalTodayRows = buildLeaderboardRows(renewalToday, "renewal");
+  return `<div class="pdf-report">
+    <style>${detailedSnapshotPdfCss()}</style>
+    <section class="pdf-page pdf-cover-page">
+      <header class="pdf-brand-row">
+        <div>
+          <div class="pdf-brand">Nirnay</div>
+          <div class="pdf-tagline">Decisions | Delivered</div>
+        </div>
+        <div class="pdf-date">${esc(dateLabel)}</div>
+      </header>
+      <div class="pdf-cover-hero">
+        <div>
+          <span class="pdf-kicker">Detailed Performance Snapshot</span>
+          <h1>Risk First Officer Review</h1>
+          <p>Officer-wise workload, completed work, and renewal risk watch for immediate sharing.</p>
+        </div>
+        <div class="pdf-risk-badge">
+          <span>NPA Risk</span>
+          <strong>${esc(totalNpaRisk)}</strong>
+          <small>${esc(totalRiskWatch)} risk-watch rows</small>
+        </div>
+      </div>
+      <div class="pdf-cover-metrics">
+        ${metricHtml("Sanctioned MTD", metrics.sanctionedThisMonth, "good")}
+        ${metricHtml("Pending", metrics.pending, "warn")}
+        ${metricHtml("Returned", metrics.returned, "soft-danger")}
+        ${metricHtml("Renewals Done", metrics.renewalDoneThisMonth, "good")}
+        ${metricHtml("Due Soon", metrics.renewalDueSoon, "warn")}
+        ${metricHtml("Overdue / NPA", metrics.renewalOverdue, "danger")}
+      </div>
+      <div class="pdf-cover-table">
+        ${rows.map(coverOfficerRow).join("")}
+      </div>
+      <footer class="pdf-footer">
+        <span>Generated ${esc(generatedAt)} by ${esc(S.user || "Admin")}</span>
+        <span>AMCC Paonta Sahib</span>
+      </footer>
+    </section>
+    ${rows.map((row, index) => buildOfficerPdfPages(row, index + 1, rows.length, dateLabel)).join("")}
+  </div>`;
+}
 
-  const css = `
-    *{box-sizing:border-box} body{margin:0;background:#F5F3FC;color:#25213D;font-family:Inter,Arial,sans-serif}
-    .snap{max-width:1100px;margin:0 auto;padding:28px} .snap-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
-    h1{font-size:28px;margin:0 0 6px} h2{font-size:16px;margin:0 0 10px}.muted{color:#756F91;font-size:12px;font-weight:700}
-    .print-btn{border:0;border-radius:10px;background:#6B5FBF;color:white;padding:10px 14px;font-weight:800;cursor:pointer}
-    .snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}.snap-card,.snap-section{background:white;border:1px solid #E7E0F8;border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(62,47,125,.05)}
-    .snap-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.snap-metric{border-radius:9px;background:#F8F6FF;border-top:4px solid #6B5FBF;padding:10px}.snap-metric.green{border-color:#10B981}.snap-metric.amber{border-color:#F59E0B}.snap-metric.red{border-color:#EF4444}
-    .snap-metric span{display:block;color:#756F91;font-size:10px;font-weight:900;text-transform:uppercase}.snap-metric b{display:block;font-size:20px;margin-top:4px}.snap-metric small{display:block;color:#756F91;font-size:11px;margin-top:4px}
-    table{width:100%;border-collapse:collapse;font-size:11px} th,td{border-bottom:1px solid #ECE7FA;padding:7px;text-align:left;vertical-align:top} th{background:#F8F6FF;color:#51498A;font-size:10px;text-transform:uppercase}.num{text-align:right;white-space:nowrap}.strong{font-weight:900;color:#25213D}
-    .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.page-break{break-before:page}
-    @media(max-width:760px){.snap{padding:16px}.snap-grid,.two{grid-template-columns:1fr}.snap-head{display:block}.print-btn{margin-top:10px}.snap-metrics{grid-template-columns:1fr}}
-    @media print{body{background:white}.snap{max-width:none;padding:0}.print-btn{display:none}.snap-card,.snap-section{box-shadow:none;break-inside:avoid} th{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+function compactFreshLoanLine(loan, dateValue, index) {
+  return `<div class="pdf-ledger-item">
+    <div class="pdf-ledger-customer">
+      <span class="pdf-row-num">${esc(index)}</span>
+      <div><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(loan.category || "Loan")}</small></div>
+    </div>
+    <div class="pdf-ledger-branch">${esc(compactBranch(loan.branch))}</div>
+    <div class="pdf-ledger-amount">${esc(fmtAmt(loan.amount))}</div>
+    <div class="pdf-ledger-date">${esc(fmtDate(dateValue) || "-")}</div>
+  </div>`;
+}
+
+function compactRenewalLoanLine(loan, mode = "done", index) {
+  const rs = loan._rs || {};
+  const status = mode === "done"
+    ? `Renewed ${fmtDate(loan.renewedDate) || "-"}`
+    : riskStatusText(loan);
+  const ac = loan.acNumber ? `A/C ${loan.acNumber}` : "No A/C";
+  return `<div class="pdf-ledger-item risk-${esc(rs.status || "done")}">
+    <div class="pdf-ledger-customer">
+      <span class="pdf-row-num">${esc(index)}</span>
+      <div><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(ac)}</small></div>
+    </div>
+    <div class="pdf-ledger-branch">${esc(compactBranch(loan.branch))}</div>
+    <div class="pdf-ledger-amount">${esc(fmtAmt(loan.amount))}</div>
+    <div class="pdf-ledger-date">${esc(status)}</div>
+  </div>`;
+}
+
+function buildOfficerPdfSections(row) {
+  return [
+    {
+      title: "Sanctioned",
+      loans: row.sanctioned,
+      renderer: (loan, index) => compactFreshLoanLine(loan, loan.sanctionDate, index),
+      tone: "good",
+      sub: "Month-to-date fresh sanctions",
+    },
+    {
+      title: "Pending",
+      loans: row.pending,
+      renderer: (loan, index) => compactFreshLoanLine(loan, loan.receiveDate, index),
+      tone: "warn",
+      sub: "Current fresh pipeline",
+    },
+    {
+      title: "Returned",
+      loans: row.returned,
+      renderer: (loan, index) => compactFreshLoanLine(loan, loan.returnedDate, index),
+      tone: "soft-danger",
+      sub: "Fresh cases needing rework",
+    },
+    {
+      title: "Renewals Done",
+      loans: row.renewalsDone,
+      renderer: (loan, index) => compactRenewalLoanLine(loan, "done", index),
+      tone: "good",
+      sub: "Month-to-date completions",
+    },
+    {
+      title: "Risk Watch",
+      loans: row.riskWatch.loans,
+      renderer: (loan, index) => compactRenewalLoanLine(loan, "risk", index),
+      tone: row.riskWatch.npaRiskCount ? "danger" : "warn",
+      sub: row.riskWatch.mode,
+    },
+  ];
+}
+
+function paginateOfficerPdfSections(row) {
+  const source = buildOfficerPdfSections(row).map(section => ({
+    ...section,
+    cursor: 0,
+    emittedEmpty: false,
+  }));
+  const pages = [];
+  const firstPageUnits = 29;
+  const continuationUnits = 36;
+  const sectionBaseUnits = 3;
+
+  while (source.some(section => section.cursor < section.loans.length || (!section.loans.length && !section.emittedEmpty))) {
+    const chunks = [];
+    let unitsLeft = pages.length ? continuationUnits : firstPageUnits;
+
+    for (const section of source) {
+      if (unitsLeft <= sectionBaseUnits) break;
+      if (!section.loans.length) {
+        if (section.emittedEmpty) continue;
+        chunks.push({ ...section, pageLoans: [], continuedBefore: false, continuedAfter: false });
+        section.emittedEmpty = true;
+        unitsLeft -= sectionBaseUnits;
+        continue;
+      }
+      if (section.cursor >= section.loans.length) continue;
+
+      const start = section.cursor;
+      const maxRows = Math.max(2, (unitsLeft - sectionBaseUnits) * 2);
+      const end = Math.min(section.loans.length, start + maxRows);
+      const rowsUsed = end - start;
+      chunks.push({
+        ...section,
+        pageLoans: section.loans.slice(start, end),
+        continuedBefore: start > 0,
+        continuedAfter: end < section.loans.length,
+        start,
+        end,
+      });
+      section.cursor = end;
+      unitsLeft -= sectionBaseUnits + Math.ceil(rowsUsed / 2);
+    }
+
+    if (!chunks.length) {
+      const section = source.find(item => item.cursor < item.loans.length);
+      chunks.push({
+        ...section,
+        pageLoans: section.loans.slice(section.cursor, section.cursor + 2),
+        continuedBefore: section.cursor > 0,
+        continuedAfter: section.cursor + 2 < section.loans.length,
+        start: section.cursor,
+        end: Math.min(section.cursor + 2, section.loans.length),
+      });
+      section.cursor += 2;
+    }
+
+    pages.push(chunks);
+    if (pages.length > 40) break;
+  }
+
+  return pages.length ? pages : [[]];
+}
+
+function compactPdfSection(section) {
+  const visible = section.pageLoans || [];
+  const total = section.loans.length;
+  const range = total && visible.length
+    ? `${(section.start || 0) + 1}-${section.end || visible.length} of ${total}`
+    : `${total} item${total === 1 ? "" : "s"}`;
+  const title = section.continuedBefore ? `${section.title} continued` : section.title;
+  const sub = section.continuedAfter ? `${section.sub} - continues next page` : section.sub;
+  return `<section class="pdf-section ${section.tone}">
+    <div class="pdf-section-head">
+      <h3>${esc(title)}</h3>
+      <span>${esc(range)}${sub ? ` · ${esc(sub)}` : ""}</span>
+    </div>
+    <div class="pdf-loan-list">
+      ${visible.length ? visible.map(section.renderer).join("") : '<div class="pdf-empty">No accounts in this section</div>'}
+    </div>
+  </section>`;
+}
+
+function compactPdfSectionV2(section) {
+  const visible = section.pageLoans || [];
+  const total = section.loans.length;
+  const range = total && visible.length
+    ? `${(section.start || 0) + 1}-${section.end || visible.length} of ${total}`
+    : `${total} item${total === 1 ? "" : "s"}`;
+  const title = section.continuedBefore ? `${section.title} continued` : section.title;
+  const sub = section.continuedAfter ? `${section.sub} - continued on next page` : section.sub;
+  const pairs = [];
+
+  for (let i = 0; i < visible.length; i += 2) {
+    const leftIndex = (section.start || 0) + i + 1;
+    const rightIndex = (section.start || 0) + i + 2;
+    const left = section.renderer(visible[i], leftIndex);
+    const right = visible[i + 1]
+      ? section.renderer(visible[i + 1], rightIndex)
+      : '<div class="pdf-ledger-item pdf-ledger-blank"></div>';
+    pairs.push(`<div class="pdf-ledger-pair">${left}${right}</div>`);
+  }
+
+  return `<section class="pdf-section ${section.tone}">
+    <div class="pdf-section-head">
+      <h3>${esc(title)}</h3>
+      <span>${esc(range)}${sub ? ` - ${esc(sub)}` : ""}</span>
+    </div>
+    <div class="pdf-ledger">
+      ${visible.length ? `
+        <div class="pdf-ledger-head">
+          <span>Customer</span><span>Branch</span><span>Rs L</span><span>Key</span>
+          <span>Customer</span><span>Branch</span><span>Rs L</span><span>Key</span>
+        </div>
+        <div class="pdf-ledger-body">${pairs.join("")}</div>
+      ` : '<div class="pdf-empty">No accounts in this section</div>'}
+    </div>
+  </section>`;
+}
+
+function buildOfficerPdfPages(row, pageNo, totalPages, dateLabel) {
+  const pages = paginateOfficerPdfSections(row);
+  return pages.map((sections, index) => buildCompactOfficerPdfPageV2(row, pageNo, totalPages, dateLabel, sections, index + 1, pages.length)).join("");
+}
+
+function buildCompactOfficerPdfPage(row, pageNo, totalPages, dateLabel, sections, partNo, totalParts) {
+  const metricStrip = `
+    ${metricHtml("Sanctioned", row.sanctioned, "good")}
+    ${metricHtml("Pending", row.pending, "warn")}
+    ${metricHtml("Returned", row.returned, "soft-danger")}
+    ${metricHtml("Renewals Done", row.renewalsDone, "good")}
+    ${metricHtml("Risk Watch", row.riskWatch.loans, row.riskWatch.npaRiskCount ? "danger" : "warn")}
   `;
+  const partLabel = totalParts > 1 ? ` - Part ${partNo} of ${totalParts}` : "";
+  const officerCode = `OFF-${String(pageNo).padStart(3, "0")}`;
+  const continued = partNo < totalParts;
+  return `<section class="pdf-page pdf-officer-page ${partNo > 1 ? "is-continuation" : ""}">
+    <header class="pdf-officer-head">
+      <div>
+        <span class="pdf-kicker">Officer ${esc(pageNo)} of ${esc(totalPages)}${esc(partLabel)}</span>
+        <h2>${esc(row.name)}</h2>
+        <p>${esc(dateLabel)} · ${esc(partNo > 1 ? "continued details" : "section cards detail")}</p>
+      </div>
+      <div class="pdf-officer-total">
+        <strong>${esc(row.totalWork)}</strong>
+        <span>total rows</span>
+      </div>
+    </header>
+    ${partNo === 1 ? `<div class="pdf-officer-metrics">${metricStrip}</div>` : ""}
+    <div class="pdf-detail-stack">
+      ${sections.map(compactPdfSectionV2).join("")}
+    </div>
+    <footer class="pdf-footer">
+      <span>Detailed Snapshot · ${esc(row.name)}${esc(partLabel)}</span>
+      <span>Nirnay</span>
+    </footer>
+  </section>`;
+}
 
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Performance Snapshot</title><style>${css}</style></head>
-  <body><main class="snap">
-    <header class="snap-head"><div><h1>Performance Snapshot</h1><div class="muted">Generated ${esc(generatedAt)} | User ${esc(S.user || "Admin")} | Month ${esc(metrics.thisMonth)}</div></div><button class="print-btn" onclick="window.print()">Save as PDF / Print</button></header>
-    <div class="snap-grid">
-      <section class="snap-card"><h2>Fresh Loans</h2><div class="snap-metrics">
-        ${metricBox("Today", `Rs ${fmtAmt(freshTodayAmt)}L`, `${metrics.sanctionedToday.length} loans`)}
-        ${metricBox("This Month", `Rs ${fmtAmt(freshMonthAmt)}L`, `${metrics.sanctionedThisMonth.length} sanctioned`, "green")}
-        ${metricBox("Pending", `Rs ${fmtAmt(pendingAmt)}L`, `${metrics.pending.length} in pipeline`, "amber")}
-      </div></section>
-      <section class="snap-card"><h2>Renewals</h2><div class="snap-metrics">
-        ${metricBox("Today Done", `Rs ${fmtAmt(renewalTodayAmt)}L`, `${renewalToday.length} renewals`)}
-        ${metricBox("This Month", `Rs ${fmtAmt(renewalMonthAmt)}L`, `${metrics.renewalDoneThisMonth.length} done`, "green")}
-        ${metricBox("Overdue", `Rs ${fmtAmt(renewalOverdueAmt)}L`, `${metrics.renewalOverdue.length} accounts`, "red")}
-      </div></section>
+function buildCompactOfficerPdfPageV2(row, pageNo, totalPages, dateLabel, sections, partNo, totalParts) {
+  const metricStrip = `
+    ${metricHtml("Sanctioned", row.sanctioned, "good")}
+    ${metricHtml("Pending", row.pending, "warn")}
+    ${metricHtml("Returned", row.returned, "soft-danger")}
+    ${metricHtml("Renewals Done", row.renewalsDone, "good")}
+    ${metricHtml("Risk Watch", row.riskWatch.loans, row.riskWatch.npaRiskCount ? "danger" : "warn")}
+  `;
+  const partLabel = totalParts > 1 ? ` - Part ${partNo} of ${totalParts}` : "";
+  const officerCode = `OFF-${String(pageNo).padStart(3, "0")}`;
+  const continued = partNo < totalParts;
+  return `<section class="pdf-page pdf-officer-page ${partNo > 1 ? "is-continuation" : ""}">
+    <header class="pdf-officer-head">
+      <div class="pdf-officer-brand">
+        <span class="pdf-mini-logo">न</span>
+        <div>
+          <strong>Nirnay</strong>
+          <small>Loan Tracker</small>
+        </div>
+      </div>
+      <div class="pdf-officer-report-title">
+        <strong>Officer Detailed Snapshot</strong>
+        <span>${esc(dateLabel)}</span>
+      </div>
+    </header>
+    <div class="pdf-officer-title-row">
+      <div>
+        <span class="pdf-kicker">Officer ${esc(pageNo)} of ${esc(totalPages)}${esc(partLabel)}</span>
+        <h2>Officer: ${esc(row.name)}</h2>
+      </div>
+      <div class="pdf-officer-code">Officer Code: ${esc(officerCode)}</div>
     </div>
-    ${["weekly", "daily"].map(scale => ["all", "fresh-officers", "renewal-officers"].map(mode => trendTable(metrics, scale, mode)).join("")).join("")}
-    <div class="two page-break">
-      ${performerTable("Fresh Top Performers - This Month", freshMonthRows, "fresh")}
-      ${performerTable("Fresh Top Performers - Today", freshTodayRows, "fresh")}
-      ${performerTable("Renewal Top Performers - This Month", renewalMonthRows, "renewal")}
-      ${performerTable("Renewal Top Performers - Today", renewalTodayRows, "renewal")}
+    ${partNo === 1 ? `<div class="pdf-officer-metrics">${metricStrip}</div>` : ""}
+    <div class="pdf-detail-stack">
+      ${sections.map(compactPdfSectionV2).join("")}
     </div>
-    ${summaryTable("Fresh Summary - Today", metrics.sanctionedToday)}
-    ${summaryTable("Fresh Summary - This Month", metrics.sanctionedThisMonth)}
-    ${summaryTable("Fresh Summary - Pending", metrics.pending)}
-  </main><script>setTimeout(()=>window.print(),400)</script></body></html>`;
+    <footer class="pdf-footer">
+      <span>Nirnay Loan Tracker</span>
+      <span>Officer page ${esc(pageNo)} of ${esc(totalPages)}${esc(partLabel)}</span>
+      <span>${esc(continued ? "Continued on next page ->" : "End of officer details")}</span>
+    </footer>
+  </section>`;
+}
+
+function buildOfficerPdfPage(row, pageNo, totalPages, dateLabel) {
+  const metricStrip = `
+    ${metricHtml("Pending", row.pending, "warn")}
+    ${metricHtml("Sanctioned", row.sanctioned, "good")}
+    ${metricHtml("Returned", row.returned, "soft-danger")}
+    ${metricHtml("Renewals Done", row.renewalsDone, "good")}
+    ${metricHtml("Risk Watch", row.riskWatch.loans, row.riskWatch.npaRiskCount ? "danger" : "warn")}
+  `;
+  return `<section class="pdf-page pdf-officer-page">
+    <header class="pdf-officer-head">
+      <div>
+        <span class="pdf-kicker">Officer ${esc(pageNo)} of ${esc(totalPages)}</span>
+        <h2>${esc(row.name)}</h2>
+        <p>${esc(dateLabel)} · ${esc(row.riskWatch.mode)}</p>
+      </div>
+      <div class="pdf-officer-total">
+        <strong>${esc(row.totalWork)}</strong>
+        <span>total rows</span>
+      </div>
+    </header>
+    <div class="pdf-officer-metrics">${metricStrip}</div>
+    <div class="pdf-detail-grid">
+      ${pdfSection("Risk Watch", row.riskWatch.loans, loan => renewalLoanLine(loan, "risk"), row.riskWatch.npaRiskCount ? "danger" : "warn", row.riskWatch.mode)}
+      ${pdfSection("Pending", row.pending, loan => freshLoanLine(loan, "Recd", loan.receiveDate), "warn")}
+      ${pdfSection("Sanctioned", row.sanctioned, loan => freshLoanLine(loan, "Sanctioned", loan.sanctionDate), "good")}
+      ${pdfSection("Returned", row.returned, loan => freshLoanLine(loan, "Returned", loan.returnedDate), "soft-danger")}
+      ${pdfSection("Renewals Done", row.renewalsDone, loan => renewalLoanLine(loan, "done"), "good")}
+    </div>
+    <footer class="pdf-footer">
+      <span>Detailed Snapshot · ${esc(row.name)}</span>
+      <span>Nirnay</span>
+    </footer>
+  </section>`;
+}
+
+function detailedSnapshotPdfCss() {
+  return `
+    .pdf-report{width:${PDF_PAGE_WIDTH}px;background:#EDE8F4;color:#15122D;font-family:'Outfit','Inter','Segoe UI',Arial,sans-serif}
+    .pdf-page{width:${PDF_PAGE_WIDTH}px;height:${PDF_PAGE_HEIGHT}px;position:relative;overflow:hidden;background:#FBFAF7;padding:34px 34px 30px;box-sizing:border-box}
+    .pdf-page + .pdf-page{margin-top:20px}
+    .pdf-cover-page{background:linear-gradient(145deg,#FFF9EE 0%,#F7F4FB 46%,#F0F7F2 100%)}
+    .pdf-brand-row,.pdf-officer-head,.pdf-footer{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+    .pdf-brand{font-size:30px;font-weight:950;letter-spacing:-0.04em}.pdf-tagline,.pdf-kicker{font-size:10px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:#6B5FBF}.pdf-date{font-size:14px;font-weight:900;color:#4A4467}
+    .pdf-cover-hero{display:grid;grid-template-columns:1fr 150px;gap:18px;margin-top:30px;align-items:stretch}
+    .pdf-cover-hero h1{margin:8px 0 8px;font-size:44px;line-height:.94;letter-spacing:-.06em}.pdf-cover-hero p{margin:0;color:#5F5A78;font-size:15px;line-height:1.45;max-width:440px}
+    .pdf-risk-badge{border-radius:24px;background:linear-gradient(150deg,#7F1D1D,#F59E0B);color:#fff;padding:18px;text-align:center;box-shadow:0 18px 36px rgba(127,29,29,.18)}
+    .pdf-risk-badge span,.pdf-risk-badge small{display:block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;opacity:.82}.pdf-risk-badge strong{display:block;font-size:46px;line-height:1;margin:10px 0 6px}
+    .pdf-cover-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:24px 0 18px}.pdf-cover-table{display:flex;flex-direction:column;gap:9px}
+    .pdf-cover-row{display:grid;grid-template-columns:1.24fr repeat(5,1fr);gap:7px;align-items:stretch;background:rgba(255,255,255,.72);border:1px solid rgba(35,25,70,.08);border-radius:18px;padding:8px;box-shadow:0 8px 22px rgba(45,35,85,.06)}
+    .pdf-cover-officer{padding:8px 10px}.pdf-cover-officer strong{display:block;font-size:18px}.pdf-cover-officer span{display:block;margin-top:4px;font-size:9px;font-weight:900;color:#8B5E00;text-transform:uppercase;letter-spacing:.08em}
+    .pdf-metric{min-width:0;border-radius:14px;background:#F4F1FB;border:1px solid rgba(107,95,191,.10);padding:9px 8px}.pdf-metric span{display:block;font-size:8px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#756F91;white-space:nowrap}.pdf-metric strong{display:block;font-size:22px;line-height:1;margin-top:3px}.pdf-metric small{display:block;margin-top:3px;font-size:9px;font-weight:850;color:#4D4868;white-space:nowrap}
+    .pdf-metric.good{background:#ECFDF5;border-color:#A7F3D0}.pdf-metric.warn{background:#FFF7ED;border-color:#FED7AA}.pdf-metric.danger{background:#FEF2F2;border-color:#FECACA}.pdf-metric.soft-danger{background:#FFF1F2;border-color:#FFE4E6}.pdf-metric.calm{background:#F8FAFC;border-color:#E2E8F0}
+    .pdf-officer-page{background:linear-gradient(180deg,#FFFFFF 0%,#F7F5FB 100%)}.pdf-officer-head h2{font-size:34px;line-height:1;margin:5px 0 4px;letter-spacing:-.05em}.pdf-officer-head p{margin:0;color:#756F91;font-size:12px;font-weight:800}.pdf-officer-total{width:88px;border-radius:20px;background:#14112E;color:#fff;text-align:center;padding:13px}.pdf-officer-total strong{display:block;font-size:32px;line-height:1}.pdf-officer-total span{display:block;margin-top:4px;font-size:9px;text-transform:uppercase;letter-spacing:.10em;font-weight:900}
+    .pdf-officer-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0 12px}.pdf-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pdf-section{background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:18px;overflow:hidden;min-height:118px}.pdf-section:first-child{grid-column:1/-1}.pdf-section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 11px;background:#F8F6FF;border-bottom:1px solid rgba(35,25,70,.06)}.pdf-section h3{margin:0;font-size:13px}.pdf-section-head span{font-size:9px;font-weight:900;color:#756F91;text-align:right}
+    .pdf-section.good .pdf-section-head{background:#ECFDF5}.pdf-section.warn .pdf-section-head{background:#FFF7ED}.pdf-section.danger .pdf-section-head{background:#FEF2F2}.pdf-section.soft-danger .pdf-section-head{background:#FFF1F2}
+    .pdf-loan-list{padding:7px;display:flex;flex-direction:column;gap:5px}.pdf-loan-row{display:grid;grid-template-columns:1fr 88px;gap:8px;border:1px solid rgba(35,25,70,.06);border-radius:12px;padding:7px;background:#fff}.pdf-loan-main strong{display:block;font-size:11px;line-height:1.15}.pdf-loan-main span,.pdf-loan-side span{display:block;margin-top:2px;font-size:8.5px;font-weight:800;color:#696381;line-height:1.25}.pdf-loan-side{text-align:right}.pdf-loan-side b{display:block;font-size:11px}.pdf-loan-remarks{margin-top:3px;font-size:8px;color:#8B5E00;font-weight:800;line-height:1.25}
+    .pdf-empty{padding:14px;text-align:center;color:#8D88A6;font-size:10px;font-weight:850;background:#FAF9FE;border-radius:12px}.pdf-footer{position:absolute;left:34px;right:34px;bottom:18px;color:#8983A1;font-size:9px;font-weight:850}.pdf-officer-page .pdf-detail-grid{max-height:858px;overflow:hidden}
+    .pdf-detail-stack{display:flex;flex-direction:column;gap:8px}.pdf-officer-page.is-continuation .pdf-detail-stack{margin-top:16px}.pdf-detail-stack .pdf-section{min-height:0;border-radius:14px}.pdf-detail-stack .pdf-section-head{padding:7px 10px}.pdf-detail-stack .pdf-section h3{font-size:12px}.pdf-detail-stack .pdf-section-head span{font-size:8px}.pdf-detail-stack .pdf-loan-list{gap:3px;padding:5px}.pdf-detail-stack .pdf-loan-row{display:grid;grid-template-columns:1.4fr 1.12fr 70px 112px;gap:6px;align-items:center;border-radius:9px;padding:5px 6px;min-height:26px}.pdf-loan-customer strong{display:block;font-size:9.5px;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-loan-customer span,.pdf-loan-branch,.pdf-loan-date{font-size:7.8px;font-weight:800;color:#6E6887;line-height:1.15}.pdf-loan-branch{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-loan-amount{font-size:9px;font-weight:950;color:#15122D;text-align:right;white-space:nowrap}.pdf-loan-date{text-align:right}.pdf-officer-page.is-continuation .pdf-officer-head h2{font-size:28px}.pdf-officer-page.is-continuation .pdf-officer-total{padding:10px}.pdf-officer-page.is-continuation .pdf-officer-total strong{font-size:26px}
+    .pdf-officer-page{background:#FFFFFF;padding:26px 26px 30px}.pdf-officer-head{align-items:center}.pdf-officer-brand{display:flex;align-items:center;gap:10px}.pdf-mini-logo{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#13234C;color:#fff;font-size:22px;font-weight:950}.pdf-officer-brand strong{display:block;font-size:20px;line-height:1;color:#0B173F}.pdf-officer-brand small{display:block;margin-top:3px;font-size:10px;font-weight:900;color:#0F766E}.pdf-officer-report-title{text-align:right}.pdf-officer-report-title strong{display:block;font-size:12px;font-weight:950;color:#0B173F}.pdf-officer-report-title span{display:block;margin-top:5px;font-size:11px;font-weight:800;color:#615B7C}.pdf-officer-title-row{display:flex;justify-content:space-between;align-items:end;gap:18px;margin:20px 0 12px}.pdf-officer-title-row h2{margin:4px 0 0;font-size:28px;line-height:1;letter-spacing:-.04em;color:#102151}.pdf-officer-code{font-size:11px;font-weight:850;color:#615B7C;white-space:nowrap}.pdf-officer-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:0 0 12px}.pdf-officer-metrics .pdf-metric{border-radius:9px;padding:10px 9px;min-height:58px}.pdf-officer-metrics .pdf-metric span{font-size:8px;white-space:normal}.pdf-officer-metrics .pdf-metric strong{font-size:20px}.pdf-officer-metrics .pdf-metric small{font-size:8.4px;white-space:normal}.pdf-officer-page.is-continuation .pdf-officer-title-row{margin-bottom:16px}.pdf-officer-page.is-continuation .pdf-officer-metrics{display:none}
+    .pdf-detail-stack{gap:9px}.pdf-detail-stack .pdf-section{border-radius:10px;border:1px solid rgba(35,25,70,.10);overflow:visible;background:#fff;box-shadow:0 6px 16px rgba(25,18,52,.035)}.pdf-detail-stack .pdf-section-head{padding:8px 10px;border-bottom:1px solid rgba(35,25,70,.08);background:#F8FAFC}.pdf-detail-stack .pdf-section h3{font-size:13px;line-height:1;margin:0;color:#102151}.pdf-detail-stack .pdf-section-head span{font-size:8.5px;line-height:1.2;color:#5F5A78;max-width:455px}.pdf-detail-stack .pdf-section.good .pdf-section-head{background:#F0FDF4;color:#047857}.pdf-detail-stack .pdf-section.warn .pdf-section-head{background:#FFF7ED;color:#C2410C}.pdf-detail-stack .pdf-section.soft-danger .pdf-section-head{background:#FFF1F2;color:#DC2626}.pdf-detail-stack .pdf-section.danger .pdf-section-head{background:#FEF2F2;color:#B91C1C}
+    .pdf-ledger{padding:6px 8px 8px}.pdf-ledger-head{display:grid;grid-template-columns:1.48fr 50px 36px 72px 1.48fr 50px 36px 72px;gap:6px;padding:0 0 5px;margin-bottom:2px;border-bottom:1px solid rgba(35,25,70,.08);font-size:7px;font-weight:950;text-transform:uppercase;letter-spacing:.04em;color:#515A75}.pdf-ledger-body{display:flex;flex-direction:column}.pdf-ledger-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-bottom:1px solid rgba(35,25,70,.055)}.pdf-ledger-pair:last-child{border-bottom:0}.pdf-ledger-item{display:grid;grid-template-columns:minmax(0,1.48fr) 50px 36px 72px;gap:6px;align-items:start;min-height:24px;padding:4px 0;background:transparent;border:0}.pdf-ledger-blank{visibility:hidden}.pdf-ledger-customer{display:grid;grid-template-columns:16px minmax(0,1fr);gap:4px;min-width:0}.pdf-row-num{font-size:7.5px;font-weight:950;color:#4B5270;text-align:right}.pdf-ledger-customer strong{display:block;font-size:8.2px;line-height:1.08;color:#111B42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-ledger-customer small{display:block;margin-top:1px;font-size:6.8px;font-weight:850;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-ledger-branch,.pdf-ledger-date{font-size:7.2px;font-weight:820;line-height:1.12;color:#475569;overflow-wrap:anywhere}.pdf-ledger-amount{font-size:7.8px;font-weight:950;color:#111B42;text-align:right;white-space:nowrap}.pdf-empty{padding:12px;text-align:center;color:#8D88A6;font-size:9px;font-weight:850;background:#FAF9FE;border-radius:8px}.pdf-officer-page .pdf-detail-grid{display:none;max-height:none;overflow:visible}.pdf-footer{left:26px;right:26px;bottom:14px;align-items:center;font-size:8.5px}
+  `;
 }
 
 function ensureHtml2Canvas() {
@@ -320,6 +827,20 @@ function ensureHtml2Canvas() {
     document.head.appendChild(script);
   });
   return html2canvasLoadPromise;
+}
+
+function ensureJsPdf() {
+  if (window.jspdf?.jsPDF) return Promise.resolve();
+  if (jsPdfLoadPromise) return jsPdfLoadPromise;
+  jsPdfLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+    script.async = true;
+    script.onload = () => window.jspdf?.jsPDF ? resolve() : reject(new Error("jsPDF did not load"));
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return jsPdfLoadPromise;
 }
 
 function ensureImageLoaded(src) {
@@ -859,25 +1380,75 @@ function renderPerformanceView(target) {
   target.innerHTML = buildDailySnapshotPageHtml();
 }
 
-window.exportPerformanceSnapshot = function () {
-  const html = buildSnapshotHtml();
-  const report = window.open("", "_blank");
-  if (report) {
-    report.document.open();
-    report.document.write(html);
-    report.document.close();
-    return;
-  }
+window.exportPerformanceSnapshot = async function () {
+  let exportHost;
+  try {
+    toast("Preparing detailed PDF...");
+    await ensureHtml2Canvas();
+    await ensureJsPdf();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
 
-  const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `performance-snapshot-${todayFileName()}.html`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+    exportHost = document.createElement("div");
+    exportHost.className = "pdf-export-host";
+    exportHost.style.position = "fixed";
+    exportHost.style.left = "-10000px";
+    exportHost.style.top = "0";
+    exportHost.style.width = `${PDF_PAGE_WIDTH}px`;
+    exportHost.style.background = "#EDE8F4";
+    exportHost.style.pointerEvents = "none";
+    exportHost.innerHTML = buildDetailedSnapshotPdfHtml();
+    document.body.appendChild(exportHost);
+
+    const pages = Array.from(exportHost.querySelectorAll(".pdf-page"));
+    if (!pages.length) throw new Error("No PDF pages were generated");
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+
+    for (let index = 0; index < pages.length; index++) {
+      const page = pages[index];
+      const canvas = await window.html2canvas(page, {
+        backgroundColor: "#FBFAF7",
+        scale: 2,
+        useCORS: true,
+        width: PDF_PAGE_WIDTH,
+        height: PDF_PAGE_HEIGHT,
+        windowWidth: PDF_PAGE_WIDTH,
+        windowHeight: PDF_PAGE_HEIGHT,
+      });
+      const image = canvas.toDataURL("image/jpeg", 0.96);
+      if (index > 0) pdf.addPage("a4", "portrait");
+      pdf.addImage(image, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+    }
+
+    const blob = pdf.output("blob");
+    const fileName = `detailed-snapshot-${todayFileName()}.pdf`;
+    const file = new File([blob], fileName, { type: "application/pdf" });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "Detailed Snapshot",
+        text: `Detailed Performance Snapshot ${formatShareDate(new Date())}`,
+      });
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Detailed PDF downloaded");
+  } catch (err) {
+    console.warn("[Performance] Detailed PDF export failed:", err);
+    toast("Unable to create detailed PDF right now");
+  } finally {
+    if (exportHost) exportHost.remove();
+  }
 };
 
 window.showDailySnapshot = function () {
