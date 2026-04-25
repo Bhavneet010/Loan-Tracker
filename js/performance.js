@@ -422,7 +422,7 @@ function coverOfficerRow(row) {
     <div>${metricHtml("Sanctioned", row.sanctioned, "good")}</div>
     <div>${metricHtml("Pending", row.pending, "warn")}</div>
     <div>${metricHtml("Returned", row.returned, "soft-danger")}</div>
-    <div>${metricHtml("Renewals Done", row.renewalsDone, "good")}</div>
+    <div>${metricHtml("Renewals Done", row.renewalsDone, "blue")}</div>
     <div>${metricHtml("Risk Watch", row.riskWatch.loans, riskTone)}</div>
   </div>`;
 }
@@ -438,6 +438,9 @@ function buildDetailedSnapshotPdfHtml() {
   });
   const totalNpaRisk = rows.reduce((sum, row) => sum + row.riskWatch.npaRiskCount, 0);
   const totalRiskWatch = rows.reduce((sum, row) => sum + row.riskWatch.loans.length, 0);
+  const officerPartCounts = rows.map(row => paginateOfficerPdfSections(row).length);
+  const totalGlobalPages = 1 + officerPartCounts.reduce((sum, n) => sum + n, 0);
+  const ctx = { runningPage: 2, totalGlobalPages };
 
   return `<div class="pdf-report">
     <style>${detailedSnapshotPdfCss()}</style>
@@ -465,7 +468,7 @@ function buildDetailedSnapshotPdfHtml() {
         ${metricHtml("Sanctioned MTD", metrics.sanctionedThisMonth, "good")}
         ${metricHtml("Pending", metrics.pending, "warn")}
         ${metricHtml("Returned", metrics.returned, "soft-danger")}
-        ${metricHtml("Renewals Done", metrics.renewalDoneThisMonth, "good")}
+        ${metricHtml("Renewals Done", metrics.renewalDoneThisMonth, "blue")}
         ${metricHtml("Due Soon", metrics.renewalDueSoon, "warn")}
         ${metricHtml("Overdue / NPA", metrics.renewalOverdue, "danger")}
       </div>
@@ -473,79 +476,77 @@ function buildDetailedSnapshotPdfHtml() {
         ${rows.map(coverOfficerRow).join("")}
       </div>
       <footer class="pdf-footer">
-        <span>Generated ${esc(generatedAt)} by ${esc(S.user || "Admin")}</span>
-        <span>AMCC Paonta Sahib</span>
+        <span class="pdf-footer-brand"><span class="pdf-footer-logo">न</span>Nirnay Loan Tracker</span>
+        <span class="pdf-footer-meta">Generated ${esc(generatedAt)} · ${esc(S.user || "Admin")} · AMCC Paonta Sahib</span>
+        <span class="pdf-footer-page">Page 1 of ${esc(totalGlobalPages)}${totalGlobalPages > 1 ? `<small>Continued on next page</small>` : ""}</span>
       </footer>
     </section>
-    ${rows.map((row, index) => buildOfficerPdfPages(row, index + 1, rows.length, dateLabel)).join("")}
+    ${rows.map((row, index) => buildOfficerPdfPages(row, index + 1, rows.length, dateLabel, ctx)).join("")}
   </div>`;
 }
 
-function compactFreshLoanLine(loan, dateValue, index) {
-  return `<div class="pdf-ledger-item">
-    <div class="pdf-ledger-customer">
-      <span class="pdf-row-num">${esc(index)}</span>
-      <div><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(loan.category || "Loan")}</small></div>
-    </div>
-    <div class="pdf-ledger-branch">${esc(compactBranch(loan.branch))}</div>
-    <div class="pdf-ledger-amount">${esc(fmtAmt(loan.amount))}</div>
-    <div class="pdf-ledger-date">${esc(fmtDate(dateValue) || "-")}</div>
-  </div>`;
+function miniFreshRow(loan, dateLabel, dateValue, index) {
+  const dateText = `${dateLabel} ${fmtDate(dateValue) || "-"}`.trim();
+  return `<tr>
+    <td class="mini-num">${esc(index)}</td>
+    <td class="mini-customer"><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(loan.category || "Loan")}</small></td>
+    <td class="mini-branch">${esc(compactBranch(loan.branch))}</td>
+    <td class="mini-amount">${esc(fmtAmt(loan.amount))}</td>
+    <td class="mini-date">${esc(dateText)}</td>
+  </tr>`;
 }
 
-function compactRenewalLoanLine(loan, mode = "done", index) {
+function miniRenewalRow(loan, mode = "done", index) {
   const rs = loan._rs || {};
   const status = mode === "done"
     ? `Renewed ${fmtDate(loan.renewedDate) || "-"}`
     : riskStatusText(loan);
   const ac = loan.acNumber ? `A/C ${loan.acNumber}` : "No A/C";
-  return `<div class="pdf-ledger-item risk-${esc(rs.status || "done")}">
-    <div class="pdf-ledger-customer">
-      <span class="pdf-row-num">${esc(index)}</span>
-      <div><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(ac)}</small></div>
-    </div>
-    <div class="pdf-ledger-branch">${esc(compactBranch(loan.branch))}</div>
-    <div class="pdf-ledger-amount">${esc(fmtAmt(loan.amount))}</div>
-    <div class="pdf-ledger-date">${esc(status)}</div>
-  </div>`;
+  return `<tr class="risk-${esc(rs.status || "done")}">
+    <td class="mini-num">${esc(index)}</td>
+    <td class="mini-customer"><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(ac)}</small></td>
+    <td class="mini-branch">${esc(compactBranch(loan.branch))}</td>
+    <td class="mini-amount">${esc(fmtAmt(loan.amount))}</td>
+    <td class="mini-date">${esc(status)}</td>
+  </tr>`;
 }
 
 function buildOfficerPdfSections(row) {
   return [
     {
-      title: "Sanctioned",
-      loans: row.sanctioned,
-      renderer: (loan, index) => compactFreshLoanLine(loan, loan.sanctionDate, index),
-      tone: "good",
-      sub: "Month-to-date fresh sanctions",
+      title: "Risk Watch",
+      loans: row.riskWatch.loans,
+      renderer: (loan, index) => miniRenewalRow(loan, "risk", index),
+      tone: row.riskWatch.npaRiskCount ? "danger" : "warn",
+      sub: row.riskWatch.mode,
     },
     {
       title: "Pending",
       loans: row.pending,
-      renderer: (loan, index) => compactFreshLoanLine(loan, loan.receiveDate, index),
+      renderer: (loan, index) => miniFreshRow(loan, "Recd", loan.receiveDate, index),
       tone: "warn",
       sub: "Current fresh pipeline",
     },
     {
+      title: "Sanctioned",
+      loans: row.sanctioned,
+      renderer: (loan, index) => miniFreshRow(loan, "Sanctioned", loan.sanctionDate, index),
+      tone: "good",
+      sub: "Month-to-date fresh sanctions",
+    },
+    {
       title: "Returned",
       loans: row.returned,
-      renderer: (loan, index) => compactFreshLoanLine(loan, loan.returnedDate, index),
+      renderer: (loan, index) => miniFreshRow(loan, "Returned", loan.returnedDate, index),
       tone: "soft-danger",
       sub: "Fresh cases needing rework",
     },
     {
       title: "Renewals Done",
       loans: row.renewalsDone,
-      renderer: (loan, index) => compactRenewalLoanLine(loan, "done", index),
-      tone: "good",
+      renderer: (loan, index) => miniRenewalRow(loan, "done", index),
+      tone: "blue",
       sub: "Month-to-date completions",
-    },
-    {
-      title: "Risk Watch",
-      loans: row.riskWatch.loans,
-      renderer: (loan, index) => compactRenewalLoanLine(loan, "risk", index),
-      tone: row.riskWatch.npaRiskCount ? "danger" : "warn",
-      sub: row.riskWatch.mode,
     },
   ];
 }
@@ -639,38 +640,54 @@ function compactPdfSectionV2(section) {
     : `${total} item${total === 1 ? "" : "s"}`;
   const title = section.continuedBefore ? `${section.title} continued` : section.title;
   const sub = section.continuedAfter ? `${section.sub} - continued on next page` : section.sub;
-  const pairs = [];
+  const start = section.start || 0;
 
-  for (let i = 0; i < visible.length; i += 2) {
-    const leftIndex = (section.start || 0) + i + 1;
-    const rightIndex = (section.start || 0) + i + 2;
-    const left = section.renderer(visible[i], leftIndex);
-    const right = visible[i + 1]
-      ? section.renderer(visible[i + 1], rightIndex)
-      : '<div class="pdf-ledger-item pdf-ledger-blank"></div>';
-    pairs.push(`<div class="pdf-ledger-pair">${left}${right}</div>`);
+  const head = `<thead><tr>
+    <th class="mini-num">#</th>
+    <th class="mini-customer">Customer</th>
+    <th class="mini-branch">Branch</th>
+    <th class="mini-amount">Rs L</th>
+    <th class="mini-date">Key Date</th>
+  </tr></thead>`;
+
+  let body;
+  if (!visible.length) {
+    body = `<table class="pdf-mini-table mini-only">${head}<tbody><tr class="mini-empty"><td colspan="5">No accounts in this section</td></tr></tbody></table>`;
+  } else if (visible.length === 1) {
+    const row = section.renderer(visible[0], start + 1);
+    body = `<table class="pdf-mini-table mini-only">${head}<tbody>${row}</tbody></table>`;
+  } else {
+    const leftCount = Math.ceil(visible.length / 2);
+    const leftRows = visible.slice(0, leftCount).map((loan, i) => section.renderer(loan, start + i + 1)).join("");
+    const rightSlice = visible.slice(leftCount);
+    const rightRows = rightSlice.map((loan, i) => section.renderer(loan, start + leftCount + i + 1)).join("")
+      + (rightSlice.length < leftCount ? '<tr class="mini-blank"><td colspan="5">&nbsp;</td></tr>' : "");
+    body = `<table class="pdf-mini-table">${head}<tbody>${leftRows}</tbody></table>` +
+           `<table class="pdf-mini-table">${head}<tbody>${rightRows}</tbody></table>`;
   }
 
-  return `<section class="pdf-section ${section.tone}">
-    <div class="pdf-section-head">
+  return `<section class="pdf-section pdf-section-cards tone-${section.tone}${visible.length <= 1 ? " is-single" : ""}">
+    <header class="pdf-section-band">
       <h3>${esc(title)}</h3>
-      <span>${esc(range)}${sub ? ` - ${esc(sub)}` : ""}</span>
-    </div>
-    <div class="pdf-ledger">
-      ${visible.length ? `
-        <div class="pdf-ledger-head">
-          <span>Customer</span><span>Branch</span><span>Rs L</span><span>Key</span>
-          <span>Customer</span><span>Branch</span><span>Rs L</span><span>Key</span>
-        </div>
-        <div class="pdf-ledger-body">${pairs.join("")}</div>
-      ` : '<div class="pdf-empty">No accounts in this section</div>'}
-    </div>
+      <span>${esc(range)}${sub ? ` · ${esc(sub)}` : ""}</span>
+    </header>
+    <div class="pdf-section-body">${body}</div>
   </section>`;
 }
 
-function buildOfficerPdfPages(row, pageNo, totalPages, dateLabel) {
+function buildOfficerPdfPages(row, pageNo, totalPages, dateLabel, ctx) {
   const pages = paginateOfficerPdfSections(row);
-  return pages.map((sections, index) => buildCompactOfficerPdfPageV2(row, pageNo, totalPages, dateLabel, sections, index + 1, pages.length)).join("");
+  return pages.map((sections, index) => {
+    const globalPageNo = ctx.runningPage++;
+    const isLastOfficerPart = index === pages.length - 1;
+    const isLastOfficer = pageNo === totalPages;
+    const continuedAfter = !(isLastOfficerPart && isLastOfficer);
+    return buildCompactOfficerPdfPageV2(row, pageNo, totalPages, dateLabel, sections, index + 1, pages.length, {
+      globalPageNo,
+      totalGlobalPages: ctx.totalGlobalPages,
+      continuedAfter,
+    });
+  }).join("");
 }
 
 function buildCompactOfficerPdfPage(row, pageNo, totalPages, dateLabel, sections, partNo, totalParts) {
@@ -707,18 +724,19 @@ function buildCompactOfficerPdfPage(row, pageNo, totalPages, dateLabel, sections
   </section>`;
 }
 
-function buildCompactOfficerPdfPageV2(row, pageNo, totalPages, dateLabel, sections, partNo, totalParts) {
+function buildCompactOfficerPdfPageV2(row, pageNo, totalPages, dateLabel, sections, partNo, totalParts, paging) {
   const metricStrip = `
-    ${metricHtml("Sanctioned", row.sanctioned, "good")}
-    ${metricHtml("Pending", row.pending, "warn")}
-    ${metricHtml("Returned", row.returned, "soft-danger")}
-    ${metricHtml("Renewals Done", row.renewalsDone, "good")}
     ${metricHtml("Risk Watch", row.riskWatch.loans, row.riskWatch.npaRiskCount ? "danger" : "warn")}
+    ${metricHtml("Pending", row.pending, "warn")}
+    ${metricHtml("Sanctioned", row.sanctioned, "good")}
+    ${metricHtml("Returned", row.returned, "soft-danger")}
+    ${metricHtml("Renewals Done", row.renewalsDone, "blue")}
   `;
   const partLabel = totalParts > 1 ? ` - Part ${partNo} of ${totalParts}` : "";
   const officerCode = `OFF-${String(pageNo).padStart(3, "0")}`;
-  const continued = partNo < totalParts;
-  return `<section class="pdf-page pdf-officer-page ${partNo > 1 ? "is-continuation" : ""}">
+  const isContinuation = partNo > 1;
+  const { globalPageNo, totalGlobalPages, continuedAfter } = paging || {};
+  return `<section class="pdf-page pdf-officer-page ${isContinuation ? "is-continuation" : ""}">
     <header class="pdf-officer-head">
       <div class="pdf-officer-brand">
         <span class="pdf-mini-logo">न</span>
@@ -737,16 +755,16 @@ function buildCompactOfficerPdfPageV2(row, pageNo, totalPages, dateLabel, sectio
         <span class="pdf-kicker">Officer ${esc(pageNo)} of ${esc(totalPages)}${esc(partLabel)}</span>
         <h2>Officer: ${esc(row.name)}</h2>
       </div>
-      <div class="pdf-officer-code">Officer Code: ${esc(officerCode)}</div>
+      ${isContinuation ? "" : `<div class="pdf-officer-code">Officer Code: ${esc(officerCode)}</div>`}
     </div>
     ${partNo === 1 ? `<div class="pdf-officer-metrics">${metricStrip}</div>` : ""}
     <div class="pdf-detail-stack">
       ${sections.map(compactPdfSectionV2).join("")}
     </div>
     <footer class="pdf-footer">
-      <span>Nirnay Loan Tracker</span>
-      <span>Officer page ${esc(pageNo)} of ${esc(totalPages)}${esc(partLabel)}</span>
-      <span>${esc(continued ? "Continued on next page ->" : "End of officer details")}</span>
+      <span class="pdf-footer-brand"><span class="pdf-footer-logo">न</span>Nirnay Loan Tracker</span>
+      <span class="pdf-footer-meta">All amounts in Rs Lakhs</span>
+      <span class="pdf-footer-page">Page ${esc(globalPageNo)} of ${esc(totalGlobalPages)}${continuedAfter ? `<small>Continued on next page</small>` : ""}</span>
     </footer>
   </section>`;
 }
@@ -789,29 +807,101 @@ function buildOfficerPdfPage(row, pageNo, totalPages, dateLabel) {
 function detailedSnapshotPdfCss() {
   return `
     .pdf-report{width:${PDF_PAGE_WIDTH}px;background:#EDE8F4;color:#15122D;font-family:'Outfit','Inter','Segoe UI',Arial,sans-serif}
-    .pdf-page{width:${PDF_PAGE_WIDTH}px;height:${PDF_PAGE_HEIGHT}px;position:relative;overflow:hidden;background:#FBFAF7;padding:34px 34px 30px;box-sizing:border-box}
+    .pdf-page{width:${PDF_PAGE_WIDTH}px;height:${PDF_PAGE_HEIGHT}px;position:relative;overflow:hidden;background:#FBFAF7;padding:30px 30px 36px;box-sizing:border-box}
     .pdf-page + .pdf-page{margin-top:20px}
-    .pdf-cover-page{background:linear-gradient(145deg,#FFF9EE 0%,#F7F4FB 46%,#F0F7F2 100%)}
-    .pdf-brand-row,.pdf-officer-head,.pdf-footer{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
-    .pdf-brand{font-size:30px;font-weight:950;letter-spacing:-0.04em}.pdf-tagline,.pdf-kicker{font-size:10px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:#6B5FBF}.pdf-date{font-size:14px;font-weight:900;color:#4A4467}
+    .pdf-cover-page{background:#FBFAF7}
+    .pdf-cover-page::before{content:"";position:absolute;left:0;right:0;top:0;height:140px;background:linear-gradient(180deg,#F1ECFB 0%,rgba(241,236,251,0) 100%);pointer-events:none}
+    .pdf-cover-page > *{position:relative}
+    .pdf-brand-row,.pdf-officer-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+    .pdf-brand{font-size:30px;font-weight:950;letter-spacing:-0.04em}
+    .pdf-tagline,.pdf-kicker{font-size:10px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:#6B5FBF}
+    .pdf-date{font-size:14px;font-weight:900;color:#4A4467}
     .pdf-cover-hero{display:grid;grid-template-columns:1fr 150px;gap:18px;margin-top:30px;align-items:stretch}
-    .pdf-cover-hero h1{margin:8px 0 8px;font-size:44px;line-height:.94;letter-spacing:-.06em}.pdf-cover-hero p{margin:0;color:#5F5A78;font-size:15px;line-height:1.45;max-width:440px}
+    .pdf-cover-hero h1{margin:8px 0 8px;font-size:44px;line-height:.94;letter-spacing:-.06em}
+    .pdf-cover-hero p{margin:0;color:#5F5A78;font-size:15px;line-height:1.45;max-width:440px}
     .pdf-risk-badge{border-radius:24px;background:linear-gradient(150deg,#7F1D1D,#F59E0B);color:#fff;padding:18px;text-align:center;box-shadow:0 18px 36px rgba(127,29,29,.18)}
-    .pdf-risk-badge span,.pdf-risk-badge small{display:block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;opacity:.82}.pdf-risk-badge strong{display:block;font-size:46px;line-height:1;margin:10px 0 6px}
-    .pdf-cover-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:24px 0 18px}.pdf-cover-table{display:flex;flex-direction:column;gap:9px}
-    .pdf-cover-row{display:grid;grid-template-columns:1.24fr repeat(5,1fr);gap:7px;align-items:stretch;background:rgba(255,255,255,.72);border:1px solid rgba(35,25,70,.08);border-radius:18px;padding:8px;box-shadow:0 8px 22px rgba(45,35,85,.06)}
-    .pdf-cover-officer{padding:8px 10px}.pdf-cover-officer strong{display:block;font-size:18px}.pdf-cover-officer span{display:block;margin-top:4px;font-size:9px;font-weight:900;color:#8B5E00;text-transform:uppercase;letter-spacing:.08em}
-    .pdf-metric{min-width:0;border-radius:14px;background:#F4F1FB;border:1px solid rgba(107,95,191,.10);padding:9px 8px}.pdf-metric span{display:block;font-size:8px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#756F91;white-space:nowrap}.pdf-metric strong{display:block;font-size:22px;line-height:1;margin-top:3px}.pdf-metric small{display:block;margin-top:3px;font-size:9px;font-weight:850;color:#4D4868;white-space:nowrap}
-    .pdf-metric.good{background:#ECFDF5;border-color:#A7F3D0}.pdf-metric.warn{background:#FFF7ED;border-color:#FED7AA}.pdf-metric.danger{background:#FEF2F2;border-color:#FECACA}.pdf-metric.soft-danger{background:#FFF1F2;border-color:#FFE4E6}.pdf-metric.calm{background:#F8FAFC;border-color:#E2E8F0}
-    .pdf-officer-page{background:linear-gradient(180deg,#FFFFFF 0%,#F7F5FB 100%)}.pdf-officer-head h2{font-size:34px;line-height:1;margin:5px 0 4px;letter-spacing:-.05em}.pdf-officer-head p{margin:0;color:#756F91;font-size:12px;font-weight:800}.pdf-officer-total{width:88px;border-radius:20px;background:#14112E;color:#fff;text-align:center;padding:13px}.pdf-officer-total strong{display:block;font-size:32px;line-height:1}.pdf-officer-total span{display:block;margin-top:4px;font-size:9px;text-transform:uppercase;letter-spacing:.10em;font-weight:900}
-    .pdf-officer-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0 12px}.pdf-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pdf-section{background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:18px;overflow:hidden;min-height:118px}.pdf-section:first-child{grid-column:1/-1}.pdf-section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 11px;background:#F8F6FF;border-bottom:1px solid rgba(35,25,70,.06)}.pdf-section h3{margin:0;font-size:13px}.pdf-section-head span{font-size:9px;font-weight:900;color:#756F91;text-align:right}
-    .pdf-section.good .pdf-section-head{background:#ECFDF5}.pdf-section.warn .pdf-section-head{background:#FFF7ED}.pdf-section.danger .pdf-section-head{background:#FEF2F2}.pdf-section.soft-danger .pdf-section-head{background:#FFF1F2}
-    .pdf-loan-list{padding:7px;display:flex;flex-direction:column;gap:5px}.pdf-loan-row{display:grid;grid-template-columns:1fr 88px;gap:8px;border:1px solid rgba(35,25,70,.06);border-radius:12px;padding:7px;background:#fff}.pdf-loan-main strong{display:block;font-size:11px;line-height:1.15}.pdf-loan-main span,.pdf-loan-side span{display:block;margin-top:2px;font-size:8.5px;font-weight:800;color:#696381;line-height:1.25}.pdf-loan-side{text-align:right}.pdf-loan-side b{display:block;font-size:11px}.pdf-loan-remarks{margin-top:3px;font-size:8px;color:#8B5E00;font-weight:800;line-height:1.25}
-    .pdf-empty{padding:14px;text-align:center;color:#8D88A6;font-size:10px;font-weight:850;background:#FAF9FE;border-radius:12px}.pdf-footer{position:absolute;left:34px;right:34px;bottom:18px;color:#8983A1;font-size:9px;font-weight:850}.pdf-officer-page .pdf-detail-grid{max-height:858px;overflow:hidden}
-    .pdf-detail-stack{display:flex;flex-direction:column;gap:8px}.pdf-officer-page.is-continuation .pdf-detail-stack{margin-top:16px}.pdf-detail-stack .pdf-section{min-height:0;border-radius:14px}.pdf-detail-stack .pdf-section-head{padding:7px 10px}.pdf-detail-stack .pdf-section h3{font-size:12px}.pdf-detail-stack .pdf-section-head span{font-size:8px}.pdf-detail-stack .pdf-loan-list{gap:3px;padding:5px}.pdf-detail-stack .pdf-loan-row{display:grid;grid-template-columns:1.4fr 1.12fr 70px 112px;gap:6px;align-items:center;border-radius:9px;padding:5px 6px;min-height:26px}.pdf-loan-customer strong{display:block;font-size:9.5px;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-loan-customer span,.pdf-loan-branch,.pdf-loan-date{font-size:7.8px;font-weight:800;color:#6E6887;line-height:1.15}.pdf-loan-branch{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-loan-amount{font-size:9px;font-weight:950;color:#15122D;text-align:right;white-space:nowrap}.pdf-loan-date{text-align:right}.pdf-officer-page.is-continuation .pdf-officer-head h2{font-size:28px}.pdf-officer-page.is-continuation .pdf-officer-total{padding:10px}.pdf-officer-page.is-continuation .pdf-officer-total strong{font-size:26px}
-    .pdf-officer-page{background:#FFFFFF;padding:26px 26px 30px}.pdf-officer-head{align-items:center}.pdf-officer-brand{display:flex;align-items:center;gap:10px}.pdf-mini-logo{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#13234C;color:#fff;font-size:22px;font-weight:950}.pdf-officer-brand strong{display:block;font-size:20px;line-height:1;color:#0B173F}.pdf-officer-brand small{display:block;margin-top:3px;font-size:10px;font-weight:900;color:#0F766E}.pdf-officer-report-title{text-align:right}.pdf-officer-report-title strong{display:block;font-size:12px;font-weight:950;color:#0B173F}.pdf-officer-report-title span{display:block;margin-top:5px;font-size:11px;font-weight:800;color:#615B7C}.pdf-officer-title-row{display:flex;justify-content:space-between;align-items:end;gap:18px;margin:20px 0 12px}.pdf-officer-title-row h2{margin:4px 0 0;font-size:28px;line-height:1;letter-spacing:-.04em;color:#102151}.pdf-officer-code{font-size:11px;font-weight:850;color:#615B7C;white-space:nowrap}.pdf-officer-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:0 0 12px}.pdf-officer-metrics .pdf-metric{border-radius:9px;padding:10px 9px;min-height:58px}.pdf-officer-metrics .pdf-metric span{font-size:8px;white-space:normal}.pdf-officer-metrics .pdf-metric strong{font-size:20px}.pdf-officer-metrics .pdf-metric small{font-size:8.4px;white-space:normal}.pdf-officer-page.is-continuation .pdf-officer-title-row{margin-bottom:16px}.pdf-officer-page.is-continuation .pdf-officer-metrics{display:none}
-    .pdf-detail-stack{gap:9px}.pdf-detail-stack .pdf-section{border-radius:10px;border:1px solid rgba(35,25,70,.10);overflow:visible;background:#fff;box-shadow:0 6px 16px rgba(25,18,52,.035)}.pdf-detail-stack .pdf-section-head{padding:8px 10px;border-bottom:1px solid rgba(35,25,70,.08);background:#F8FAFC}.pdf-detail-stack .pdf-section h3{font-size:13px;line-height:1;margin:0;color:#102151}.pdf-detail-stack .pdf-section-head span{font-size:8.5px;line-height:1.2;color:#5F5A78;max-width:455px}.pdf-detail-stack .pdf-section.good .pdf-section-head{background:#F0FDF4;color:#047857}.pdf-detail-stack .pdf-section.warn .pdf-section-head{background:#FFF7ED;color:#C2410C}.pdf-detail-stack .pdf-section.soft-danger .pdf-section-head{background:#FFF1F2;color:#DC2626}.pdf-detail-stack .pdf-section.danger .pdf-section-head{background:#FEF2F2;color:#B91C1C}
-    .pdf-ledger{padding:6px 8px 8px}.pdf-ledger-head{display:grid;grid-template-columns:1.48fr 50px 36px 72px 1.48fr 50px 36px 72px;gap:6px;padding:0 0 5px;margin-bottom:2px;border-bottom:1px solid rgba(35,25,70,.08);font-size:7px;font-weight:950;text-transform:uppercase;letter-spacing:.04em;color:#515A75}.pdf-ledger-body{display:flex;flex-direction:column}.pdf-ledger-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-bottom:1px solid rgba(35,25,70,.055)}.pdf-ledger-pair:last-child{border-bottom:0}.pdf-ledger-item{display:grid;grid-template-columns:minmax(0,1.48fr) 50px 36px 72px;gap:6px;align-items:start;min-height:24px;padding:4px 0;background:transparent;border:0}.pdf-ledger-blank{visibility:hidden}.pdf-ledger-customer{display:grid;grid-template-columns:16px minmax(0,1fr);gap:4px;min-width:0}.pdf-row-num{font-size:7.5px;font-weight:950;color:#4B5270;text-align:right}.pdf-ledger-customer strong{display:block;font-size:8.2px;line-height:1.08;color:#111B42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-ledger-customer small{display:block;margin-top:1px;font-size:6.8px;font-weight:850;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-ledger-branch,.pdf-ledger-date{font-size:7.2px;font-weight:820;line-height:1.12;color:#475569;overflow-wrap:anywhere}.pdf-ledger-amount{font-size:7.8px;font-weight:950;color:#111B42;text-align:right;white-space:nowrap}.pdf-empty{padding:12px;text-align:center;color:#8D88A6;font-size:9px;font-weight:850;background:#FAF9FE;border-radius:8px}.pdf-officer-page .pdf-detail-grid{display:none;max-height:none;overflow:visible}.pdf-footer{left:26px;right:26px;bottom:14px;align-items:center;font-size:8.5px}
+    .pdf-risk-badge span,.pdf-risk-badge small{display:block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;opacity:.82}
+    .pdf-risk-badge strong{display:block;font-size:46px;line-height:1;margin:10px 0 6px}
+    .pdf-cover-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:24px 0 18px}
+    .pdf-cover-table{display:flex;flex-direction:column;gap:9px}
+    .pdf-cover-row{display:grid;grid-template-columns:1.24fr repeat(5,1fr);gap:7px;align-items:stretch;background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:14px;padding:8px;box-shadow:0 6px 14px rgba(45,35,85,.04)}
+    .pdf-cover-officer{padding:8px 10px}
+    .pdf-cover-officer strong{display:block;font-size:18px}
+    .pdf-cover-officer span{display:block;margin-top:4px;font-size:9px;font-weight:900;color:#8B5E00;text-transform:uppercase;letter-spacing:.08em}
+    .pdf-metric{min-width:0;border-radius:12px;background:#F4F1FB;border:1px solid rgba(107,95,191,.10);padding:9px 10px}
+    .pdf-metric span{display:block;font-size:8px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#756F91;white-space:nowrap}
+    .pdf-metric strong{display:block;font-size:22px;line-height:1;margin-top:3px}
+    .pdf-metric small{display:block;margin-top:3px;font-size:9px;font-weight:850;color:#4D4868;white-space:nowrap}
+    .pdf-metric.good{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+    .pdf-metric.warn{background:#FFF7ED;border-color:#FED7AA;color:#C2410C}
+    .pdf-metric.danger{background:#FEF2F2;border-color:#FECACA;color:#B91C1C}
+    .pdf-metric.soft-danger{background:#FFF1F2;border-color:#FFE1E5;color:#DC2626}
+    .pdf-metric.blue{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+    .pdf-metric.calm{background:#F8FAFC;border-color:#E2E8F0;color:#475569}
+    .pdf-metric.good strong,.pdf-metric.warn strong,.pdf-metric.danger strong,.pdf-metric.soft-danger strong,.pdf-metric.blue strong{color:inherit}
+
+    .pdf-officer-page{background:#FFFFFF;padding:26px 28px 36px}
+    .pdf-officer-head{align-items:center}
+    .pdf-officer-brand{display:flex;align-items:center;gap:10px}
+    .pdf-mini-logo{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#13234C;color:#fff;font-size:22px;font-weight:950}
+    .pdf-officer-brand strong{display:block;font-size:20px;line-height:1;color:#0B173F}
+    .pdf-officer-brand small{display:block;margin-top:3px;font-size:10px;font-weight:900;color:#0F766E}
+    .pdf-officer-report-title{text-align:right}
+    .pdf-officer-report-title strong{display:block;font-size:12px;font-weight:950;color:#0B173F;letter-spacing:.04em;text-transform:uppercase}
+    .pdf-officer-report-title span{display:block;margin-top:5px;font-size:12px;font-weight:800;color:#615B7C}
+    .pdf-officer-title-row{display:flex;justify-content:space-between;align-items:end;gap:18px;margin:20px 0 14px}
+    .pdf-officer-title-row .pdf-kicker{display:block;margin-bottom:6px}
+    .pdf-officer-title-row h2{margin:0;font-size:30px;line-height:1;letter-spacing:-.04em;color:#102151}
+    .pdf-officer-code{font-size:11px;font-weight:850;color:#615B7C;white-space:nowrap}
+    .pdf-officer-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:0 0 14px}
+    .pdf-officer-metrics .pdf-metric{border-radius:9px;padding:9px 10px;min-height:54px}
+    .pdf-officer-metrics .pdf-metric span{font-size:8px;white-space:normal}
+    .pdf-officer-metrics .pdf-metric strong{font-size:20px}
+    .pdf-officer-metrics .pdf-metric small{font-size:8.4px;white-space:normal}
+    .pdf-officer-page.is-continuation .pdf-officer-title-row h2{font-size:24px}
+    .pdf-officer-page.is-continuation .pdf-officer-title-row{margin-bottom:14px}
+    .pdf-officer-page.is-continuation .pdf-officer-metrics{display:none}
+
+    .pdf-detail-stack{display:flex;flex-direction:column;gap:9px}
+    .pdf-section.pdf-section-cards{background:#fff;border:1px solid rgba(35,25,70,.10);border-radius:10px;overflow:hidden;box-shadow:0 6px 16px rgba(25,18,52,.035)}
+    .pdf-section-band{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;background:#F8FAFC;border-bottom:1px solid rgba(35,25,70,.08)}
+    .pdf-section-band h3{margin:0;font-size:13px;line-height:1;color:#102151}
+    .pdf-section-band span{font-size:9px;font-weight:850;color:#5F5A78;text-align:right;line-height:1.2;max-width:60%}
+    .pdf-section-cards.tone-good .pdf-section-band{background:#DCFCE7;color:#047857}
+    .pdf-section-cards.tone-good .pdf-section-band h3{color:#047857}
+    .pdf-section-cards.tone-warn .pdf-section-band{background:#FFF1E5;color:#C2410C}
+    .pdf-section-cards.tone-warn .pdf-section-band h3{color:#C2410C}
+    .pdf-section-cards.tone-danger .pdf-section-band{background:#FEE2E2;color:#B91C1C}
+    .pdf-section-cards.tone-danger .pdf-section-band h3{color:#B91C1C}
+    .pdf-section-cards.tone-soft-danger .pdf-section-band{background:#FEE7EA;color:#DC2626}
+    .pdf-section-cards.tone-soft-danger .pdf-section-band h3{color:#DC2626}
+    .pdf-section-cards.tone-blue .pdf-section-band{background:#DBEAFE;color:#1D4ED8}
+    .pdf-section-cards.tone-blue .pdf-section-band h3{color:#1D4ED8}
+
+    .pdf-section-body{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:6px 12px 8px}
+    .pdf-section-cards.is-single .pdf-section-body{grid-template-columns:1fr}
+
+    .pdf-mini-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.6px;color:#15122D}
+    .pdf-mini-table thead th{padding:5px 4px 4px;border-bottom:1px solid rgba(35,25,70,.10);font-size:7px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;color:#515A75;text-align:left;background:transparent}
+    .pdf-mini-table thead th.mini-amount,.pdf-mini-table thead th.mini-date{text-align:right}
+    .pdf-mini-table tbody td{padding:5px 4px;vertical-align:top;border-bottom:1px solid rgba(35,25,70,.06);line-height:1.18}
+    .pdf-mini-table tbody tr:last-child td{border-bottom:0}
+    .pdf-mini-table tbody tr.mini-blank td{visibility:hidden;border-bottom:0}
+    .pdf-mini-table tbody tr.mini-empty td{text-align:center;color:#8D88A6;font-size:9px;font-weight:850;padding:14px 6px;background:#FAF9FE;border-bottom:0}
+    .pdf-mini-table th.mini-num,.pdf-mini-table td.mini-num{width:18px;color:#4B5270;font-weight:950;font-size:7.6px;text-align:right;padding-right:6px}
+    .pdf-mini-table th.mini-customer,.pdf-mini-table td.mini-customer{width:auto}
+    .pdf-mini-table th.mini-branch,.pdf-mini-table td.mini-branch{width:78px;font-size:7.4px;font-weight:820;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pdf-mini-table th.mini-amount,.pdf-mini-table td.mini-amount{width:46px;font-size:8.4px;font-weight:950;color:#111B42;text-align:right;white-space:nowrap}
+    .pdf-mini-table th.mini-date,.pdf-mini-table td.mini-date{width:90px;font-size:7.4px;font-weight:820;color:#475569;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-mini-table td.mini-customer strong{display:block;font-size:9px;line-height:1.1;color:#111B42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:900}
+    .pdf-mini-table td.mini-customer small{display:block;margin-top:1px;font-size:7.2px;font-weight:850;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.04em;text-transform:uppercase}
+
+    .pdf-footer{position:absolute;left:28px;right:28px;bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:14px;color:#8983A1;font-size:9px;font-weight:850}
+    .pdf-footer-brand{display:flex;align-items:center;gap:6px;color:#0B173F;font-weight:900}
+    .pdf-footer-logo{display:grid;place-items:center;width:14px;height:14px;border-radius:4px;background:#13234C;color:#fff;font-size:9px;font-weight:950}
+    .pdf-footer-meta{color:#615B7C;text-align:center;flex:1}
+    .pdf-footer-page{display:flex;flex-direction:column;align-items:flex-end;gap:2px;color:#102151;font-weight:900}
+    .pdf-footer-page small{display:block;font-size:8px;font-weight:800;color:#8983A1;letter-spacing:.04em;text-transform:none}
   `;
 }
 
