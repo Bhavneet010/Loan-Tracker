@@ -1630,6 +1630,20 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
   pointer-events:none;
   z-index:1;
 }
+.editorial-callout.primary::after{
+  display:none;
+}
+.editorial-trophy-watermark{
+  position:absolute !important;
+  right:2px;
+  top:50%;
+  width:88px;
+  height:88px;
+  opacity:0.25;
+  transform:translateY(-50%);
+  pointer-events:none;
+  z-index:1 !important;
+}
 .editorial-callout label{
   display:block;
   font-size:10px;
@@ -2264,6 +2278,12 @@ body.dark .os-grand{background:rgba(107,95,191,0.12);}
     width:68px;
     height:68px;
     margin-top:0;
+    opacity:0.22;
+  }
+  .editorial-trophy-watermark{
+    right:2px;
+    width:68px;
+    height:68px;
     opacity:0.22;
   }
   .editorial-callout label{

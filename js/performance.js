@@ -888,6 +888,24 @@ function buildEditorialShareMockupHtml(mockup, report) {
       </div>
       <div class="editorial-callout-row">
         <div class="editorial-callout primary">
+          <svg class="editorial-trophy-watermark" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="topPerformerGold" x1="24" y1="14" x2="98" y2="112" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#fff5c7"></stop>
+                <stop offset=".42" stop-color="#f3c55e"></stop>
+                <stop offset="1" stop-color="#a96518"></stop>
+              </linearGradient>
+            </defs>
+            <g fill="url(#topPerformerGold)">
+              <path d="M35 17h58c-.8 18-4.5 32.5-11.4 43.4C76.2 68.9 70.2 73.9 64 76c-6.2-2.1-12.2-7.1-17.6-15.6C39.5 49.5 35.8 35 35 17z"></path>
+              <path d="M36 27H22c-6.7 0-11 4.7-11 11.2 0 18.4 15.2 32.2 36.8 34.8l2.7-10.7C34.4 60.6 22.2 50.7 22.2 38.7c0-2.2 1.4-3.7 3.7-3.7h11.2L36 27z"></path>
+              <path d="M92 27h14c6.7 0 11 4.7 11 11.2 0 18.4-15.2 32.2-36.8 34.8l-2.7-10.7c16.1-1.7 28.3-11.6 28.3-23.6 0-2.2-1.4-3.7-3.7-3.7H90.9L92 27z"></path>
+              <path d="M57 75h14v18c0 4.4 3.6 8 8 8h6v9H43v-9h6c4.4 0 8-3.6 8-8V75z"></path>
+              <path d="M34 110h60v9H34z"></path>
+            </g>
+            <path d="M47 23h18c-9.5 9.5-13.2 23.8-9.7 38.5C47.9 52.3 44.9 39.5 47 23z" fill="#fff8dc" opacity=".34"></path>
+            <path d="M71 22h15c-1 14-4.5 25-10.5 33.4 2.1-10.6.8-22.1-4.5-33.4z" fill="#b97b20" opacity=".22"></path>
+          </svg>
           <label>Top fresh performer</label>
           <strong>${esc(topFresh ? topFresh.name : "—")}</strong>
           <span>${topFresh ? `Rs ${esc(fmtAmt(topFresh.sanctioned.total.amount))}L · ${esc(topFresh.sanctioned.total.count)} cases` : "No data"}</span>
