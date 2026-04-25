@@ -3,6 +3,7 @@ import { initials, officerColor } from "./utils.js";
 import { subscribeLoans } from "./db.js";
 import { subscribeNotifications } from "./notifications.js";
 import { render } from "./ui-render.js";
+import { initPushNotifications } from "./push-notifications.js";
 
 // Import modules to register window actions and side effects
 import "./ui-core.js";

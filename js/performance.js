@@ -1,3 +1,5 @@
+import { db } from "./config.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
@@ -50,6 +52,7 @@ window.exportPerformanceSnapshot = async function () {
     const file = new File([blob], fileName, { type: "application/pdf" });
 
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await logSnapshot();
       await navigator.share({
         files: [file],
         title: "Detailed Snapshot",
@@ -170,4 +173,13 @@ function formatShareDate(date) {
     month: "long",
     year: "numeric",
   });
+}
+
+async function logSnapshot() {
+  try {
+    const today = new Date();
+    today.setHours(today.getHours() + 5, today.getMinutes() + 30);
+    const dateStr = today.toISOString().split("T")[0];
+    await setDoc(doc(db, "snapshotLogs", dateStr), { sharedAt: new Date().toISOString() }, { merge: true });
+  } catch(e) {}
 }

@@ -1,3 +1,4 @@
+import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
 import { esc, toast } from "./utils.js";
 

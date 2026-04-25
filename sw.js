@@ -1,4 +1,28 @@
-const CACHE = 'nirnay-v39';
+
+importScripts('https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyDY0AMy0eZI_74nJSoy46uHqgKvh9NkKw8",
+  projectId: "loan-tracker-4af27",
+  messagingSenderId: "700827916451",
+  appId: "1:700827916451:web:d872bf2905d234bdb60716"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('[SW] Received background message ', payload);
+  const notificationTitle = payload.notification?.title || "Nirnay Update";
+  const notificationOptions = {
+    body: payload.notification?.body || "New activity detected.",
+    icon: './icon-192.png'
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+const CACHE = 'nirnay-v40';
 const ASSETS = [
   './',
   './index.html',
@@ -26,6 +50,7 @@ const ASSETS = [
   './js/ui-forms.js',
   './js/notifications.js',
   './js/performance.js',
+  './js/push-notifications.js',
   './js/performance-utils.js',
   './js/performance-templates.js',
   './js/performance-pdf.js',
