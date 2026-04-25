@@ -1,0 +1,32 @@
+name: Daily Push Notifications
+
+on:
+  schedule:
+    # 9:00 AM IST = 3:30 AM UTC
+    - cron: '30 3 * * *'
+    # 7:00 PM IST = 1:30 PM UTC
+    - cron: '30 13 * * *'
+    # 7:30 PM IST = 2:00 PM UTC
+    - cron: '0 14 * * *'
+  workflow_dispatch: # Allows you to manually trigger it from GitHub Actions tab
+
+jobs:
+  run-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./.github/scripts
+        run: npm install
+
+      - name: Run Push Script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node ./.github/scripts/send-alerts.js

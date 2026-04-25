@@ -1,0 +1,6 @@
+{
+  "name": "github-actions-firebase-push",
+  "dependencies": {
+    "firebase-admin": "^11.8.0"
+  }
+}
