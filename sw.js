@@ -1,4 +1,4 @@
-const CACHE = 'nirnay-v26';
+const CACHE = 'nirnay-v28';
 const ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
   './assets/splash/splash-light.png',
   './assets/splash/splash-dark-master.svg',
   './assets/splash/splash-light-master.svg',
+  './assets/snapshot/top-performer-bg.png',
   './css/styles.css',
   './js/app.js',
   './js/config.js',

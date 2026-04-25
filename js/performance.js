@@ -449,12 +449,23 @@ function ensureHtml2Canvas() {
   return html2canvasLoadPromise;
 }
 
+function ensureImageLoaded(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = resolve;
+    img.onerror = reject;
+    img.src = src;
+    if (img.complete) resolve();
+  });
+}
+
 const DAILY_SNAPSHOT = {
   label: "Daily Snapshot",
   title: "Ribbon Sheet",
   description: "One-page share view using the final readable portrait layout.",
   className: "report-mockup-a",
 };
+const SNAPSHOT_BG_ASSETS = ["assets/snapshot/top-performer-bg.png"];
 
 function officerNamesFromMetrics(metrics) {
   const seen = new Set(S.officers);
@@ -1222,6 +1233,8 @@ window.shareDailySnapshotJpeg = async function () {
 
   try {
     await ensureHtml2Canvas();
+    await Promise.all(SNAPSHOT_BG_ASSETS.map(ensureImageLoaded));
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const exportWidth = 680;
     const exportHost = document.createElement("div");
     const exportCard = card.cloneNode(true);
