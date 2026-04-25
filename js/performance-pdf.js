@@ -89,84 +89,121 @@ function buildBarChartSvg(rows, dateLabel) {
   };
 
   const maxVal = Math.max(1, ...rows.flatMap(row => categories.map(cat => getData(row, cat))));
-  const chartW = 340, chartH = 160, padL = 30, padB = 30, padT = 30;
-  const groupW = (chartW - padL) / categories.length;
-  const barW = Math.min(24, (groupW - 20) / rows.length);
+  const chartW = 460, chartH = 150, padL = 28, padB = 24, padT = 44;
+  const drawW = chartW - padL - 10;
+  const groupW = drawW / categories.length;
+  const barW = Math.min(28, (groupW - 16) / rows.length);
 
   const gridLines = [];
-  const step = Math.ceil(maxVal / 4);
-  for (let v = 0; v <= maxVal + step; v += step || 1) {
-    const y = padT + chartH - (v / (maxVal + step)) * chartH;
-    gridLines.push(`<line x1="${padL}" y1="${y}" x2="${padL + chartW - padL}" y2="${y}" stroke="#E2E8F0" stroke-width="0.5"/>`);
+  const step = Math.ceil(maxVal / 4) || 1;
+  const gridMax = Math.ceil(maxVal / step) * step;
+  for (let v = 0; v <= gridMax; v += step) {
+    const y = padT + chartH - (v / gridMax) * chartH;
+    gridLines.push(`<line x1="${padL}" y1="${y}" x2="${padL + drawW}" y2="${y}" stroke="#E2E8F0" stroke-width="0.5"/>`);
     gridLines.push(`<text x="${padL - 4}" y="${y + 3}" text-anchor="end" font-size="7" fill="#94A3B8">${v}</text>`);
   }
 
   const bars = [];
   categories.forEach((cat, ci) => {
     const gx = padL + ci * groupW + groupW / 2;
-    bars.push(`<text x="${gx}" y="${padT + chartH + 14}" text-anchor="middle" font-size="7.5" font-weight="800" fill="#475569">${cat}</text>`);
+    bars.push(`<text x="${gx}" y="${padT + chartH + 14}" text-anchor="middle" font-size="8" font-weight="800" fill="#475569">${cat}</text>`);
     rows.forEach((row, ri) => {
       const val = getData(row, cat);
-      const bh = (val / (maxVal + step)) * chartH;
+      const bh = gridMax > 0 ? (val / gridMax) * chartH : 0;
       const bx = gx - (rows.length * barW) / 2 + ri * barW + 1;
       const by = padT + chartH - bh;
       const color = COLORS[ri % COLORS.length];
       bars.push(`<rect x="${bx}" y="${by}" width="${barW - 2}" height="${bh}" rx="2" fill="${color}"/>`);
-      if (val > 0) bars.push(`<text x="${bx + (barW - 2) / 2}" y="${by - 3}" text-anchor="middle" font-size="7" font-weight="900" fill="${color}">${val}</text>`);
+      if (val > 0) bars.push(`<text x="${bx + (barW - 2) / 2}" y="${by - 4}" text-anchor="middle" font-size="7.5" font-weight="900" fill="${color}">${val}</text>`);
     });
   });
 
-  const legendX = padL + 10;
   const legendItems = rows.map((row, i) => {
-    const x = legendX + i * 70;
+    const x = 200 + i * 80;
     const color = COLORS[i % COLORS.length];
-    return `<rect x="${x}" y="4" width="8" height="8" rx="2" fill="${color}"/>
-      <text x="${x + 11}" y="11" font-size="7.5" font-weight="800" fill="#475569">${esc(row.name)}</text>`;
+    return `<rect x="${x}" y="8" width="8" height="8" rx="2" fill="${color}"/>
+      <text x="${x + 11}" y="15" font-size="7.5" font-weight="800" fill="#475569">${esc(row.name)}</text>`;
   });
 
-  const shortDate = dateLabel;
-
-  return `<svg width="${chartW}" height="${padT + chartH + padB + 10}" viewBox="0 0 ${chartW} ${padT + chartH + padB + 10}" xmlns="http://www.w3.org/2000/svg">
-    <text x="4" y="14" font-size="11" font-weight="950" fill="#1E293B">Officer Key Metrics Comparison</text>
-    <text x="4" y="24" font-size="7" font-weight="700" fill="#94A3B8">Sanctioned, Renewals Done and Risk Watch | ${esc(shortDate)}</text>
+  const svgH = padT + chartH + padB;
+  return `<svg width="100%" height="${svgH}" viewBox="0 0 ${chartW} ${svgH}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <text x="4" y="14" font-size="12" font-weight="950" fill="#1E293B">Officer Key Metrics Comparison</text>
+    <text x="4" y="26" font-size="7" font-weight="700" fill="#94A3B8">Sanctioned, Renewals Done and Risk Watch  |  ${esc(dateLabel)}</text>
     ${legendItems.join('')}
     ${gridLines.join('')}
     ${bars.join('')}
   </svg>`;
 }
 
-function buildKeyInsightsSvg(rows) {
+function buildKeyInsightsHtml(rows) {
   const sanctionedLeader = [...rows].sort((a, b) => b.sanctioned.length - a.sanctioned.length)[0];
   const renewalLeader = [...rows].sort((a, b) => b.renewalsDone.length - a.renewalsDone.length)[0];
   const riskLeader = [...rows].sort((a, b) => b.riskWatch.loans.length - a.riskWatch.loans.length)[0];
 
-  const insightH = 50;
-  const totalH = 20 + 3 * insightH + 60;
-
   const insights = [
-    { icon: '📊', label: 'Highest Sanctioned:', name: sanctionedLeader?.name || '—', value: sanctionedLeader?.sanctioned.length || 0, bg: '#ECFDF5', border: '#A7F3D0', color: '#047857' },
-    { icon: '🔄', label: 'Renewal Lead:', name: renewalLeader?.name || '—', value: renewalLeader?.renewalsDone.length || 0, bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C' },
-    { icon: '⚡', label: 'Risk Watch Lead:', name: riskLeader?.name || '—', value: riskLeader?.riskWatch.loans.length || 0, bg: '#EFF6FF', border: '#BFDBFE', color: '#1D4ED8' },
+    { label: 'Highest Sanctioned:', name: sanctionedLeader?.name || '—', value: sanctionedLeader?.sanctioned.length || 0, tone: 'good' },
+    { label: 'Renewal Lead:', name: renewalLeader?.name || '—', value: renewalLeader?.renewalsDone.length || 0, tone: 'warn' },
+    { label: 'Risk Watch Lead:', name: riskLeader?.name || '—', value: riskLeader?.riskWatch.loans.length || 0, tone: 'blue' },
   ];
 
-  const cards = insights.map((ins, i) => {
-    const y = 22 + i * insightH;
-    return `<rect x="4" y="${y}" width="142" height="${insightH - 6}" rx="8" fill="${ins.bg}" stroke="${ins.border}" stroke-width="1"/>
-      <text x="16" y="${y + 16}" font-size="8" font-weight="800" fill="#64748B">${ins.label}</text>
-      <text x="16" y="${y + 30}" font-size="12" font-weight="950" fill="${ins.color}">${esc(ins.name)} ${esc(ins.value)}</text>`;
-  });
+  return `<div class="pdf-insights-panel">
+    <div class="pdf-insights-title">Key Insights</div>
+    ${insights.map(ins => `<div class="pdf-insight-card ${ins.tone}">
+      <span>${esc(ins.label)}</span>
+      <strong>${esc(ins.name)} ${esc(ins.value)}</strong>
+    </div>`).join('')}
+    <div class="pdf-insight-tip">Focus on returned and risk watch accounts to reduce potential losses and improve renewal outcomes.</div>
+  </div>`;
+}
 
-  const tipY = 22 + 3 * insightH + 4;
+function buildNpaAlertTable(metrics) {
+  const allUnrenewed = metrics.renewals.filter(loan => !loan.renewedDate);
+  const npa15 = allUnrenewed.filter(loan => {
+    const days = Number(loan._rs?.daysUntilNpa);
+    return days > 0 && days <= 15;
+  }).sort((a, b) => (a._rs?.daysUntilNpa || 0) - (b._rs?.daysUntilNpa || 0));
 
-  return `<svg width="150" height="${totalH}" viewBox="0 0 150 ${totalH}" xmlns="http://www.w3.org/2000/svg">
-    <text x="75" y="14" text-anchor="middle" font-size="10" font-weight="950" fill="#1E293B">Key Insights</text>
-    ${cards.join('')}
-    <rect x="4" y="${tipY}" width="142" height="40" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
-    <text x="14" y="${tipY + 14}" font-size="6.5" font-weight="700" fill="#64748B">Focus on returned and risk</text>
-    <text x="14" y="${tipY + 22}" font-size="6.5" font-weight="700" fill="#64748B">watch accounts to reduce</text>
-    <text x="14" y="${tipY + 30}" font-size="6.5" font-weight="700" fill="#64748B">potential losses and improve</text>
-    <text x="14" y="${tipY + 38}" font-size="6.5" font-weight="700" fill="#64748B">renewal outcomes.</text>
-  </svg>`;
+  if (!npa15.length) {
+    return `<div class="pdf-npa-alert-section">
+      <div class="pdf-npa-alert-head">
+        <h3>⚠ Accounts Turning NPA in Next 15 Days</h3>
+        <span>0 accounts</span>
+      </div>
+      <div class="pdf-npa-empty">No accounts approaching NPA in the next 15 days.</div>
+    </div>`;
+  }
+
+  const tableRows = npa15.slice(0, 10).map((loan, i) => {
+    const rs = loan._rs || {};
+    const officer = loan.allocatedTo || 'Unassigned';
+    return `<tr>
+      <td class="npa-num">${i + 1}</td>
+      <td class="npa-customer"><strong>${catTag(loan)}${esc(loan.customerName || 'Unnamed')}</strong></td>
+      <td class="npa-officer">${esc(officer)}</td>
+      <td class="npa-branch">${esc(compactBranch(loan.branch))}</td>
+      <td class="npa-amount">${esc(fmtAmt(loan.amount))}</td>
+      <td class="npa-days">${esc(rs.daysUntilNpa)}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="pdf-npa-alert-section">
+    <div class="pdf-npa-alert-head">
+      <h3>⚠ Accounts Turning NPA in Next 15 Days</h3>
+      <span>${esc(npa15.length)} account${npa15.length === 1 ? '' : 's'}</span>
+    </div>
+    <table class="pdf-npa-table">
+      <thead><tr>
+        <th class="npa-num">#</th>
+        <th class="npa-customer">Customer</th>
+        <th class="npa-officer">Officer</th>
+        <th class="npa-branch">Branch</th>
+        <th class="npa-amount">Rs L</th>
+        <th class="npa-days">Days</th>
+      </tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    ${npa15.length > 10 ? `<div class="pdf-npa-more">+ ${npa15.length - 10} more accounts (see officer detail pages)</div>` : ''}
+  </div>`;
 }
 
 function coverOfficerRowV2(row) {
@@ -217,7 +254,8 @@ function buildDetailedSnapshotPdfHtml() {
 
   const donutSvg = buildDonutChartSvg(rows, totalRiskWatch);
   const barChartSvg = buildBarChartSvg(rows, dateLabel);
-  const keyInsightsSvg = buildKeyInsightsSvg(rows);
+  const keyInsightsHtml = buildKeyInsightsHtml(rows);
+  const npaAlertHtml = buildNpaAlertTable(metrics);
 
   return `<div class="pdf-report">
     <style>${detailedSnapshotPdfCss()}</style>
@@ -261,9 +299,10 @@ function buildDetailedSnapshotPdfHtml() {
           ${barChartSvg}
         </div>
         <div class="pdf-cover-insights-col">
-          ${keyInsightsSvg}
+          ${keyInsightsHtml}
         </div>
       </div>
+      ${npaAlertHtml}
       <footer class="pdf-footer">
         <span class="pdf-footer-brand"><span class="pdf-footer-logo">न</span>Nirnay Loan Tracker</span>
         <span class="pdf-footer-meta">Generated ${esc(generatedAt)} · ${esc(S.user || "Admin")} · AMCC Paonta Sahib</span>
@@ -672,7 +711,38 @@ function detailedSnapshotPdfCss() {
     .pdf-cv2-metric.calm{background:#F8FAFC;border-color:#E2E8F0;color:#475569}
     .pdf-cv2-metric.good strong,.pdf-cv2-metric.warn strong,.pdf-cv2-metric.danger strong,.pdf-cv2-metric.soft-danger strong,.pdf-cv2-metric.blue strong,.pdf-cv2-metric.calm strong{color:inherit}
 
-    .pdf-cover-bottom-grid{display:grid;grid-template-columns:1fr 170px;gap:14px;margin:8px 0 0;background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(45,35,85,.035)}
+    .pdf-cover-bottom-grid{display:grid;grid-template-columns:1fr 170px;gap:10px;margin:8px 0 0;background:#fff;border:1px solid rgba(35,25,70,.08);border-radius:14px;padding:12px;box-shadow:0 4px 12px rgba(45,35,85,.035)}
+    .pdf-cover-bar-col{min-width:0;overflow:hidden}
+    .pdf-cover-bar-col svg{display:block;width:100%;height:auto}
+
+    .pdf-insights-panel{display:flex;flex-direction:column;gap:5px}
+    .pdf-insights-title{font-size:10px;font-weight:950;color:#1E293B;text-align:center;margin-bottom:2px}
+    .pdf-insight-card{border-radius:8px;padding:7px 10px}
+    .pdf-insight-card span{display:block;font-size:7.5px;font-weight:800;color:#64748B}
+    .pdf-insight-card strong{display:block;font-size:11px;font-weight:950;margin-top:1px}
+    .pdf-insight-card.good{background:#ECFDF5;color:#047857}
+    .pdf-insight-card.warn{background:#FFF7ED;color:#C2410C}
+    .pdf-insight-card.blue{background:#EFF6FF;color:#1D4ED8}
+    .pdf-insight-tip{font-size:7px;font-weight:700;color:#64748B;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 8px;line-height:1.4}
+
+    .pdf-npa-alert-section{margin:8px 0 0;background:#fff;border:1.5px solid #FECACA;border-radius:12px;padding:10px 12px;box-shadow:0 4px 12px rgba(185,28,28,.06)}
+    .pdf-npa-alert-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+    .pdf-npa-alert-head h3{margin:0;font-size:11px;font-weight:950;color:#B91C1C}
+    .pdf-npa-alert-head span{font-size:9px;font-weight:900;color:#DC2626;background:#FEF2F2;padding:2px 8px;border-radius:6px}
+    .pdf-npa-empty{font-size:9px;font-weight:800;color:#64748B;text-align:center;padding:8px}
+    .pdf-npa-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.4px;color:#15122D}
+    .pdf-npa-table thead th{padding:4px 4px 3px;border-bottom:1.5px solid #FECACA;font-size:7px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;color:#991B1B;text-align:left;background:transparent}
+    .pdf-npa-table tbody td{padding:4px 4px;vertical-align:top;border-bottom:1px solid rgba(220,38,38,.08);line-height:1.18}
+    .pdf-npa-table tbody tr:last-child td{border-bottom:0}
+    .pdf-npa-table th.npa-num,.pdf-npa-table td.npa-num{width:16px;text-align:right;padding-right:4px;color:#4B5270;font-weight:950;font-size:7.6px}
+    .pdf-npa-table th.npa-customer,.pdf-npa-table td.npa-customer{width:auto}
+    .pdf-npa-table td.npa-customer strong{display:block;font-size:8.6px;line-height:1.15;color:#111B42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:900}
+    .pdf-npa-table th.npa-officer,.pdf-npa-table td.npa-officer{width:52px;font-size:7.6px;font-weight:850;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-npa-table th.npa-branch,.pdf-npa-table td.npa-branch{width:42px;font-size:7.4px;font-weight:820;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+    .pdf-npa-table th.npa-amount,.pdf-npa-table td.npa-amount{width:38px;font-size:8.4px;font-weight:950;color:#111B42;text-align:right;white-space:nowrap}
+    .pdf-npa-table th.npa-days,.pdf-npa-table td.npa-days{width:30px;font-size:9px;font-weight:950;color:#B91C1C;text-align:center}
+    .pdf-npa-table th.npa-amount,.pdf-npa-table th.npa-days{text-align:right}
+    .pdf-npa-more{font-size:8px;font-weight:800;color:#991B1B;text-align:center;padding:4px 0 0;font-style:italic}
 
     .pdf-cover-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:24px 0 18px}
     .pdf-cover-table{display:flex;flex-direction:column;gap:9px}
