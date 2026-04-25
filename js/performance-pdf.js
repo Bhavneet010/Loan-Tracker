@@ -30,9 +30,8 @@ function buildDetailedSnapshotPdfHtml() {
       </header>
       <div class="pdf-cover-hero">
         <div>
-          <span class="pdf-kicker">Detailed Performance Snapshot</span>
-          <h1>Risk First Officer Review</h1>
-          <p>Officer-wise workload, completed work, and renewal risk watch for immediate sharing.</p>
+          <h1>Granular Performance Matrix</h1>
+          <p>Account wise Performance data of all Officers</p>
         </div>
         <div class="pdf-risk-badge">
           <span>NPA Risk</span>
@@ -61,68 +60,85 @@ function buildDetailedSnapshotPdfHtml() {
   </div>`;
 }
 
-function miniFreshRow(loan, dateLabel, dateValue, index) {
-  const dateText = `${dateLabel} ${fmtDate(dateValue) || "-"}`.trim();
+const CAT_TAG={Agriculture:'A',SME:'S',Education:'E'};
+function catTag(loan){const l=CAT_TAG[loan.category]||'?';return `<span class="cat-tag cat-${l}">${l}</span>`;}
+
+function miniFreshRow(loan, dateValue, index) {
+  const dateText = fmtDate(dateValue) || "-";
   return `<tr>
     <td class="mini-num">${esc(index)}</td>
-    <td class="mini-customer"><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(loan.category || "Loan")}</small></td>
+    <td class="mini-customer"><strong>${catTag(loan)}${esc(loan.customerName || "Unnamed")}</strong></td>
     <td class="mini-branch">${esc(compactBranch(loan.branch))}</td>
     <td class="mini-amount">${esc(fmtAmt(loan.amount))}</td>
     <td class="mini-date">${esc(dateText)}</td>
   </tr>`;
 }
 
-function miniRenewalRow(loan, mode = "done", index) {
+function miniRiskRow(loan, index) {
   const rs = loan._rs || {};
-  const status = mode === "done"
-    ? `Renewed ${fmtDate(loan.renewedDate) || "-"}`
-    : riskStatusText(loan);
-  const ac = loan.acNumber ? `A/C ${loan.acNumber}` : "No A/C";
+  const daysToNpa = rs.daysUntilNpa != null ? rs.daysUntilNpa : '-';
   return `<tr class="risk-${esc(rs.status || "done")}">
     <td class="mini-num">${esc(index)}</td>
-    <td class="mini-customer"><strong>${esc(loan.customerName || "Unnamed customer")}</strong><small>${esc(ac)}</small></td>
+    <td class="mini-customer"><strong>${catTag(loan)}${esc(loan.customerName || "Unnamed")}</strong></td>
     <td class="mini-branch">${esc(compactBranch(loan.branch))}</td>
     <td class="mini-amount">${esc(fmtAmt(loan.amount))}</td>
-    <td class="mini-date">${esc(status)}</td>
+    <td class="mini-date mini-days">${esc(daysToNpa)}</td>
   </tr>`;
 }
+function miniRenewalDoneRow(loan, index) {
+  const dateText = fmtDate(loan.renewedDate) || "-";
+  return `<tr>
+    <td class="mini-num">${esc(index)}</td>
+    <td class="mini-customer"><strong>${catTag(loan)}${esc(loan.customerName || "Unnamed")}</strong></td>
+    <td class="mini-branch">${esc(compactBranch(loan.branch))}</td>
+    <td class="mini-amount">${esc(fmtAmt(loan.amount))}</td>
+    <td class="mini-date">${esc(dateText)}</td>
+  </tr>`;
+}
+function sortByDateAsc(loans, key) { return [...loans].sort((a, b) => (a[key]||'').localeCompare(b[key]||'')); }
+function sortByDaysToNpaAsc(loans) { return [...loans].sort((a, b) => (a._rs?.daysUntilNpa??9999)-(b._rs?.daysUntilNpa??9999)); }
 
 function buildOfficerPdfSections(row) {
   return [
     {
       title: "Risk Watch",
-      loans: row.riskWatch.loans,
-      renderer: (loan, index) => miniRenewalRow(loan, "risk", index),
+      loans: sortByDaysToNpaAsc(row.riskWatch.loans),
+      renderer: (loan, index) => miniRiskRow(loan, index),
       tone: row.riskWatch.npaRiskCount ? "danger" : "warn",
       sub: row.riskWatch.mode,
+      dateHeader: "Days to NPA",
     },
     {
       title: "Pending",
-      loans: row.pending,
-      renderer: (loan, index) => miniFreshRow(loan, "Recd", loan.receiveDate, index),
+      loans: sortByDateAsc(row.pending, 'receiveDate'),
+      renderer: (loan, index) => miniFreshRow(loan, loan.receiveDate, index),
       tone: "warn",
       sub: "Current fresh pipeline",
+      dateHeader: "Recd Date",
     },
     {
       title: "Sanctioned",
-      loans: row.sanctioned,
-      renderer: (loan, index) => miniFreshRow(loan, "Sanctioned", loan.sanctionDate, index),
+      loans: sortByDateAsc(row.sanctioned, 'sanctionDate'),
+      renderer: (loan, index) => miniFreshRow(loan, loan.sanctionDate, index),
       tone: "good",
       sub: "Month-to-date fresh sanctions",
+      dateHeader: "Sanctioned Date",
     },
     {
       title: "Returned",
-      loans: row.returned,
-      renderer: (loan, index) => miniFreshRow(loan, "Returned", loan.returnedDate, index),
+      loans: sortByDateAsc(row.returned, 'returnedDate'),
+      renderer: (loan, index) => miniFreshRow(loan, loan.returnedDate, index),
       tone: "soft-danger",
       sub: "Fresh cases needing rework",
+      dateHeader: "Returned Date",
     },
     {
       title: "Renewals Done",
-      loans: row.renewalsDone,
-      renderer: (loan, index) => miniRenewalRow(loan, "done", index),
+      loans: sortByDateAsc(row.renewalsDone, 'renewedDate'),
+      renderer: (loan, index) => miniRenewalDoneRow(loan, index),
       tone: "blue",
       sub: "Month-to-date completions",
+      dateHeader: "Renewed Date",
     },
   ];
 }
@@ -134,9 +150,9 @@ function paginateOfficerPdfSections(row) {
     emittedEmpty: false,
   }));
   const pages = [];
-  const firstPageUnits = 29;
-  const continuationUnits = 36;
-  const sectionBaseUnits = 3;
+  const firstPageUnits = 40;
+  const continuationUnits = 48;
+  const sectionBaseUnits = 2;
 
   while (source.some(section => section.cursor < section.loans.length || (!section.loans.length && !section.emittedEmpty))) {
     const chunks = [];
@@ -217,13 +233,14 @@ function compactPdfSectionV2(section) {
   const title = section.continuedBefore ? `${section.title} continued` : section.title;
   const sub = section.continuedAfter ? `${section.sub} - continued on next page` : section.sub;
   const start = section.start || 0;
+  const dateHeader = section.dateHeader || "Key Date";
 
   const head = `<thead><tr>
     <th class="mini-num">#</th>
     <th class="mini-customer">Customer</th>
-    <th class="mini-branch">Branch</th>
+    <th class="mini-branch">Br</th>
     <th class="mini-amount">Rs L</th>
-    <th class="mini-date">Key Date</th>
+    <th class="mini-date">${esc(dateHeader)}</th>
   </tr></thead>`;
 
   let body;
@@ -464,13 +481,17 @@ function detailedSnapshotPdfCss() {
     .pdf-mini-table tbody tr:last-child td{border-bottom:0}
     .pdf-mini-table tbody tr.mini-blank td{visibility:hidden;border-bottom:0}
     .pdf-mini-table tbody tr.mini-empty td{text-align:center;color:#8D88A6;font-size:9px;font-weight:850;padding:14px 6px;background:#FAF9FE;border-bottom:0}
-    .pdf-mini-table th.mini-num,.pdf-mini-table td.mini-num{width:18px;color:#4B5270;font-weight:950;font-size:7.6px;text-align:right;padding-right:6px}
+    .pdf-mini-table th.mini-num,.pdf-mini-table td.mini-num{width:16px;color:#4B5270;font-weight:950;font-size:7.6px;text-align:right;padding-right:4px}
     .pdf-mini-table th.mini-customer,.pdf-mini-table td.mini-customer{width:auto}
-    .pdf-mini-table th.mini-branch,.pdf-mini-table td.mini-branch{width:78px;font-size:7.4px;font-weight:820;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .pdf-mini-table th.mini-amount,.pdf-mini-table td.mini-amount{width:46px;font-size:8.4px;font-weight:950;color:#111B42;text-align:right;white-space:nowrap}
-    .pdf-mini-table th.mini-date,.pdf-mini-table td.mini-date{width:90px;font-size:7.4px;font-weight:820;color:#475569;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .pdf-mini-table td.mini-customer strong{display:block;font-size:9px;line-height:1.1;color:#111B42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:900}
-    .pdf-mini-table td.mini-customer small{display:block;margin-top:1px;font-size:7.2px;font-weight:850;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.04em;text-transform:uppercase}
+    .pdf-mini-table th.mini-branch,.pdf-mini-table td.mini-branch{width:40px;font-size:7.4px;font-weight:820;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+    .pdf-mini-table th.mini-amount,.pdf-mini-table td.mini-amount{width:40px;font-size:8.4px;font-weight:950;color:#111B42;text-align:right;white-space:nowrap}
+    .pdf-mini-table th.mini-date,.pdf-mini-table td.mini-date{width:70px;font-size:7.4px;font-weight:820;color:#475569;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-mini-table td.mini-customer strong{display:block;font-size:9px;line-height:1.15;color:#111B42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:900}
+    .pdf-mini-table td.mini-date.mini-days{font-size:9px;font-weight:950;color:#B91C1C;text-align:center}
+    .cat-tag{display:inline-block;font-size:6.5px;font-weight:950;padding:1px 3px;border-radius:3px;margin-right:3px;vertical-align:middle;letter-spacing:.04em;color:#fff}
+    .cat-tag.cat-A{background:#047857}
+    .cat-tag.cat-S{background:#1D4ED8}
+    .cat-tag.cat-E{background:#9333EA}
 
     .pdf-footer{position:absolute;left:28px;right:28px;bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:14px;color:#8983A1;font-size:9px;font-weight:850}
     .pdf-footer-brand{display:flex;align-items:center;gap:6px;color:#0B173F;font-weight:900}
@@ -482,4 +503,4 @@ function detailedSnapshotPdfCss() {
 }
 
 
-export { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRenewalRow, buildOfficerPdfSections, paginateOfficerPdfSections, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss };
+export { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSections, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss };
