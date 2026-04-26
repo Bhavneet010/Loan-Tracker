@@ -1,6 +1,7 @@
 import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
 import { esc, toast } from "./utils.js";
+import { renderMonthEndSettings } from "./month-end.js";
 
 /* ── SETTINGS UI ── */
 export function renderSettingsList() {
@@ -41,6 +42,14 @@ export function renderSettingsList() {
       <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#F59E0B,#B45309);" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>
       <input type="file" id="csvFileInput" style="display:none;" onchange="handleCsvUpload(event)">
       <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">📥 Upload CSV</button>`;
+  } else if (S.settingsTab === 'monthend') {
+    const label = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.45;">Generate the previous month PDF first. After admin reviews it, use the cleanup button separately.</div>
+      <button type="button" id="monthEndSnapshotBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:14px;background:linear-gradient(135deg,#13234C,#2563EB);" onclick="runMonthEndSnapshot()">Generate ${esc(label)} Snapshot</button>
+      <button type="button" id="monthEndCleanupBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:14px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="runMonthEndCleanup()">Clean ${esc(label)} Data</button>
+      <div style="font-size:12px;font-weight:800;color:#4A4467;text-transform:uppercase;letter-spacing:.06em;margin:8px 0;">Previous Month Dashboards</div>
+      <div id="monthEndHistory"></div>`;
+    renderMonthEndSettings();
   }
 }
 

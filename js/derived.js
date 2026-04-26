@@ -13,13 +13,24 @@ export function getLoanMetrics() {
   const day = todayStr();
   if (cache && cacheLoans === S.loans && cacheDay === day) return cache;
 
-  const thisMonth = day.slice(0, 7);
+  cache = buildLoanMetricsForMonth(day.slice(0, 7), day);
+  cacheLoans = S.loans;
+  cacheDay = day;
+  return cache;
+}
+
+export function getLoanMetricsForMonth(month, day = todayStr()) {
+  return buildLoanMetricsForMonth(month || day.slice(0, 7), day);
+}
+
+function buildLoanMetricsForMonth(thisMonth, day) {
   const fresh = S.loans.filter(isFreshCC);
   const pending = fresh.filter(loan => loan.status === "pending");
   const sanctioned = fresh.filter(loan => loan.status === "sanctioned");
   const returned = fresh.filter(loan => loan.status === "returned");
   const sanctionedToday = sanctioned.filter(loan => loan.sanctionDate === day);
   const sanctionedThisMonth = sanctioned.filter(loan => (loan.sanctionDate || "").startsWith(thisMonth));
+  const returnedThisMonth = returned.filter(loan => (loan.returnedDate || "").startsWith(thisMonth));
   const renewals = S.loans
     .filter(loan => loan.category === "SME" && loan.sanctionDate && !loan.isTermLoan)
     .map(loan => ({ ...loan, _rs: computeRenewalStatus(loan) }))
@@ -43,13 +54,14 @@ export function getLoanMetrics() {
     rows: renewalOfficerRows,
   };
 
-  cache = {
+  return {
     day,
     thisMonth,
     fresh,
     pending,
     sanctioned,
     returned,
+    returnedThisMonth,
     sanctionedToday,
     sanctionedThisMonth,
     renewals,
@@ -60,9 +72,6 @@ export function getLoanMetrics() {
     urgentRenewals,
     renewalOfficerSummary,
   };
-  cacheLoans = S.loans;
-  cacheDay = day;
-  return cache;
 }
 
 function buildRenewalOfficerRows(renewals, dueSoon, overdue) {
