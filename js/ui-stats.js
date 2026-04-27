@@ -48,7 +48,7 @@ export function updateHero() {
       rnwStat('done', `Renewals Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green', '', '') +
       rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber', metrics.renewalDueSoon.length ? `${metrics.renewalDueSoon.length} pending` : '', 'stat-badge-warn') +
       rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red', metrics.renewalOverdue.length ? 'Action needed' : '', 'stat-badge-danger') +
-      rnwStat('all', 'All CC Accounts', metrics.renewals, 'rnw-grad-darkred', '', '');
+      rnwStat('all', 'All CC Accounts', metrics.renewals, '', '', '');
     return;
   }
   
