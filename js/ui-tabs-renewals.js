@@ -1,6 +1,6 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
-import { esc, fmtAmt, initials, officerColor } from "./utils.js";
+import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
 
@@ -70,7 +70,10 @@ export function applyRenewalFilters(enriched) {
   let out = enriched;
   if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => l.allocatedTo === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
-  if (S.renewalFilter.branch !== 'All') out = out.filter(l => l.branch === S.renewalFilter.branch);
+  if (S.renewalFilter.branch !== 'All') {
+    const filterCode = branchCode(S.renewalFilter.branch);
+    out = out.filter(l => branchCode(l.branch) === filterCode);
+  }
   if (S.renewalFilter.completion === 'DatesMissing') out = out.filter(hasMissingRenewalDates);
   else if (S.renewalFilter.completion === 'Complete') out = out.filter(l => !l.renewedDate || !hasMissingRenewalDates(l));
   return out;
