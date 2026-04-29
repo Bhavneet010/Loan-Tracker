@@ -1,22 +1,12 @@
 import { collection, doc, limit, onSnapshot, orderBy, query, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S } from "./state.js";
-import { fmtAmt, esc, toast } from "./utils.js";
+import { fmtAmt, esc, toast, timeAgo } from "./utils.js";
 
 const NOTIFICATION_LIMIT = 75;
 const typeIcon = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎' };
 const typeLabel = { added: 'New loan added', sanctioned: 'Loan sanctioned', returned: 'Loan returned', edited: 'Loan updated' };
 const typeCls = { added: 'notif-added', sanctioned: 'notif-sanctioned', returned: 'notif-returned', edited: 'notif-edited' };
-
-function timeAgo(ts) {
-  if (!ts) return '';
-  const mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
 
 function notificationCard(n) {
   const unread = !(n.readBy || []).includes(S.user);

@@ -1,4 +1,4 @@
-import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing } from "./utils.js";
+import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing, timeAgo } from "./utils.js";
 import { S } from "./state.js";
 
 export function loanCard(loan, actions, variant = '') {
@@ -49,6 +49,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '') {
     <div class="loan-detail">
       <div class="loan-collapse" onclick="toggleExpand('${loan.id}')">▲ collapse</div>
       ${loanCard(loan, actions, cardVariant)}
+      ${auditTrailHtml(loan.id)}
     </div>
   </div>`;
 }
@@ -129,8 +130,26 @@ export function renewalItemHtml(loan, rs) {
             ${S.isAdmin ? `<button class="btn btn-del-icon" onclick="${S.renewalTab === 'done' ? `undoRenewalDone('${loan.id}')` : `deleteLoan('${loan.id}')`}" title="${S.renewalTab === 'done' ? 'Undo Renewal Done' : 'Delete'}">🗑</button>` : ''}
           </div>
         </div>
+        ${auditTrailHtml(loan.id)}
         <div class="loan-collapse" onclick="toggleExpand('${itemId}')">▲ hide details</div>
       </div>
     </div>
   </div>`;
+}
+
+function auditTrailHtml(loanId) {
+  const entries = S.notifications.filter(n => n.loanId === loanId).slice(0, 10);
+  if (!entries.length) return '';
+  const icons = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎' };
+  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated' };
+  const rows = entries.map(n => `
+    <div class="audit-row">
+      <span class="audit-icon audit-${esc(n.type)}">${icons[n.type] || '•'}</span>
+      <span class="audit-text">
+        <span class="audit-action">${labels[n.type] || esc(n.type)}</span>
+        <span class="audit-by">by ${esc(n.by || '?')}</span>
+      </span>
+      <span class="audit-time">${timeAgo(n.timestamp)}</span>
+    </div>`).join('');
+  return `<div class="audit-trail"><div class="audit-head">Activity</div>${rows}</div>`;
 }

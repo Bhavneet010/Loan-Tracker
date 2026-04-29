@@ -1,0 +1,49 @@
+/* Tasks mode button */
+.mode-btn.active.tasks-btn{background:linear-gradient(135deg,#F59E0B,#B45309);box-shadow:0 2px 8px rgba(245,158,11,0.35);}
+body.dark .mode-btn.active.tasks-btn{background:linear-gradient(135deg,#F59E0B,#B45309);}
+
+/* Tasks hero stat cards */
+.tasks-stat-card{cursor:default;}
+.tasks-stat-num{font-size:28px;font-weight:800;line-height:1.1;}
+.tasks-stat--amber{border-left:3px solid var(--amber);}
+.tasks-stat--red{border-left:3px solid var(--red);}
+.tasks-stat--purple{border-left:3px solid var(--p1);}
+
+/* Tasks header */
+.tasks-header{padding:14px 2px 12px;}
+.tasks-title{font-size:20px;font-weight:800;color:var(--text1);letter-spacing:-0.4px;}
+.tasks-subtitle{font-size:12px;color:var(--text3);margin-top:2px;}
+
+/* Section */
+.tasks-section{margin-bottom:16px;}
+.tasks-sec-head{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.tasks-sec-icon{font-size:14px;}
+.tasks-sec-title{font-size:13px;font-weight:700;color:var(--text1);}
+.tasks-sec-count{font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;}
+.tasks-sec-count--amber{background:var(--amber-bg);color:var(--amber);}
+.tasks-sec-count--red{background:var(--red-bg);color:var(--red);}
+.tasks-sec-count--purple{background:var(--p-bg);color:var(--p1);}
+
+/* Task items */
+.task-item{
+  background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.85);border-radius:14px;
+  padding:10px 12px;margin-bottom:7px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 2px 8px rgba(107,95,191,0.05);
+}
+.task-item-info{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.task-bcode{font-size:10px;font-weight:800;color:var(--text3);flex-shrink:0;}
+.task-name{font-size:12px;font-weight:600;color:var(--text1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.task-meta{font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;flex-shrink:0;}
+.task-status-tag{flex-shrink:0;}
+.task-actions{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.btn.btn-sm{padding:5px 10px;font-size:11px;font-weight:700;border-radius:8px;}
+
+/* All clear */
+.tasks-all-clear{text-align:center;padding:60px 20px;}
+.tasks-clear-icon{font-size:48px;margin-bottom:12px;}
+.tasks-clear-title{font-size:18px;font-weight:800;color:var(--text1);margin-bottom:6px;}
+.tasks-clear-sub{font-size:13px;color:var(--text3);}
+
+body.dark .task-item{background:rgba(30,28,58,0.75);border-color:rgba(80,70,130,0.3);}

@@ -1,6 +1,6 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
-import { fmtAmt } from "./utils.js";
+import { fmtAmt, daysPending } from "./utils.js";
 
 /* BADGES */
 export function updateBadges() {
@@ -16,12 +16,23 @@ export function updateBadges() {
   
   const rnwEl = document.getElementById('b-renewals');
   if (rnwEl) rnwEl.textContent = metrics.urgentRenewals.length || '';
-  
+
   const setB = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n || ''; };
   setB('b-rnw-done', metrics.renewalDoneThisMonth.length);
   setB('b-rnw-due-soon', metrics.renewalDueSoon.length);
   setB('b-rnw-overdue', metrics.renewalOverdue.length);
   setB('b-rnw-all-cc', metrics.renewals.length);
+
+  const bTasks = document.getElementById('b-tasks');
+  if (bTasks) {
+    const isVisible = l => S.isAdmin || l.allocatedTo === S.user;
+    const taskCount =
+      metrics.pending.filter(l => isVisible(l) && daysPending(l.receiveDate) > 7).length +
+      metrics.renewalDueSoon.filter(l => isVisible(l) && !l.renewedDate).length +
+      metrics.renewalOverdue.filter(l => isVisible(l) && !l.renewedDate).length +
+      metrics.renewalDatesMissing.filter(isVisible).length;
+    bTasks.textContent = taskCount || '';
+  }
 }
 
 /* HERO STATS */
@@ -29,6 +40,27 @@ export function updateHero() {
   const sc = document.getElementById('statsScroll');
   if (!sc) return;
   const metrics = getLoanMetrics();
+
+  if (S.appMode === 'tasks') {
+    const isVisible = l => S.isAdmin || l.allocatedTo === S.user;
+    const overdueLoans = metrics.pending.filter(l => isVisible(l) && daysPending(l.receiveDate) > 7);
+    const dueSoon = metrics.renewalDueSoon.filter(l => isVisible(l) && !l.renewedDate);
+    const overdueRenewals = metrics.renewalOverdue.filter(l => isVisible(l) && !l.renewedDate);
+    const datesMissing = metrics.renewalDatesMissing.filter(isVisible);
+    const taskStat = (label, arr, cls) =>
+      `<div class="stat tasks-stat-card tasks-stat--${cls}">
+        <div class="stat-l">${label}</div>
+        <div class="stat-v tasks-stat-num">${arr.length}</div>
+        <div class="stat-s">₹${fmtAmt(sumAmount(arr))}L</div>
+      </div>`;
+    sc.classList.remove('rnw-grid');
+    sc.innerHTML =
+      taskStat('⏳ Overdue Loans', overdueLoans, 'amber') +
+      taskStat('⏰ Due Soon', dueSoon, 'amber') +
+      taskStat('⚠ Overdue Rnw', overdueRenewals, 'red') +
+      taskStat('📋 Missing Dates', datesMissing, 'purple');
+    return;
+  }
 
   if (S.appMode === 'renewals') {
     const monthName = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(metrics.thisMonth.slice(5)) - 1];

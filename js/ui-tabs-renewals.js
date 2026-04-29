@@ -3,8 +3,10 @@ import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
+import { renderCalendar } from "./ui-calendar.js";
 
 export function renderRenewals(c) {
+  if (S.renewalView === 'calendar') { renderCalendar(c); return; }
   const metrics = getLoanMetrics();
   const enriched = metrics.renewals;
   let tabFiltered = enriched;
@@ -50,6 +52,7 @@ export function renderRenewals(c) {
       <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
       <span>Show NPA</span>
     </label>` : ''}
+    <button class="fs-btn cal-toggle-btn ${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView(S.renewalView==='calendar'?'list':'calendar')">📅 Cal</button>
     <div class="fs-pop" style="${filterStyle}">
       <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Dates missing' }, { v: 'Complete', label: 'Dates complete' }], S.renewalFilter.completion)}
       <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}

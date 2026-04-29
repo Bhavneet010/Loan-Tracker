@@ -77,6 +77,7 @@ window.setFreshTab = function (tab) {
 };
 
 window.setAppMode = function (v) {
+  if (S.appMode === 'renewals' && v !== 'renewals') { S.renewalView = 'list'; S.calendarOpenDay = null; }
   S.appMode = v; S.openPop = null;
   localStorage.setItem('lpMode', v);
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-' + v));

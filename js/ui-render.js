@@ -4,6 +4,7 @@ import { S } from "./state.js";
 import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
 import { renderRenewals } from "./ui-tabs-renewals.js";
+import { renderTasks } from "./ui-tasks.js";
 
 let renderQueued = false;
 
@@ -21,7 +22,8 @@ export function render() {
   if (!c) return;
 
   if (S.appMode === 'renewals') { renderRenewals(c); return; }
-  
+  if (S.appMode === 'tasks') { renderTasks(c); return; }
+
   if (S.tab === 'pending') renderPending(c);
   else if (S.tab === 'sanctioned') renderSanctioned(c);
   else if (S.tab === 'returned') renderReturned(c);
@@ -61,6 +63,21 @@ window.toggleRenewalOfficers = function() {
 
 window.toggleRenewalNpa = function(show) {
   S.renewalShowNpa = !!show;
+  render();
+};
+
+window.setRenewalView = function(v) { S.renewalView = v; render(); };
+window.calendarNavMonth = function(delta) {
+  if (!S.calendarState) return;
+  let { year, month } = S.calendarState;
+  month += delta;
+  if (month > 11) { month = 0; year++; }
+  if (month < 0)  { month = 11; year--; }
+  S.calendarState = { year, month };
+  render();
+};
+window.toggleCalendarDay = function(dateStr) {
+  S.calendarOpenDay = S.calendarOpenDay === dateStr ? null : dateStr;
   render();
 };
 
