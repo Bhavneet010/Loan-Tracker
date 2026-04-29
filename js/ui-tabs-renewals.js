@@ -63,7 +63,7 @@ export function renderRenewals(c) {
 
   const officerViewer = renewalOfficerViewerHtml(buildVisibleRenewalOfficerSummary(metrics));
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
-  c.innerHTML = `${officerViewer}${fsBar}<div class="sec-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div></div>${list}`;
+  c.innerHTML = `${officerViewer}${fsBar}<div class="sec-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${list}`;
 }
 
 export function applyRenewalFilters(enriched) {

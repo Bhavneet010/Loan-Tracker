@@ -156,4 +156,13 @@ window.setSettingsTab = function (tab) {
 window.toggleExpand = function (id) {
   const el = document.getElementById('li-' + id);
   if (el) el.classList.toggle('expanded');
+  const hasExpanded = !!document.querySelector('.loan-item.expanded');
+  document.querySelectorAll('.sec-collapse-btn').forEach(btn => {
+    btn.style.display = hasExpanded ? '' : 'none';
+  });
+};
+
+window.collapseAll = function () {
+  document.querySelectorAll('.loan-item.expanded').forEach(el => el.classList.remove('expanded'));
+  document.querySelectorAll('.sec-collapse-btn').forEach(btn => { btn.style.display = 'none'; });
 };

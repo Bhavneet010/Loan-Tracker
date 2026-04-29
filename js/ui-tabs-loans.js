@@ -24,7 +24,7 @@ export function renderPending(c) {
       return compactLoanItem(l, actions, days > 7 ? 'overdue' : '');
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
 }
 
 export function renderSanctioned(c) {
@@ -41,7 +41,7 @@ export function renderSanctioned(c) {
       return compactLoanItem(l, actions, '', 'sanctioned');
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
 }
 
 export function renderReturned(c) {
@@ -59,5 +59,5 @@ export function renderReturned(c) {
       return compactLoanItem(l, actions, '', 'returned');
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
 }
