@@ -30,9 +30,10 @@
   <!-- HEADER -->
   <div class="header">
     <div class="header-top">
-      <div class="brand">
-        <div class="brand-av">
+      <div class="brand" onclick="setAppMode(S.appMode==='tasks'?'fresh':'tasks')" title="Today's Tasks" style="cursor:pointer;">
+        <div class="brand-av brand-av--tasks-trigger">
           <img src="icon-192.png" alt="" width="38" height="38">
+          <span class="brand-tasks-badge" id="b-tasks"></span>
         </div>
         <div>
           <div class="brand-name">निर्णय</div>
@@ -58,7 +59,6 @@
     <div class="mode-toggle-bar">
       <button class="mode-btn active" id="modeBtn-fresh" onclick="setAppMode('fresh')">Fresh Loans</button>
       <button class="mode-btn renewals-btn" id="modeBtn-renewals" onclick="setAppMode('renewals')">♻ Renewals <span class="mode-badge" id="b-renewals"></span></button>
-      <button class="mode-btn tasks-btn" id="modeBtn-tasks" onclick="setAppMode('tasks')">✓ Tasks <span class="mode-badge" id="b-tasks"></span></button>
     </div>
   </div>
 

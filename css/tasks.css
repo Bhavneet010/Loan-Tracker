@@ -1,6 +1,19 @@
-/* Tasks mode button */
-.mode-btn.active.tasks-btn{background:linear-gradient(135deg,#F59E0B,#B45309);box-shadow:0 2px 8px rgba(245,158,11,0.35);}
-body.dark .mode-btn.active.tasks-btn{background:linear-gradient(135deg,#F59E0B,#B45309);}
+/* Brand logo tasks trigger */
+.brand-av--tasks-trigger{position:relative;display:inline-flex;}
+.brand-tasks-badge{
+  position:absolute;top:-4px;right:-4px;
+  min-width:16px;height:16px;border-radius:8px;
+  background:rgba(239,68,68,0.9);color:#fff;
+  font-size:9px;font-weight:800;padding:0 3px;line-height:16px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1.5px solid #fff;
+}
+.brand-tasks-badge:empty{display:none;}
+.brand--tasks-active .brand-av img{
+  outline:2.5px solid #F59E0B;outline-offset:2px;border-radius:10px;
+}
+.brand{transition:opacity 0.15s;}
+.brand:active{opacity:0.75;}
 
 /* Tasks hero stat cards */
 .tasks-stat-card{cursor:default;}

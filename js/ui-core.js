@@ -81,6 +81,7 @@ window.setAppMode = function (v) {
   S.appMode = v; S.openPop = null;
   localStorage.setItem('lpMode', v);
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-' + v));
+  document.querySelector('.brand')?.classList.toggle('brand--tasks-active', v === 'tasks');
   const mainTabs = document.getElementById('mainTabs');
   if (mainTabs) mainTabs.style.display = v === 'fresh' ? '' : 'none';
   window.render();
