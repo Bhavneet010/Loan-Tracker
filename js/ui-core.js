@@ -76,6 +76,10 @@ window.setFreshTab = function (tab) {
   window.render();
 };
 
+window.toggleTasksMode = function () {
+  window.setAppMode(S.appMode === 'tasks' ? 'fresh' : 'tasks');
+};
+
 window.setAppMode = function (v) {
   if (S.appMode === 'renewals' && v !== 'renewals') { S.renewalView = 'list'; S.calendarOpenDay = null; }
   S.appMode = v; S.openPop = null;
