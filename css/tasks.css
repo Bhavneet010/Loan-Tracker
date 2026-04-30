@@ -1,16 +1,17 @@
 /* Brand logo tasks trigger */
-.brand-av--tasks-trigger{position:relative;display:inline-flex;}
+.brand-av-wrap{position:relative;display:inline-flex;flex-shrink:0;}
 .brand-tasks-badge{
-  position:absolute;top:-4px;right:-4px;
+  position:absolute;top:-5px;right:-5px;z-index:10;
   min-width:16px;height:16px;border-radius:8px;
   background:rgba(239,68,68,0.9);color:#fff;
   font-size:9px;font-weight:800;padding:0 3px;line-height:16px;
   display:inline-flex;align-items:center;justify-content:center;
-  border:1.5px solid #fff;
+  border:2px solid var(--header-bg, #f0eeff);
+  pointer-events:none;
 }
 .brand-tasks-badge:empty{display:none;}
-.brand--tasks-active .brand-av img{
-  outline:2.5px solid #F59E0B;outline-offset:2px;border-radius:10px;
+.brand--tasks-active .brand-av{
+  outline:2.5px solid #F59E0B;outline-offset:2px;border-radius:12px;
 }
 .brand{transition:opacity 0.15s;}
 .brand:active{opacity:0.75;}
