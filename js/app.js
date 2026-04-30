@@ -52,6 +52,10 @@ async function init() {
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-renewals'));
     const mt = document.getElementById('mainTabs');
     if (mt) mt.style.display = 'none';
+  } else {
+    S.appMode = 'tasks';
+    document.querySelector('.brand')?.classList.add('brand--tasks-active');
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   }
   
   status('Checking authentication...');

@@ -82,6 +82,7 @@ window.toggleTasksMode = function () {
 
 window.setAppMode = function (v) {
   if (S.appMode === 'renewals' && v !== 'renewals') { S.renewalView = 'list'; S.calendarOpenDay = null; }
+  if (S.appMode === 'tasks' && v !== 'tasks') { S.taskView = 'overview'; S.taskCategory = null; S.taskOfficer = null; }
   S.appMode = v; S.openPop = null;
   localStorage.setItem('lpMode', v);
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-' + v));

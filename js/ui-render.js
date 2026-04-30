@@ -81,6 +81,21 @@ window.toggleCalendarDay = function(dateStr) {
   render();
 };
 
+window.setTaskCategory = function(cat) {
+  S.taskCategory = cat;
+  S.taskView = S.isAdmin ? 'officers' : 'detail';
+  S.taskOfficer = S.isAdmin ? null : S.user;
+  render();
+};
+window.setTaskOfficer = function(officer) { S.taskOfficer = officer; S.taskView = 'detail'; render(); };
+window.taskBack = function() {
+  if (S.taskView === 'detail') {
+    if (S.isAdmin) { S.taskView = 'officers'; S.taskOfficer = null; }
+    else { S.taskView = 'overview'; S.taskCategory = null; }
+  } else if (S.taskView === 'officers') { S.taskView = 'overview'; S.taskCategory = null; }
+  render();
+};
+
 // Export specifically for importer.js
 export { renderSettingsList } from "./ui-settings.js";
 export { updateBadges, updateHero };
