@@ -17,7 +17,7 @@ export function render() {
   updateBadges();
   
   const sw = document.getElementById('searchWrap');
-  if (sw) sw.style.display = '';
+  if (sw) sw.style.display = S.appMode === 'tasks' ? 'none' : '';
   const c = document.getElementById('content');
   if (!c) return;
 

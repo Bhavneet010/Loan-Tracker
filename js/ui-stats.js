@@ -42,27 +42,23 @@ export function updateHero() {
   const metrics = getLoanMetrics();
 
   if (S.appMode === 'tasks') {
+    sc.style.display = 'none';
     const isVisible = l => S.isAdmin || l.allocatedTo === S.user;
-    const overdueLoans = metrics.pending.filter(l => isVisible(l) && daysPending(l.receiveDate) > 7);
-    const dueSoon = metrics.renewalDueSoon.filter(l => isVisible(l) && !l.renewedDate);
-    const overdueRenewals = metrics.renewalOverdue.filter(l => isVisible(l) && !l.renewedDate);
+    const pendingTen = metrics.pending.filter(l => isVisible(l) && daysPending(l.receiveDate) > 10);
+    const npaRisk = metrics.renewalOverdue.filter(l =>
+      isVisible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' &&
+      l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15
+    );
     const datesMissing = metrics.renewalDatesMissing.filter(isVisible);
-    const taskStat = (label, arr, cls) =>
-      `<div class="stat tasks-stat-card tasks-stat--${cls}">
-        <div class="stat-l">${label}</div>
-        <div class="stat-v tasks-stat-num">${arr.length}</div>
-        <div class="stat-s">₹${fmtAmt(sumAmount(arr))}L</div>
-      </div>`;
     sc.classList.remove('rnw-grid');
-    sc.innerHTML =
-      taskStat('⏳ Overdue Loans', overdueLoans, 'amber') +
-      taskStat('⏰ Due Soon', dueSoon, 'amber') +
-      taskStat('⚠ Overdue Rnw', overdueRenewals, 'red') +
-      taskStat('📋 Missing Dates', datesMissing, 'purple');
+    sc.innerHTML = '';
+    const bTasks = document.getElementById('b-tasks');
+    if (bTasks) bTasks.textContent = (npaRisk.length + pendingTen.length + datesMissing.length) || '';
     return;
   }
 
   if (S.appMode === 'renewals') {
+    sc.style.display = '';
     const monthName = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(metrics.thisMonth.slice(5)) - 1];
     
     const rnwStat = (tab, label, arr, gradCls, badge, badgeCls) => {
@@ -84,6 +80,7 @@ export function updateHero() {
     return;
   }
   
+  sc.style.display = '';
   sc.classList.remove('rnw-grid');
   const freshStat = (tab, label, arr, subtitle, badge = '') => {
     const active = S.tab === tab;
