@@ -107,6 +107,7 @@ window.shareDailySnapshotJpeg = async function () {
     await Promise.all(SNAPSHOT_BG_ASSETS.map(ensureImageLoaded));
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const exportWidth = 680;
+    const hdScale = 4;
     const exportHost = document.createElement("div");
     const exportCard = card.cloneNode(true);
     exportHost.style.position = "fixed";
@@ -124,7 +125,7 @@ window.shareDailySnapshotJpeg = async function () {
     try {
       canvas = await window.html2canvas(exportCard, {
         backgroundColor: "#f1eff8",
-        scale: Math.min(4, Math.max(3, window.devicePixelRatio || 2)),
+        scale: hdScale,
         useCORS: true,
         width: exportWidth,
         windowWidth: exportWidth,
@@ -133,18 +134,14 @@ window.shareDailySnapshotJpeg = async function () {
       exportHost.remove();
     }
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.98));
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
 
-    const fileName = `daily-snapshot-${todayFileName()}.jpg`;
+    const fileName = `daily-snapshot-hd-${todayFileName()}.jpg`;
     const file = new File([blob], fileName, { type: "image/jpeg" });
 
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: "Daily Snapshot",
-        text: `Daily Performance Update ${formatShareDate(new Date())}`,
-      });
+      await navigator.share({ files: [file] });
       return;
     }
 
@@ -156,7 +153,7 @@ window.shareDailySnapshotJpeg = async function () {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast("JPEG downloaded");
+    toast("HD JPEG downloaded");
   } catch (err) {
     console.warn("[Performance] Snapshot share failed:", err);
     toast("Unable to share snapshot right now");
