@@ -46,17 +46,17 @@ async function init() {
   }
   
   status('Setting app mode...');
-  const savedMode = localStorage.getItem('lpMode');
-  if (savedMode === 'renewals') {
-    S.appMode = 'renewals';
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-renewals'));
-    const mt = document.getElementById('mainTabs');
-    if (mt) mt.style.display = 'none';
-  } else {
-    S.appMode = 'tasks';
-    document.querySelector('.brand')?.classList.add('brand--tasks-active');
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  }
+  S.appMode = 'tasks';
+  S.taskView = 'overview';
+  S.taskCategory = null;
+  S.taskOfficer = null;
+  S.renewalView = 'list';
+  S.calendarOpenDay = null;
+  localStorage.setItem('lpMode', 'tasks');
+  document.querySelector('.brand')?.classList.add('brand--tasks-active');
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  const mt = document.getElementById('mainTabs');
+  if (mt) mt.style.display = 'none';
   
   status('Checking authentication...');
   const su = localStorage.getItem('lpUser');
