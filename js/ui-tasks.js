@@ -48,6 +48,7 @@ function renderTaskOverview(c, metrics) {
   const activeKey = CRITICAL_META[S.taskCategory] ? S.taskCategory : pickDefaultCritical(critical);
   const totalCritical = Object.values(critical).reduce((sum, items) => sum + items.length, 0);
   const exposure = Object.values(critical).reduce((sum, items) => sum + sumAmount(items), 0);
+  const activeItems = critical[activeKey] || [];
 
   c.innerHTML = `
     ${performerBoardHtml(metrics)}
@@ -56,22 +57,30 @@ function renderTaskOverview(c, metrics) {
         <div>
           <div class="task-kicker">Critical Care</div>
           <div class="task-care-title">Highest risk accounts first</div>
+          <div class="task-care-sub">NPA risk, pending loans and missing renewal dates</div>
         </div>
-        <div class="task-pulse" aria-label="${totalCritical} critical tasks">
-          <svg viewBox="0 0 48 48" aria-hidden="true">
-            <circle class="task-pulse-track" cx="24" cy="24" r="18"></circle>
-            <circle class="task-pulse-fill" cx="24" cy="24" r="18" style="stroke-dashoffset:${pulseOffset(totalCritical)}"></circle>
-          </svg>
-          <span>${totalCritical}</span>
+        <div class="task-care-info">i</div>
+      </div>
+      <div class="task-risk-board">
+        <div class="task-risk-gauge">
+          <div class="task-risk-arc" style="--risk:${riskGaugePct(totalCritical)}%;"></div>
+          <div class="task-risk-value">${totalCritical}</div>
+          <div class="task-risk-label">Critical<br>accounts</div>
+        </div>
+        <div class="task-risk-load">
+          <div class="task-risk-icon">!</div>
+          <div>
+            <div class="task-risk-title">High priority load</div>
+            <div class="task-risk-amount">&#8377;${fmtAmt(exposure)}L</div>
+            <div class="task-risk-sub">Exposure at risk</div>
+          </div>
         </div>
       </div>
-      <div class="task-care-meta">
-        <span>${totalCritical} open</span>
-        <span>&#8377;${fmtAmt(exposure)}L exposure</span>
-        <span>Tap to expand</span>
+      <div class="task-critical-tabs">
+        ${Object.keys(CRITICAL_META).map(key => criticalTabHtml(key, critical[key], activeKey === key)).join('')}
       </div>
-      <div class="task-critical-list">
-        ${Object.keys(CRITICAL_META).map(key => criticalCardHtml(key, critical[key], activeKey === key)).join('')}
+      <div class="task-critical-detail task-critical-detail--${CRITICAL_META[activeKey].tone}">
+        ${criticalRowsHtml(activeKey, activeItems)}
       </div>
     </section>
     ${renewalTargetsHtml(metrics)}
@@ -97,34 +106,37 @@ function pickDefaultCritical(critical) {
   return Object.keys(CRITICAL_META).find(key => critical[key].length) || 'npa15';
 }
 
-function pulseOffset(n) {
-  const pct = Math.max(0.12, Math.min(0.95, n / 80));
-  return Math.round(113 - (113 * pct));
+function riskGaugePct(n) {
+  return Math.round(Math.max(18, Math.min(92, n * 4)));
 }
 
-function criticalCardHtml(key, items, active) {
+function criticalTabHtml(key, items, active) {
   const meta = CRITICAL_META[key];
   const total = sumAmount(items);
-  return `<div class="task-critical-card task-critical-card--${meta.tone} ${active ? 'active' : ''}">
-    <button type="button" class="task-critical-btn" onclick="toggleCriticalCare('${key}')" aria-expanded="${active}">
+  return `<button type="button" class="task-critical-tab task-critical-tab--${meta.tone} ${active ? 'active' : ''}" onclick="toggleCriticalCare('${key}')" aria-expanded="${active}">
       <span class="task-critical-mark"></span>
       <span class="task-critical-copy">
         <span class="task-critical-title">${meta.title}</span>
-        <span class="task-critical-sub">&#8377;${fmtAmt(total)}L exposure</span>
+        <span class="task-critical-count">${items.length}</span>
+        <span class="task-critical-sub">&#8377;${fmtAmt(total)}L</span>
       </span>
-      <span class="task-critical-count">${items.length}</span>
       <span class="task-critical-chevron">${active ? '&#8963;' : '&#8250;'}</span>
-    </button>
-    ${active ? criticalRowsHtml(key, items) : ''}
-  </div>`;
+    </button>`;
 }
 
 function criticalRowsHtml(key, items) {
   if (!items.length) return `<div class="task-critical-empty">All clear in this bucket.</div>`;
+  const total = items.length;
   return `<div class="task-critical-rows">
-    <div class="task-critical-sort">Sorted by urgency</div>
+    <div class="task-critical-sort">
+      <span>Sorted by urgency</span>
+      <span class="task-sort-icon">&#8645;</span>
+    </div>
+    <div class="task-critical-table-head">
+      <span>Branch</span><span>Borrower</span><span>${key === 'pending10' ? 'Days' : 'Status'}</span><span>Amt</span><span>Officer</span>
+    </div>
     ${items.slice(0, 5).map(loan => criticalLoanRowHtml(key, loan)).join('')}
-    ${items.length > 5 ? `<div class="task-critical-more">${items.length - 5} more account${items.length - 5 !== 1 ? 's' : ''}</div>` : ''}
+    ${items.length > 5 ? `<button type="button" class="task-critical-more">View all ${total} accounts &#8250;</button>` : ''}
   </div>`;
 }
 
@@ -134,22 +146,32 @@ function criticalLoanRowHtml(key, loan) {
     : key === 'pending10'
       ? `${daysPending(loan.receiveDate)}d pending`
       : 'Dates missing';
-  return `<div class="task-critical-row">
-    <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
-    <span class="task-critical-row-main">
-      <span><b>${esc(branchCode(loan.branch))}</b> ${esc(loan.customerName)}</span>
-      <small>${esc(status)} &middot; &#8377;${fmtAmt(loan.amount)}L</small>
-    </span>
-    <button type="button" class="task-open-btn" onclick="event.stopPropagation();editLoan('${loan.id}')">Open</button>
+  const statusShort = key === 'npa15'
+    ? `${loan._rs?.daysUntilNpa ?? 0}d`
+    : key === 'pending10'
+      ? `${daysPending(loan.receiveDate)}`
+      : 'Miss';
+  return `<div class="task-critical-row" onclick="editLoan('${loan.id}')">
+    <span class="task-branch-chip">${esc(branchCode(loan.branch))}</span>
+    <span class="task-critical-name">${esc(loan.customerName)}</span>
+    <span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>
+    <span class="task-critical-amt">&#8377;${fmtAmt(loan.amount)}L</span>
+    <span class="task-officer-mini" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
   </div>`;
 }
 
 function performerBoardHtml(metrics) {
   const freshBest = bestOfficer(metrics.sanctionedThisMonth);
   const renewalBest = bestOfficer(metrics.renewalDoneThisMonth);
-  return `<section class="task-performers" aria-label="Best performers">
-    ${performerCardHtml('Fresh sanctions', freshBest, 'fresh')}
-    ${performerCardHtml('Renewals done', renewalBest, 'renewal')}
+  return `<section class="task-performer-block" aria-label="Best performers">
+    <div class="task-performer-head">
+      <div><span class="task-performer-spark">✦</span><b>Best Performer</b></div>
+      <span>This month</span>
+    </div>
+    <div class="task-performer-grid">
+      ${performerCardHtml('Fresh sanctions', freshBest, 'fresh')}
+      ${performerCardHtml('Renewals done', renewalBest, 'renewal')}
+    </div>
   </section>`;
 }
 
@@ -170,15 +192,17 @@ function performerCardHtml(label, row, type) {
   const empty = row.count === 0;
   const name = empty ? 'No entries yet' : row.officer;
   return `<div class="task-performer task-performer--${type}">
-    <div class="task-performer-badge">${type === 'fresh' ? '&#9733;' : '&#10003;'}</div>
+    <div class="task-performer-ornament">${type === 'fresh' ? '&#127942;' : '&#127941;'}</div>
     <div class="task-performer-copy">
-      <div class="task-performer-label">Best Performer</div>
       <div class="task-performer-title">${label}</div>
-      <div class="task-performer-name">${esc(name)}</div>
-    </div>
-    <div class="task-performer-score">
-      <b>${row.count}</b>
-      <span>&#8377;${fmtAmt(row.amount)}L</span>
+      <div class="task-performer-line">
+        <span class="task-performer-av" style="background:${officerColor(row.officer).bg};">${initials(row.officer)}</span>
+        <span>
+          <b>${esc(name)}</b>
+          <small>${row.count} ${type === 'fresh' ? 'loans sanctioned' : 'renewals'}</small>
+        </span>
+      </div>
+      <div class="task-performer-amount">&#8377;${fmtAmt(row.amount)}L</div>
     </div>
   </div>`;
 }
