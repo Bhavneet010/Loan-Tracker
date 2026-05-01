@@ -50,7 +50,7 @@ async function init() {
   S.taskView = 'overview';
   S.taskCategory = null;
   S.taskOfficer = null;
-  S.renewalView = 'list';
+  S.renewalView = 'calendar';
   S.calendarOpenDay = null;
   localStorage.setItem('lpMode', 'tasks');
   document.querySelector('.brand')?.classList.add('brand--tasks-active');

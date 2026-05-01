@@ -3,10 +3,9 @@ import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
-import { renderCalendar } from "./ui-calendar.js";
+import { buildCalendarViewHtml } from "./ui-calendar.js";
 
 export function renderRenewals(c) {
-  if (S.renewalView === 'calendar') { renderCalendar(c); return; }
   const metrics = getLoanMetrics();
   const enriched = metrics.renewals;
   let tabFiltered = enriched;
@@ -14,9 +13,9 @@ export function renderRenewals(c) {
   else if (S.renewalTab === 'dates-missing') tabFiltered = metrics.renewalDatesMissing;
   else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
-  const canToggleNpa = ['due-soon', 'overdue', 'all'].includes(S.renewalTab);
+  const canToggleNpa = ['due-soon', 'overdue', 'all'].includes(S.renewalTab) || S.renewalView === 'calendar';
   if (canToggleNpa && !S.renewalShowNpa) tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
-  
+
   const sl = { daysFromSanction: 'Days', amount: 'Amount', officer: 'Officer', branch: 'Branch' };
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
   let sorted = [...applyRenewalFilters(tabFiltered)].sort((a, b) => {
@@ -25,34 +24,39 @@ export function renderRenewals(c) {
     else if (S.renewalSort.field === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
     else if (S.renewalSort.field === 'officer') { av = (a.allocatedTo || '').toLowerCase(); bv = (b.allocatedTo || '').toLowerCase(); }
     else if (S.renewalSort.field === 'branch') { av = (a.branch || '').toLowerCase(); bv = (b.branch || '').toLowerCase(); }
-    if (av < bv) return -1 * dir; if (av > bv) return 1 * dir; return 0;
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
   }).filter(searchMatch);
-  
+
   const total = sumAmount(sorted);
   const tabMeta = {
     'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
     'done': { title: 'Done This Month', empty: '♻', msg: 'No SME renewals completed this month' },
     'due-soon': { title: 'Due for Renewal Soon', empty: '⏰', msg: 'No accounts due within 30 days' },
-    'overdue': { title: 'Renewal Overdue', empty: '⚠', msg: 'No overdue renewal accounts' },
+    'overdue': { title: 'Renewal Overdue', empty: '!', msg: 'No overdue renewal accounts' },
     'all': { title: 'All CC Accounts', empty: '📋', msg: 'No CC accounts found' },
   }[S.renewalTab] || { title: 'SME CC Renewals', empty: '♻', msg: 'No renewals found' };
-  
+
   const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) + (S.renewalFilter.branch !== 'All' ? 1 : 0) + (S.renewalFilter.completion !== 'All' ? 1 : 0);
   const sortLabel = `${sl[S.renewalSort.field] || 'Days'} ${S.renewalSort.dir === 'asc' ? '↑' : '↓'}`;
-  
   const radio = (name, opts, cur) => opts.map(o => `<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur === o.v ? 'checked' : ''} onchange="${name === 'sortField' ? `setRenewalSort('${esc(o.v)}',null)` : name === 'sortDir' ? `setRenewalSort(null,'${esc(o.v)}')` : `setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
-  
+
   const filterStyle = S.openPop === 'rnwFilter' ? '' : 'display:none;';
   const sortStyle = S.openPop === 'rnwSort' ? '' : 'display:none;';
-  
-  const fsBar = `<div class="fs-bar" onclick="event.stopPropagation();">
-    <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">⚲ Filter<span class="fs-badge">${fc || ''}</span></button>
-    <button class="fs-btn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">↕ Sort <span class="fs-label">${sortLabel}</span></button>
+  const viewToggle = `<div class="rnw-view-toggle" role="group" aria-label="Renewal view">
+    <button type="button" class="${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('calendar')">Calendar</button>
+    <button type="button" class="${S.renewalView === 'list' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('list')">List</button>
+  </div>`;
+
+  const fsBar = `<div class="fs-bar rnw-control-row" onclick="event.stopPropagation();">
+    ${viewToggle}
+    <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">Filter<span class="fs-badge">${fc || ''}</span></button>
+    <button class="fs-btn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">Sort <span class="fs-label">${sortLabel}</span></button>
     ${canToggleNpa ? `<label class="rnw-npa-toggle" title="Show NPA accounts">
       <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
       <span>Show NPA</span>
     </label>` : ''}
-    <button class="fs-btn cal-toggle-btn" onclick="event.stopPropagation();setRenewalView('calendar')">📅 Cal</button>
     <div class="fs-pop" style="${filterStyle}">
       <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Integration pending' }, { v: 'Complete', label: 'Integration complete' }], S.renewalFilter.completion)}
       <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}
@@ -65,8 +69,11 @@ export function renderRenewals(c) {
   </div>`;
 
   const officerViewer = renewalOfficerViewerHtml(buildVisibleRenewalOfficerSummary(metrics));
+  const searchBar = `<div class="rnw-search-wrap"><input type="text" class="search-inp rnw-search-inp" placeholder="Search account or branch" value="${esc(S.search)}" oninput="handleSearch(this.value)"></div>`;
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
-  c.innerHTML = `${officerViewer}${fsBar}<div class="sec-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${list}`;
+  const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${list}`;
+  const mainContent = S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : listContent;
+  c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div>${mainContent}`;
 }
 
 export function applyRenewalFilters(enriched) {
@@ -88,12 +95,14 @@ function hasMissingRenewalDates(loan) {
 
 function buildVisibleRenewalOfficerSummary(metrics) {
   const includeLoan = loan => S.renewalShowNpa || loan._rs?.status !== 'npa';
-  const renewals = metrics.renewals.filter(includeLoan);
-  const dueSoon = metrics.renewalDueSoon.filter(includeLoan);
-  const overdue = metrics.renewalOverdue.filter(includeLoan);
+  const includeRoleLoan = loan => S.isAdmin || loan.allocatedTo === S.user;
+  const renewals = metrics.renewals.filter(includeLoan).filter(includeRoleLoan);
+  const dueSoon = metrics.renewalDueSoon.filter(includeLoan).filter(includeRoleLoan);
+  const overdue = metrics.renewalOverdue.filter(includeLoan).filter(includeRoleLoan);
   const rowsByOfficer = new Map();
 
-  S.officers.forEach(officer => {
+  const summaryOfficers = S.isAdmin ? S.officers : [S.user].filter(Boolean);
+  summaryOfficers.forEach(officer => {
     rowsByOfficer.set(officer, { officer, total: 0, od: 0, due: 0 });
   });
 

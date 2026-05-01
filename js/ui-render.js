@@ -20,7 +20,7 @@ export function render() {
   updateBadges();
   
   const sw = document.getElementById('searchWrap');
-  if (sw) sw.style.display = S.appMode === 'tasks' ? 'none' : '';
+  if (sw) sw.style.display = S.appMode === 'fresh' ? '' : 'none';
   const c = document.getElementById('content');
   if (!c) return;
 
@@ -52,7 +52,13 @@ window.setFilter = function(k, v) { S.filter[k] = v; render(); };
 window.setSort = function(f, d) { if (f) S.sort.field = f; if (d) S.sort.dir = d; render(); };
 window.setRenewalFilter = function(k, v) { S.renewalFilter[k] = S.renewalFilter[k] === v ? 'All' : v; render(); };
 window.setRenewalSort = function(f, d) { if (f) S.renewalSort.field = f; if (d) S.renewalSort.dir = d; render(); };
-window.setRenewalTab = function(t) { S.renewalTab = t; S.openPop = null; render(); };
+window.setRenewalTab = function(t) {
+  S.renewalTab = t;
+  S.renewalView = 'list';
+  S.calendarOpenDay = null;
+  S.openPop = null;
+  render();
+};
 window.setRenewalOfficer = function(officer) {
   S.renewalFilter.officer = S.renewalFilter.officer === officer ? 'All' : officer;
   S.openPop = null;

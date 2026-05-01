@@ -1,25 +1,37 @@
 import { S } from "./state.js";
 import { getLoanMetrics } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
+import { searchMatch } from "./ui-logic.js";
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS = ['M','T','W','T','F','S','S'];
 
-export function renderCalendar(c) {
+export function buildCalendarViewHtml(metrics = getLoanMetrics()) {
   if (!S.calendarState) {
     const now = new Date();
     S.calendarState = { year: now.getFullYear(), month: now.getMonth() };
   }
-  const metrics = getLoanMetrics();
   const renewals = getFilteredRenewals(metrics);
   const { year, month } = S.calendarState;
   const calData = buildCalendarData(renewals, year, month);
-  c.innerHTML = calendarHtml(calData, year, month);
+  return calendarHtml(calData, year, month);
+}
+
+export function renderCalendar(c) {
+  c.innerHTML = buildCalendarViewHtml();
 }
 
 function getFilteredRenewals(metrics) {
   let out = metrics.renewals.filter(l => !l.renewedDate);
-  return S.isAdmin ? out : out.filter(l => l.allocatedTo === S.user);
+  if (!S.isAdmin) out = out.filter(l => l.allocatedTo === S.user);
+  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
+  if (S.renewalFilter.branch !== 'All') {
+    const filterCode = branchCode(S.renewalFilter.branch);
+    out = out.filter(l => branchCode(l.branch) === filterCode);
+  }
+  if (!S.renewalShowNpa) out = out.filter(l => l._rs?.status !== 'npa');
+  out = out.filter(searchMatch);
+  return out;
 }
 
 function buildCalendarData(renewals, year, month) {
@@ -83,7 +95,6 @@ function calendarHtml(calData, year, month) {
         <span class="cal-month-label">${MONTHS[month]} ${year}</span>
         <div class="cal-nav-actions">
           <button class="cal-nav-btn" onclick="calendarNavMonth(1)">›</button>
-          <button class="cal-list-btn" onclick="setRenewalView('list')">List</button>
         </div>
       </div>
       ${monthTotal > 0 ? `<div class="cal-month-count">${monthTotal} NPA date${monthTotal !== 1 ? 's' : ''} this month</div>` : '<div class="cal-month-count cal-month-count--empty">No NPA dates this month</div>'}

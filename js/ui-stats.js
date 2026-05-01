@@ -50,22 +50,23 @@ export function updateHero() {
     sc.style.display = '';
     const monthName = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(metrics.thisMonth.slice(5)) - 1];
     
-    const rnwStat = (tab, label, arr, gradCls, badge, badgeCls) => {
+    const rnwStat = (tab, label, arr, gradCls) => {
       const active = S.renewalTab === tab;
       return `<div class="stat rnw-stat-card ${gradCls} ${active ? 'stat-rnw-active' : ''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
-        <div class="stat-l">${label}</div>
-        <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
-        <div class="stat-s">${arr.length} accounts</div>
-        ${badge ? `<div class="stat-badge ${badgeCls || ''}">${badge}</div>` : ''}
+        <div class="rnw-stat-copy">
+          <div class="stat-l">${label}</div>
+          <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
+        </div>
+        <div class="rnw-stat-count" aria-label="${arr.length} accounts">${arr.length}</div>
       </div>`;
     };
     
     sc.classList.add('rnw-grid');
     sc.innerHTML = 
-      rnwStat('done', `Renewals Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green', '', '') +
-      rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber', metrics.renewalDueSoon.length ? `${metrics.renewalDueSoon.length} pending` : '', 'stat-badge-warn') +
-      rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red', metrics.renewalOverdue.length ? 'Action needed' : '', 'stat-badge-danger') +
-      rnwStat('all', 'All CC Accounts', metrics.renewals, '', '', '');
+      rnwStat('done', `Renewals Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green') +
+      rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber') +
+      rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red') +
+      rnwStat('all', 'All CC Accounts', metrics.renewals, '');
     return;
   }
   

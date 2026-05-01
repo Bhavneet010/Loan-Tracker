@@ -19,7 +19,7 @@ export const S = {
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },
   renewalShowNpa: false,
   renewalOfficersExpanded: false,
-  renewalView: 'list',
+  renewalView: 'calendar',
   calendarState: null,
   calendarOpenDay: null,
   taskView: 'overview',
