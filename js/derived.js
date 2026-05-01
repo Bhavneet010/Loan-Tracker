@@ -39,6 +39,7 @@ function buildLoanMetricsForMonth(thisMonth, day) {
   const renewalDoneThisMonth = renewals.filter(
     loan => loan.renewedDate && (loan.sanctionDate || "").startsWith(thisMonth) && !isFreshCC(loan)
   );
+  const renewalDoneToday = renewalDoneThisMonth.filter(loan => loan.sanctionDate === day);
   const renewalDatesMissing = renewals.filter(isRenewalDatesMissing);
   const renewalDueSoon = renewals.filter(loan => loan._rs.status === "due-soon" && !loan.renewedDate);
   const renewalOverdue = renewals.filter(
@@ -66,6 +67,7 @@ function buildLoanMetricsForMonth(thisMonth, day) {
     sanctionedThisMonth,
     renewals,
     renewalDoneThisMonth,
+    renewalDoneToday,
     renewalDatesMissing,
     renewalDueSoon,
     renewalOverdue,

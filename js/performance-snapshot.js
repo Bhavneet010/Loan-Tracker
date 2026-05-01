@@ -64,6 +64,7 @@ function officerNamesFromMetrics(metrics) {
     metrics.sanctionedToday,
     metrics.renewals,
     metrics.renewalDoneThisMonth,
+    metrics.renewalDoneToday,
   ].flat().forEach(loan => {
     const name = loan.allocatedTo || "Unassigned";
     if (!seen.has(name)) {
@@ -108,7 +109,7 @@ function buildOfficerCategoryRows(loans, officerNames) {
 
 function buildOfficerRenewalRows(metrics, officerNames) {
   const queueLoans = metrics.renewals.filter(loan => !loan.renewedDate && loan._rs?.status === "pending-renewal");
-  const todayDone = metrics.renewalDoneThisMonth.filter(loan => loan.sanctionDate === metrics.day);
+  const todayDone = metrics.renewalDoneToday || [];
   const rows = officerNames.map(name => ({
     name,
     queue: { count: 0, amount: 0 },

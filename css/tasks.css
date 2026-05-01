@@ -142,6 +142,10 @@
   box-shadow:0 5px 16px rgba(107,95,191,0.08);
   padding:8px;margin-bottom:7px;
 }
+.task-care{
+  border-color:rgba(239,68,68,0.34);
+  box-shadow:0 0 0 2px rgba(239,68,68,0.16),0 5px 16px rgba(107,95,191,0.08);
+}
 .task-care-head{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   margin:0 0 6px;padding:7px 9px;border-radius:13px;

@@ -24,8 +24,8 @@ export function renderTasks(c) {
 }
 
 export function getTaskCounts(metrics) {
-  return Object.keys(CATEGORY_META).reduce((sum, cat) =>
-    sum + buildCategoryItems(metrics, cat, null).length, 0);
+  const critical = buildCriticalCare(metrics);
+  return Object.values(critical).reduce((sum, items) => sum + items.length, 0);
 }
 
 /* ── DATA HELPER ── */

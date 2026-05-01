@@ -1,6 +1,7 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
-import { fmtAmt, daysPending } from "./utils.js";
+import { fmtAmt } from "./utils.js";
+import { getTaskCounts } from "./ui-tasks.js";
 
 /* BADGES */
 export function updateBadges() {
@@ -25,12 +26,7 @@ export function updateBadges() {
 
   const bTasks = document.getElementById('b-tasks');
   if (bTasks) {
-    const isVisible = l => S.isAdmin || l.allocatedTo === S.user;
-    const taskCount =
-      metrics.pending.filter(l => isVisible(l) && daysPending(l.receiveDate) > 7).length +
-      metrics.renewalDueSoon.filter(l => isVisible(l) && !l.renewedDate).length +
-      metrics.renewalOverdue.filter(l => isVisible(l) && !l.renewedDate).length +
-      metrics.renewalDatesMissing.filter(isVisible).length;
+    const taskCount = getTaskCounts(metrics);
     bTasks.textContent = taskCount || '';
   }
 }
@@ -43,17 +39,10 @@ export function updateHero() {
 
   if (S.appMode === 'tasks') {
     sc.style.display = 'none';
-    const isVisible = l => S.isAdmin || l.allocatedTo === S.user;
-    const pendingTen = metrics.pending.filter(l => isVisible(l) && daysPending(l.receiveDate) > 10);
-    const npaRisk = metrics.renewalOverdue.filter(l =>
-      isVisible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' &&
-      l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15
-    );
-    const datesMissing = metrics.renewalDatesMissing.filter(isVisible);
     sc.classList.remove('rnw-grid');
     sc.innerHTML = '';
     const bTasks = document.getElementById('b-tasks');
-    if (bTasks) bTasks.textContent = (npaRisk.length + pendingTen.length + datesMissing.length) || '';
+    if (bTasks) bTasks.textContent = getTaskCounts(metrics) || '';
     return;
   }
 
