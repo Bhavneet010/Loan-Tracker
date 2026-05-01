@@ -19,11 +19,7 @@ export function renderCalendar(c) {
 
 function getFilteredRenewals(metrics) {
   let out = metrics.renewals.filter(l => !l.renewedDate);
-  if (S.renewalFilter.officer === 'Mine' && S.user)
-    out = out.filter(l => l.allocatedTo === S.user);
-  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine')
-    out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
-  return out;
+  return S.isAdmin ? out : out.filter(l => l.allocatedTo === S.user);
 }
 
 function buildCalendarData(renewals, year, month) {
