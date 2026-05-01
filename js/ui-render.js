@@ -13,6 +13,7 @@ export function render() {
     if (typeof window.showUserSelect === 'function') window.showUserSelect(); 
     return; 
   }
+  document.body.classList.toggle('tasks-mode', S.appMode === 'tasks');
   updateHero();
   updateBadges();
   

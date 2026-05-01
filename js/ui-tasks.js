@@ -253,12 +253,12 @@ function renewalTargetsHtml(metrics) {
   }).join('');
 
   return `<section class="task-targets">
-    <div class="task-section-head">
+    <div class="task-section-head task-target-title-row">
       <div>
         <div class="task-kicker">Renewal Targets</div>
       </div>
+      <div class="task-target-head">Done / target</div>
     </div>
-    <div class="task-target-head"><span></span><span></span><span>Done / target</span></div>
     <div class="task-target-list">${rows}</div>
   </section>`;
 }

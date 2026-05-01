@@ -718,6 +718,11 @@ body.dark .duplicate-card{background:rgba(107,95,191,0.12);border-color:rgba(107
   font-size:9px;font-weight:800;padding:0 3px;line-height:1;
 }
 .mode-badge:empty{display:none;}
+.tasks-mode .header{padding:10px 12px 7px;}
+.tasks-mode .mode-toggle-bar{margin-top:7px;padding:2px;border-radius:10px;}
+.tasks-mode .mode-btn{padding:6px 8px;border-radius:8px;font-size:11px;}
+.tasks-mode .panel{padding:0 10px 80px;}
+.tasks-mode .panel-handle{margin:7px auto 9px;}
 body.dark .mode-toggle-bar{background:rgba(107,95,191,0.10);border-color:rgba(107,95,191,0.22);}
 body.dark .mode-btn{color:var(--text3);}
 body.dark .mode-btn.active{background:linear-gradient(135deg,var(--p2),var(--p3));}
