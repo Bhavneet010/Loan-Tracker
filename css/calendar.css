@@ -1,4 +1,4 @@
-.cal-wrap{padding:4px 0 20px;}
+.cal-wrap{padding:6px;border:2px solid rgba(107,95,191,0.26);border-radius:14px;background:rgba(255,255,255,0.28);}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:4px 6px;border-radius:10px;background:rgba(107,95,191,0.08);border:1px solid rgba(107,95,191,0.10);}
 .cal-nav-btn{background:rgba(255,255,255,0.7);border:1px solid rgba(107,95,191,0.15);color:var(--p1);border-radius:8px;width:34px;height:34px;font-size:18px;font-weight:700;cursor:pointer;transition:background 0.15s;}
 .cal-nav-btn:hover{background:var(--p-bg);}
@@ -8,18 +8,18 @@
 .cal-month-count--empty{color:var(--text3);opacity:0.7;}
 .cal-legend{display:flex;gap:12px;font-size:11px;color:var(--text3);margin-bottom:10px;align-items:center;}
 .cal-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;flex-shrink:0;}
-.cal-dot--overdue{background:var(--red);}
-.cal-dot--soon{background:var(--amber);}
-.cal-dot--active{background:var(--green);}
+.cal-dot--overdue{background:#7F1D1D;}
+.cal-dot--soon{background:#EF4444;}
+.cal-dot--active{background:#F59E0B;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:10px;}
 .cal-dow{text-align:center;font-size:9px;font-weight:800;color:var(--text3);padding:4px 0;}
 .cal-cell{aspect-ratio:1;border-radius:10px;position:relative;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all 0.15s;}
 .cal-cell--empty{background:transparent;border-color:transparent;cursor:default;}
 .cal-cell--past{background:rgba(255,255,255,0.25);opacity:0.6;}
 .cal-cell--today{border:2px solid var(--p2);}
-.cal-cell--overdue{background:var(--red-bg);border-color:var(--red-bd);cursor:pointer;}
-.cal-cell--soon{background:var(--amber-bg);border-color:var(--amber-bd);cursor:pointer;}
-.cal-cell--active-has{background:var(--green-bg);border-color:var(--green-bd);cursor:pointer;}
+.cal-cell--overdue{background:rgba(127,29,29,0.16);border-color:rgba(127,29,29,0.36);cursor:pointer;}
+.cal-cell--soon{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.30);cursor:pointer;}
+.cal-cell--active-has{background:rgba(245,158,11,0.13);border-color:rgba(245,158,11,0.30);cursor:pointer;}
 .cal-cell--open{box-shadow:0 0 0 2px var(--p2);}
 .cal-cell:active{transform:scale(0.95);}
 .cal-day-num{font-size:12px;font-weight:700;color:var(--text1);line-height:1;}
@@ -33,6 +33,7 @@
 .cal-bcode{font-size:10px;color:var(--text3);font-weight:700;flex-shrink:0;}
 .cal-amt{font-size:11px;font-weight:800;color:var(--text1);white-space:nowrap;flex-shrink:0;}
 .cal-toggle-btn{margin-left:auto;}
+body.dark .cal-wrap{background:rgba(30,28,58,0.38);border-color:rgba(139,124,246,0.42);}
 body.dark .cal-cell{background:rgba(30,28,58,0.7);border-color:rgba(80,70,130,0.3);}
 body.dark .cal-cell--past{background:rgba(30,28,58,0.4);}
 body.dark .cal-day-detail{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);}
@@ -40,7 +41,7 @@ body.dark .cal-nav{background:rgba(107,95,191,0.14);border-color:rgba(107,95,191
 body.dark .cal-nav-btn{background:rgba(36,32,64,0.85);border-color:rgba(107,95,191,0.25);}
 
 /* Compact calendar rhythm aligned with Tasks */
-.cal-wrap{padding:0 0 10px;}
+.cal-wrap{padding:5px 5px 9px;}
 .cal-nav{margin-bottom:4px;padding:3px 5px;border-radius:9px;}
 .cal-nav-btn{width:27px;height:27px;border-radius:7px;font-size:14px;}
 .cal-month-label{font-size:13px;}
