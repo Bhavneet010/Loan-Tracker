@@ -27,6 +27,12 @@ if (mainTabs) {
   });
 }
 
+document.addEventListener('click', e => {
+  if (!S.openPop || e.target.closest('.fs-bar')) return;
+  S.openPop = null;
+  render();
+});
+
 /* ── INIT ── */
 async function init() {
   const status = (txt) => {
