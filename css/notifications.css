@@ -46,3 +46,22 @@
 body.dark .notif-card{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);}
 body.dark .notif-card.unread{background:rgba(107,95,191,0.12);}
 body.dark .activity-bubble{background:rgba(30,28,58,0.95);border-color:rgba(80,70,130,0.3);}
+
+/* Compact notification and activity cards */
+.notif-card{
+  gap:8px;border-radius:13px;padding:9px 10px;margin-bottom:6px;
+  box-shadow:0 2px 8px rgba(107,95,191,0.04);
+}
+.notif-card.unread{border-left-width:3px;}
+.notif-icon{width:27px;height:27px;border-radius:9px;font-size:12px;}
+.notif-label{font-size:8px;margin-bottom:1px;}
+.notif-name{font-size:11px;font-weight:900;margin-bottom:2px;}
+.notif-meta{font-size:9px;}
+.notif-time{font-size:8px;}
+.activity-bubble{border-radius:18px;padding:18px 20px;min-width:200px;}
+.ab-title{font-size:9px;margin-bottom:10px;}
+.ab-lines{gap:7px;margin-bottom:12px;}
+.ab-line{gap:7px;}
+.ab-icon{width:24px;height:24px;border-radius:8px;font-size:11px;}
+.ab-line span:last-child{font-size:12px;font-weight:800;}
+.ab-hint{font-size:9px;}

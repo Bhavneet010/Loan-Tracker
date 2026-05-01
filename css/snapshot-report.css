@@ -1363,3 +1363,26 @@ body.dark .report-mockup{
   border-color:rgba(80,70,130,0.3);
   box-shadow:0 18px 38px rgba(0,0,0,0.28);
 }
+
+/* Compact performance/report preview surfaces */
+.perf-snapshot-share-row{padding:0 0 4px;}
+.perf-snapshot-page-head{gap:8px;margin-bottom:10px;}
+.perf-snapshot-page-head h2{font-size:18px;}
+.perf-snapshot-page-head p{font-size:10px;}
+.perf-snapshot-share-btn{padding:6px 10px;border-radius:10px;font-size:10px;}
+.report-mockup-toolbar{gap:6px;padding-bottom:0;}
+.report-mockup-tab{padding:6px 10px;font-size:10px;}
+.report-mockup-caption h3{font-size:15px;}
+.report-mockup-caption p{font-size:10px;}
+.report-mockup-preview-wrap{border-radius:20px;padding:9px;}
+.report-mockup{border-radius:18px;}
+.report-top{padding:13px 13px 10px;}
+.report-top-kicker{font-size:8px;}
+.report-title-wrap h3{font-size:23px;}
+.report-title-wrap p{font-size:10px;}
+.report-top-meta{gap:5px;}
+.report-top-meta span{padding:4px 7px;font-size:9px;}
+.report-summary-row{gap:6px;}
+.report-summary-chip{padding:7px 8px;border-radius:12px;}
+.report-summary-label{font-size:8px;}
+.report-summary-value{font-size:15px;}

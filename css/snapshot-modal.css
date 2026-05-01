@@ -352,3 +352,46 @@
 .share-snap-modal-box{
   width:min(100%, 940px);
 }
+
+/* Compact overlay chrome aligned with Tasks */
+#perfOverlayContent{padding:10px!important;}
+.perf-overlay-header{gap:8px;padding:10px 12px;}
+.back-btn{font-size:12px;padding:3px 7px;border-radius:8px;font-weight:800;}
+.perf-overlay-title{font-size:14px;font-weight:900;}
+.perf-overlay-header.snapshot-mode .perf-overlay-title{font-size:14px;}
+.perf-overlay-actions{gap:5px;}
+.perf-header-share-btn,
+.perf-export-btn{padding:6px 9px;border-radius:9px;font-size:10px;}
+.share-snap-modal-box{border-radius:20px;padding:14px;}
+.share-snap-modal-head{gap:8px;margin-bottom:10px;}
+.share-snap-modal-kicker{font-size:8px;margin-bottom:4px;}
+.share-snap-modal-head h2{font-size:18px;}
+.share-snap-modal-head p{font-size:10px;margin-top:4px;}
+.share-snap-close{padding:7px 10px;font-size:10px;}
+.share-snap-stage{padding:2px 0 0;}
+.share-snap-card{border-radius:22px;padding:14px;}
+.share-snap-header{margin-bottom:11px;}
+.share-snap-eyebrow{padding:4px 7px;font-size:8px;}
+.share-snap-header h3{font-size:23px;margin:8px 0 3px;}
+.share-snap-sub{font-size:10px;}
+.share-snap-hero{padding:11px;border-radius:16px;}
+.share-snap-hero-label{font-size:9px;}
+.share-snap-hero strong{font-size:28px;}
+.share-snap-hero small{font-size:10px;}
+.share-snap-hero-badge{padding:6px 8px;border-radius:12px;}
+.share-snap-hero-badge span{font-size:8px;}
+.share-snap-hero-badge b{font-size:14px;}
+.share-snap-grid{gap:7px;}
+.share-snap-metric{padding:10px;border-radius:14px;}
+.share-snap-metric-label{font-size:8px;}
+.share-snap-metric-value{font-size:21px;}
+.share-snap-metric-sub{font-size:10px;}
+.share-snap-section{padding:10px;border-radius:15px;}
+.share-snap-section-title{font-size:12px;}
+.share-snap-section-note{font-size:9px;}
+.share-snap-attention-list{gap:6px;}
+.share-snap-attention-item{padding:9px;border-radius:12px;}
+.share-snap-attention-item strong{font-size:11px;}
+.share-snap-attention-item p{font-size:10px;}
+.share-snap-attention-meta{padding:3px 6px;font-size:8px;}
+.share-snap-footer{font-size:9px;}

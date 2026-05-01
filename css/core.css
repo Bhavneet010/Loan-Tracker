@@ -719,12 +719,85 @@ body.dark .duplicate-card{background:rgba(107,95,191,0.12);border-color:rgba(107
   font-size:9px;font-weight:800;padding:0 3px;line-height:1;
 }
 .mode-badge:empty{display:none;}
-.tasks-mode .header{padding:10px 12px 7px;}
-.tasks-mode .mode-toggle-bar{margin-top:7px;padding:2px;border-radius:10px;}
-.tasks-mode .mode-btn{padding:6px 8px;border-radius:8px;font-size:11px;}
-.tasks-mode .panel{padding:0 10px 80px;}
-.tasks-mode .panel-handle{margin:7px auto 9px;}
+.header{padding:10px 12px 7px;}
+.mode-toggle-bar{margin-top:7px;padding:2px;border-radius:10px;}
+.mode-btn{padding:6px 8px;border-radius:8px;font-size:11px;}
+.panel{padding:0 10px 80px;}
+.panel-handle{margin:7px auto 9px;}
 body.dark .mode-toggle-bar{background:rgba(107,95,191,0.10);border-color:rgba(107,95,191,0.22);}
 body.dark .mode-btn{color:var(--text3);}
 body.dark .mode-btn.active{background:linear-gradient(135deg,var(--p2),var(--p3));}
 body.dark .mode-btn.active.renewals-btn{background:linear-gradient(135deg,#10B981,#047857);}
+
+/* Compact app-wide rhythm aligned with the Tasks dashboard */
+.stats-scroll{padding:8px 10px 9px;gap:6px;}
+.stat{padding:7px 8px;border-radius:12px;}
+.stat-l{font-size:8px;letter-spacing:0.45px;}
+.stat-v{font-size:16px;margin-top:1px;}
+.stat-s{font-size:9px;}
+.stat-badge{font-size:8px;padding:1px 5px;margin-top:3px;border-radius:7px;}
+.tabs{gap:5px;padding-bottom:8px;}
+.tab{padding:7px 7px;border-radius:14px;font-size:11px;font-weight:800;}
+.tab .badge{font-size:9px;padding:1px 5px;margin-left:2px;}
+.search-wrap{padding:0 0 7px;}
+.search-inp{padding:9px 11px;border-radius:11px;font-size:12px;}
+.fs-bar{gap:5px;padding-bottom:8px;}
+.fs-btn,.rnw-npa-toggle{
+  padding:5px 9px;border-radius:13px;font-size:10px;font-weight:900;gap:4px;
+}
+.fs-badge{font-size:8px;padding:0 5px;border-radius:8px;}
+.fs-pop{padding:8px;min-width:190px;border-radius:13px;}
+.fs-pop h4{font-size:9px;margin-bottom:4px;}
+.fs-pop label{padding:5px 3px;font-size:11px;}
+.sec-head{margin:0 1px 7px;align-items:center;}
+.sec-title{font-size:13px;font-weight:900;letter-spacing:-0.2px;}
+.sec-count{font-size:9px;padding:2px 7px;border-radius:8px;}
+.sec-collapse-btn{font-size:9px;padding:2px 6px;}
+.loan-item{margin-bottom:6px;}
+.loan-row{padding:8px 10px 8px 14px;border-radius:13px;gap:6px;}
+.lr-info{gap:5px;}
+.lr-av{width:20px;height:20px;font-size:8px;}
+.lr-bcode{font-size:9px;padding:2px 5px;border-radius:6px;}
+.lr-name{font-size:11px;font-weight:800;}
+.lr-meta{gap:4px;}
+.lr-amount{font-size:11px;}
+.lr-chev{font-size:12px;}
+.loan-collapse{font-size:9px;padding:5px;}
+.loan-card{padding:10px 10px 9px 13px;margin-bottom:7px;border-radius:14px;}
+.lc-top{margin-bottom:6px;}
+.lc-name{font-size:12px;font-weight:900;max-width:200px;}
+.lc-branch{font-size:10px;}
+.lc-amount{font-size:16px;}
+.lc-amount .u{font-size:9px;}
+.lc-tags{gap:4px;margin-bottom:7px;}
+.tag{padding:2px 7px;border-radius:12px;font-size:8px;font-weight:900;}
+.lc-remarks{margin-bottom:7px;padding:6px 8px;font-size:10px;border-radius:8px;}
+.lc-actions{gap:5px;}
+.btn{padding:7px 8px;border-radius:9px;font-size:10px;font-weight:900;}
+.btn-more,.btn-danger{width:32px;font-size:12px;}
+.btn-primary-full,.btn-cancel-full{padding:10px 11px;font-size:12px;border-radius:11px;}
+.empty-state{padding:26px 14px;border-radius:15px;}
+.empty-icon{font-size:32px;margin-bottom:7px;}
+.empty-msg{font-size:12px;font-weight:900;margin-bottom:3px;}
+.empty-sub{font-size:10px;}
+.sheet{padding:0 12px 30px;border-radius:20px 20px 0 0;}
+.sheet-handle{margin:8px auto 12px;}
+.sheet h2{margin:0 0 12px;font-size:17px;}
+.modal-box{padding:18px;border-radius:20px;}
+.modal-box h2{font-size:18px;}
+.modal-box p{font-size:11px;margin-bottom:12px;}
+.form-group{margin-bottom:10px;}
+.form-group label{font-size:9px;margin-bottom:4px;}
+.form-group input,.form-group select,.form-group textarea{padding:9px 10px;border-radius:10px;font-size:13px;}
+.form-group textarea{min-height:56px;}
+.form-row{gap:7px;margin-top:14px;}
+.form-intro{margin-bottom:10px;padding:8px 9px;border-radius:10px;font-size:10px;}
+.category-chips{gap:6px;}
+.category-chip{padding:7px 10px;font-size:11px;}
+.setting-item{padding:8px 10px;border-radius:10px;margin-bottom:5px;}
+.setting-item span{font-size:12px;font-weight:800;}
+.settings-tabs{gap:5px;margin-bottom:12px;}
+.stab{padding:7px 8px;border-radius:14px;font-size:11px;font-weight:800;}
+.user-list{gap:6px;}
+.user-btn{padding:10px 12px;border-radius:12px;font-size:13px;gap:9px;}
+.user-btn .av{width:30px;height:30px;border-radius:9px;font-size:12px;}

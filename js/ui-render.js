@@ -9,12 +9,13 @@ import { renderTasks } from "./ui-tasks.js";
 let renderQueued = false;
 
 export function render() {
+  document.body.classList.toggle('tasks-mode', S.appMode === 'tasks');
+  document.body.classList.toggle('fresh-mode', S.appMode === 'fresh');
+  document.body.classList.toggle('renewals-mode', S.appMode === 'renewals');
   if (!S.user) { 
     if (typeof window.showUserSelect === 'function') window.showUserSelect(); 
     return; 
   }
-  document.body.classList.toggle('tasks-mode', S.appMode === 'tasks');
-  document.body.classList.toggle('fresh-mode', S.appMode === 'fresh');
   updateHero();
   updateBadges();
   
