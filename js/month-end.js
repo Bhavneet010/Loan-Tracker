@@ -21,6 +21,26 @@ import {
 
 const SNAPSHOT_COLLECTION = "monthlySnapshots";
 const DETAIL_ROWS_PER_PAGE = 24;
+const OFFICER_PALETTE = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
+
+function buildOfficerColorMap() {
+  const map = new Map();
+  S.officers.forEach((name, i) => map.set(name, OFFICER_PALETTE[i % OFFICER_PALETTE.length]));
+  return map;
+}
+
+function sortByOfficerThenDate(loans, dateKey) {
+  return [...loans].sort((a, b) => {
+    const ai = S.officers.indexOf(a.allocatedTo || '');
+    const bi = S.officers.indexOf(b.allocatedTo || '');
+    const ao = ai === -1 ? S.officers.length : ai;
+    const bo = bi === -1 ? S.officers.length : bi;
+    if (ao !== bo) return ao - bo;
+    const ad = a[dateKey] ? new Date(a[dateKey]).getTime() : Infinity;
+    const bd = b[dateKey] ? new Date(b[dateKey]).getTime() : Infinity;
+    return ad - bd;
+  });
+}
 
 function previousMonthKey() {
   const date = new Date();
@@ -216,6 +236,24 @@ function buildCoverPage(data, summary) {
         </table>
       </section>
     </div>
+    <section class="me-panel" style="margin-top:14px">
+      <h2 style="margin-bottom:6px">Officer Summary</h2>
+      <table class="me-table me-officer-inline">
+        <thead>
+          <tr><th>Officer</th><th>Sanctioned</th><th>Returned</th><th>Renewals Done</th><th>Pending</th><th>Renewal Risk</th></tr>
+        </thead>
+        <tbody>
+          ${summary.officers.map(row => `<tr>
+            <th>${esc(row.name)}</th>
+            <td>${esc(row.sanctioned.count)}<small>Rs ${esc(fmtAmt(row.sanctioned.amount))}L</small></td>
+            <td>${esc(row.returned.count)}<small>Rs ${esc(fmtAmt(row.returned.amount))}L</small></td>
+            <td>${esc(row.renewalsDone.count)}<small>Rs ${esc(fmtAmt(row.renewalsDone.amount))}L</small></td>
+            <td>${esc(row.pending.count)}<small>Rs ${esc(fmtAmt(row.pending.amount))}L</small></td>
+            <td>${esc(row.dueSoon.count + row.overdue.count)}<small>${esc(row.dueSoon.count)} due / ${esc(row.overdue.count)} OD</small></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </section>
     <footer class="me-footer">
       <span>Generated ${esc(generatedAt)}</span>
       <span>${esc(summary.generatedBy)}</span>
@@ -259,12 +297,13 @@ function buildOfficerPage(data, summary) {
   </section>`;
 }
 
-function detailRow(loan, index, dateKey, mode) {
+function detailRow(loan, index, dateKey, mode, color) {
   const dateText = fmtDate(loan[dateKey]) || "-";
   const note = mode === "renewal"
     ? `Due ${fmtDate(loan.renewalDueDate || loan._rs?.dueDateStr) || "-"} / Exp ${fmtDate(loan.limitExpiryDate) || "-"}`
     : (loan.remarks || "");
-  return `<tr>
+  const rowStyle = color ? `style="background:${color}12;border-left:3px solid ${color}"` : '';
+  return `<tr ${rowStyle}>
     <td class="me-num">${esc(index)}</td>
     <td class="me-customer"><strong>${esc(loan.customerName || "Unnamed")}</strong><span>${esc(note)}</span></td>
     <td>${esc(loan.allocatedTo || "Unassigned")}</td>
@@ -275,8 +314,43 @@ function detailRow(loan, index, dateKey, mode) {
   </tr>`;
 }
 
+function officerGroupHeaderRow(officer, color) {
+  return `<tr class="me-officer-group" style="background:${color}22;border-left:4px solid ${color}">
+    <td colspan="7" style="color:${color};font-weight:950;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;">&#9679; ${esc(officer)}</td>
+  </tr>`;
+}
+
+function renderChunkRows(chunk, startIndex, dateKey, mode, colorMap) {
+  let lastOfficer = null;
+  return chunk.reduce((acc, loan, i) => {
+    const officer = loan.allocatedTo || 'Unassigned';
+    const color = colorMap.get(officer) || '#64748B';
+    if (officer !== lastOfficer) {
+      acc += officerGroupHeaderRow(officer, color);
+      lastOfficer = officer;
+    }
+    acc += detailRow(loan, startIndex + i + 1, dateKey, mode, color);
+    return acc;
+  }, '');
+}
+
+function buildLegendHtml(loans, colorMap) {
+  const seen = new Map();
+  loans.forEach(loan => {
+    const name = loan.allocatedTo || 'Unassigned';
+    if (!seen.has(name)) seen.set(name, colorMap.get(name) || '#64748B');
+  });
+  if (!seen.size) return '';
+  return `<div class="me-legend">${[...seen.entries()].map(([name, color]) =>
+    `<span><span class="me-legend-dot" style="background:${color}"></span>${esc(name)}</span>`
+  ).join('')}</div>`;
+}
+
 function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
-  if (!loans.length) {
+  const sorted = sortByOfficerThenDate(loans, dateKey);
+  const colorMap = buildOfficerColorMap();
+
+  if (!sorted.length) {
     return `<section class="me-page">
       <header class="me-section-head ${tone}">
         <div><span class="me-kicker">DETAIL LIST</span><h2>${esc(title)}</h2></div>
@@ -286,24 +360,27 @@ function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
     </section>`;
   }
 
+  const legend = buildLegendHtml(sorted, colorMap);
   const pages = [];
-  for (let start = 0; start < loans.length; start += DETAIL_ROWS_PER_PAGE) {
-    const chunk = loans.slice(start, start + DETAIL_ROWS_PER_PAGE);
+  for (let start = 0; start < sorted.length; start += DETAIL_ROWS_PER_PAGE) {
+    const chunk = sorted.slice(start, start + DETAIL_ROWS_PER_PAGE);
     const part = Math.floor(start / DETAIL_ROWS_PER_PAGE) + 1;
-    const totalParts = Math.ceil(loans.length / DETAIL_ROWS_PER_PAGE);
+    const totalParts = Math.ceil(sorted.length / DETAIL_ROWS_PER_PAGE);
+    const bodyRows = renderChunkRows(chunk, start, dateKey, mode, colorMap);
     pages.push(`<section class="me-page">
       <header class="me-section-head ${tone}">
         <div>
           <span class="me-kicker">DETAIL LIST${totalParts > 1 ? ` - PART ${part} OF ${totalParts}` : ""}</span>
           <h2>${esc(title)}</h2>
+          ${part === 1 ? legend : ""}
         </div>
-        <strong>${esc(loans.length)} records</strong>
+        <strong>${esc(sorted.length)} records</strong>
       </header>
       <table class="me-table me-detail-table">
         <thead>
           <tr><th>#</th><th>Customer</th><th>Officer</th><th>Branch</th><th>Cat</th><th>Amount</th><th>Date</th></tr>
         </thead>
-        <tbody>${chunk.map((loan, index) => detailRow(loan, start + index + 1, dateKey, mode)).join("")}</tbody>
+        <tbody>${bodyRows}</tbody>
       </table>
       <footer class="me-footer"><span>${esc(title)}</span><span>${esc(part)} of ${esc(totalParts)}</span></footer>
     </section>`);
@@ -320,13 +397,13 @@ function monthlyPdfCss() {
     .me-brand{font-size:30px;font-weight:950;letter-spacing:-.03em;color:#13234C}
     .me-kicker{display:block;font-size:10px;font-weight:950;letter-spacing:.14em;text-transform:uppercase;color:#6B5FBF}
     .me-date{font-size:15px;font-weight:900;color:#4A4467}
-    .me-hero{display:grid;grid-template-columns:1fr 160px;gap:18px;align-items:stretch;margin:34px 0 20px}
+    .me-hero{display:grid;grid-template-columns:1fr 160px;gap:18px;align-items:stretch;margin:22px 0 12px}
     .me-hero h1{margin:0 0 8px;font-size:42px;line-height:.98;letter-spacing:-.04em;color:#111B42}
     .me-hero p{margin:0;max-width:470px;color:#5F5A78;font-size:15px;line-height:1.45}
     .me-close-badge{border-radius:18px;background:#13234C;color:#fff;padding:18px;text-align:center}
     .me-close-badge span{display:block;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#C7D2FE}
     .me-close-badge strong{display:block;margin-top:10px;font-size:28px;line-height:1}
-    .me-metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+    .me-metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
     .me-metric{border-radius:12px;background:#F4F1FB;border:1px solid rgba(107,95,191,.12);padding:14px 16px}
     .me-metric span{display:block;font-size:9px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#756F91}
     .me-metric strong{display:block;margin-top:5px;font-size:28px;line-height:1}
@@ -349,6 +426,12 @@ function monthlyPdfCss() {
     .me-table tbody th{font-weight:900;color:#111B42}
     .me-table small,.me-customer span{display:block;margin-top:3px;font-size:8px;font-weight:750;color:#64748B;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .me-officer-table{margin-top:22px;font-size:10px}
+    .me-officer-inline{margin-top:4px;font-size:9px}
+    .me-officer-inline th,.me-officer-inline td{padding:5px 6px}
+    .me-officer-group td{font-size:9px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;padding:5px 8px}
+    .me-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+    .me-legend span{display:flex;align-items:center;gap:4px;font-size:9px;font-weight:850;color:#4A4467}
+    .me-legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .me-detail-table{margin-top:22px;font-size:8.8px}
     .me-detail-table th:nth-child(1),.me-detail-table td:nth-child(1){width:20px;text-align:right}
     .me-detail-table th:nth-child(2),.me-detail-table td:nth-child(2){width:230px}
@@ -368,7 +451,6 @@ function buildMonthlySnapshotPdfHtml(data, summary) {
   return `<div class="me-report">
     <style>${monthlyPdfCss()}</style>
     ${buildCoverPage(data, summary)}
-    ${buildOfficerPage(data, summary)}
     ${buildDetailPages("Sanctions Done", data.sanctioned, "sanctionDate", "good")}
     ${buildDetailPages("Returns Done", data.returned, "returnedDate", "danger")}
     ${buildDetailPages("Renewals Done", data.renewalsDone, "renewedDate", "blue", "renewal")}
