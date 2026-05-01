@@ -295,7 +295,9 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
   document.getElementById('fName').value = loan.customerName || '';
   document.getElementById('fAmount').value = loan.amount || '';
   document.getElementById('fReceive').value = isEdit ? (loan.receiveDate || '') : todayStr();
-  document.getElementById('fSanction').value = isEdit ? (loan.sanctionDate || loan.renewedDate || '') : '';
+  document.getElementById('fSanction').value = isEdit
+    ? (mode === 'renewal-done' ? (loan.renewedDate || '') : (loan.sanctionDate || loan.renewedDate || ''))
+    : '';
   document.getElementById('fRemarks').value = loan.remarks || '';
 
   const renewalGroup = document.getElementById('fRenewalGroup');
