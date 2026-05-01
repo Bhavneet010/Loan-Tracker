@@ -69,11 +69,61 @@ export function renderRenewals(c) {
   </div>`;
 
   const officerViewer = renewalOfficerViewerHtml(buildVisibleRenewalOfficerSummary(metrics));
-  const searchBar = `<div class="rnw-search-wrap"><input type="text" class="search-inp rnw-search-inp" placeholder="Search account or branch" value="${esc(S.search)}" oninput="handleSearch(this.value)"></div>`;
+  const searchBar = `<div class="rnw-search-wrap"><input type="text" class="search-inp rnw-search-inp" placeholder="Search account or branch" value="${esc(S.search)}" oninput="handleRenewalSearch(this.value)"></div>`;
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
   const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${list}`;
   const mainContent = S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : listContent;
-  c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div>${mainContent}`;
+  c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div><div class="rnw-content">${mainContent}</div>`;
+}
+
+window.handleRenewalSearch = function(v) {
+  S.search = v.toLowerCase().trim();
+  const content = document.querySelector('.rnw-content');
+  if (S.appMode !== 'renewals' || !content) {
+    window.render();
+    return;
+  }
+  content.innerHTML = buildRenewalMainContent();
+};
+
+function buildRenewalMainContent(metrics = getLoanMetrics()) {
+  return S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : buildRenewalListContent(metrics);
+}
+
+function buildRenewalListContent(metrics) {
+  const enriched = metrics.renewals;
+  let tabFiltered = enriched;
+  if (S.renewalTab === 'done') tabFiltered = metrics.renewalDoneThisMonth;
+  else if (S.renewalTab === 'dates-missing') tabFiltered = metrics.renewalDatesMissing;
+  else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
+  else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
+
+  const canToggleNpa = ['due-soon', 'overdue', 'all'].includes(S.renewalTab) || S.renewalView === 'calendar';
+  if (canToggleNpa && !S.renewalShowNpa) tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
+
+  const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
+  const sorted = [...applyRenewalFilters(tabFiltered)].sort((a, b) => {
+    let av, bv;
+    if (S.renewalSort.field === 'daysFromSanction') { av = a._rs.daysSinceSanction; bv = b._rs.daysSinceSanction; }
+    else if (S.renewalSort.field === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
+    else if (S.renewalSort.field === 'officer') { av = (a.allocatedTo || '').toLowerCase(); bv = (b.allocatedTo || '').toLowerCase(); }
+    else if (S.renewalSort.field === 'branch') { av = (a.branch || '').toLowerCase(); bv = (b.branch || '').toLowerCase(); }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  }).filter(searchMatch);
+
+  const total = sumAmount(sorted);
+  const tabMeta = {
+    'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
+    'done': { title: 'Done This Month', empty: 'â™»', msg: 'No SME renewals completed this month' },
+    'due-soon': { title: 'Due for Renewal Soon', empty: 'â°', msg: 'No accounts due within 30 days' },
+    'overdue': { title: 'Renewal Overdue', empty: '!', msg: 'No overdue renewal accounts' },
+    'all': { title: 'All CC Accounts', empty: 'ðŸ“‹', msg: 'No CC accounts found' },
+  }[S.renewalTab] || { title: 'SME CC Renewals', empty: 'â™»', msg: 'No renewals found' };
+
+  const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
+  return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} Â· â‚¹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">â–² collapse all</button></div></div>${list}`;
 }
 
 export function applyRenewalFilters(enriched) {
