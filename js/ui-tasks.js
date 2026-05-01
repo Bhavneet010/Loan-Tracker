@@ -46,8 +46,6 @@ function buildCategoryItems(metrics, category, officer) {
 function renderTaskOverview(c, metrics) {
   const critical = buildCriticalCare(metrics);
   const activeKey = CRITICAL_META[S.taskCategory] ? S.taskCategory : pickDefaultCritical(critical);
-  const totalCritical = Object.values(critical).reduce((sum, items) => sum + items.length, 0);
-  const exposure = Object.values(critical).reduce((sum, items) => sum + sumAmount(items), 0);
   const activeItems = critical[activeKey] || [];
 
   c.innerHTML = `
@@ -55,26 +53,10 @@ function renderTaskOverview(c, metrics) {
     <section class="task-care">
       <div class="task-care-head">
         <div>
-          <div class="task-kicker">Critical Care</div>
-          <div class="task-care-title">Highest risk accounts first</div>
-          <div class="task-care-sub">NPA risk, pending loans and missing renewal dates</div>
+          <div class="task-care-title">Critical Care</div>
+          <div class="task-care-sub">Highest risk accounts first</div>
         </div>
         <div class="task-care-info">i</div>
-      </div>
-      <div class="task-risk-board">
-        <div class="task-risk-gauge">
-          <div class="task-risk-arc" style="--risk:${riskGaugePct(totalCritical)}%;"></div>
-          <div class="task-risk-value">${totalCritical}</div>
-          <div class="task-risk-label">Critical<br>accounts</div>
-        </div>
-        <div class="task-risk-load">
-          <div class="task-risk-icon">!</div>
-          <div>
-            <div class="task-risk-title">High priority load</div>
-            <div class="task-risk-amount">&#8377;${fmtAmt(exposure)}L</div>
-            <div class="task-risk-sub">Exposure at risk</div>
-          </div>
-        </div>
       </div>
       <div class="task-critical-tabs">
         ${Object.keys(CRITICAL_META).map(key => criticalTabHtml(key, critical[key], activeKey === key)).join('')}
@@ -104,10 +86,6 @@ function buildCriticalCare(metrics) {
 
 function pickDefaultCritical(critical) {
   return Object.keys(CRITICAL_META).find(key => critical[key].length) || 'npa15';
-}
-
-function riskGaugePct(n) {
-  return Math.round(Math.max(18, Math.min(92, n * 4)));
 }
 
 function criticalTabHtml(key, items, active) {
@@ -192,7 +170,6 @@ function performerCardHtml(label, row, type) {
   const empty = row.count === 0;
   const name = empty ? 'No entries yet' : row.officer;
   return `<div class="task-performer task-performer--${type}">
-    <div class="task-performer-ornament">${type === 'fresh' ? '&#127942;' : '&#127941;'}</div>
     <div class="task-performer-copy">
       <div class="task-performer-title">${label}</div>
       <div class="task-performer-line">
