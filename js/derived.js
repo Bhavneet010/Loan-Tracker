@@ -4,6 +4,7 @@ import { computeRenewalStatus, isFreshCC, isRenewalDatesMissing, todayStr } from
 let cache = null;
 let cacheLoans = null;
 let cacheDay = "";
+let cacheSettingsKey = "";
 
 export function sumAmount(loans) {
   return loans.reduce((sum, loan) => sum + (parseFloat(loan.amount) || 0), 0);
@@ -11,11 +12,13 @@ export function sumAmount(loans) {
 
 export function getLoanMetrics() {
   const day = todayStr();
-  if (cache && cacheLoans === S.loans && cacheDay === day) return cache;
+  const settingsKey = S.officers.join("|");
+  if (cache && cacheLoans === S.loans && cacheDay === day && cacheSettingsKey === settingsKey) return cache;
 
   cache = buildLoanMetricsForMonth(day.slice(0, 7), day);
   cacheLoans = S.loans;
   cacheDay = day;
+  cacheSettingsKey = settingsKey;
   return cache;
 }
 

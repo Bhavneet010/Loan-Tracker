@@ -69,7 +69,12 @@ window.toggleRenewalNpa = function(show) {
   render();
 };
 
-window.setRenewalView = function(v) { S.renewalView = v; render(); };
+window.setRenewalView = function(v) {
+  S.renewalView = v;
+  S.openPop = null;
+  if (v !== 'calendar') S.calendarOpenDay = null;
+  render();
+};
 window.calendarNavMonth = function(delta) {
   if (!S.calendarState) return;
   let { year, month } = S.calendarState;

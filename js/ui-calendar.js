@@ -31,13 +31,13 @@ function buildCalendarData(renewals, year, month) {
   const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
   renewals.forEach(loan => {
     const rs = loan._rs;
-    if (!rs || !rs.dueDateStr) return;
-    if (!rs.dueDateStr.startsWith(monthStr)) return;
-    if (!map.has(rs.dueDateStr)) map.set(rs.dueDateStr, { loans: [], urgency: 'active' });
-    const entry = map.get(rs.dueDateStr);
+    if (!rs || !rs.npaDateStr) return;
+    if (!rs.npaDateStr.startsWith(monthStr)) return;
+    if (!map.has(rs.npaDateStr)) map.set(rs.npaDateStr, { loans: [], urgency: 'active' });
+    const entry = map.get(rs.npaDateStr);
     entry.loans.push(loan);
-    if (rs.status === 'pending-renewal' || rs.status === 'npa') entry.urgency = 'overdue';
-    else if (rs.status === 'due-soon' && entry.urgency !== 'overdue') entry.urgency = 'due-soon';
+    if (rs.status === 'npa') entry.urgency = 'overdue';
+    else if ((rs.daysUntilNpa || 0) <= 30 && entry.urgency !== 'overdue') entry.urgency = 'due-soon';
   });
   return map;
 }
@@ -85,13 +85,16 @@ function calendarHtml(calData, year, month) {
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="calendarNavMonth(-1)">‹</button>
         <span class="cal-month-label">${MONTHS[month]} ${year}</span>
-        <button class="cal-nav-btn" onclick="calendarNavMonth(1)">›</button>
+        <div class="cal-nav-actions">
+          <button class="cal-nav-btn" onclick="calendarNavMonth(1)">›</button>
+          <button class="cal-list-btn" onclick="setRenewalView('list')">List</button>
+        </div>
       </div>
-      ${monthTotal > 0 ? `<div class="cal-month-count">${monthTotal} renewal${monthTotal !== 1 ? 's' : ''} this month</div>` : '<div class="cal-month-count cal-month-count--empty">No renewals due this month</div>'}
+      ${monthTotal > 0 ? `<div class="cal-month-count">${monthTotal} NPA date${monthTotal !== 1 ? 's' : ''} this month</div>` : '<div class="cal-month-count cal-month-count--empty">No NPA dates this month</div>'}
       <div class="cal-legend">
-        <span class="cal-dot cal-dot--overdue"></span>Overdue
-        <span class="cal-dot cal-dot--soon"></span>Due soon
-        <span class="cal-dot cal-dot--active"></span>Future
+        <span class="cal-dot cal-dot--overdue"></span>NPA
+        <span class="cal-dot cal-dot--soon"></span>NPA within 30d
+        <span class="cal-dot cal-dot--active"></span>Future NPA
       </div>
       <div class="cal-grid">
         ${dowHeaders}
@@ -108,7 +111,7 @@ function dayDetailHtml(dateStr, entry) {
   const items = entry.loans.map(loan => {
     const rs = loan._rs;
     const statusCls = rs.status === 'npa' ? 'rnw-chip-npa' : rs.status === 'pending-renewal' ? 'rnw-chip-pending' : rs.status === 'due-soon' ? 'rnw-chip-due-soon' : 'rnw-chip-active';
-    const statusLabel = rs.status === 'npa' ? 'NPA' : rs.status === 'pending-renewal' ? `${rs.daysOverdue}d OD` : rs.status === 'due-soon' ? `${rs.daysUntilDue}d` : 'Active';
+    const statusLabel = rs.status === 'npa' ? 'NPA' : `${rs.daysUntilNpa}d to NPA`;
     return `<div class="cal-detail-item">
       <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
       <span class="cal-name">${esc(loan.customerName)}</span>
@@ -118,7 +121,7 @@ function dayDetailHtml(dateStr, entry) {
     </div>`;
   }).join('');
   return `<div class="cal-day-detail">
-    <div class="cal-detail-head">${label} · ${entry.loans.length} renewal${entry.loans.length !== 1 ? 's' : ''}</div>
+    <div class="cal-detail-head">NPA date ${label} · ${entry.loans.length} renewal${entry.loans.length !== 1 ? 's' : ''}</div>
     ${items}
   </div>`;
 }

@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v50';
+const CACHE = 'nirnay-v53';
 const ASSETS = [
   './',
   './index.html',
@@ -36,11 +36,14 @@ const ASSETS = [
   './assets/splash/splash-dark-master.svg',
   './assets/splash/splash-light-master.svg',
   './assets/snapshot/top-performer-bg.png',
+  './css/audit.css',
+  './css/calendar.css',
   './css/core.css',
-  './css/snapshot-modal.css',
-  './css/snapshot-report.css',
   './css/notifications.css',
   './css/renewals.css',
+  './css/snapshot-modal.css',
+  './css/snapshot-report.css',
+  './css/tasks.css',
   './js/app.js',
   './js/config.js',
   './js/db.js',
@@ -57,6 +60,7 @@ const ASSETS = [
   './js/performance-pdf.js',
   './js/performance-snapshot.js',
   './js/state.js',
+  './js/ui-calendar.js',
   './js/ui-components.js',
   './js/ui-core.js',
   './js/ui-logic.js',
@@ -65,6 +69,7 @@ const ASSETS = [
   './js/ui-stats.js',
   './js/ui-tabs-loans.js',
   './js/ui-tabs-renewals.js',
+  './js/ui-tasks.js',
   './js/utils.js',
 ];
 

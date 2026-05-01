@@ -52,7 +52,7 @@ export function renderRenewals(c) {
       <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
       <span>Show NPA</span>
     </label>` : ''}
-    <button class="fs-btn cal-toggle-btn ${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView(S.renewalView==='calendar'?'list':'calendar')">📅 Cal</button>
+    <button class="fs-btn cal-toggle-btn" onclick="event.stopPropagation();setRenewalView('calendar')">📅 Cal</button>
     <div class="fs-pop" style="${filterStyle}">
       <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Integration pending' }, { v: 'Complete', label: 'Integration complete' }], S.renewalFilter.completion)}
       <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}
