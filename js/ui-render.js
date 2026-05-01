@@ -14,6 +14,7 @@ export function render() {
     return; 
   }
   document.body.classList.toggle('tasks-mode', S.appMode === 'tasks');
+  document.body.classList.toggle('fresh-mode', S.appMode === 'fresh');
   updateHero();
   updateBadges();
   
