@@ -114,6 +114,8 @@ window.saveLoan = async function(e) {
 
     const renewalInput = document.getElementById('fRenewalDue');
     const limitExpiryInput = document.getElementById('fLimitExpiry');
+    const existingLoan = id ? S.loans.find(x => x.id === id) : null;
+    const isRenewalDoneEdit = !!(existingLoan?.renewedDate) && mode !== 'renewal-done';
     if (mode === 'renewal-done') {
       const hasRenewalDue = !!(renewalInput && renewalInput.value);
       const hasLimitExpiry = !!(limitExpiryInput && limitExpiryInput.value);
@@ -121,6 +123,12 @@ window.saveLoan = async function(e) {
       data.renewalDatesPending = !(hasRenewalDue && hasLimitExpiry);
       if (hasRenewalDue) data.renewalDueDate = renewalInput.value;
       if (hasLimitExpiry) data.limitExpiryDate = limitExpiryInput.value;
+    } else if (isRenewalDoneEdit) {
+      if (renewalInput && renewalInput.value) data.renewalDueDate = renewalInput.value;
+      if (limitExpiryInput && limitExpiryInput.value) data.limitExpiryDate = limitExpiryInput.value;
+      const finalRenewalDue = data.renewalDueDate || existingLoan.renewalDueDate;
+      const finalLimitExpiry = data.limitExpiryDate || existingLoan.limitExpiryDate;
+      if (finalRenewalDue && finalLimitExpiry) data.renewalDatesPending = false;
     } else {
       data.renewalDueDate = (renewalInput && renewalInput.value) ? renewalInput.value : '';
       data.limitExpiryDate = (limitExpiryInput && limitExpiryInput.value) ? limitExpiryInput.value : '';

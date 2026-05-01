@@ -295,7 +295,7 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
   document.getElementById('fName').value = loan.customerName || '';
   document.getElementById('fAmount').value = loan.amount || '';
   document.getElementById('fReceive').value = isEdit ? (loan.receiveDate || '') : todayStr();
-  document.getElementById('fSanction').value = isEdit ? (loan.sanctionDate || '') : '';
+  document.getElementById('fSanction').value = isEdit ? (loan.sanctionDate || loan.renewedDate || '') : '';
   document.getElementById('fRemarks').value = loan.remarks || '';
 
   const renewalGroup = document.getElementById('fRenewalGroup');
@@ -305,8 +305,9 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
 
   const renewalInput = document.getElementById('fRenewalDue');
   const limitExpiryInput = document.getElementById('fLimitExpiry');
-  if (renewalInput) renewalInput.value = mode === 'renewal-done' ? '' : (loan.renewalDueDate || '');
-  if (limitExpiryInput) limitExpiryInput.value = mode === 'renewal-done' ? '' : (loan.limitExpiryDate || '');
+  const hideRenewalDates = mode === 'renewal-done' || (isEdit && !!loan.renewedDate);
+  if (renewalInput) renewalInput.value = hideRenewalDates ? '' : (loan.renewalDueDate || '');
+  if (limitExpiryInput) limitExpiryInput.value = hideRenewalDates ? '' : (loan.limitExpiryDate || '');
 }
 
 function getDuplicateMatches({ id = '', customerName = '', branch = '' }) {
@@ -423,9 +424,10 @@ window.openForm = function(loan = null, mode = null, options = {}) {
     updateAssignedOfficerHint('');
   }
 
-  if (mode === 'renewal-done') {
+  const isRenewalDoneEdit = isEdit && !!loan?.renewedDate;
+  if (mode === 'renewal-done' || isRenewalDoneEdit) {
     document.getElementById('fReceiveGroup').style.display = 'none';
-    document.getElementById('fSanctionGroup').style.display = 'none';
+    document.getElementById('fSanctionGroup').style.display = 'block';
   } else {
     document.getElementById('fReceiveGroup').style.display = '';
     document.getElementById('fSanctionGroup').style.display = isEdit && loan.status === 'sanctioned' ? 'block' : 'none';
