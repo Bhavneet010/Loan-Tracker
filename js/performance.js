@@ -141,7 +141,11 @@ window.shareDailySnapshotJpeg = async function () {
     const file = new File([blob], fileName, { type: "image/jpeg" });
 
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file] });
+      await navigator.share({
+        files: [file],
+        title: "Daily Snapshot",
+        text: `Daily Performance Update ${formatShareDate(new Date())}`,
+      });
       return;
     }
 
