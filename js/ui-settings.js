@@ -30,6 +30,18 @@ export function renderSettingsList() {
         }).join('')}
       </div>
       <div style="display:flex;gap:8px;"><input type="text" id="newBranch" placeholder="e.g. 1234 : BRANCH" style="flex:1;"><button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addBranch()">Add</button></div>`;
+  } else if (S.settingsTab === 'targets') {
+    const month = currentMonthKey();
+    const label = new Date(`${month}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    const targets = S.renewalTargets?.[month] || {};
+    el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.45;">Set renewal completion targets for ${esc(label)}. Missing targets count as 0.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+        ${S.officers.map((officer, i) => `<div class="setting-item" style="gap:10px;">
+          <span style="flex:1;">${esc(officer)}</span>
+          <input type="number" id="target_${i}" min="0" step="1" value="${Number(targets[officer]) || 0}" style="width:92px;padding:8px 10px;border-radius:9px;border:1px solid rgba(107,95,191,0.2);background:rgba(255,255,255,0.75);font-weight:800;text-align:right;">
+        </div>`).join('')}
+      </div>
+      <button type="button" class="btn btn-primary-full" style="width:100%;padding:13px;border-radius:13px;" onclick="saveRenewalTargets()">Save Targets</button>`;
   } else if (S.settingsTab === 'adminid') {
     el.innerHTML = `<div class="form-group"><label>New PIN (6 digits)</label><input type="password" id="newPin" class="pin-input" maxlength="6" inputmode="numeric"></div>
       <div class="form-group"><label>Confirm New PIN</label><input type="password" id="confirmPin" class="pin-input" maxlength="6" inputmode="numeric"></div>
@@ -51,6 +63,12 @@ export function renderSettingsList() {
       <div id="monthEndHistory"></div>`;
     renderMonthEndSettings();
   }
+}
+
+function currentMonthKey() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 7);
 }
 
 /* ── SETTINGS ACTIONS ── */
@@ -75,6 +93,19 @@ window.removeBranch = async function(i) {
 };
 window.setBranchOfficer = async function(code, off) {
   S.branchOfficers[code] = off; await saveSettings(); toast('Assigned officer ✓');
+};
+window.saveRenewalTargets = async function() {
+  const month = currentMonthKey();
+  const targets = {};
+  S.officers.forEach((officer, i) => {
+    const input = document.getElementById(`target_${i}`);
+    targets[officer] = Math.max(0, Math.floor(Number(input?.value) || 0));
+  });
+  S.renewalTargets = { ...(S.renewalTargets || {}), [month]: targets };
+  await saveSettings();
+  renderSettingsList();
+  window.render?.();
+  toast('Targets saved ✓');
 };
 window.changePassword = async function() {
   const np = document.getElementById('newPin').value.trim();

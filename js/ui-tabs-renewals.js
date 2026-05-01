@@ -30,7 +30,7 @@ export function renderRenewals(c) {
   
   const total = sumAmount(sorted);
   const tabMeta = {
-    'dates-missing': { title: 'Renewal Dates Missing', empty: '!', msg: 'No completed renewals need date updates' },
+    'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
     'done': { title: 'Done This Month', empty: '♻', msg: 'No SME renewals completed this month' },
     'due-soon': { title: 'Due for Renewal Soon', empty: '⏰', msg: 'No accounts due within 30 days' },
     'overdue': { title: 'Renewal Overdue', empty: '⚠', msg: 'No overdue renewal accounts' },
@@ -54,7 +54,7 @@ export function renderRenewals(c) {
     </label>` : ''}
     <button class="fs-btn cal-toggle-btn ${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView(S.renewalView==='calendar'?'list':'calendar')">📅 Cal</button>
     <div class="fs-pop" style="${filterStyle}">
-      <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Dates missing' }, { v: 'Complete', label: 'Dates complete' }], S.renewalFilter.completion)}
+      <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Integration pending' }, { v: 'Complete', label: 'Integration complete' }], S.renewalFilter.completion)}
       <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}
       <hr><h4>Branch</h4>${radio('branch', [{ v: 'All', label: 'All branches' }, ...S.branches.map(b => ({ v: b, label: b }))], S.renewalFilter.branch)}
     </div>

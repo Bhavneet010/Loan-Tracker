@@ -6,13 +6,13 @@ const CATEGORY_META = {
   overdueLoans:    { title: 'Overdue Pending',    icon: '⏳', urgency: 'amber', type: 'loan' },
   dueSoon:         { title: 'Renewals Due Soon',   icon: '⏰', urgency: 'amber', type: 'renewal' },
   overdueRenewals: { title: 'Overdue Renewals',    icon: '⚠',  urgency: 'red',   type: 'renewal' },
-  datesMissing:    { title: 'Missing Dates',        icon: '📋', urgency: 'purple', type: 'renewal' },
+  datesMissing:    { title: 'Integration Pending',  icon: '📋', urgency: 'purple', type: 'renewal' },
 };
 
 const CRITICAL_META = {
   npa15:        { title: 'NPA in 15 days',   tone: 'red' },
-  pending10:    { title: 'Pending >10 days', tone: 'amber' },
-  datesMissing: { title: 'Dates missing',    tone: 'purple' },
+  pending10:    { title: 'Pending>10d',      tone: 'amber' },
+  datesMissing: { title: 'Integration Pending', tone: 'purple' },
 };
 
 /* ── ENTRY POINT ── */
@@ -46,7 +46,7 @@ function buildCategoryItems(metrics, category, officer) {
 function renderTaskOverview(c, metrics) {
   const critical = buildCriticalCare(metrics);
   const activeKey = CRITICAL_META[S.taskCategory] ? S.taskCategory : pickDefaultCritical(critical);
-  const activeItems = critical[activeKey] || [];
+  const activeItems = sortCriticalItems(activeKey, critical[activeKey] || []);
 
   c.innerHTML = `
     ${performerBoardHtml(metrics)}
@@ -54,9 +54,8 @@ function renderTaskOverview(c, metrics) {
       <div class="task-care-head">
         <div>
           <div class="task-care-title">Critical Care</div>
-          <div class="task-care-sub">Highest risk accounts first</div>
         </div>
-        <div class="task-care-info">i</div>
+        <div class="task-care-risk">!</div>
       </div>
       <div class="task-critical-tabs">
         ${Object.keys(CRITICAL_META).map(key => criticalTabHtml(key, critical[key], activeKey === key)).join('')}
@@ -73,14 +72,11 @@ function buildCriticalCare(metrics) {
   const visible = l => S.isAdmin || l.allocatedTo === S.user;
   return {
     npa15: metrics.renewalOverdue
-      .filter(l => visible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15)
-      .sort((a, b) => (a._rs.daysUntilNpa - b._rs.daysUntilNpa) || ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0))),
+      .filter(l => visible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15),
     pending10: metrics.pending
-      .filter(l => visible(l) && daysPending(l.receiveDate) > 10)
-      .sort((a, b) => daysPending(b.receiveDate) - daysPending(a.receiveDate) || ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0))),
+      .filter(l => visible(l) && daysPending(l.receiveDate) > 10),
     datesMissing: metrics.renewalDatesMissing
-      .filter(visible)
-      .sort((a, b) => ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0)) || (a.customerName || '').localeCompare(b.customerName || '')),
+      .filter(visible),
   };
 }
 
@@ -105,17 +101,72 @@ function criticalTabHtml(key, items, active) {
 function criticalRowsHtml(key, items) {
   if (!items.length) return `<div class="task-critical-empty">All clear in this bucket.</div>`;
   const total = items.length;
+  const expanded = !!S.taskCriticalExpanded?.[key];
+  const shown = expanded ? items : items.slice(0, 5);
+  const sort = S.taskCriticalSort?.[key] || { field: 'urgency', dir: 'desc' };
   return `<div class="task-critical-rows">
     <div class="task-critical-sort">
-      <span>Sorted by urgency</span>
+      <span>Sorted by ${criticalSortLabel(key, sort.field)}</span>
       <span class="task-sort-icon">&#8645;</span>
     </div>
     <div class="task-critical-table-head">
-      <span>Branch</span><span>Borrower</span><span>${key === 'pending10' ? 'Days' : 'Status'}</span><span>Amt</span><span>Officer</span>
+      ${criticalHeadCell(key, 'branch', 'Branch', sort)}
+      ${criticalHeadCell(key, 'borrower', 'Borrower', sort)}
+      ${criticalHeadCell(key, 'status', key === 'pending10' ? 'Days' : 'Status', sort)}
+      ${criticalHeadCell(key, 'amount', 'Amt', sort)}
+      ${criticalHeadCell(key, 'officer', 'Officer', sort)}
     </div>
-    ${items.slice(0, 5).map(loan => criticalLoanRowHtml(key, loan)).join('')}
-    ${items.length > 5 ? `<button type="button" class="task-critical-more">View all ${total} accounts &#8250;</button>` : ''}
+    ${shown.map(loan => criticalLoanRowHtml(key, loan)).join('')}
+    ${items.length > 5 && !expanded ? `<button type="button" class="task-critical-more" onclick="expandCriticalCare('${key}')">View all ${total} accounts &#8250;</button>` : ''}
+    ${items.length > 5 && expanded ? `<button type="button" class="task-critical-more task-critical-collapse" onclick="collapseCriticalCare('${key}')">Collapse to 5 accounts &#8963;</button>` : ''}
   </div>`;
+}
+
+function criticalSortLabel(key, field) {
+  if (field === 'branch') return 'branch';
+  if (field === 'borrower') return 'borrower';
+  if (field === 'amount') return 'amount';
+  if (field === 'officer') return 'officer';
+  if (field === 'status') return key === 'pending10' ? 'days' : 'status';
+  return 'urgency';
+}
+
+function criticalHeadCell(key, field, label, sort) {
+  const active = sort.field === field;
+  const arrow = active ? (sort.dir === 'asc' ? '↑' : '↓') : '';
+  return `<button type="button" class="task-critical-head-btn ${active ? 'active' : ''}" onclick="sortCriticalCare('${key}','${field}')">${label}${arrow ? ` <span>${arrow}</span>` : ''}</button>`;
+}
+
+function sortCriticalItems(key, items) {
+  const sort = S.taskCriticalSort?.[key] || { field: 'urgency', dir: 'desc' };
+  const dir = sort.dir === 'asc' ? 1 : -1;
+  return [...items].sort((a, b) => {
+    if (sort.field === 'urgency') return defaultCriticalCompare(key, a, b);
+    const av = criticalSortValue(key, a, sort.field);
+    const bv = criticalSortValue(key, b, sort.field);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return defaultCriticalCompare(key, a, b);
+  });
+}
+
+function defaultCriticalCompare(key, a, b) {
+  if (key === 'npa15') return (a._rs?.daysUntilNpa ?? 999) - (b._rs?.daysUntilNpa ?? 999) || ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
+  if (key === 'pending10') return daysPending(b.receiveDate) - daysPending(a.receiveDate) || ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
+  return ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0)) || (a.customerName || '').localeCompare(b.customerName || '');
+}
+
+function criticalSortValue(key, loan, field) {
+  if (field === 'branch') return branchCode(loan.branch);
+  if (field === 'borrower') return (loan.customerName || '').toLowerCase();
+  if (field === 'amount') return parseFloat(loan.amount) || 0;
+  if (field === 'officer') return (loan.allocatedTo || '').toLowerCase();
+  if (field === 'status') {
+    if (key === 'npa15') return loan._rs?.daysUntilNpa ?? 999;
+    if (key === 'pending10') return daysPending(loan.receiveDate);
+    return (loan.customerName || '').toLowerCase();
+  }
+  return '';
 }
 
 function criticalLoanRowHtml(key, loan) {
@@ -123,7 +174,7 @@ function criticalLoanRowHtml(key, loan) {
     ? `${loan._rs?.daysUntilNpa ?? 0}d to NPA`
     : key === 'pending10'
       ? `${daysPending(loan.receiveDate)}d pending`
-      : 'Dates missing';
+      : 'Integration pending';
   const statusShort = key === 'npa15'
     ? `${loan._rs?.daysUntilNpa ?? 0}d`
     : key === 'pending10'
@@ -186,12 +237,11 @@ function performerCardHtml(label, row, type) {
 
 function renewalTargetsHtml(metrics) {
   const doneByOfficer = countByOfficer(metrics.renewalDoneThisMonth);
-  const openByOfficer = countByOfficer([...metrics.renewalDueSoon, ...metrics.renewalOverdue]);
+  const monthTargets = S.renewalTargets?.[metrics.thisMonth] || {};
   const rows = S.officers.map(officer => {
     const done = doneByOfficer.get(officer) || 0;
-    const open = openByOfficer.get(officer) || 0;
-    const target = Math.max(done + open, done, 1);
-    const pct = Math.min(100, Math.round((done / target) * 100));
+    const target = Math.max(0, Number(monthTargets[officer]) || 0);
+    const pct = target > 0 ? Math.min(100, Math.round((done / target) * 100)) : 0;
     return `<div class="task-target-row">
       <div class="task-target-person">
         <span class="lr-av" style="background:${officerColor(officer).bg};">${initials(officer)}</span>
@@ -206,10 +256,9 @@ function renewalTargetsHtml(metrics) {
     <div class="task-section-head">
       <div>
         <div class="task-kicker">Renewal Targets</div>
-        <div class="task-section-title">This month by officer</div>
       </div>
-      <span class="task-section-pill">Done / target</span>
     </div>
+    <div class="task-target-head"><span></span><span></span><span>Done / target</span></div>
     <div class="task-target-list">${rows}</div>
   </section>`;
 }
@@ -302,7 +351,7 @@ function taskRenewalItemHtml(loan) {
   const statusLabel = rs.status === 'npa' ? 'NPA'
     : rs.status === 'pending-renewal' ? `${rs.daysOverdue}d OD`
     : rs.status === 'due-soon' ? `Due ${rs.daysUntilDue}d`
-    : 'Missing dates';
+    : 'Integration pending';
   const statusCls = rs.status === 'npa' ? 'rnw-chip-npa'
     : rs.status === 'pending-renewal' ? 'rnw-chip-pending'
     : 'rnw-chip-due-soon';
@@ -323,5 +372,26 @@ function taskRenewalItemHtml(loan) {
 window.toggleCriticalCare = function(key) {
   S.taskCategory = key;
   S.taskView = 'overview';
+  window.render?.();
+};
+
+window.expandCriticalCare = function(key) {
+  S.taskCriticalExpanded = { ...(S.taskCriticalExpanded || {}), [key]: true };
+  S.taskCategory = key;
+  window.render?.();
+};
+
+window.collapseCriticalCare = function(key) {
+  S.taskCriticalExpanded = { ...(S.taskCriticalExpanded || {}), [key]: false };
+  S.taskCategory = key;
+  window.render?.();
+};
+
+window.sortCriticalCare = function(key, field) {
+  const cur = S.taskCriticalSort?.[key] || { field: 'urgency', dir: 'desc' };
+  const numeric = field === 'status' || field === 'amount';
+  const nextDir = cur.field === field ? (cur.dir === 'asc' ? 'desc' : 'asc') : (numeric ? 'desc' : 'asc');
+  S.taskCriticalSort = { ...(S.taskCriticalSort || {}), [key]: { field, dir: nextDir } };
+  S.taskCategory = key;
   window.render?.();
 };

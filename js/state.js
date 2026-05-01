@@ -25,10 +25,13 @@ export const S = {
   taskView: 'overview',
   taskCategory: null,
   taskOfficer: null,
+  taskCriticalExpanded: {},
+  taskCriticalSort: {},
   openPop: null,
   loans: [],
   loanMap: new Map(),
   notifications: [],
+  renewalTargets: {},
   officers: ['Anchal', 'Nikita', 'Ritika'],
   branches: [
     '686 : NAHAN', '1680 : ADB PAONTA SAHIB', '1755 : PAONTA SAHIB',
@@ -54,12 +57,14 @@ export async function loadSettings() {
       if (d.officers?.length) S.officers = d.officers;
       if (d.branches?.length) S.branches = d.branches;
       if (d.branchOfficers) S.branchOfficers = { ...S.branchOfficers, ...d.branchOfficers };
+      if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
       if (d.adminPin) PIN = d.adminPin;
     } else {
       await setDoc(doc(db, 'settings', 'config'), { 
         officers: S.officers, 
         branches: S.branches, 
         branchOfficers: S.branchOfficers, 
+        renewalTargets: S.renewalTargets,
         adminPin: PIN 
       });
     }
@@ -72,6 +77,7 @@ export async function saveSettings() {
       officers: S.officers, 
       branches: S.branches, 
       branchOfficers: S.branchOfficers, 
+      renewalTargets: S.renewalTargets,
       adminPin: PIN 
     }); 
   } catch (e) { console.error('Error saving settings:', e); }
