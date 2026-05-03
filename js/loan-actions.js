@@ -22,7 +22,7 @@ window.moveToPending = async function(id) {
 
 async function applyLoanStatus(id, nextStatus, remarks = '') {
   const l = S.loans.find(x => x.id === id);
-  if (!l || !nextStatus || nextStatus === l.status) return null;
+  if (!l || !nextStatus) return null;
   const data = { status: nextStatus };
   if (nextStatus === 'sanctioned') {
     data.sanctionDate = l.sanctionDate || todayStr();
@@ -30,6 +30,9 @@ async function applyLoanStatus(id, nextStatus, remarks = '') {
     data.returnedDate = l.returnedDate || todayStr();
     data.remarks = remarks.trim();
   }
+  const noStatusChange = nextStatus === l.status;
+  const noRemarkChange = nextStatus !== 'returned' || (data.remarks || '') === (l.remarks || '');
+  if (noStatusChange && noRemarkChange) return null;
   try {
     await updateLoan(id, data);
     if (nextStatus === 'sanctioned') createNotification('sanctioned', { ...l, ...data }).catch(() => {});
@@ -46,18 +49,20 @@ async function applyLoanStatus(id, nextStatus, remarks = '') {
 
 async function applyRenewalStatus(id, renewed) {
   const l = S.loans.find(x => x.id === id);
-  if (!l) return;
+  if (!l) return false;
   if (renewed) {
     window.closeDecisionSheet();
     window.openForm({ ...l, renewedDate: l.renewedDate || todayStr() }, 'renewal-done', { entryMode: 'full' });
-    return;
+    return true;
   }
   try {
     await updateLoan(id, { renewedDate: '', renewalDatesPending: false });
     toast('Renewal moved to pending');
+    return true;
   } catch (e) {
     toast('Error');
     console.error(e);
+    return false;
   }
 }
 
@@ -86,6 +91,16 @@ function loanDecisionLines(loan) {
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
   }
   return rows.join('');
+}
+
+function previewLoanStatus(loan, status, remarks = '') {
+  const preview = { ...loan, status };
+  if (status === 'sanctioned') preview.sanctionDate = loan.sanctionDate || todayStr();
+  if (status === 'returned') {
+    preview.returnedDate = loan.returnedDate || todayStr();
+    preview.remarks = remarks;
+  }
+  return preview;
 }
 
 function renewalDecisionLines(loan, rs) {
@@ -153,6 +168,9 @@ function setDecisionSelected(overlay, value, opts = {}) {
   if (thumbLabel) thumbLabel.textContent = selected.label;
   slider.querySelectorAll('[data-decision-value]').forEach(btn => btn.classList.toggle('active', btn.dataset.decisionValue === selected.value));
   overlay.querySelector('.decision-return-note')?.classList.toggle('show', selected.value === 'returned');
+  if (opts.emit !== false) {
+    slider.dispatchEvent(new CustomEvent('decisionchange', { bubbles: true, detail: { value: selected.value } }));
+  }
 }
 
 function updateLoanDecisionView(overlay, loan, status) {
@@ -166,7 +184,7 @@ function updateLoanDecisionView(overlay, loan, status) {
 }
 
 function initDecisionSheet(overlay, options, selected) {
-  setDecisionSelected(overlay, selected);
+  setDecisionSelected(overlay, selected, { emit: false });
   overlay.addEventListener('click', e => {
     const btn = e.target.closest('[data-decision-value]');
     if (btn) setDecisionSelected(overlay, btn.dataset.decisionValue);
@@ -246,7 +264,8 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
   const loan = S.loans.find(x => x.id === id);
   if (!loan) return;
   window.closeDecisionSheet();
-  let current = loan.status || 'pending';
+  const current = loan.status || 'pending';
+  let stagedStatus = preferredStatus || current;
   const selected = preferredStatus || current;
   const options = [
     { value: 'returned', label: 'Return' },
@@ -262,6 +281,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
       <h2>Loan status</h2>
       <span class="decision-title-actions">
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
+        <button type="button" class="decision-icon-btn" title="Edit loan" onclick="closeDecisionSheet();editLoan('${esc(id)}')">✎</button>
         <span class="decision-status-pill decision-status-pill--${esc(current)}">${esc(current[0].toUpperCase() + current.slice(1))}</span>
       </span>
     </div>
@@ -284,19 +304,26 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
     </div>
     <div class="decision-action-row">
       <button type="button" class="btn btn-cancel-full" onclick="closeDecisionSheet()">Cancel</button>
-      <button type="button" class="btn btn-outline" onclick="closeDecisionSheet();editLoan('${esc(id)}')">Edit loan</button>
+      <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
     </div>
   </div>`;
   document.body.appendChild(overlay);
   initDecisionSheet(overlay, options, selected);
-  overlay.querySelector('[data-decision-thumb]')?.addEventListener('pointerup', async () => {
-    const next = overlay.querySelector('.decision-slider')?.dataset.selected;
-    if (!next || next === current) return;
+  const updatePreview = () => {
     const remarks = overlay.querySelector('#decisionReturnRemarks')?.value || '';
-    const changed = await applyLoanStatus(id, next, remarks);
-    if (!changed) return;
-    current = next;
-    updateLoanDecisionView(overlay, loan, current);
+    const preview = previewLoanStatus(loan, stagedStatus, remarks);
+    updateLoanDecisionView(overlay, preview, stagedStatus);
+  };
+  overlay.addEventListener('decisionchange', e => {
+    stagedStatus = e.detail?.value || stagedStatus;
+    updatePreview();
+  });
+  overlay.querySelector('#decisionReturnRemarks')?.addEventListener('input', updatePreview);
+  updatePreview();
+  overlay.querySelector('[data-decision-save]')?.addEventListener('click', async () => {
+    const remarks = overlay.querySelector('#decisionReturnRemarks')?.value || '';
+    await applyLoanStatus(id, stagedStatus, remarks);
+    window.closeDecisionSheet();
   });
 };
 
@@ -306,6 +333,7 @@ window.openRenewalDecisionSheet = function(id) {
   window.closeDecisionSheet();
   const rs = computeRenewalStatus(loan);
   const current = loan.renewedDate ? 'renewed' : 'pending';
+  let stagedRenewal = current;
   const options = [
     { value: 'pending', label: 'Pending' },
     { value: 'renewed', label: 'Renewed' },
@@ -320,6 +348,7 @@ window.openRenewalDecisionSheet = function(id) {
       <h2>Renewal status</h2>
       <span class="decision-title-actions">
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
+        <button type="button" class="decision-icon-btn" title="Edit loan" onclick="closeDecisionSheet();editLoan('${esc(id)}')">✎</button>
         <span class="decision-status-pill decision-status-pill--renewal">${esc(statusLabel)}</span>
       </span>
     </div>
@@ -338,15 +367,20 @@ window.openRenewalDecisionSheet = function(id) {
     </div>
     <div class="decision-action-row">
       <button type="button" class="btn btn-cancel-full" onclick="closeDecisionSheet()">Cancel</button>
-      <button type="button" class="btn btn-outline" onclick="closeDecisionSheet();editLoan('${esc(id)}')">Edit loan</button>
+      <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
     </div>
   </div>`;
   document.body.appendChild(overlay);
   initDecisionSheet(overlay, options, current);
-  overlay.querySelector('[data-decision-thumb]')?.addEventListener('pointerup', async () => {
-    const next = overlay.querySelector('.decision-slider')?.dataset.selected;
-    if (!next || next === current) return;
-    await applyRenewalStatus(id, next === 'renewed');
+  overlay.addEventListener('decisionchange', e => {
+    stagedRenewal = e.detail?.value || stagedRenewal;
+  });
+  overlay.querySelector('[data-decision-save]')?.addEventListener('click', async () => {
+    if (stagedRenewal !== current) {
+      const changed = await applyRenewalStatus(id, stagedRenewal === 'renewed');
+      if (changed && stagedRenewal !== 'renewed') window.closeDecisionSheet();
+    }
+    else window.closeDecisionSheet();
   });
 };
 

@@ -670,6 +670,11 @@ body.fresh-mode .fab{display:flex;}
   border:1px solid rgba(107,95,191,0.16);background:rgba(255,255,255,0.62);color:var(--text2);
   font:900 9px/1 inherit;cursor:pointer;white-space:nowrap;
 }
+.decision-icon-btn{
+  width:22px;height:22px;border-radius:999px;border:1px solid rgba(107,95,191,0.16);
+  background:rgba(255,255,255,0.62);color:var(--text2);font:900 11px/1 inherit;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+}
 .decision-status-pill{
   display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;
   background:var(--p-bg);border:1px solid var(--p-bd);color:var(--p1);
@@ -737,9 +742,10 @@ body.fresh-mode .fab{display:flex;}
   position:absolute;inset:0;display:grid;grid-template-columns:var(--decision-cols);align-items:center;padding:0 10px;
 }
 .decision-slider-labels button{
-  border:0;background:transparent;padding:0;color:var(--text3);font:900 10px/1 inherit;cursor:pointer;min-width:0;
+  border:0;outline:0;background:transparent;padding:0;color:var(--text3);font:900 10px/1 inherit;cursor:pointer;min-width:0;
   opacity:0.72;transition:color 0.16s ease,opacity 0.16s ease,transform 0.16s ease;
 }
+.decision-slider-labels button:focus-visible{outline:0;}
 .decision-slider-labels .returned{color:var(--red);text-align:left;}
 .decision-slider-labels .pending{text-align:center;}
 .decision-slider-labels .sanctioned,.decision-slider-labels .renewed{color:var(--green);text-align:right;}
