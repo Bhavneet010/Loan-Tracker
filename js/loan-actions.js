@@ -107,7 +107,9 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   }
 
   if (renewalState === 'renewed') {
-    data.renewedDate = draft.renewedDate || base.renewedDate || todayStr();
+    const completionDate = draft.sanctionDate || draft.renewedDate || base.sanctionDate || base.renewedDate || todayStr();
+    data.sanctionDate = completionDate;
+    data.renewedDate = completionDate;
     data.renewalDatesPending = !(draft.renewalDueDate && draft.limitExpiryDate);
   } else if (renewalState === 'pending') {
     data.renewedDate = '';
@@ -253,7 +255,7 @@ function categoryBadgeHtml(loan) {
 }
 
 function renewalStatusLineHtml(loan, rs) {
-  if (loan.renewedDate) return accountLine('Renewed Date', fmtDate(loan.renewedDate));
+  if (loan.renewedDate) return accountLine('Sanction Date', fmtDate(loan.sanctionDate || loan.renewedDate));
   if (rs?.status === 'pending-renewal') return accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert');
   if (rs?.status === 'due-soon') return accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn');
   if (rs?.status === 'npa') return accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert');
@@ -270,7 +272,7 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
   ];
   const officerOptions = [{ value: '', label: 'Select officer' }, ...S.officers.map(o => ({ value: o, label: o }))];
   const branchOptions = [{ value: '', label: 'Select branch' }, ...S.branches.map(b => ({ value: b, label: b }))];
-  const preview = { ...draft, renewedDate: stagedRenewal === 'renewed' ? (draft.renewedDate || todayStr()) : '' };
+  const preview = { ...draft, renewedDate: stagedRenewal === 'renewed' ? (draft.sanctionDate || draft.renewedDate || todayStr()) : '' };
   return `<div class="decision-account-card decision-account-card--editing">
     <div class="decision-account-main">
       <div class="decision-name-row decision-name-row--edit">
@@ -288,7 +290,7 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
         ${inlineAccountEditLine('A/C No.', `<input aria-label="Account Number" data-draft="acNumber" type="text" inputmode="numeric" value="${esc(draft.acNumber)}" placeholder="Account number">`)}
         ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="renewalDueDate" type="date" value="${esc(draft.renewalDueDate)}">`)}
         ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="limitExpiryDate" type="date" value="${esc(draft.limitExpiryDate)}">`)}
-        ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Renewed Date', `<input aria-label="Renewed Date" data-draft="renewedDate" type="date" value="${esc(draft.renewedDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
+        ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Sanction Date', `<input aria-label="Sanction Date" data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || draft.renewedDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
       </div>
     </div>
   </div>`;
@@ -391,7 +393,7 @@ function renewalDecisionLines(loan, rs) {
     accountLine('Renewal Due', fmtDate(loan.renewalDueDate || rs?.dueDateStr)),
     accountLine('Limit Expiry', fmtDate(loan.limitExpiryDate)),
   ];
-  if (loan.renewedDate) rows.push(accountLine('Renewed Date', fmtDate(loan.renewedDate)));
+  if (loan.renewedDate) rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate || loan.renewedDate)));
   else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
   else if (rs?.status === 'due-soon') rows.push(accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn'));
   else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert'));
@@ -781,7 +783,8 @@ window.openRenewalDecisionSheet = function(id) {
   const pill = overlay.querySelector('.decision-status-pill');
   const renderCard = () => {
     const preview = loanFromDraft(loan, draft, loan.status || 'pending');
-    preview.renewedDate = stagedRenewal === 'renewed' ? (loan.renewedDate || todayStr()) : '';
+    preview.renewedDate = stagedRenewal === 'renewed' ? (draft.sanctionDate || draft.renewedDate || loan.sanctionDate || loan.renewedDate || todayStr()) : '';
+    if (stagedRenewal === 'renewed') preview.sanctionDate = draft.sanctionDate || draft.renewedDate || loan.sanctionDate || loan.renewedDate || todayStr();
     const previewRs = computeRenewalStatus(preview);
     if (editMode) {
       card.innerHTML = inlineRenewalEditHtml(draft, stagedRenewal, previewRs);
@@ -909,6 +912,7 @@ window.saveLoan = async function(e) {
 
   const sanctionDate = document.getElementById('fSanction').value;
   if (sanctionDate) data.sanctionDate = sanctionDate;
+  if (mode === 'renewal-done' && sanctionDate) data.renewedDate = sanctionDate;
 
   try {
     if (id) {

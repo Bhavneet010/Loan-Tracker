@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v95';
+const CACHE = 'nirnay-v98';
 const ASSETS = [
   './',
   './index.html',
