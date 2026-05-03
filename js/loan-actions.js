@@ -22,7 +22,7 @@ window.moveToPending = async function(id) {
 
 async function applyLoanStatus(id, nextStatus, remarks = '') {
   const l = S.loans.find(x => x.id === id);
-  if (!l || !nextStatus || nextStatus === l.status) return;
+  if (!l || !nextStatus || nextStatus === l.status) return null;
   const data = { status: nextStatus };
   if (nextStatus === 'sanctioned') {
     data.sanctionDate = l.sanctionDate || todayStr();
@@ -35,9 +35,12 @@ async function applyLoanStatus(id, nextStatus, remarks = '') {
     if (nextStatus === 'sanctioned') createNotification('sanctioned', { ...l, ...data }).catch(() => {});
     else if (nextStatus === 'returned') createNotification('returned', { ...l, ...data }).catch(() => {});
     toast(nextStatus === 'sanctioned' ? 'Sanctioned ✓' : nextStatus === 'returned' ? 'Marked as returned' : 'Moved to pending');
+    Object.assign(l, data);
+    return data;
   } catch (e) {
     toast('Error');
     console.error(e);
+    return null;
   }
 }
 
@@ -143,11 +146,23 @@ function setDecisionSelected(overlay, value, opts = {}) {
   const options = [...slider.querySelectorAll('[data-decision-value]')].map(btn => ({ value: btn.dataset.decisionValue, label: btn.textContent.trim() }));
   const selected = options.find(o => o.value === value) || options[0];
   slider.dataset.selected = selected.value;
+  slider.classList.remove('decision-slider--selected-returned', 'decision-slider--selected-pending', 'decision-slider--selected-sanctioned', 'decision-slider--selected-renewed');
+  slider.classList.add(`decision-slider--selected-${selected.value}`);
   if (opts.snap !== false) slider.style.setProperty('--thumb-left', `${optionLeft(options, selected.value)}%`);
   const thumbLabel = slider.querySelector('[data-decision-thumb] b');
   if (thumbLabel) thumbLabel.textContent = selected.label;
   slider.querySelectorAll('[data-decision-value]').forEach(btn => btn.classList.toggle('active', btn.dataset.decisionValue === selected.value));
   overlay.querySelector('.decision-return-note')?.classList.toggle('show', selected.value === 'returned');
+}
+
+function updateLoanDecisionView(overlay, loan, status) {
+  const pill = overlay.querySelector('.decision-status-pill');
+  if (pill) {
+    pill.className = `decision-status-pill decision-status-pill--${status}`;
+    pill.textContent = status[0].toUpperCase() + status.slice(1);
+  }
+  const lines = overlay.querySelector('.decision-account-lines');
+  if (lines) lines.innerHTML = loanDecisionLines(loan);
 }
 
 function initDecisionSheet(overlay, options, selected) {
@@ -231,7 +246,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
   const loan = S.loans.find(x => x.id === id);
   if (!loan) return;
   window.closeDecisionSheet();
-  const current = loan.status || 'pending';
+  let current = loan.status || 'pending';
   const selected = preferredStatus || current;
   const options = [
     { value: 'returned', label: 'Return' },
@@ -278,8 +293,10 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
     const next = overlay.querySelector('.decision-slider')?.dataset.selected;
     if (!next || next === current) return;
     const remarks = overlay.querySelector('#decisionReturnRemarks')?.value || '';
-    window.closeDecisionSheet();
-    await applyLoanStatus(id, next, remarks);
+    const changed = await applyLoanStatus(id, next, remarks);
+    if (!changed) return;
+    current = next;
+    updateLoanDecisionView(overlay, loan, current);
   });
 };
 

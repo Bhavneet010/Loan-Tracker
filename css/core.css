@@ -756,6 +756,19 @@ body.fresh-mode .fab{display:flex;}
   color:var(--text1);font:900 11px/1 inherit;cursor:grab;touch-action:none;
   transition:left 0.18s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.18s ease, transform 0.18s ease;
 }
+.decision-slider--selected-returned .decision-slider-thumb{
+  background:linear-gradient(135deg,#FEE2E2,#FECACA);border-color:rgba(239,68,68,0.30);color:#7F1D1D;
+}
+.decision-slider--selected-pending .decision-slider-thumb{
+  background:#fff;border-color:rgba(107,95,191,0.18);color:var(--text1);
+}
+.decision-slider--selected-sanctioned .decision-slider-thumb,
+.decision-slider--selected-renewed .decision-slider-thumb{
+  background:linear-gradient(135deg,#DCFCE7,#A7F3D0);border-color:rgba(16,185,129,0.32);color:#065F46;
+}
+.decision-slider--renewal.decision-slider--selected-pending .decision-slider-thumb{
+  background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-color:rgba(245,158,11,0.28);color:#92400E;
+}
 .decision-slider-thumb:active{cursor:grabbing;}
 .decision-slider.dragging .decision-slider-thumb{
   transition:box-shadow 0.12s ease, transform 0.12s ease;
