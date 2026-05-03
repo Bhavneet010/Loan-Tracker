@@ -750,7 +750,7 @@ body.fresh-mode .fab{display:flex;}
 .decision-slider-labels .pending{text-align:center;}
 .decision-slider-labels .sanctioned,.decision-slider-labels .renewed{color:var(--green);text-align:right;}
 .decision-slider--renewal .pending{color:var(--amber);text-align:left;}
-.decision-slider-labels .active{opacity:1;transform:translateY(-0.5px);}
+.decision-slider-labels .active{opacity:0;transform:translateY(-0.5px);}
 .decision-slider-labels .returned.active{color:#7F1D1D;}
 .decision-slider-labels .pending.active{color:var(--text1);}
 .decision-slider-labels .sanctioned.active,.decision-slider-labels .renewed.active{color:#065F46;}
