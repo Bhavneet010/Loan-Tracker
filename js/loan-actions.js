@@ -66,8 +66,119 @@ async function applyRenewalStatus(id, renewed) {
   }
 }
 
+function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) {
+  const branch = matchBranchOption(draft.branch);
+  const assignedOfficer = assignedOfficerForBranch(branch);
+  const selectedOfficer = draft.allocatedTo || assignedOfficer || (S.user && !S.isAdmin ? S.user : '');
+  const customerName = normalizeName(draft.customerName);
+  if (!draft.category) return { error: 'Pick a category first' };
+  if (!branch) return { error: 'Pick a valid branch first' };
+  if (!selectedOfficer) return { error: 'Select or assign an officer first' };
+  if (!customerName) return { error: 'Customer name is required' };
+  if (!(parseFloat(draft.amount) > 0)) return { error: 'Enter a valid amount' };
+
+  const data = {
+    allocatedTo: selectedOfficer,
+    category: draft.category,
+    branch,
+    customerName,
+    amount: parseFloat(draft.amount),
+    receiveDate: draft.receiveDate || todayStr(),
+    remarks: (draft.remarks || '').trim(),
+  };
+  if (draft.acNumber !== undefined) data.acNumber = (draft.acNumber || '').trim();
+
+  if (status) data.status = status;
+  if (status === 'sanctioned') data.sanctionDate = draft.sanctionDate || base.sanctionDate || todayStr();
+  else if (draft.sanctionDate) data.sanctionDate = draft.sanctionDate;
+  if (status === 'returned') data.returnedDate = base.returnedDate || todayStr();
+
+  if (draft.category === 'SME') {
+    data.isTermLoan = !!draft.isTermLoan;
+    const isImported = (base && base.isImported) || (base?.id && base.id.startsWith('import_sme_csv_'));
+    data.isFreshCC = !isImported;
+    if (isImported) data.isImported = true;
+    else data.manuallyCreated = true;
+    data.renewalDueDate = draft.renewalDueDate || '';
+    data.limitExpiryDate = draft.limitExpiryDate || '';
+    if (data.renewalDueDate && data.limitExpiryDate) data.renewalDatesPending = false;
+  } else {
+    data.isTermLoan = false;
+  }
+
+  if (renewalState === 'renewed') {
+    data.renewedDate = draft.renewedDate || base.renewedDate || todayStr();
+    data.renewalDatesPending = !(draft.renewalDueDate && draft.limitExpiryDate);
+  } else if (renewalState === 'pending') {
+    data.renewedDate = '';
+    data.renewalDatesPending = false;
+  }
+
+  return { data, duplicateCheck: { id: base.id, customerName, branch } };
+}
+
+async function saveInlineLoan(base, draft, status, opts = {}) {
+  const built = buildInlineSaveData(base, draft, status, opts);
+  if (built.error) {
+    toast(built.error);
+    return false;
+  }
+  if (!await confirmPotentialDuplicate(built.duplicateCheck)) return false;
+  try {
+    await updateLoan(base.id, built.data);
+    createNotification('edited', { ...built.data, id: base.id }).catch(() => {});
+    if (status && status !== base.status) {
+      if (status === 'sanctioned') createNotification('sanctioned', { ...base, ...built.data }).catch(() => {});
+      if (status === 'returned') createNotification('returned', { ...base, ...built.data }).catch(() => {});
+    }
+    Object.assign(base, built.data);
+    saveRecentBranch(built.data.branch);
+    toast('Loan updated ✓');
+    return true;
+  } catch (e) {
+    toast('Error saving');
+    console.error(e);
+    return false;
+  }
+}
+
 function accountAmount(loan) {
   return `₹${fmtAmt(loan.amount)}<span> L</span>`;
+}
+
+function cloneLoanDraft(loan) {
+  return {
+    allocatedTo: loan.allocatedTo || '',
+    category: loan.category || '',
+    branch: loan.branch || '',
+    customerName: loan.customerName || '',
+    amount: loan.amount ?? '',
+    acNumber: loan.acNumber || '',
+    receiveDate: loan.receiveDate || todayStr(),
+    sanctionDate: loan.sanctionDate || '',
+    returnedDate: loan.returnedDate || '',
+    renewedDate: loan.renewedDate || '',
+    renewalDueDate: loan.renewalDueDate || '',
+    limitExpiryDate: loan.limitExpiryDate || '',
+    remarks: loan.remarks || '',
+    isTermLoan: !!loan.isTermLoan,
+  };
+}
+
+function loanFromDraft(base, draft, status = base.status || 'pending') {
+  const loan = {
+    ...base,
+    ...draft,
+    status,
+    customerName: normalizeName(draft.customerName),
+    amount: parseFloat(draft.amount) || 0,
+  };
+  if (status === 'sanctioned') loan.sanctionDate = draft.sanctionDate || base.sanctionDate || todayStr();
+  if (status === 'returned') {
+    loan.returnedDate = base.returnedDate || todayStr();
+    loan.remarks = draft.remarks || '';
+  }
+  return loan;
 }
 
 function accountLine(label, value, tone = '') {
@@ -83,9 +194,14 @@ function loanDecisionLines(loan) {
     accountLine('Officer', loan.allocatedTo),
     accountLine('Received', fmtDate(loan.receiveDate)),
   ];
+  if (loan.category === 'SME') {
+    rows.push(accountLine('Renewal Due', fmtDate(loan.renewalDueDate)));
+    rows.push(accountLine('Limit Expiry', fmtDate(loan.limitExpiryDate)));
+  }
   if ((loan.status || 'pending') === 'pending') {
     const days = daysPending(loan.receiveDate);
     rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`, days > 7 ? 'alert' : ''));
+    rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
   }
   if (loan.status === 'sanctioned') rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
   if (loan.status === 'returned') {
@@ -103,6 +219,168 @@ function previewLoanStatus(loan, status, remarks = '') {
     preview.remarks = remarks;
   }
   return preview;
+}
+
+function inlineSelect(options, value) {
+  return options.map(opt => {
+    const val = typeof opt === 'string' ? opt : opt.value;
+    const label = typeof opt === 'string' ? opt : opt.label;
+    return `<option value="${esc(val)}" ${val === value ? 'selected' : ''}>${esc(label)}</option>`;
+  }).join('');
+}
+
+function inlineField(label, html, cls = '') {
+  return `<label class="decision-edit-field ${cls}"><small>${esc(label)}</small>${html}</label>`;
+}
+
+function inlineAccountEditLine(label, html, tone = '') {
+  const cls = tone ? ` decision-account-line--${esc(tone)}` : '';
+  return `<div class="decision-account-line decision-account-line--edit${cls}">
+    <small>${esc(label)}</small>
+    <span class="decision-edit-control">${html}</span>
+    <span></span>
+  </div>`;
+}
+
+function categoryModeValue(loan) {
+  if (loan.category === 'SME' && loan.isTermLoan) return 'SME_TERM';
+  return loan.category || '';
+}
+
+function categoryBadgeHtml(loan) {
+  const label = loan.category === 'SME' && loan.isTermLoan ? 'SME TL' : (loan.category || 'Loan');
+  return `<span class="decision-category-badge ${catCls(loan.category)}" title="${esc(label)}">${esc(label)}</span>`;
+}
+
+function renewalStatusLineHtml(loan, rs) {
+  if (loan.renewedDate) return accountLine('Renewed Date', fmtDate(loan.renewedDate));
+  if (rs?.status === 'pending-renewal') return accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert');
+  if (rs?.status === 'due-soon') return accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn');
+  if (rs?.status === 'npa') return accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert');
+  return '';
+}
+
+function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
+  const categoryOptions = [
+    { value: '', label: 'Category' },
+    { value: 'Agriculture', label: 'Agriculture' },
+    { value: 'SME', label: 'SME' },
+    { value: 'SME_TERM', label: 'SME Term Loan' },
+    { value: 'Education', label: 'Education' },
+  ];
+  const officerOptions = [{ value: '', label: 'Select officer' }, ...S.officers.map(o => ({ value: o, label: o }))];
+  const branchOptions = [{ value: '', label: 'Select branch' }, ...S.branches.map(b => ({ value: b, label: b }))];
+  const preview = { ...draft, renewedDate: stagedRenewal === 'renewed' ? (draft.renewedDate || todayStr()) : '' };
+  return `<div class="decision-account-card decision-account-card--editing">
+    <div class="decision-account-main">
+      <div class="decision-name-row decision-name-row--edit">
+        <label class="decision-name decision-name--edit" title="Customer Name">
+          <input data-draft="customerName" type="text" value="${esc(draft.customerName)}" autocomplete="off">
+        </label>
+        <select class="decision-category-select ${catCls(draft.category)}" aria-label="Category" data-draft="categoryMode">${inlineSelect(categoryOptions, categoryModeValue(draft))}</select>
+        <label class="decision-amount decision-amount--edit" title="Amount (L)">
+          <input data-draft="amount" type="number" step="0.01" min="0" value="${esc(draft.amount)}">
+        </label>
+      </div>
+      <div class="decision-account-lines decision-account-lines--edit">
+        ${inlineAccountEditLine('Branch', `<select aria-label="Branch" data-draft="branch">${inlineSelect(branchOptions, matchBranchOption(draft.branch) || draft.branch)}</select>`)}
+        ${inlineAccountEditLine('Officer', `<select aria-label="Officer" data-draft="allocatedTo">${inlineSelect(officerOptions, draft.allocatedTo)}</select>`)}
+        ${inlineAccountEditLine('A/C No.', `<input aria-label="Account Number" data-draft="acNumber" type="text" inputmode="numeric" value="${esc(draft.acNumber)}" placeholder="Account number">`)}
+        ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="renewalDueDate" type="date" value="${esc(draft.renewalDueDate)}">`)}
+        ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="limitExpiryDate" type="date" value="${esc(draft.limitExpiryDate)}">`)}
+        ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Renewed Date', `<input aria-label="Renewed Date" data-draft="renewedDate" type="date" value="${esc(draft.renewedDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function inlineEditHtml(draft, status, { renewal = false } = {}) {
+  const isSme = draft.category === 'SME';
+  const showRenewalDue = isSme && !!draft.renewalDueDate;
+  const showLimitExpiry = isSme && !!draft.limitExpiryDate;
+  const categoryOptions = [
+    { value: '', label: 'Category' },
+    { value: 'Agriculture', label: 'Agriculture' },
+    { value: 'SME', label: 'SME' },
+    { value: 'SME_TERM', label: 'SME Term Loan' },
+    { value: 'Education', label: 'Education' },
+  ];
+  const officerOptions = [{ value: '', label: 'Select officer' }, ...S.officers.map(o => ({ value: o, label: o }))];
+  const branchOptions = [{ value: '', label: 'Select branch' }, ...S.branches.map(b => ({ value: b, label: b }))];
+  return `<div class="decision-account-card decision-account-card--editing">
+    <div class="decision-account-main">
+      <div class="decision-name-row decision-name-row--edit">
+        <label class="decision-name decision-name--edit" title="Customer Name">
+          <input data-draft="customerName" type="text" value="${esc(draft.customerName)}" autocomplete="off">
+        </label>
+        <select class="decision-category-select ${catCls(draft.category)}" aria-label="Category" data-draft="categoryMode">${inlineSelect(categoryOptions, categoryModeValue(draft))}</select>
+        <label class="decision-amount decision-amount--edit" title="Amount (L)">
+          <input data-draft="amount" type="number" step="0.01" min="0" value="${esc(draft.amount)}">
+        </label>
+      </div>
+      <div class="decision-account-lines decision-account-lines--edit">
+        ${inlineAccountEditLine('Branch', `<select aria-label="Branch" data-draft="branch">${inlineSelect(branchOptions, matchBranchOption(draft.branch) || draft.branch)}</select>`)}
+        ${inlineAccountEditLine('Officer', `<select aria-label="Officer" data-draft="allocatedTo">${inlineSelect(officerOptions, draft.allocatedTo)}</select>`)}
+        ${inlineAccountEditLine('Received', `<input aria-label="Receive Date" data-draft="receiveDate" type="date" value="${esc(draft.receiveDate)}">`)}
+        ${status === 'sanctioned' ? inlineAccountEditLine('Sanction Date', `<input data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || todayStr())}">`) : ''}
+        ${status === 'returned' ? inlineAccountEditLine('Return Date', `<span class="decision-edit-static">${esc(fmtDate(draft.returnedDate || todayStr()))}</span>`, 'alert') : ''}
+        ${showRenewalDue ? inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="renewalDueDate" type="date" value="${esc(draft.renewalDueDate)}">`) : ''}
+        ${showLimitExpiry ? inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="limitExpiryDate" type="date" value="${esc(draft.limitExpiryDate)}">`) : ''}
+        ${status === 'pending' ? accountLine('Ageing', `${daysPending(draft.receiveDate)} ${daysPending(draft.receiveDate) === 1 ? 'day' : 'days'}`, daysPending(draft.receiveDate) > 7 ? 'alert' : '') : ''}
+        ${status === 'pending' || status === 'returned' ? inlineAccountEditLine('Remarks', `<textarea aria-label="Remarks" data-draft="remarks" rows="2" placeholder="Additional notes">${esc(draft.remarks)}</textarea>`, status === 'returned' ? 'alert' : '') : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function updateDraftFromControl(draft, control) {
+  const key = control.dataset.draft;
+  if (!key) return;
+  const value = control.type === 'checkbox' ? control.checked : control.value;
+  if (key === 'categoryMode') {
+    draft.category = value === 'SME_TERM' ? 'SME' : value;
+    draft.isTermLoan = value === 'SME_TERM';
+    return;
+  }
+  draft[key] = value;
+  if (key === 'branch') {
+    const branch = matchBranchOption(value) || value;
+    draft.branch = branch;
+    const officer = assignedOfficerForBranch(branch);
+    if (officer) draft.allocatedTo = officer;
+  }
+  if (key === 'category' && value !== 'SME') {
+    draft.isTermLoan = false;
+  }
+}
+
+function bindInlineDraftControls(container, draft, onStructuralChange) {
+  container.querySelectorAll('[data-draft]').forEach(control => {
+    const structural = ['branch', 'category', 'categoryMode'].includes(control.dataset.draft);
+    const update = () => updateDraftFromControl(draft, control);
+    control.addEventListener('input', () => {
+      if (control.tagName !== 'SELECT' && control.type !== 'checkbox') update();
+    });
+    control.addEventListener('change', () => {
+      update();
+      if (structural) onStructuralChange?.();
+    });
+  });
+}
+
+function loanAccountCardHtml(loan, linesHtml) {
+  return `<div class="decision-account-card">
+    <div class="decision-account-main">
+      <div class="decision-name-row">
+        <div class="decision-name-wrap">
+          <div class="decision-name">${esc(loan.customerName)}</div>
+          ${categoryBadgeHtml(loan)}
+        </div>
+        <div class="decision-amount">${accountAmount(loan)}</div>
+      </div>
+      <div class="decision-account-lines">${linesHtml}</div>
+    </div>
+  </div>`;
 }
 
 function renewalDecisionLines(loan, rs) {
@@ -185,6 +463,13 @@ function updateLoanDecisionView(overlay, loan, status) {
   if (lines) lines.innerHTML = loanDecisionLines(loan);
 }
 
+function updateDecisionStatusPill(overlay, status) {
+  const pill = overlay.querySelector('.decision-status-pill');
+  if (!pill) return;
+  pill.className = `decision-status-pill decision-status-pill--${status}`;
+  pill.textContent = status[0].toUpperCase() + status.slice(1);
+}
+
 function initDecisionSheet(overlay, options, selected) {
   setDecisionSelected(overlay, selected, { emit: false });
   overlay.addEventListener('click', e => {
@@ -262,7 +547,7 @@ window.openDecisionActivity = function(id) {
   document.body.appendChild(overlay);
 };
 
-window.openLoanDecisionSheet = function(id, preferredStatus = null) {
+function legacyOpenLoanDecisionSheet(id, preferredStatus = null) {
   const loan = S.loans.find(x => x.id === id);
   if (!loan) return;
   window.closeDecisionSheet();
@@ -329,7 +614,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
   });
 };
 
-window.openRenewalDecisionSheet = function(id) {
+function legacyOpenRenewalDecisionSheet(id) {
   const loan = S.loans.find(x => x.id === id);
   if (!loan) return;
   window.closeDecisionSheet();
@@ -383,6 +668,144 @@ window.openRenewalDecisionSheet = function(id) {
       if (changed && stagedRenewal !== 'renewed') window.closeDecisionSheet();
     }
     else window.closeDecisionSheet();
+  });
+};
+
+window.openLoanDecisionSheet = function(id, preferredStatus = null) {
+  const loan = S.loans.find(x => x.id === id);
+  if (!loan) return;
+  window.closeDecisionSheet();
+  const current = loan.status || 'pending';
+  let stagedStatus = preferredStatus || current;
+  let editMode = false;
+  const draft = cloneLoanDraft(loan);
+  const options = [
+    { value: 'returned', label: 'Return' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'sanctioned', label: 'Sanction' },
+  ];
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay decision-overlay';
+  overlay.addEventListener('click', closeOnBackdrop);
+  overlay.innerHTML = `<div class="sheet decision-sheet" role="dialog" aria-modal="true" aria-label="Loan status">
+    <div class="sheet-handle"></div>
+    <div class="decision-title-row">
+      <h2>Loan status</h2>
+      <span class="decision-title-actions">
+        <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
+        <button type="button" class="decision-icon-btn" title="Edit loan" data-decision-edit>&#9998;</button>
+        <span class="decision-status-pill decision-status-pill--${esc(current)}">${esc(current[0].toUpperCase() + current.slice(1))}</span>
+      </span>
+    </div>
+    <div data-decision-card></div>
+    <div class="decision-outcome-block">
+      ${sliderHtml(options, stagedStatus, 'loan')}
+    </div>
+    <div class="decision-action-row">
+      <button type="button" class="btn btn-cancel-full" onclick="closeDecisionSheet()">Cancel</button>
+      <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  initDecisionSheet(overlay, options, stagedStatus);
+  const card = overlay.querySelector('[data-decision-card]');
+  const editBtn = overlay.querySelector('[data-decision-edit]');
+  const renderCard = () => {
+    const preview = previewLoanStatus(loanFromDraft(loan, draft, stagedStatus), stagedStatus, draft.remarks);
+    if (editMode) {
+      card.innerHTML = inlineEditHtml(draft, stagedStatus);
+      bindInlineDraftControls(card, draft, renderCard);
+    } else {
+      card.innerHTML = loanAccountCardHtml(preview, loanDecisionLines(preview));
+      bindInlineDraftControls(card, draft, () => {});
+    }
+    editBtn?.classList.toggle('active', editMode);
+    editBtn?.setAttribute('aria-pressed', editMode ? 'true' : 'false');
+    if (editMode) updateDecisionStatusPill(overlay, stagedStatus);
+    else updateLoanDecisionView(overlay, preview, stagedStatus);
+    setDecisionSelected(overlay, stagedStatus, { emit: false });
+  };
+  editBtn?.addEventListener('click', () => {
+    editMode = !editMode;
+    renderCard();
+  });
+  overlay.addEventListener('decisionchange', e => {
+    stagedStatus = e.detail?.value || stagedStatus;
+    renderCard();
+  });
+  renderCard();
+  overlay.querySelector('[data-decision-save]')?.addEventListener('click', async () => {
+    const saved = await saveInlineLoan(loan, draft, stagedStatus);
+    if (saved) window.closeDecisionSheet();
+  });
+};
+
+window.openRenewalDecisionSheet = function(id) {
+  const loan = S.loans.find(x => x.id === id);
+  if (!loan) return;
+  window.closeDecisionSheet();
+  const current = loan.renewedDate ? 'renewed' : 'pending';
+  let stagedRenewal = current;
+  let editMode = false;
+  const draft = cloneLoanDraft(loan);
+  const options = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'renewed', label: 'Renewed' },
+  ];
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay decision-overlay';
+  overlay.addEventListener('click', closeOnBackdrop);
+  overlay.innerHTML = `<div class="sheet decision-sheet" role="dialog" aria-modal="true" aria-label="Renewal status">
+    <div class="sheet-handle"></div>
+    <div class="decision-title-row">
+      <h2>Renewal status</h2>
+      <span class="decision-title-actions">
+        <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
+        <button type="button" class="decision-icon-btn" title="Edit loan" data-decision-edit>&#9998;</button>
+        <span class="decision-status-pill decision-status-pill--renewal">Pending</span>
+      </span>
+    </div>
+    <div data-decision-card></div>
+    <div class="decision-outcome-block">
+      ${sliderHtml(options, current, 'renewal')}
+    </div>
+    <div class="decision-action-row">
+      <button type="button" class="btn btn-cancel-full" onclick="closeDecisionSheet()">Cancel</button>
+      <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  initDecisionSheet(overlay, options, current);
+  const card = overlay.querySelector('[data-decision-card]');
+  const editBtn = overlay.querySelector('[data-decision-edit]');
+  const pill = overlay.querySelector('.decision-status-pill');
+  const renderCard = () => {
+    const preview = loanFromDraft(loan, draft, loan.status || 'pending');
+    preview.renewedDate = stagedRenewal === 'renewed' ? (loan.renewedDate || todayStr()) : '';
+    const previewRs = computeRenewalStatus(preview);
+    if (editMode) {
+      card.innerHTML = inlineRenewalEditHtml(draft, stagedRenewal, previewRs);
+      bindInlineDraftControls(card, draft, renderCard);
+    } else {
+      card.innerHTML = loanAccountCardHtml(preview, renewalDecisionLines(preview, previewRs));
+    }
+    if (pill) pill.textContent = stagedRenewal === 'renewed' ? 'Renewed' : (previewRs?.status === 'pending-renewal' ? 'Overdue' : previewRs?.status === 'due-soon' ? 'Due Soon' : previewRs?.status === 'npa' ? 'NPA' : 'Pending');
+    editBtn?.classList.toggle('active', editMode);
+    editBtn?.setAttribute('aria-pressed', editMode ? 'true' : 'false');
+    setDecisionSelected(overlay, stagedRenewal, { emit: false });
+  };
+  editBtn?.addEventListener('click', () => {
+    editMode = !editMode;
+    renderCard();
+  });
+  overlay.addEventListener('decisionchange', e => {
+    stagedRenewal = e.detail?.value || stagedRenewal;
+    renderCard();
+  });
+  renderCard();
+  overlay.querySelector('[data-decision-save]')?.addEventListener('click', async () => {
+    const saved = await saveInlineLoan(loan, draft, loan.status || 'pending', { renewalState: stagedRenewal });
+    if (saved) window.closeDecisionSheet();
   });
 };
 
