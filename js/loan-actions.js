@@ -251,7 +251,7 @@ function categoryModeValue(loan) {
 
 function categoryBadgeHtml(loan) {
   const label = loan.category === 'SME' && loan.isTermLoan ? 'SME TL' : (loan.category || 'Loan');
-  return `<span class="decision-category-badge ${catCls(loan.category)}" title="${esc(label)}">${esc(label)}</span>`;
+  return `<span class="tag decision-category-badge ${catCls(loan.category)}" title="${esc(label)}">${esc(label)}</span>`;
 }
 
 function renewalStatusLineHtml(loan, rs) {
@@ -733,6 +733,10 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
   });
   overlay.addEventListener('decisionchange', e => {
     stagedStatus = e.detail?.value || stagedStatus;
+    if (overlay.querySelector('.decision-slider.dragging')) {
+      updateDecisionStatusPill(overlay, stagedStatus);
+      return;
+    }
     renderCard();
   });
   renderCard();
@@ -803,6 +807,10 @@ window.openRenewalDecisionSheet = function(id) {
   });
   overlay.addEventListener('decisionchange', e => {
     stagedRenewal = e.detail?.value || stagedRenewal;
+    if (overlay.querySelector('.decision-slider.dragging')) {
+      if (pill) pill.textContent = stagedRenewal === 'renewed' ? 'Renewed' : 'Pending';
+      return;
+    }
     renderCard();
   });
   renderCard();
