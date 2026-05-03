@@ -8,6 +8,10 @@ function copyAction(id) {
   return `<button class="btn btn-outline" onclick="duplicateLoan('${id}')">Copy</button>`;
 }
 
+function statusAction(id) {
+  return `<button class="btn btn-sanction" onclick="openLoanDecisionSheet('${id}')">Status</button>`;
+}
+
 export function renderPending(c) {
   let loans = applyFilters(getLoanMetrics().pending.filter(searchMatch));
   loans = applySort(loans);
@@ -16,8 +20,7 @@ export function renderPending(c) {
     ? emptyState('📭', 'No pending loans', 'Tap + to add a new loan')
     : loans.map(l => {
       const days = daysPending(l.receiveDate);
-      const actions = `<button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
-        <button class="btn btn-return" onclick="returnLoan('${l.id}')">↩ Return</button>
+      const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
@@ -34,7 +37,7 @@ export function renderSanctioned(c) {
   const cards = loans.length === 0
     ? emptyState('🎉', 'No sanctioned loans yet', 'Sanction pending loans to see them here')
     : loans.map(l => {
-      const actions = `<button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
+      const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
@@ -51,8 +54,7 @@ export function renderReturned(c) {
   const cards = loans.length === 0
     ? emptyState('📋', 'No returned loans', 'Returned loans will appear here')
     : loans.map(l => {
-      const actions = `<button class="btn btn-sanction" onclick="sanctionLoan('${l.id}')">✓ Sanction</button>
-        <button class="btn btn-return" onclick="moveToPending('${l.id}')">↩ Pending</button>
+      const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;

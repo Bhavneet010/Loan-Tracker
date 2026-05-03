@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nirnay Action Sheet Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/core.css">
+<link rel="stylesheet" href="../css/tasks.css">
+<style>
+  body{min-height:100vh;}
+  .mock-phone{
+    width:min(100%,390px);
+    min-height:844px;
+    margin:0 auto;
+    position:relative;
+    overflow:hidden;
+    background:transparent;
+    box-shadow:0 24px 70px rgba(30,27,58,0.20);
+  }
+  .mock-phone #app{max-width:none;min-height:844px;padding-bottom:0;}
+  .mock-note{
+    margin:0 14px 10px;
+    padding:10px 12px;
+    border-radius:13px;
+    background:rgba(255,255,255,0.52);
+    border:1px solid rgba(255,255,255,0.82);
+    color:var(--text2);
+    font-size:11px;
+    font-weight:700;
+  }
+  .mock-action-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin:0 0 7px;
+  }
+  .mock-action-title h2{margin:0;font-size:18px;letter-spacing:-0.5px;}
+  .mock-action-copy{
+    margin:0 0 10px;
+    color:#7B7A9A;
+    font-size:11px;
+    font-weight:600;
+    line-height:1.35;
+  }
+  .mock-status-pill{
+    display:inline-flex;
+    align-items:center;
+    height:23px;
+    padding:0 8px;
+    border-radius:999px;
+    background:var(--green-bg);
+    border:1px solid var(--green-bd);
+    color:var(--green);
+    font-size:9px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .mock-confirm-card{
+    margin:0 0 10px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.72);
+    border:1px solid rgba(255,255,255,0.90);
+    box-shadow:0 8px 22px rgba(107,95,191,0.10);
+    overflow:hidden;
+  }
+  .mock-confirm-main{
+    padding:11px 11px 10px;
+  }
+  .mock-confirm-name-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:7px;
+  }
+  .mock-confirm-name{
+    min-width:0;
+    color:var(--text1);
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:-0.25px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mock-confirm-amount{
+    color:var(--text1);
+    font-size:19px;
+    font-weight:900;
+    letter-spacing:-0.8px;
+    white-space:nowrap;
+  }
+  .mock-confirm-amount span{font-size:11px;font-weight:700;color:#7B7A9A;}
+  .mock-account-lines{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    border-radius:13px;
+    overflow:hidden;
+    border:1px solid rgba(107,95,191,0.10);
+    background:rgba(107,95,191,0.05);
+  }
+  .mock-account-line{
+    display:grid;
+    grid-template-columns:76px minmax(0,1fr);
+    gap:9px;
+    padding:7px 9px;
+    border-top:1px solid rgba(107,95,191,0.09);
+  }
+  .mock-account-line:first-child{border-top:0;}
+  .mock-account-line small{
+    color:var(--text3);
+    font-size:7px;
+    font-weight:900;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+  }
+  .mock-account-line b{
+    min-width:0;
+    color:var(--text1);
+    font-size:11px;
+    font-weight:900;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mock-outcome-block{
+    margin:0 0 10px;
+    padding:10px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.60);
+    border:1px solid rgba(255,255,255,0.88);
+  }
+  .mock-outcome-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .mock-outcome-head b{
+    color:var(--text1);
+    font-size:12px;
+    font-weight:900;
+  }
+  .mock-outcome-head span{
+    color:var(--text3);
+    font-size:9px;
+    font-weight:800;
+  }
+  .mock-slider{
+    position:relative;
+    height:52px;
+    border-radius:16px;
+    background:linear-gradient(90deg,rgba(239,68,68,0.13),rgba(107,95,191,0.10) 50%,rgba(16,185,129,0.14));
+    border:1px solid rgba(107,95,191,0.12);
+    overflow:hidden;
+  }
+  .mock-slider::before{
+    content:'';
+    position:absolute;
+    left:50%;
+    top:8px;
+    bottom:8px;
+    width:1px;
+    background:rgba(107,95,191,0.18);
+  }
+  .mock-slider-labels{
+    position:absolute;
+    inset:0;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    align-items:center;
+    padding:0 11px;
+    pointer-events:none;
+  }
+  .mock-slider-labels span{
+    font-size:10px;
+    font-weight:900;
+  }
+  .mock-slider-labels .return{color:var(--red);text-align:left;}
+  .mock-slider-labels .pending{color:var(--text3);text-align:center;}
+  .mock-slider-labels .sanction{color:var(--green);text-align:right;}
+  .mock-slider-thumb{
+    position:absolute;
+    left:50%;
+    top:6px;
+    transform:translateX(-50%);
+    width:96px;
+    height:39px;
+    border-radius:14px;
+    background:#fff;
+    border:1px solid rgba(107,95,191,0.17);
+    box-shadow:0 7px 18px rgba(50,43,105,0.18);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:var(--text1);
+    font-size:11px;
+    font-weight:900;
+  }
+  .mock-slider-thumb span{
+    color:var(--text3);
+    font-size:13px;
+    line-height:1;
+  }
+  .mock-overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    background:linear-gradient(180deg,rgba(20,18,40,0.18) 0%,rgba(20,18,40,0.32) 48%,rgba(20,18,40,0.46) 100%);
+    backdrop-filter:blur(1.5px);
+    z-index:300;
+  }
+  .mock-overlay .sheet{
+    max-height:none;
+    padding:0 14px 16px;
+    background:#F7F5FF;
+    box-shadow:0 -18px 44px rgba(30,27,58,0.24);
+  }
+  .mock-underlay{
+    filter:saturate(0.98);
+  }
+  .mock-action-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  @media(max-width:420px){
+    .mock-phone{min-height:100vh;box-shadow:none;}
+    .mock-phone #app{min-height:100vh;}
+  }
+</style>
+</head>
+<body>
+<div class="mock-phone">
+  <div id="app" class="mock-underlay">
+    <div class="header">
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-av-wrap">
+            <div class="brand-av"><img src="../icon-192.png" alt="" width="38" height="38"></div>
+            <span class="brand-tasks-badge">3</span>
+          </div>
+          <div>
+            <div class="brand-name">निर्णय</div>
+            <div class="brand-sub">AMCC Paonta Sahib</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="hbtn notif-hbtn">🔔<span class="hbtn-badge">2</span></div>
+          <div class="hbtn">📊</div>
+          <div class="user-pill">
+            <span class="sync-dot"></span>
+            <div class="uav" style="background:#7B6FD4;color:#fff;">RT</div>
+          </div>
+        </div>
+      </div>
+      <div class="mode-toggle-bar">
+        <button class="mode-btn active">Fresh Loans</button>
+        <button class="mode-btn renewals-btn">♻ Renewals <span class="mode-badge">8</span></button>
+      </div>
+    </div>
+
+    <div class="stats-scroll">
+      <button class="stat fresh-stat-card stat-fresh-active">
+        <div class="stat-l">Pending</div>
+        <div class="stat-v">14</div>
+        <div class="stat-s">₹438.50 L</div>
+      </button>
+      <button class="stat fresh-stat-card">
+        <div class="stat-l">Sanctioned</div>
+        <div class="stat-v">9</div>
+        <div class="stat-s">₹221.00 L</div>
+      </button>
+      <button class="stat fresh-stat-card">
+        <div class="stat-l">Returned</div>
+        <div class="stat-v">3</div>
+        <div class="stat-s">Needs follow-up</div>
+      </button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-handle"></div>
+      <div class="search-wrap" style="display:block;">
+        <div class="search-wrap-inner">
+          <input type="text" class="search-inp" placeholder="Search customer, branch…" value="">
+        </div>
+      </div>
+      <div class="mock-note">Expanded pending account. Tapping Sanction opens a focused confirmation without losing the loan context.</div>
+
+      <div class="loan-item cat-sme status-pending expanded overdue">
+        <div class="loan-row">
+          <div class="lr-info">
+            <span class="lr-av" style="background:#EF4444;">RT</span>
+            <span class="lr-bcode">1755</span>
+            <span class="lr-name">SUNIL SHARMA INDUSTRY</span>
+          </div>
+          <div class="lr-meta">
+            <span class="tag overdue">9d</span>
+            <span class="lr-amount">₹35.00L</span>
+            <span class="lr-chev">›</span>
+          </div>
+        </div>
+        <div class="loan-detail">
+          <div class="loan-collapse">▲ collapse</div>
+          <div class="loan-card overdue">
+            <div class="lc-top">
+              <div class="lc-left">
+                <div class="lc-name">SUNIL SHARMA INDUSTRY</div>
+                <div class="lc-branch">1755 : PAONTA SAHIB</div>
+              </div>
+              <div class="lc-amount">₹35.00<span class="u"> L</span></div>
+            </div>
+            <div class="lc-tags">
+              <span class="tag sme">SME</span>
+              <span class="tag officer">Ritika</span>
+              <span class="tag date">Recd 24 Apr</span>
+              <span class="tag overdue">9d</span>
+            </div>
+            <div class="lc-remarks">📝 Site visit done. Documents received from borrower.</div>
+            <div class="lc-actions">
+              <button class="btn btn-sanction">✓ Sanction</button>
+              <button class="btn btn-return">↩ Return</button>
+              <button class="btn btn-more">⋯</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="loan-item cat-agri status-pending">
+        <div class="loan-row">
+          <div class="lr-info">
+            <span class="lr-av" style="background:#10B981;">AN</span>
+            <span class="lr-bcode">3399</span>
+            <span class="lr-name">KIRAN DEVI</span>
+          </div>
+          <div class="lr-meta">
+            <span class="lr-amount">₹12.50L</span>
+            <span class="lr-chev">›</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="loan-item cat-edu status-pending">
+        <div class="loan-row">
+          <div class="lr-info">
+            <span class="lr-av" style="background:#F59E0B;">NK</span>
+            <span class="lr-bcode">686</span>
+            <span class="lr-name">AMAN THAKUR</span>
+          </div>
+          <div class="lr-meta">
+            <span class="lr-amount">₹8.00L</span>
+            <span class="lr-chev">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mock-overlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="mock-action-title">
+        <h2>Confirm sanction</h2>
+        <span class="mock-status-pill">Ready</span>
+      </div>
+      <p class="mock-action-copy">Review the account before changing its status.</p>
+
+      <div class="mock-confirm-card">
+        <div class="mock-confirm-main">
+          <div class="mock-confirm-name-row">
+            <div class="mock-confirm-name">SUNIL SHARMA INDUSTRY</div>
+            <div class="mock-confirm-amount">₹35.00<span> L</span></div>
+          </div>
+          <div class="mock-account-lines">
+            <div class="mock-account-line"><small>Branch</small><b>1755 : PAONTA SAHIB</b></div>
+            <div class="mock-account-line"><small>Officer</small><b>Ritika</b></div>
+            <div class="mock-account-line"><small>Received</small><b>24 Apr 2026</b></div>
+            <div class="mock-account-line"><small>Ageing</small><b>9 days pending</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mock-outcome-block">
+        <div class="mock-outcome-head">
+          <b>Choose outcome</b>
+        </div>
+        <div class="mock-slider" aria-label="Swipe decision control">
+          <div class="mock-slider-labels">
+            <span class="return">Return</span>
+            <span class="pending">Pending</span>
+            <span class="sanction">Sanction</span>
+          </div>
+          <div class="mock-slider-thumb"><span>‹</span>Pending<span>›</span></div>
+        </div>
+      </div>
+
+      <div class="mock-action-actions">
+        <button class="btn btn-cancel-full">Cancel</button>
+        <button class="btn btn-outline">Edit loan</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

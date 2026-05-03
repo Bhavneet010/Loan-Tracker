@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nirnay Renewal Decision Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/core.css">
+<link rel="stylesheet" href="../css/renewals.css">
+<style>
+  body{min-height:100vh;}
+  .mock-phone{
+    width:min(100%,390px);
+    min-height:844px;
+    margin:0 auto;
+    position:relative;
+    overflow:hidden;
+    background:transparent;
+    box-shadow:0 24px 70px rgba(30,27,58,0.20);
+  }
+  .mock-phone #app{max-width:none;min-height:844px;padding-bottom:0;}
+  .mock-underlay{filter:saturate(0.98);}
+  .mock-overlay{
+    position:absolute;
+    inset:0;
+    z-index:300;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    background:linear-gradient(180deg,rgba(20,18,40,0.16),rgba(20,18,40,0.31) 52%,rgba(20,18,40,0.47));
+    backdrop-filter:blur(1.5px);
+  }
+  .mock-overlay .sheet{
+    max-height:none;
+    padding:0 14px 16px;
+    background:#F7F5FF;
+    box-shadow:0 -18px 44px rgba(30,27,58,0.24);
+  }
+  .mock-note{
+    margin:0 14px 10px;
+    padding:10px 12px;
+    border-radius:13px;
+    background:rgba(255,255,255,0.52);
+    border:1px solid rgba(255,255,255,0.82);
+    color:var(--text2);
+    font-size:11px;
+    font-weight:700;
+  }
+  .mock-title-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin:0 0 7px;
+  }
+  .mock-title-row h2{margin:0;font-size:18px;font-weight:900;color:var(--text1);letter-spacing:-0.5px;}
+  .mock-status-pill{
+    display:inline-flex;
+    align-items:center;
+    height:23px;
+    padding:0 8px;
+    border-radius:999px;
+    background:var(--amber-bg);
+    border:1px solid var(--amber-bd);
+    color:var(--amber);
+    font-size:9px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .mock-copy{
+    margin:0 0 10px;
+    color:#7B7A9A;
+    font-size:11px;
+    font-weight:600;
+    line-height:1.35;
+  }
+  .mock-account-card{
+    margin:0 0 10px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.72);
+    border:1px solid rgba(255,255,255,0.90);
+    box-shadow:0 8px 22px rgba(107,95,191,0.10);
+    overflow:hidden;
+  }
+  .mock-account-main{padding:11px 11px 10px;}
+  .mock-name-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:7px;
+  }
+  .mock-name{
+    min-width:0;
+    color:var(--text1);
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:-0.25px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mock-amount{
+    color:var(--text1);
+    font-size:19px;
+    font-weight:900;
+    letter-spacing:-0.8px;
+    white-space:nowrap;
+  }
+  .mock-amount span{font-size:11px;font-weight:700;color:#7B7A9A;}
+  .mock-account-lines{
+    display:flex;
+    flex-direction:column;
+    border-radius:13px;
+    overflow:hidden;
+    border:1px solid rgba(107,95,191,0.10);
+    background:rgba(107,95,191,0.05);
+  }
+  .mock-account-line{
+    display:grid;
+    grid-template-columns:82px minmax(0,1fr);
+    gap:9px;
+    padding:7px 9px;
+    border-top:1px solid rgba(107,95,191,0.09);
+  }
+  .mock-account-line:first-child{border-top:0;}
+  .mock-account-line small{
+    color:var(--text3);
+    font-size:7px;
+    font-weight:900;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+  }
+  .mock-account-line b{
+    min-width:0;
+    color:var(--text1);
+    font-size:11px;
+    font-weight:900;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mock-renewal-block{
+    margin:0 0 10px;
+    padding:10px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.60);
+    border:1px solid rgba(255,255,255,0.88);
+  }
+  .mock-renewal-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .mock-renewal-head b{
+    color:var(--text1);
+    font-size:12px;
+    font-weight:900;
+  }
+  .mock-two-slider{
+    position:relative;
+    height:52px;
+    border-radius:16px;
+    background:linear-gradient(90deg,rgba(245,158,11,0.13),rgba(16,185,129,0.15));
+    border:1px solid rgba(107,95,191,0.12);
+    overflow:hidden;
+  }
+  .mock-two-slider::before{
+    content:'';
+    position:absolute;
+    left:50%;
+    top:8px;
+    bottom:8px;
+    width:1px;
+    background:rgba(107,95,191,0.18);
+  }
+  .mock-slider-labels{
+    position:absolute;
+    inset:0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:center;
+    padding:0 13px;
+    pointer-events:none;
+  }
+  .mock-slider-labels span{
+    font-size:10px;
+    font-weight:900;
+  }
+  .mock-slider-labels .pending{color:var(--amber);text-align:left;}
+  .mock-slider-labels .renewed{color:var(--green);text-align:right;}
+  .mock-slider-thumb{
+    position:absolute;
+    left:26%;
+    top:6px;
+    transform:translateX(-50%);
+    width:100px;
+    height:39px;
+    border-radius:14px;
+    background:#fff;
+    border:1px solid rgba(107,95,191,0.17);
+    box-shadow:0 7px 18px rgba(50,43,105,0.18);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:var(--text1);
+    font-size:11px;
+    font-weight:900;
+  }
+  .mock-slider-thumb span{color:var(--text3);font-size:13px;line-height:1;}
+  .mock-action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  @media(max-width:420px){
+    .mock-phone{min-height:100vh;box-shadow:none;}
+    .mock-phone #app{min-height:100vh;}
+  }
+</style>
+</head>
+<body>
+<div class="mock-phone">
+  <div id="app" class="mock-underlay">
+    <div class="header">
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-av-wrap">
+            <div class="brand-av"><img src="../icon-192.png" alt="" width="38" height="38"></div>
+            <span class="brand-tasks-badge">3</span>
+          </div>
+          <div>
+            <div class="brand-name">निर्णय</div>
+            <div class="brand-sub">AMCC Paonta Sahib</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="hbtn notif-hbtn">🔔<span class="hbtn-badge">2</span></div>
+          <div class="hbtn">📊</div>
+          <div class="user-pill">
+            <span class="sync-dot"></span>
+            <div class="uav" style="background:#7B6FD4;color:#fff;">RT</div>
+          </div>
+        </div>
+      </div>
+      <div class="mode-toggle-bar">
+        <button class="mode-btn">Fresh Loans</button>
+        <button class="mode-btn renewals-btn active">♻ Renewals <span class="mode-badge">8</span></button>
+      </div>
+    </div>
+
+    <div class="stats-scroll">
+      <div class="stat">
+        <div class="stat-l">Due Soon</div>
+        <div class="stat-v">8</div>
+        <div class="stat-s">₹214.00 L</div>
+      </div>
+      <div class="stat">
+        <div class="stat-l">Overdue</div>
+        <div class="stat-v">5</div>
+        <div class="stat-s">₹146.50 L</div>
+      </div>
+      <div class="stat">
+        <div class="stat-l">Done</div>
+        <div class="stat-v">11</div>
+        <div class="stat-s">This month</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-handle"></div>
+      <div class="mock-note">Expanded renewal account. The decision sheet only needs Pending and Renewed.</div>
+
+      <div class="loan-item rnw-s-pending expanded">
+        <div class="loan-row">
+          <div class="lr-info">
+            <span class="lr-av" style="background:#7B6FD4;">AN</span>
+            <span class="lr-bcode">4589</span>
+            <span class="lr-name">MATA RANI TRADERS <span class="ac-sub">A/C: 30178264511</span></span>
+          </div>
+          <div class="lr-meta">
+            <span class="tag rnw-chip-pending">17d OD</span>
+            <span class="lr-amount">₹22.00L</span>
+            <span class="lr-chev">›</span>
+          </div>
+        </div>
+        <div class="loan-detail">
+          <div class="rnw-expanded-card">
+            <div class="lc-top">
+              <div class="lc-left">
+                <div class="lc-name">MATA RANI TRADERS</div>
+                <div class="lc-branch">4589 : SME TARUWALA • A/C: 30178264511</div>
+              </div>
+              <div class="lc-amount">₹22.00<span class="u"> L</span></div>
+            </div>
+            <div class="rnw-tags-group">
+              <div class="tag-row">
+                <span class="tag sme">SME CC</span>
+                <span class="tag officer">Anchal</span>
+              </div>
+              <div class="tag-row status-row">
+                <span class="tag date">Due 16 Apr</span>
+                <span class="tag date">Exp 30 Apr</span>
+                <span class="tag rnw-chip-pending">17d OD</span>
+                <span class="tag rnw-chip-npa-cd">13d to NPA</span>
+              </div>
+            </div>
+            <div class="rnw-action-group">
+              <button class="btn btn-rnw-done">♻ Renewal Done</button>
+              <div class="rnw-sub-actions">
+                <button class="btn btn-edit-icon">✎</button>
+                <button class="btn btn-del-icon">🗑</button>
+              </div>
+            </div>
+            <div class="loan-collapse">▲ hide details</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="loan-item rnw-s-due-soon">
+        <div class="loan-row">
+          <div class="lr-info">
+            <span class="lr-av" style="background:#10B981;">NK</span>
+            <span class="lr-bcode">686</span>
+            <span class="lr-name">SHIVALIK ENTERPRISES</span>
+          </div>
+          <div class="lr-meta">
+            <span class="tag rnw-chip-due-soon">Due in 8d</span>
+            <span class="lr-amount">₹18.50L</span>
+            <span class="lr-chev">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mock-overlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="mock-title-row">
+        <h2>Renewal status</h2>
+        <span class="mock-status-pill">Overdue</span>
+      </div>
+      <p class="mock-copy">Review the account before updating the renewal status.</p>
+
+      <div class="mock-account-card">
+        <div class="mock-account-main">
+          <div class="mock-name-row">
+            <div class="mock-name">MATA RANI TRADERS</div>
+            <div class="mock-amount">₹22.00<span> L</span></div>
+          </div>
+          <div class="mock-account-lines">
+            <div class="mock-account-line"><small>Branch</small><b>4589 : SME TARUWALA</b></div>
+            <div class="mock-account-line"><small>Officer</small><b>Anchal</b></div>
+            <div class="mock-account-line"><small>A/C No.</small><b>30178264511</b></div>
+            <div class="mock-account-line"><small>Renewal Due</small><b>16 Apr 2026</b></div>
+            <div class="mock-account-line"><small>Limit Expiry</small><b>30 Apr 2026</b></div>
+            <div class="mock-account-line"><small>Status</small><b>17 days overdue • 13 days to NPA</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mock-renewal-block">
+        <div class="mock-renewal-head">
+          <b>Choose renewal state</b>
+        </div>
+        <div class="mock-two-slider" aria-label="Pending to renewed control">
+          <div class="mock-slider-labels">
+            <span class="pending">Pending</span>
+            <span class="renewed">Renewed</span>
+          </div>
+          <div class="mock-slider-thumb">Pending<span>›</span></div>
+        </div>
+      </div>
+
+      <div class="mock-action-row">
+        <button class="btn btn-cancel-full">Cancel</button>
+        <button class="btn btn-outline">Edit loan</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

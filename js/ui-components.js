@@ -34,7 +34,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '') {
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
   
   return `<div class="loan-item ${cls}" id="li-${loan.id}">
-    <div class="loan-row" onclick="toggleExpand('${loan.id}')">
+    <div class="loan-row" onclick="openLoanDecisionSheet('${loan.id}')">
       <div class="lr-info">
         <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
@@ -84,7 +84,7 @@ export function renewalItemHtml(loan, rs) {
   const itemId = 'rnw-' + loan.id;
   
   return `<div class="loan-item ${statusCls}" id="li-${itemId}">
-    <div class="loan-row" onclick="toggleExpand('${itemId}')">
+    <div class="loan-row" onclick="openRenewalDecisionSheet('${loan.id}')">
       <div class="lr-info">
         <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
@@ -122,8 +122,8 @@ export function renewalItemHtml(loan, rs) {
         ${datesMissing ? `<div class="rnw-date-warning">New limit expiry date and next renewal due date are pending. Old due warning is retained until the next due date is entered.</div>` : ''}
         ${loan.remarks ? `<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>` : ''}
         <div class="rnw-action-group">
-          <button class="btn btn-rnw-done" onclick="markRenewalDone('${loan.id}')">
-            ♻ Renewal Done
+          <button class="btn btn-rnw-done" onclick="openRenewalDecisionSheet('${loan.id}')">
+            Renewal Status
           </button>
           <div class="rnw-sub-actions">
             <button class="btn btn-edit-icon" onclick="editLoan('${loan.id}')" title="Edit">✎</button>
