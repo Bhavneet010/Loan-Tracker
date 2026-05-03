@@ -70,9 +70,11 @@ function accountAmount(loan) {
   return `₹${fmtAmt(loan.amount)}<span> L</span>`;
 }
 
-function accountLine(label, value) {
+function accountLine(label, value, tone = '') {
   if (!value) return '';
-  return `<div class="decision-account-line"><small>${esc(label)}</small><b>${esc(value)}</b></div>`;
+  const cls = tone ? ` decision-account-line--${esc(tone)}` : '';
+  const mark = tone ? '<span class="decision-account-alert">!</span>' : '';
+  return `<div class="decision-account-line${cls}"><small>${esc(label)}</small><b>${esc(value)}</b>${mark}</div>`;
 }
 
 function loanDecisionLines(loan) {
@@ -83,12 +85,12 @@ function loanDecisionLines(loan) {
   ];
   if ((loan.status || 'pending') === 'pending') {
     const days = daysPending(loan.receiveDate);
-    rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`));
+    rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`, days > 7 ? 'alert' : ''));
   }
   if (loan.status === 'sanctioned') rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
   if (loan.status === 'returned') {
-    rows.push(accountLine('Return Date', fmtDate(loan.returnedDate)));
-    rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
+    rows.push(accountLine('Return Date', fmtDate(loan.returnedDate), 'alert'));
+    rows.push(accountLine('Remarks', loan.remarks || 'No remarks added', 'alert'));
   }
   return rows.join('');
 }
@@ -112,9 +114,9 @@ function renewalDecisionLines(loan, rs) {
     accountLine('Limit Expiry', fmtDate(loan.limitExpiryDate)),
   ];
   if (loan.renewedDate) rows.push(accountLine('Renewed Date', fmtDate(loan.renewedDate)));
-  else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`));
-  else if (rs?.status === 'due-soon') rows.push(accountLine('Status', `Due in ${rs.daysUntilDue} days`));
-  else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue • NPA`));
+  else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
+  else if (rs?.status === 'due-soon') rows.push(accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn'));
+  else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert'));
   return rows.join('');
 }
 
