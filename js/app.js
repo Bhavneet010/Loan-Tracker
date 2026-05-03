@@ -35,23 +35,15 @@ document.addEventListener('click', e => {
 
 /* ── INIT ── */
 async function init() {
-  const status = (txt) => {
-    const el = document.querySelector('.loading-wrap span');
-    if (el) el.textContent = txt;
-    console.log('[INIT]', txt);
-  };
-
-  status('Loading configuration...');
+  console.log('[INIT] Loading configuration...');
   await loadSettings();
   
-  status('Applying theme...');
   const darkPref = localStorage.getItem('lpDark');
   if (darkPref === '1') {
     S.dark = true;
     document.body.classList.add('dark');
   }
   
-  status('Setting app mode...');
   S.appMode = 'tasks';
   S.taskView = 'overview';
   S.taskCategory = null;
@@ -64,7 +56,6 @@ async function init() {
   const mt = document.getElementById('mainTabs');
   if (mt) mt.style.display = 'none';
   
-  status('Checking authentication...');
   const su = localStorage.getItem('lpUser');
   const sa = localStorage.getItem('lpAdmin') === 'true';
   if (su) {
@@ -83,18 +74,15 @@ async function init() {
     }
   }
   
-  status('Connecting to database...');
+  console.log('[INIT] Connecting to database...');
   subscribeLoans();
   subscribeNotifications();
   
   if (!S.user) {
-    status('Please select a user...');
     if (window.showUserSelect) window.showUserSelect();
-  } else {
-    status('Retrieving data...');
   }
   
-  // Initial render
+  // Initial render replaces skeleton with real content
   render();
 }
 

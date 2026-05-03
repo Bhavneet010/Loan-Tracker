@@ -50,7 +50,7 @@ window.showPerfOverlay = async function () {
   document.getElementById('perfOverlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
   const target = document.getElementById('perfOverlayContent');
-  if (target) target.innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading performance...</span></div>';
+  if (target) target.innerHTML = '<div class="skeleton-wrap"><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div></div>';
   await import("./performance.js");
   if (typeof window.showDailySnapshot === 'function') window.showDailySnapshot();
 };
