@@ -99,20 +99,34 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
     data.isFreshCC = !isImported;
     if (isImported) data.isImported = true;
     else data.manuallyCreated = true;
-    data.renewalDueDate = draft.renewalDueDate || '';
-    data.limitExpiryDate = draft.limitExpiryDate || '';
-    if (data.renewalDueDate && data.limitExpiryDate) data.renewalDatesPending = false;
+    if (renewalState !== 'renewed') {
+      data.renewalDueDate = draft.renewalDueDate || '';
+      data.limitExpiryDate = draft.limitExpiryDate || '';
+      if (data.renewalDueDate && data.limitExpiryDate) data.renewalDatesPending = false;
+    }
   } else {
     data.isTermLoan = false;
   }
 
   if (renewalState === 'renewed') {
     const completionDate = draft.sanctionDate || draft.renewedDate || base.sanctionDate || base.renewedDate || todayStr();
+    const nextRenewalDue = draft.nextRenewalDueDate || '';
+    const nextLimitExpiry = draft.nextLimitExpiryDate || '';
     data.sanctionDate = completionDate;
     data.renewedDate = completionDate;
-    data.renewalDatesPending = !(draft.renewalDueDate && draft.limitExpiryDate);
+    if (nextRenewalDue) data.renewalDueDate = nextRenewalDue;
+    if (nextLimitExpiry) data.limitExpiryDate = nextLimitExpiry;
+    data.renewalDueDatePending = !nextRenewalDue;
+    data.limitExpiryDatePending = !nextLimitExpiry;
+    data.renewalDueDateEntered = !!nextRenewalDue;
+    data.limitExpiryDateEntered = !!nextLimitExpiry;
+    data.renewalDatesPending = !(nextRenewalDue && nextLimitExpiry);
   } else if (renewalState === 'pending') {
     data.renewedDate = '';
+    data.renewalDueDatePending = false;
+    data.limitExpiryDatePending = false;
+    data.renewalDueDateEntered = false;
+    data.limitExpiryDateEntered = false;
     data.renewalDatesPending = false;
   }
 
@@ -162,6 +176,11 @@ function cloneLoanDraft(loan) {
     renewedDate: loan.renewedDate || '',
     renewalDueDate: loan.renewalDueDate || '',
     limitExpiryDate: loan.limitExpiryDate || '',
+    renewalDatesPending: !!loan.renewalDatesPending,
+    renewalDueDatePending: loan.renewalDueDatePending === true,
+    limitExpiryDatePending: loan.limitExpiryDatePending === true,
+    nextRenewalDueDate: loan.renewedDate && loan.renewalDueDateEntered === true ? (loan.renewalDueDate || '') : '',
+    nextLimitExpiryDate: loan.renewedDate && loan.limitExpiryDateEntered === true ? (loan.limitExpiryDate || '') : '',
     remarks: loan.remarks || '',
     isTermLoan: !!loan.isTermLoan,
   };
@@ -262,6 +281,14 @@ function renewalStatusLineHtml(loan, rs) {
   return '';
 }
 
+function renewalDateAccountLine(label, loan, key, fallback = '') {
+  const pendingKey = key === 'renewalDueDate' ? 'renewalDueDatePending' : 'limitExpiryDatePending';
+  const enteredKey = key === 'renewalDueDate' ? 'renewalDueDateEntered' : 'limitExpiryDateEntered';
+  const missingNextDate = !!loan.renewedDate && loan[enteredKey] !== true;
+  if (missingNextDate) return accountLine(label, '-', 'warn');
+  return accountLine(label, fmtDate(loan[key] || fallback));
+}
+
 function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
   const categoryOptions = [
     { value: '', label: 'Category' },
@@ -288,8 +315,8 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
         ${inlineAccountEditLine('Branch', `<select aria-label="Branch" data-draft="branch">${inlineSelect(branchOptions, matchBranchOption(draft.branch) || draft.branch)}</select>`)}
         ${inlineAccountEditLine('Officer', `<select aria-label="Officer" data-draft="allocatedTo">${inlineSelect(officerOptions, draft.allocatedTo)}</select>`)}
         ${inlineAccountEditLine('A/C No.', `<input aria-label="Account Number" data-draft="acNumber" type="text" inputmode="numeric" value="${esc(draft.acNumber)}" placeholder="Account number">`)}
-        ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="renewalDueDate" type="date" value="${esc(draft.renewalDueDate)}">`)}
-        ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="limitExpiryDate" type="date" value="${esc(draft.limitExpiryDate)}">`)}
+        ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="nextRenewalDueDate" type="date" value="${esc(draft.nextRenewalDueDate)}">`, !draft.nextRenewalDueDate && stagedRenewal === 'renewed' ? 'warn' : '')}
+        ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="nextLimitExpiryDate" type="date" value="${esc(draft.nextLimitExpiryDate)}">`, !draft.nextLimitExpiryDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Sanction Date', `<input aria-label="Sanction Date" data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || draft.renewedDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
       </div>
     </div>
@@ -390,8 +417,8 @@ function renewalDecisionLines(loan, rs) {
     accountLine('Branch', loan.branch),
     accountLine('Officer', loan.allocatedTo),
     accountLine('A/C No.', loan.acNumber),
-    accountLine('Renewal Due', fmtDate(loan.renewalDueDate || rs?.dueDateStr)),
-    accountLine('Limit Expiry', fmtDate(loan.limitExpiryDate)),
+    renewalDateAccountLine('Renewal Due', loan, 'renewalDueDate', rs?.dueDateStr),
+    renewalDateAccountLine('Limit Expiry', loan, 'limitExpiryDate'),
   ];
   if (loan.renewedDate) rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate || loan.renewedDate)));
   else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
@@ -903,6 +930,10 @@ window.saveLoan = async function(e) {
       const hasLimitExpiry = !!(limitExpiryInput && limitExpiryInput.value);
       data.renewedDate = todayStr();
       data.renewalDatesPending = !(hasRenewalDue && hasLimitExpiry);
+      data.renewalDueDatePending = !hasRenewalDue;
+      data.limitExpiryDatePending = !hasLimitExpiry;
+      data.renewalDueDateEntered = hasRenewalDue;
+      data.limitExpiryDateEntered = hasLimitExpiry;
       if (hasRenewalDue) data.renewalDueDate = renewalInput.value;
       if (hasLimitExpiry) data.limitExpiryDate = limitExpiryInput.value;
     } else if (isRenewalDoneEdit) {
@@ -910,6 +941,10 @@ window.saveLoan = async function(e) {
       if (limitExpiryInput && limitExpiryInput.value) data.limitExpiryDate = limitExpiryInput.value;
       const finalRenewalDue = data.renewalDueDate || existingLoan.renewalDueDate;
       const finalLimitExpiry = data.limitExpiryDate || existingLoan.limitExpiryDate;
+      if (data.renewalDueDate) data.renewalDueDatePending = false;
+      if (data.limitExpiryDate) data.limitExpiryDatePending = false;
+      if (data.renewalDueDate) data.renewalDueDateEntered = true;
+      if (data.limitExpiryDate) data.limitExpiryDateEntered = true;
       if (finalRenewalDue && finalLimitExpiry) data.renewalDatesPending = false;
     } else {
       data.renewalDueDate = (renewalInput && renewalInput.value) ? renewalInput.value : '';
