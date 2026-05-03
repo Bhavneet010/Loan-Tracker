@@ -73,7 +73,10 @@ function loanDecisionLines(loan) {
     accountLine('Officer', loan.allocatedTo),
     accountLine('Received', fmtDate(loan.receiveDate)),
   ];
-  if ((loan.status || 'pending') === 'pending') rows.push(accountLine('Ageing', `${daysPending(loan.receiveDate)} days pending`));
+  if ((loan.status || 'pending') === 'pending') {
+    const days = daysPending(loan.receiveDate);
+    rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`));
+  }
   if (loan.status === 'sanctioned') rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
   if (loan.status === 'returned') {
     rows.push(accountLine('Return Date', fmtDate(loan.returnedDate)));
@@ -156,23 +159,40 @@ function initDecisionSheet(overlay, options, selected) {
   const slider = overlay.querySelector('.decision-slider');
   const thumb = overlay.querySelector('[data-decision-thumb]');
   if (!slider || !thumb) return;
-  const pick = clientX => {
+  const positionFromPointer = clientX => {
     const rect = slider.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return { ratio, percent: ratio * 100 };
+  };
+  const dragTo = clientX => {
+    const { percent } = positionFromPointer(clientX);
+    const min = options.length === 2 ? 25 : 16.67;
+    const max = options.length === 2 ? 75 : 83.33;
+    slider.style.setProperty('--thumb-left', `${Math.max(min, Math.min(max, percent))}%`);
+  };
+  const settle = clientX => {
+    const { ratio } = positionFromPointer(clientX);
     const idx = Math.max(0, Math.min(options.length - 1, Math.round(ratio * (options.length - 1))));
     setDecisionSelected(overlay, options[idx].value);
   };
   thumb.addEventListener('pointerdown', e => {
     thumb.setPointerCapture(e.pointerId);
     thumb.dataset.dragging = '1';
-    pick(e.clientX);
+    slider.classList.add('dragging');
+    dragTo(e.clientX);
   });
   thumb.addEventListener('pointermove', e => {
-    if (thumb.dataset.dragging === '1') pick(e.clientX);
+    if (thumb.dataset.dragging === '1') dragTo(e.clientX);
   });
   thumb.addEventListener('pointerup', e => {
     thumb.dataset.dragging = '';
-    pick(e.clientX);
+    slider.classList.remove('dragging');
+    settle(e.clientX);
+  });
+  thumb.addEventListener('pointercancel', () => {
+    thumb.dataset.dragging = '';
+    slider.classList.remove('dragging');
+    setDecisionSelected(overlay, slider.dataset.selected);
   });
 }
 
@@ -243,7 +263,6 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
       <textarea id="decisionReturnRemarks" rows="2" placeholder="Reason for return">${esc(loan.remarks || '')}</textarea>
     </label>
     <div class="decision-outcome-block">
-      <div class="decision-outcome-head"><b>Choose outcome</b></div>
       ${sliderHtml(options, selected, 'loan')}
     </div>
     <div class="decision-action-row">
@@ -296,7 +315,6 @@ window.openRenewalDecisionSheet = function(id) {
       </div>
     </div>
     <div class="decision-outcome-block">
-      <div class="decision-outcome-head"><b>Choose renewal state</b></div>
       ${sliderHtml(options, current, 'renewal')}
     </div>
     <div class="decision-action-row">

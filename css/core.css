@@ -723,14 +723,12 @@ body.fresh-mode .fab{display:flex;}
 }
 .decision-return-note textarea:focus{border-color:var(--p2);box-shadow:0 0 0 3px rgba(107,95,191,0.12);}
 .decision-outcome-block{
-  margin:0 0 9px;padding:9px;border-radius:15px;background:rgba(255,255,255,0.60);
+  margin:0 0 8px;padding:6px;border-radius:14px;background:rgba(255,255,255,0.60);
   border:1px solid rgba(255,255,255,0.88);
 }
-.decision-outcome-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
-.decision-outcome-head b{color:var(--text1);font-size:12px;font-weight:900;}
 .decision-slider{
   --thumb-left:50%;
-  position:relative;height:48px;border-radius:15px;
+  position:relative;height:44px;border-radius:13px;
   background:linear-gradient(90deg,rgba(239,68,68,0.13),rgba(107,95,191,0.10) 50%,rgba(16,185,129,0.14));
   border:1px solid rgba(107,95,191,0.12);overflow:hidden;touch-action:none;
 }
@@ -747,12 +745,18 @@ body.fresh-mode .fab{display:flex;}
 .decision-slider--renewal .pending{color:var(--amber);text-align:left;}
 .decision-slider-labels .active{opacity:0;}
 .decision-slider-thumb{
-  position:absolute;left:var(--thumb-left);top:5px;transform:translateX(-50%);
-  width:94px;height:37px;border-radius:13px;background:#fff;border:1px solid rgba(107,95,191,0.17);
+  position:absolute;left:var(--thumb-left);top:4px;transform:translateX(-50%);
+  width:90px;height:34px;border-radius:12px;background:#fff;border:1px solid rgba(107,95,191,0.17);
   box-shadow:0 7px 18px rgba(50,43,105,0.18);display:flex;align-items:center;justify-content:center;gap:5px;
   color:var(--text1);font:900 11px/1 inherit;cursor:grab;touch-action:none;
+  transition:left 0.18s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.18s ease, transform 0.18s ease;
 }
 .decision-slider-thumb:active{cursor:grabbing;}
+.decision-slider.dragging .decision-slider-thumb{
+  transition:box-shadow 0.12s ease, transform 0.12s ease;
+  transform:translateX(-50%) scale(1.03);
+  box-shadow:0 10px 24px rgba(50,43,105,0.24);
+}
 .decision-slider-thumb span{color:var(--text3);font-size:13px;line-height:1;}
 .decision-action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .decision-action-row .btn{padding:11px 8px;border-radius:12px;font-size:13px;}
