@@ -738,12 +738,17 @@ body.fresh-mode .fab{display:flex;}
 }
 .decision-slider-labels button{
   border:0;background:transparent;padding:0;color:var(--text3);font:900 10px/1 inherit;cursor:pointer;min-width:0;
+  opacity:0.72;transition:color 0.16s ease,opacity 0.16s ease,transform 0.16s ease;
 }
 .decision-slider-labels .returned{color:var(--red);text-align:left;}
 .decision-slider-labels .pending{text-align:center;}
 .decision-slider-labels .sanctioned,.decision-slider-labels .renewed{color:var(--green);text-align:right;}
 .decision-slider--renewal .pending{color:var(--amber);text-align:left;}
-.decision-slider-labels .active{opacity:0;}
+.decision-slider-labels .active{opacity:1;transform:translateY(-0.5px);}
+.decision-slider-labels .returned.active{color:#7F1D1D;}
+.decision-slider-labels .pending.active{color:var(--text1);}
+.decision-slider-labels .sanctioned.active,.decision-slider-labels .renewed.active{color:#065F46;}
+.decision-slider--renewal .pending.active{color:#92400E;}
 .decision-slider-thumb{
   position:absolute;left:var(--thumb-left);top:4px;transform:translateX(-50%);
   width:90px;height:34px;border-radius:12px;background:#fff;border:1px solid rgba(107,95,191,0.17);

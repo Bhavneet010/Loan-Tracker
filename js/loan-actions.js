@@ -137,13 +137,13 @@ function sliderHtml(options, selected, type) {
   </div>`;
 }
 
-function setDecisionSelected(overlay, value) {
+function setDecisionSelected(overlay, value, opts = {}) {
   const slider = overlay.querySelector('.decision-slider');
   if (!slider) return;
   const options = [...slider.querySelectorAll('[data-decision-value]')].map(btn => ({ value: btn.dataset.decisionValue, label: btn.textContent.trim() }));
   const selected = options.find(o => o.value === value) || options[0];
   slider.dataset.selected = selected.value;
-  slider.style.setProperty('--thumb-left', `${optionLeft(options, selected.value)}%`);
+  if (opts.snap !== false) slider.style.setProperty('--thumb-left', `${optionLeft(options, selected.value)}%`);
   const thumbLabel = slider.querySelector('[data-decision-thumb] b');
   if (thumbLabel) thumbLabel.textContent = selected.label;
   slider.querySelectorAll('[data-decision-value]').forEach(btn => btn.classList.toggle('active', btn.dataset.decisionValue === selected.value));
@@ -165,10 +165,12 @@ function initDecisionSheet(overlay, options, selected) {
     return { ratio, percent: ratio * 100 };
   };
   const dragTo = clientX => {
-    const { percent } = positionFromPointer(clientX);
+    const { ratio, percent } = positionFromPointer(clientX);
     const min = options.length === 2 ? 25 : 16.67;
     const max = options.length === 2 ? 75 : 83.33;
     slider.style.setProperty('--thumb-left', `${Math.max(min, Math.min(max, percent))}%`);
+    const idx = Math.max(0, Math.min(options.length - 1, Math.round(ratio * (options.length - 1))));
+    setDecisionSelected(overlay, options[idx].value, { snap: false });
   };
   const settle = clientX => {
     const { ratio } = positionFromPointer(clientX);
