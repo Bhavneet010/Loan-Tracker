@@ -296,7 +296,7 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
   document.getElementById('fAmount').value = loan.amount || '';
   document.getElementById('fReceive').value = isEdit ? (loan.receiveDate || '') : todayStr();
   document.getElementById('fSanction').value = isEdit
-    ? (mode === 'renewal-done' ? (loan.renewedDate || '') : (loan.sanctionDate || loan.renewedDate || ''))
+    ? (mode === 'renewal-done' ? todayStr() : (loan.sanctionDate || loan.renewedDate || ''))
     : '';
   document.getElementById('fRemarks').value = loan.remarks || '';
 
