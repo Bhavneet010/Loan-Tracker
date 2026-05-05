@@ -3,8 +3,8 @@ import { S } from "./state.js";
 
 export function loanCard(loan, actions, variant = '') {
   const remarks = loan.remarks ? `<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>` : '';
-  const sanctTag = loan.sanctionDate ? `<span class="tag date">✓ ${fmtDate(loan.sanctionDate)}</span>` : '';
-  const retTag = loan.returnedDate ? `<span class="tag date">↩ ${fmtDate(loan.returnedDate)}</span>` : '';
+  const sanctTag = loan.sanctionDate ? `<span class="tag tag-sanctioned">✓ ${fmtDate(loan.sanctionDate)}</span>` : '';
+  const retTag = loan.returnedDate ? `<span class="tag tag-returned">↩ ${fmtDate(loan.returnedDate)}</span>` : '';
   const days = loan.status === 'pending' ? daysPending(loan.receiveDate) : 0;
   const overdueTag = days > 7 ? `<span class="tag overdue">⚠ ${days}d</span>` : '';
   const cls = `${variant} ${days > 7 && loan.status === 'pending' ? 'overdue' : ''}`.trim();
@@ -31,8 +31,13 @@ export function loanCard(loan, actions, variant = '') {
 
 export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '') {
   const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">⚠ ${daysPending(loan.receiveDate)}d</span>` : '';
+  const statusChip = cardVariant === 'sanctioned'
+    ? `<span class="lr-status-chip lr-status-chip--sanctioned">✓</span>`
+    : cardVariant === 'returned'
+    ? `<span class="lr-status-chip lr-status-chip--returned">↩</span>`
+    : '';
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
-  
+
   return `<div class="loan-item ${cls}" id="li-${loan.id}">
     <div class="loan-row" onclick="openLoanDecisionSheet('${loan.id}')">
       <div class="lr-info">
@@ -42,6 +47,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '') {
       </div>
       <div class="lr-meta">
         ${overdueTag}
+        ${statusChip}
         <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">›</span>
       </div>

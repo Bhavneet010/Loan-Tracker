@@ -8,13 +8,13 @@ export function updateBadges() {
   const metrics = getLoanMetrics();
   const bPending = document.getElementById('b-pending');
   if (bPending) bPending.textContent = metrics.pending.length;
-  
+
   const bSanctioned = document.getElementById('b-sanctioned');
   if (bSanctioned) bSanctioned.textContent = metrics.sanctioned.length;
-  
+
   const bReturned = document.getElementById('b-returned');
   if (bReturned) bReturned.textContent = metrics.returned.length;
-  
+
   const rnwEl = document.getElementById('b-renewals');
   if (rnwEl) rnwEl.textContent = metrics.urgentRenewals.length || '';
 
@@ -49,7 +49,7 @@ export function updateHero() {
   if (S.appMode === 'renewals') {
     sc.style.display = '';
     const monthName = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(metrics.thisMonth.slice(5)) - 1];
-    
+
     const rnwStat = (tab, label, arr, gradCls) => {
       const active = S.renewalTab === tab;
       return `<div class="stat rnw-stat-card ${gradCls} ${active ? 'stat-rnw-active' : ''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
@@ -60,28 +60,30 @@ export function updateHero() {
         <div class="rnw-stat-count" aria-label="${arr.length} accounts">${arr.length}</div>
       </div>`;
     };
-    
+
     sc.classList.add('rnw-grid');
-    sc.innerHTML = 
+    sc.innerHTML =
       rnwStat('done', `Renewals Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green') +
       rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber') +
       rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red') +
       rnwStat('all', 'All CC Accounts', metrics.renewals, '');
     return;
   }
-  
+
   sc.style.display = '';
   sc.classList.remove('rnw-grid');
+  const gradMap = { pending: 'stat-grad-pending', sanctioned: 'stat-grad-sanctioned', returned: 'stat-grad-returned' };
   const freshStat = (tab, label, arr, subtitle, badge = '') => {
     const active = S.tab === tab;
-    return `<button type="button" class="stat fresh-stat-card ${active ? 'stat-fresh-active' : ''}" onclick="setFreshTab('${tab}')" aria-pressed="${active}">
+    const gradCls = gradMap[tab] || '';
+    return `<button type="button" class="stat fresh-stat-card ${gradCls} ${active ? 'stat-fresh-active' : ''}" onclick="setFreshTab('${tab}')" aria-pressed="${active}">
       <div class="stat-l">${label}</div>
       <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
       <div class="stat-s">${subtitle}</div>
       ${badge ? `<div class="stat-badge">${badge}</div>` : ''}
     </button>`;
   };
-  
+
   sc.innerHTML =
     freshStat('pending', 'Pending', metrics.pending, `${metrics.pending.length} loans`, metrics.pending.length ? '&nearr; Active' : '') +
     freshStat('sanctioned', 'This Month', metrics.sanctionedThisMonth, `${metrics.sanctionedThisMonth.length} sanctioned`, 'Month total') +
