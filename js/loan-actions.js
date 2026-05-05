@@ -722,6 +722,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
       <h2>Loan status</h2>
       <span class="decision-title-actions">
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
+        ${S.isAdmin ? `<button type="button" class="decision-icon-btn decision-icon-btn--danger" title="Delete loan" onclick="closeDecisionSheet();deleteLoan('${esc(id)}')">🗑</button>` : ''}
         <button type="button" class="decision-icon-btn" title="Edit loan" data-decision-edit>&#9998;</button>
         <span class="decision-status-pill decision-status-pill--${esc(current)}">${esc(current[0].toUpperCase() + current.slice(1))}</span>
       </span>
@@ -794,6 +795,7 @@ window.openRenewalDecisionSheet = function(id) {
       <h2>Renewal status</h2>
       <span class="decision-title-actions">
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
+        ${S.isAdmin ? `<button type="button" class="decision-icon-btn decision-icon-btn--danger" title="Delete loan" onclick="closeDecisionSheet();deleteLoan('${esc(id)}')">🗑</button>` : ''}
         <button type="button" class="decision-icon-btn" title="Edit loan" data-decision-edit>&#9998;</button>
         <span class="decision-status-pill decision-status-pill--renewal">Pending</span>
       </span>

@@ -711,6 +711,9 @@ body.dark .skel-circle,body.dark .skel-bar{background:rgba(155,143,228,0.14);}
 .decision-icon-btn.active{
   background:var(--p-bg);border-color:var(--p-bd);color:var(--p1);
 }
+.decision-icon-btn--danger{
+  border-color:rgba(239,68,68,0.25);color:var(--red);
+}
 .decision-status-pill{
   display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;
   background:var(--p-bg);border:1px solid var(--p-bd);color:var(--p1);
