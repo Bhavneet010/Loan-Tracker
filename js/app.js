@@ -95,3 +95,18 @@ if ('serviceWorker' in navigator) {
 
 // Start the app
 init();
+
+/* ── SHRINKING HEADER ON SCROLL ── */
+(function initHeaderCompact() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      header.classList.toggle('header--compact', window.scrollY > 32);
+      ticking = false;
+    });
+  }, { passive: true });
+}());

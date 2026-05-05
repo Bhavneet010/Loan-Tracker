@@ -1250,3 +1250,17 @@ body.dark .lr-status-chip--returned{background:rgba(245,158,11,0.18);color:#FBBF
 .loan-row:active{transform:scale(0.99);transition-duration:0.08s;}
 .loan-row:active .lr-av{transform:scale(0.92);transition:transform 0.08s ease;}
 .lr-av{transition:transform 0.18s ease;}
+
+/* ── AESTHETIC UPGRADE 9: SHRINKING HEADER ON SCROLL ── */
+.header{transition:padding 0.28s ease;}
+.brand-sub{
+  overflow:hidden;max-height:18px;opacity:1;
+  transition:max-height 0.28s ease,opacity 0.18s ease,margin-top 0.28s ease;
+}
+.brand-av{transition:width 0.28s ease,height 0.28s ease,border-radius 0.28s ease;}
+.mode-toggle-bar{transition:margin-top 0.28s ease;}
+
+.header--compact{padding-top:5px;padding-bottom:4px;}
+.header--compact .brand-sub{max-height:0;opacity:0;margin-top:0;}
+.header--compact .brand-av{width:30px;height:30px;border-radius:9px;}
+.header--compact .mode-toggle-bar{margin-top:4px;}
