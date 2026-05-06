@@ -3,6 +3,7 @@ import { renderSettingsList } from "./ui-settings.js";
 import { toast, initials, officerColor } from "./utils.js";
 import { getLoanMetrics } from "./derived.js";
 import { requestNotifPermission } from "./notifications.js";
+import { isBiometricRegistered, authenticateBiometric, isBiometricAvailable } from "./biometric.js";
 
 window.toggleDark = function () {
   S.dark = !S.dark;
@@ -118,32 +119,60 @@ window.selectUser = function (name) {
   window.render();
 };
 
-window.promptAdmin = function () {
+window.promptAdmin = async function () {
   document.getElementById('userModal').style.display = 'none';
   document.getElementById('pinModal').style.display = 'flex';
+
+  const bioBtn = document.getElementById('biometricBtn');
+  if (bioBtn) {
+    const registered = isBiometricRegistered();
+    const available = registered && await isBiometricAvailable();
+    bioBtn.style.display = available ? 'flex' : 'none';
+  }
+
   setTimeout(() => document.getElementById('pinInput').focus(), 100);
 };
 
 window.checkPin = function () {
   if (document.getElementById('pinInput').value === PIN) {
-    S.user = 'Admin'; S.isAdmin = true;
-    S.filter = { category: 'All', officer: 'All' };
-    localStorage.setItem('lpUser', 'Admin'); localStorage.setItem('lpAdmin', 'true');
-    const av = document.getElementById('userAv');
-    av.textContent = '🔒'; av.style.background = ''; av.style.color = '';
     document.getElementById('pinInput').value = '';
     document.getElementById('pinModal').style.display = 'none';
-    requestNotifPermission();
-    toast('Admin mode active'); window.render();
+    _grantAdminAccess();
   } else {
     toast('Incorrect PIN'); document.getElementById('pinInput').value = '';
   }
 };
 
-window.closePinModal = function () { 
-  document.getElementById('pinInput').value = ''; 
-  document.getElementById('pinModal').style.display = 'none'; 
+window.closePinModal = function () {
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinModal').style.display = 'none';
 };
+
+window.loginWithBiometric = async function () {
+  const bioBtn = document.getElementById('biometricBtn');
+  if (bioBtn) { bioBtn.disabled = true; bioBtn.classList.add('bio-btn--loading'); }
+  try {
+    const ok = await authenticateBiometric();
+    if (ok) {
+      _grantAdminAccess();
+      document.getElementById('pinModal').style.display = 'none';
+    }
+  } catch (e) {
+    if (e.name !== 'NotAllowedError') toast('Biometric failed — use PIN instead');
+  } finally {
+    if (bioBtn) { bioBtn.disabled = false; bioBtn.classList.remove('bio-btn--loading'); }
+  }
+};
+
+function _grantAdminAccess() {
+  S.user = 'Admin'; S.isAdmin = true;
+  S.filter = { category: 'All', officer: 'All' };
+  localStorage.setItem('lpUser', 'Admin'); localStorage.setItem('lpAdmin', 'true');
+  const av = document.getElementById('userAv');
+  av.textContent = '🔒'; av.style.background = ''; av.style.color = '';
+  requestNotifPermission();
+  toast('Admin mode active'); window.render();
+}
 
 window.handleSettings = function () {
   if (!S.isAdmin) { toast('Admin access required'); return; }

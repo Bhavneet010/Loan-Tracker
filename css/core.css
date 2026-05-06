@@ -1299,3 +1299,29 @@ body.dark .lr-status-chip--returned{background:rgba(245,158,11,0.18);color:#FBBF
 .header--compact .brand-sub{max-height:0;opacity:0;margin-top:0;}
 .header--compact .brand-av{width:30px;height:30px;border-radius:var(--radius-xs);}
 .header--compact .mode-toggle-bar{margin-top:4px;}
+
+/* ── BIOMETRIC BUTTON ── */
+.bio-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  margin: 10px 0 4px;
+  border: 2px solid rgba(107, 95, 191, 0.35);
+  border-radius: 13px;
+  background: rgba(107, 95, 191, 0.07);
+  color: var(--c-primary, #7c3aed);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, transform 80ms ease;
+}
+.bio-btn:hover { background: rgba(107, 95, 191, 0.13); border-color: rgba(107, 95, 191, 0.55); }
+.bio-btn:active { transform: scale(0.98); }
+.bio-btn__icon { width: 22px; height: 22px; flex-shrink: 0; }
+.bio-btn--loading .bio-btn__icon { animation: spin 1s linear infinite; opacity: 0.6; }
+.bio-btn--loading .bio-btn__label::after { content: '…'; }
+.dark .bio-btn { border-color: rgba(167, 139, 250, 0.35); background: rgba(167, 139, 250, 0.09); color: #a78bfa; }
+.dark .bio-btn:hover { background: rgba(167, 139, 250, 0.16); border-color: rgba(167, 139, 250, 0.55); }

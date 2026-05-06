@@ -2,6 +2,7 @@ import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
 import { esc, toast } from "./utils.js";
 import { renderMonthEndSettings } from "./month-end.js";
+import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";
 
 /* ── SETTINGS UI ── */
 export function renderSettingsList() {
@@ -45,7 +46,12 @@ export function renderSettingsList() {
   } else if (S.settingsTab === 'adminid') {
     el.innerHTML = `<div class="form-group"><label>New PIN (6 digits)</label><input type="password" id="newPin" class="pin-input" maxlength="6" inputmode="numeric"></div>
       <div class="form-group"><label>Confirm New PIN</label><input type="password" id="confirmPin" class="pin-input" maxlength="6" inputmode="numeric"></div>
-      <button type="button" class="btn btn-primary-full" style="width:100%;padding:13px;border-radius:13px;" onclick="changePassword()">Change PIN</button>`;
+      <button type="button" class="btn btn-primary-full" style="width:100%;padding:13px;border-radius:13px;" onclick="changePassword()">Change PIN</button>
+      <div id="biometricSettingsSection" style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(107,95,191,0.15);">
+        <div style="font-size:13px;color:#7B7A9A;margin-bottom:12px;line-height:1.5;">Use device fingerprint or face unlock instead of PIN when logging in as Admin.</div>
+        <div id="biometricSettingsStatus"></div>
+      </div>`;
+    _renderBiometricSettings();
   } else if (S.settingsTab === 'import') {
     el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;">Bulk-import data from the data/ folder.</div>
       <button type="button" id="clearRenewalsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="clearAllSmeRenewals()">🗑️ Clear All SME Renewals</button>
@@ -117,4 +123,45 @@ window.changePassword = async function() {
     document.getElementById('newPin').value = ''; document.getElementById('confirmPin').value = '';
     toast('Admin PIN changed ✓');
   });
+};
+
+async function _renderBiometricSettings() {
+  const el = document.getElementById('biometricSettingsStatus');
+  if (!el) return;
+  const available = await isBiometricAvailable();
+  if (!available) {
+    el.innerHTML = `<div style="font-size:13px;color:#EF4444;padding:10px 12px;background:rgba(239,68,68,0.08);border-radius:10px;">Biometric authentication is not available on this device or browser.</div>`;
+    return;
+  }
+  const registered = isBiometricRegistered();
+  if (registered) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(16,185,129,0.08);border-radius:12px;margin-bottom:10px;">
+        <span style="font-size:22px;">&#128274;</span>
+        <div style="flex:1;"><div style="font-weight:600;font-size:14px;color:#059669;">Biometric Login Active</div><div style="font-size:12px;color:#7B7A9A;margin-top:2px;">Fingerprint / Face ID is set up for Admin login.</div></div>
+      </div>
+      <button type="button" class="btn btn-primary-full" style="width:100%;padding:12px;border-radius:12px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="disableBiometric()">Remove Biometric</button>`;
+  } else {
+    el.innerHTML = `
+      <button type="button" class="btn btn-primary-full" style="width:100%;padding:12px;border-radius:12px;" onclick="setupBiometric()">&#128274; Set Up Biometric Login</button>`;
+  }
+}
+
+window.setupBiometric = async function() {
+  const btn = document.querySelector('#biometricSettingsStatus button');
+  if (btn) btn.disabled = true;
+  try {
+    await registerBiometric();
+    toast('Biometric login enabled ✓');
+    _renderBiometricSettings();
+  } catch (e) {
+    if (e.name !== 'NotAllowedError') toast('Could not register biometric: ' + e.message);
+    if (btn) btn.disabled = false;
+  }
+};
+
+window.disableBiometric = function() {
+  removeBiometric();
+  toast('Biometric login removed');
+  _renderBiometricSettings();
 };
