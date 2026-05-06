@@ -85,8 +85,6 @@ export function animateContent(mode, tab) {
       cls = curr > prev ? 'content-enter-right' : 'content-enter-left';
     }
   }
-    }
-  }
 
   _prevMode = mode;
   _prevTab = tab;
