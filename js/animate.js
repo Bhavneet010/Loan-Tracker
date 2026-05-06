@@ -1,16 +1,21 @@
-// Duration must match CSS closing animation durations (ms)
-const CLOSE_MS = 200;
+// Must be >= longest CSS exit animation (backdropOut: 0.24s + sheet/modal: 0.24s)
+const CLOSE_MS = 260;
 
 /**
  * Show an overlay with entrance animation.
- * Sets display then adds .is-open on the next two frames so CSS animation fires cleanly.
+ * Pre-hides via opacity:0 so the backdrop fade starts from invisible,
+ * then adds .is-open two frames later so CSS animation fires cleanly.
  */
 export function openOverlay(id, displayMode = 'flex') {
   const el = typeof id === 'string' ? document.getElementById(id) : id;
   if (!el) return;
   el.classList.remove('is-closing');
+  el.style.opacity = '0';
   el.style.display = displayMode;
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-open')));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.opacity = '';
+    el.classList.add('is-open');
+  }));
 }
 
 /**
@@ -31,9 +36,14 @@ export function closeOverlay(id, cb) {
 
 /**
  * Animate a dynamically-created overlay element that was just appended to the DOM.
+ * Pre-hides so there is no flash before the entrance animation starts.
  */
 export function animateOverlayIn(el) {
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-open')));
+  el.style.opacity = '0';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.opacity = '';
+    el.classList.add('is-open');
+  }));
 }
 
 /**
