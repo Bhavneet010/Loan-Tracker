@@ -84,15 +84,19 @@ export function computeRenewalStatus(loan) {
   const dueDateStr = new Date(msDue).toISOString().slice(0, 10);
   const npaDateStr = new Date(msNpa).toISOString().slice(0, 10);
   const daysToDue = Math.floor((msDue - now) / 86400000);
-  
+  // Ceil so the last partial day shows as 1d, not 0d
+  const npaCountdown = Math.ceil((msNpa - now) / 86400000);
+
   let status, daysUntilDue = 0, daysOverdue = 0, daysUntilNpa = 0;
-  
+
   if (daysToDue > 30) {
-    status = 'active'; daysUntilDue = daysToDue; daysUntilNpa = daysToDue + 181;
+    status = 'active'; daysUntilDue = daysToDue; daysUntilNpa = npaCountdown;
   } else if (daysToDue >= 0) {
-    status = 'due-soon'; daysUntilDue = daysToDue; daysUntilNpa = daysToDue + 181;
-  } else if (daysToDue > -181) {
-    status = 'pending-renewal'; daysOverdue = -daysToDue; daysUntilNpa = 181 + daysToDue;
+    status = 'due-soon'; daysUntilDue = daysToDue; daysUntilNpa = npaCountdown;
+  } else if (now < msNpa) {
+    // Use timestamp comparison, not daysToDue > -181, so Math.floor can't
+    // prematurely flip status to npa on the last partial day before NPA.
+    status = 'pending-renewal'; daysOverdue = -daysToDue; daysUntilNpa = npaCountdown;
   } else {
     status = 'npa'; daysOverdue = -daysToDue;
   }
