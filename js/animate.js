@@ -58,23 +58,33 @@ export function animateOverlayOut(el, cb) {
 // ── Content entrance ───────────────────────────────────────────────────────────
 
 const TAB_ORDER = { pending: 0, sanctioned: 1, returned: 2 };
+const RENEWAL_TAB_ORDER = { done: 0, 'due-soon': 1, overdue: 2, all: 3, 'dates-missing': 4 };
 let _prevMode = null;
 let _prevTab = null;
 
 /**
  * Trigger a directional entrance animation on #content after innerHTML is replaced.
- * Tab switches slide left/right; mode switches fade+rise.
+ * Tab switches (fresh and renewals) slide left/right; mode switches fade+rise.
  */
 export function animateContent(mode, tab) {
   const c = document.getElementById('content');
   if (!c) return;
 
   let cls = 'content-enter';
+
   if (mode === 'fresh' && _prevMode === 'fresh' && tab !== _prevTab) {
     const prev = TAB_ORDER[_prevTab] ?? -1;
     const curr = TAB_ORDER[tab] ?? -1;
     if (prev !== -1 && curr !== -1) {
       cls = curr > prev ? 'content-enter-right' : 'content-enter-left';
+    }
+  } else if (mode === 'renewals' && _prevMode === 'renewals' && tab !== _prevTab) {
+    const prev = RENEWAL_TAB_ORDER[_prevTab] ?? -1;
+    const curr = RENEWAL_TAB_ORDER[tab] ?? -1;
+    if (prev !== -1 && curr !== -1) {
+      cls = curr > prev ? 'content-enter-right' : 'content-enter-left';
+    }
+  }
     }
   }
 

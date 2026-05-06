@@ -70,7 +70,7 @@ export function renderRenewals(c) {
 
   const officerViewer = renewalOfficerViewerHtml(buildVisibleRenewalOfficerSummary(metrics));
   const searchBar = `<div class="rnw-search-wrap"><input type="text" class="search-inp rnw-search-inp" placeholder="Search account or branch" value="${esc(S.search)}" oninput="handleRenewalSearch(this.value)"></div>`;
-  const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
+  const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
   const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${list}`;
   const mainContent = S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : listContent;
   c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div><div class="rnw-content">${mainContent}</div>`;
@@ -122,7 +122,7 @@ function buildRenewalListContent(metrics) {
     'all': { title: 'All CC Accounts', empty: 'ðŸ“‹', msg: 'No CC accounts found' },
   }[S.renewalTab] || { title: 'SME CC Renewals', empty: 'â™»', msg: 'No renewals found' };
 
-  const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map(l => renewalItemHtml(l, l._rs)).join('');
+  const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
   return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} Â· â‚¹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">â–² collapse all</button></div></div>${list}`;
 }
 

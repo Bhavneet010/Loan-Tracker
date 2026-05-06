@@ -74,7 +74,7 @@ export function renewalBadge(rs) {
   }[rs.status] || { label: '', cls: '' };
 }
 
-export function renewalItemHtml(loan, rs) {
+export function renewalItemHtml(loan, rs, idx = 0) {
   const sm = renewalBadge(rs);
   const datesMissing = isRenewalDatesMissing(loan);
   const statusCls = loan.renewedDate
@@ -89,7 +89,7 @@ export function renewalItemHtml(loan, rs) {
     
   const itemId = 'rnw-' + loan.id;
   
-  return `<div class="loan-item ${statusCls}" id="li-${itemId}">
+  return `<div class="loan-item ${statusCls}" id="li-${itemId}" style="--i:${idx}">
     <div class="loan-row" onclick="openRenewalDecisionSheet('${loan.id}')">
       <div class="lr-info">
         <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>

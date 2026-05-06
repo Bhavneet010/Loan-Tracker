@@ -25,8 +25,8 @@ export function render() {
   const c = document.getElementById('content');
   if (!c) return;
 
-  if (S.appMode === 'renewals') { renderRenewals(c); animateContent('renewals', null); return; }
-  if (S.appMode === 'tasks') { renderTasks(c); animateContent('tasks', null); return; }
+  if (S.appMode === 'renewals') { renderRenewals(c); animateContent('renewals', S.renewalTab); return; }
+  if (S.appMode === 'tasks') { renderTasks(c); animateContent('tasks', S.taskView); return; }
 
   if (S.tab === 'pending') renderPending(c);
   else if (S.tab === 'sanctioned') renderSanctioned(c);
