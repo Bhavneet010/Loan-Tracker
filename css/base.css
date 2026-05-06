@@ -56,5 +56,5 @@ body::before{
 
 /* ── SECTION HEADER ── */
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;padding:16px 4px 10px;}
-.sec-title{font-size:var(--fs-lg);font-weight:800;color:var(--text2);font-family:var(--f-head);letter-spacing:-0.4px;}
+.sec-title{font-size:var(--fs-base);font-weight:800;color:var(--text1);font-family:var(--f-head);letter-spacing:-0.3px;}
 .sec-count{font-size:var(--fs-md);color:var(--text3);font-weight:600;}

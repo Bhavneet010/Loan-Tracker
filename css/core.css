@@ -16,6 +16,11 @@
   --header-bg:rgba(195,188,230,0.45);
   --dark-glass:rgba(36,32,64,0.85);
   --p-subtle:rgba(107,95,191,0.08);
+  /* Surface tiers — use these everywhere instead of raw rgba */
+  --glass-low:rgba(255,255,255,0.32);      --glass-low-bd:rgba(255,255,255,0.55);
+  --glass-mid:rgba(255,255,255,0.58);      --glass-mid-bd:rgba(255,255,255,0.80);
+  /* --glass / --glass-bd already defined above */
+  --glass-high:rgba(255,255,255,0.78);     --glass-high-bd:rgba(255,255,255,0.92);
   --r:14px; --rl:20px;
   /* Tag size tokens */
   --tag-xs:8px; --tag-sm:9px; --tag-md:10px;
@@ -171,8 +176,8 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 }
 .stat{
   flex:1;min-width:0;
-  background:rgba(255,255,255,0.30);backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.55);
+  background:var(--glass-low);backdrop-filter:blur(20px);
+  border:1px solid var(--glass-low-bd);
   padding:10px;border-radius:var(--radius-md);color:var(--text1);
 }
 .fresh-stat-card{
@@ -264,7 +269,7 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 .fs-pop hr{border:none;border-top:1px solid rgba(107,95,191,0.1);margin:10px 0;}
 
 .sec-head{display:flex;justify-content:space-between;align-items:center;margin:0 2px 10px;}
-.sec-title{font-size:16px;font-weight:700;color:var(--text1);letter-spacing:-0.3px;}
+.sec-title{font-size:var(--fs-base);font-weight:800;color:var(--text1);font-family:var(--f-head);letter-spacing:-0.3px;}
 .sec-right{display:flex;align-items:center;gap:var(--space-sm);}
 .sec-collapse-btn{
   font-size:var(--fs-sm);font-weight:600;color:var(--p1);
@@ -280,8 +285,8 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 }
 
 .loan-card{
-  background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.85);border-radius:var(--radius-lg);
+  background:var(--glass);backdrop-filter:blur(20px);
+  border:1px solid var(--glass-bd);border-radius:var(--radius-lg);
   padding:14px 14px 13px 17px;margin-bottom:10px;
   box-shadow:0 4px 14px rgba(107,95,191,0.07);
   position:relative;overflow:hidden;
@@ -328,7 +333,7 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
   border:1px solid rgba(0,0,0,0.08)!important;
 }
 .btn-more{
-  width:38px;flex:none;
+  width:36px;flex:none;
   background:rgba(255,255,255,0.85);color:var(--muted);
   border:1px solid rgba(0,0,0,0.08)!important;font-size:var(--fs-base);
 }
@@ -345,7 +350,7 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 .btn-danger{
   background:var(--red-bg);color:var(--red);
   border:1px solid var(--red-bd)!important;
-  width:38px;flex:none;font-size:var(--fs-base);
+  width:36px;flex:none;font-size:var(--fs-base);
 }
 .btn-primary-full{
   flex:1;

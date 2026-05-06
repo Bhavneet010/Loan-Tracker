@@ -62,8 +62,8 @@ body.dark .loan-item.rnw-s-dates-missing > .loan-row {background:rgba(245,158,11
 .stat.stat-rnw-active{box-shadow:0 0 0 2px rgba(90,78,175,0.5);}
 
 .rnw-officer-card{
-  background:rgba(255,255,255,0.78);
-  border:1px solid rgba(255,255,255,0.9);
+  background:var(--glass-high);
+  border:1px solid var(--glass-high-bd);
   border-radius:var(--radius-lg);
   box-shadow:0 4px 16px var(--p-subtle);
   margin:0 0 12px;
@@ -193,7 +193,7 @@ body.dark .loan-item.rnw-s-dates-missing > .loan-row {background:rgba(245,158,11
 }
 
 .rnw-expanded-card{
-  background:rgba(255,255,255,0.6);padding:12px 14px;
+  background:var(--glass-mid);padding:12px 14px;
   border-radius:0 0 var(--radius-md) var(--radius-md);
   border:1px solid rgba(107,95,191,0.18);border-top:none;
 }

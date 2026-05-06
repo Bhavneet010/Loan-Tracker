@@ -1,5 +1,12 @@
 /* ── DARK MODE OVERRIDES ── */
-body.dark{--text1:#E8E6F4;--text2:#B8B0E4;--text3:rgba(232,230,244,0.58);}
+body.dark{
+  --text1:#E8E6F4;--text2:#B8B0E4;--text3:rgba(232,230,244,0.58);
+  /* Surface tier variables — dark equivalents */
+  --glass-low:rgba(30,28,58,0.55);      --glass-low-bd:rgba(80,70,130,0.22);
+  --glass-mid:rgba(30,28,58,0.70);      --glass-mid-bd:rgba(80,70,130,0.28);
+  --glass:rgba(30,28,58,0.75);          --glass-bd:rgba(80,70,130,0.30);
+  --glass-high:rgba(30,28,58,0.90);     --glass-high-bd:rgba(80,70,130,0.36);
+}
 
 body.dark::before{
   background:

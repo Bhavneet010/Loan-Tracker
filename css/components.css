@@ -2,8 +2,8 @@
 .stats-scroll{display:flex;gap:var(--space-sm);padding:12px 14px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .stat{
   flex:1;min-width:145px;padding:12px;border-radius:var(--radius-md);
-  background:rgba(255,255,255,0.30);backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.55);transition:all var(--dur-slow) ease;
+  background:var(--glass-low);backdrop-filter:blur(20px);
+  border:1px solid var(--glass-low-bd);transition:all var(--dur-slow) ease;
 }
 .stat-l{font-size:var(--fs-sm);font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
 .stat-v{font-size:var(--fs-lg);font-weight:800;color:var(--text1);margin:2px 0;}
@@ -14,8 +14,8 @@
 .loan-row{
   display:flex;align-items:center;justify-content:space-between;
   padding:10px 14px 10px 18px;gap:var(--space-sm);cursor:pointer;
-  background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.85);border-radius:var(--radius-md);
+  background:var(--glass);backdrop-filter:blur(20px);
+  border:1px solid var(--glass-bd);border-radius:var(--radius-md);
   position:relative;overflow:hidden;
 }
 .loan-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--p2);}
@@ -37,8 +37,8 @@
 
 /* ── LOAN CARD INTERNAL ── */
 .loan-card{
-  background:rgba(255,255,255,0.6);padding:14px 16px;border-radius:0 0 var(--radius-md) var(--radius-md);
-  border:1px solid rgba(255,255,255,0.8);border-top:none;
+  background:var(--glass-mid);padding:14px 16px;border-radius:0 0 var(--radius-md) var(--radius-md);
+  border:1px solid var(--glass-mid-bd);border-top:none;
 }
 .lc-top{display:flex;justify-content:space-between;margin-bottom:10px;}
 .lc-name{font-size:var(--fs-base);font-weight:800;color:var(--text1);font-family:var(--f-head);}
