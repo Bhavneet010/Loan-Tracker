@@ -44,7 +44,7 @@
 .lc-name{font-size:var(--fs-base);font-weight:800;color:var(--text1);font-family:var(--f-head);}
 .lc-amount{font-size:var(--fs-lg);font-weight:800;color:var(--p1);}
 .lc-tags{display:flex;flex-wrap:wrap;gap:var(--space-sm);margin-bottom:10px;}
-.lc-actions{display:flex;gap:var(--space-sm);margin-top:12px;padding-top:10px;border-top:1px solid rgba(107,95,191,0.08);}
+.lc-actions{display:flex;gap:var(--space-sm);margin-top:12px;padding-top:10px;border-top:1px solid var(--p-subtle);}
 
 /* ── FORMS ── */
 .form-group{margin-bottom:16px;}
@@ -58,7 +58,7 @@
 /* ── NOTIFICATIONS ── */
 .notif-card{
   display:flex;gap:var(--space-md);padding:12px;background:white;border-radius:var(--radius-md);margin-bottom:8px;
-  border:1px solid rgba(107,95,191,0.08);transition:all var(--dur-base) ease;
+  border:1px solid var(--p-subtle);transition:all var(--dur-base) ease;
 }
 .notif-card.unread{background:rgba(123,111,212,0.05);border-color:rgba(123,111,212,0.15);}
 .notif-icon{width:36px;height:36px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;background:var(--p-bg);font-size:16px;}

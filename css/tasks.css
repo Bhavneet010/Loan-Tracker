@@ -100,7 +100,7 @@
   padding:6px 8px 7px;margin:0 0 6px;
   background:rgba(255,255,255,0.35);backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,0.88);border-radius:var(--radius-lg);
-  box-shadow:0 5px 16px rgba(107,95,191,0.08);
+  box-shadow:0 5px 16px var(--p-subtle);
 }
 .task-performer-head{
   display:flex;align-items:center;gap:var(--space-sm);margin:0 0 5px;
@@ -139,12 +139,12 @@
 .task-care,.task-targets{
   background:rgba(255,255,255,0.68);backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,0.86);border-radius:var(--radius-lg);
-  box-shadow:0 5px 16px rgba(107,95,191,0.08);
+  box-shadow:0 5px 16px var(--p-subtle);
   padding:8px;margin-bottom:7px;
 }
 .task-care{
   border-color:rgba(239,68,68,0.34);
-  box-shadow:0 0 0 2px rgba(239,68,68,0.16),0 5px 16px rgba(107,95,191,0.08);
+  box-shadow:0 0 0 2px rgba(239,68,68,0.16),0 5px 16px var(--p-subtle);
 }
 .task-care-head{
   display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);
