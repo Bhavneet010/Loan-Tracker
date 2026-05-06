@@ -4,6 +4,7 @@ import { createNotification } from "./notifications.js";
 import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo } from "./utils.js";
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 
 import { getBranchSearchInput, getBranchValueInput, getCategorySelect, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve } from "./ui-forms.js";
 
@@ -548,11 +549,11 @@ function initDecisionSheet(overlay, options, selected) {
 }
 
 window.closeDecisionSheet = function() {
-  document.querySelectorAll('.decision-overlay').forEach(el => el.remove());
+  document.querySelectorAll('.decision-overlay').forEach(el => animateOverlayOut(el));
 };
 
 window.closeDecisionActivity = function() {
-  document.querySelectorAll('.decision-activity-overlay').forEach(el => el.remove());
+  document.querySelectorAll('.decision-activity-overlay').forEach(el => animateOverlayOut(el));
 };
 
 window.openDecisionActivity = function(id) {
@@ -573,7 +574,7 @@ window.openDecisionActivity = function(id) {
     <p class="decision-copy">${esc(loan.customerName || 'Loan account')}</p>
     <div class="decision-activity-list">${activityRowsHtml(id)}</div>
   </div>`;
-  document.body.appendChild(overlay);
+  document.body.appendChild(overlay); animateOverlayIn(overlay);
 };
 
 function legacyOpenLoanDecisionSheet(id, preferredStatus = null) {
@@ -623,7 +624,7 @@ function legacyOpenLoanDecisionSheet(id, preferredStatus = null) {
       <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
     </div>
   </div>`;
-  document.body.appendChild(overlay);
+  document.body.appendChild(overlay); animateOverlayIn(overlay);
   initDecisionSheet(overlay, options, selected);
   const updatePreview = () => {
     const remarks = overlay.querySelector('#decisionReturnRemarks')?.value || '';
@@ -686,7 +687,7 @@ function legacyOpenRenewalDecisionSheet(id) {
       <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
     </div>
   </div>`;
-  document.body.appendChild(overlay);
+  document.body.appendChild(overlay); animateOverlayIn(overlay);
   initDecisionSheet(overlay, options, current);
   overlay.addEventListener('decisionchange', e => {
     stagedRenewal = e.detail?.value || stagedRenewal;
@@ -736,7 +737,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
       <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
     </div>
   </div>`;
-  document.body.appendChild(overlay);
+  document.body.appendChild(overlay); animateOverlayIn(overlay);
   initDecisionSheet(overlay, options, stagedStatus);
   const card = overlay.querySelector('[data-decision-card]');
   const editBtn = overlay.querySelector('[data-decision-edit]');
@@ -809,7 +810,7 @@ window.openRenewalDecisionSheet = function(id) {
       <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
     </div>
   </div>`;
-  document.body.appendChild(overlay);
+  document.body.appendChild(overlay); animateOverlayIn(overlay);
   initDecisionSheet(overlay, options, current);
   const card = overlay.querySelector('[data-decision-card]');
   const editBtn = overlay.querySelector('[data-decision-edit]');

@@ -29,7 +29,7 @@ export function loanCard(loan, actions, variant = '') {
     </div>`;
 }
 
-export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '') {
+export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', idx = 0) {
   const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">⚠ ${daysPending(loan.receiveDate)}d</span>` : '';
   const statusChip = cardVariant === 'sanctioned'
     ? `<span class="lr-status-chip lr-status-chip--sanctioned">✓</span>`
@@ -38,7 +38,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '') {
     : '';
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
 
-  return `<div class="loan-item ${cls}" id="li-${loan.id}">
+  return `<div class="loan-item ${cls}" id="li-${loan.id}" style="--i:${idx}">
     <div class="loan-row" onclick="openLoanDecisionSheet('${loan.id}')">
       <div class="lr-info">
         <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>

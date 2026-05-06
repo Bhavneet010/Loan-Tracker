@@ -24,7 +24,7 @@ export function renderPending(c) {
         ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
-      return compactLoanItem(l, actions, days > 7 ? 'overdue' : '');
+      return compactLoanItem(l, actions, days > 7 ? 'overdue' : '', '', loans.indexOf(l));
     }).join('');
 
   c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
@@ -41,7 +41,7 @@ export function renderSanctioned(c) {
         ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
-      return compactLoanItem(l, actions, '', 'sanctioned');
+      return compactLoanItem(l, actions, '', 'sanctioned', loans.indexOf(l));
     }).join('');
 
   c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
@@ -58,7 +58,7 @@ export function renderReturned(c) {
         ${copyAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
-      return compactLoanItem(l, actions, '', 'returned');
+      return compactLoanItem(l, actions, '', 'returned', loans.indexOf(l));
     }).join('');
 
   c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;

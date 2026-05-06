@@ -3,6 +3,7 @@ import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
 import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls } from "./utils.js";
 import { db } from "./config.js";
+import { openOverlay, closeOverlay } from "./animate.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const RECENT_BRANCHES_KEY = 'lpRecentBranches';
@@ -331,7 +332,7 @@ function showDuplicateModal(matches) {
   if (!modal || !list) return Promise.resolve(false);
 
   list.innerHTML = matches.map(duplicateCardHtml).join('');
-  modal.style.display = 'flex';
+  openOverlay('duplicateModal');
 
   return new Promise(resolve => {
     duplicateDecisionResolve = resolve;
@@ -369,11 +370,11 @@ window.handleBranchSearch = function(branch) {
 };
 
 window.closeDuplicateModal = function(saveAnyway) {
-  const modal = document.getElementById('duplicateModal');
-  if (modal) modal.style.display = 'none';
-  const resolve = duplicateDecisionResolve;
-  duplicateDecisionResolve = null;
-  if (resolve) resolve(!!saveAnyway);
+  closeOverlay('duplicateModal', () => {
+    const resolve = duplicateDecisionResolve;
+    duplicateDecisionResolve = null;
+    if (resolve) resolve(!!saveAnyway);
+  });
 };
 
 window.openDuplicateExisting = function(id) {
@@ -446,7 +447,7 @@ window.openForm = function(loan = null, mode = null, options = {}) {
     }
   }
 
-  document.getElementById('formModal').style.display = 'flex';
+  openOverlay('formModal');
 };
 
 window.openQuickAdd = function(sourceId = null) {
@@ -458,7 +459,7 @@ window.openQuickAdd = function(sourceId = null) {
 };
 
 window.closeForm = function() {
-  document.getElementById('formModal').style.display = 'none';
+  closeOverlay('formModal');
 };
 
 window.editLoan = id => {

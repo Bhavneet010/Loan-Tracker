@@ -4,6 +4,7 @@ import { toast, initials, officerColor } from "./utils.js";
 import { getLoanMetrics } from "./derived.js";
 import { requestNotifPermission } from "./notifications.js";
 import { isBiometricRegistered, authenticateBiometric, isBiometricAvailable } from "./biometric.js";
+import { openOverlay, closeOverlay } from "./animate.js";
 
 window.toggleDark = function () {
   S.dark = !S.dark;
@@ -36,19 +37,17 @@ function _closeMenuOutside(e) {
 }
 
 window.showNotifOverlay = function () {
-  document.getElementById('notifOverlay').style.display = 'flex';
+  openOverlay('notifOverlay');
   import("./notifications.js").then(module => {
     module.renderNotifOverlay();
     module.markNotifsRead();
   });
 };
 
-window.closeNotifOverlay = () => {
-  document.getElementById('notifOverlay').style.display = 'none';
-};
+window.closeNotifOverlay = () => closeOverlay('notifOverlay');
 
 window.showPerfOverlay = async function () {
-  document.getElementById('perfOverlay').style.display = 'block';
+  openOverlay('perfOverlay', 'block');
   document.body.style.overflow = 'hidden';
   const target = document.getElementById('perfOverlayContent');
   if (target) target.innerHTML = '<div class="skeleton-wrap"><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div></div>';
@@ -57,10 +56,7 @@ window.showPerfOverlay = async function () {
 };
 
 window.closePerfOverlay = function () {
-  const perfOverlay = document.getElementById('perfOverlay');
-  if (perfOverlay) perfOverlay.style.display = 'none';
-  document.body.style.overflow = '';
-  // Charts are handled in performance.js
+  closeOverlay('perfOverlay', () => { document.body.style.overflow = ''; });
 };
 
 window.handleSearch = v => { 
@@ -103,7 +99,7 @@ window.showUserSelect = function () {
       <div class="av" style="background:${officerColor(o).bg};">${initials(o)}</div><span>${o}</span>${badge}
     </button>`;
   }).join('');
-  document.getElementById('userModal').style.display = 'flex';
+  openOverlay('userModal');
 };
 
 window.selectUser = function (name) {
@@ -114,30 +110,26 @@ window.selectUser = function (name) {
   av.textContent = initials(name);
   av.style.background = officerColor(name).bg;
   av.style.color = '#fff';
-  document.getElementById('userModal').style.display = 'none';
-  requestNotifPermission();
-  window.render();
+  closeOverlay('userModal', () => { requestNotifPermission(); window.render(); });
 };
 
 window.promptAdmin = async function () {
-  document.getElementById('userModal').style.display = 'none';
-  document.getElementById('pinModal').style.display = 'flex';
-
-  const bioBtn = document.getElementById('biometricBtn');
-  if (bioBtn) {
-    const registered = isBiometricRegistered();
-    const available = registered && await isBiometricAvailable();
-    bioBtn.style.display = available ? 'flex' : 'none';
-  }
-
-  setTimeout(() => document.getElementById('pinInput').focus(), 100);
+  closeOverlay('userModal', async () => {
+    const bioBtn = document.getElementById('biometricBtn');
+    if (bioBtn) {
+      const registered = isBiometricRegistered();
+      const available = registered && await isBiometricAvailable();
+      bioBtn.style.display = available ? 'flex' : 'none';
+    }
+    openOverlay('pinModal');
+    setTimeout(() => document.getElementById('pinInput').focus(), 260);
+  });
 };
 
 window.checkPin = function () {
   if (document.getElementById('pinInput').value === PIN) {
     document.getElementById('pinInput').value = '';
-    document.getElementById('pinModal').style.display = 'none';
-    _grantAdminAccess();
+    closeOverlay('pinModal', _grantAdminAccess);
   } else {
     toast('Incorrect PIN'); document.getElementById('pinInput').value = '';
   }
@@ -145,7 +137,7 @@ window.checkPin = function () {
 
 window.closePinModal = function () {
   document.getElementById('pinInput').value = '';
-  document.getElementById('pinModal').style.display = 'none';
+  closeOverlay('pinModal');
 };
 
 window.loginWithBiometric = async function () {
@@ -153,10 +145,7 @@ window.loginWithBiometric = async function () {
   if (bioBtn) { bioBtn.disabled = true; bioBtn.classList.add('bio-btn--loading'); }
   try {
     const ok = await authenticateBiometric();
-    if (ok) {
-      _grantAdminAccess();
-      document.getElementById('pinModal').style.display = 'none';
-    }
+    if (ok) closeOverlay('pinModal', _grantAdminAccess);
   } catch (e) {
     if (e.name !== 'NotAllowedError') toast('Biometric failed — use PIN instead');
   } finally {
@@ -178,11 +167,11 @@ window.handleSettings = function () {
   if (!S.isAdmin) { toast('Admin access required'); return; }
   S.settingsTab = 'officers';
   renderSettingsList();
-  document.getElementById('settingsModal').style.display = 'flex';
+  openOverlay('settingsModal');
 };
 
-window.closeSettings = function () { 
-  document.getElementById('settingsModal').style.display = 'none'; 
+window.closeSettings = function () {
+  closeOverlay('settingsModal');
 };
 
 window.setSettingsTab = function (tab) { 
