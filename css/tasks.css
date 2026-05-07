@@ -205,6 +205,10 @@
   padding:0 0 4px;border-bottom:1px solid rgba(107,95,191,0.14);
   color:var(--text3);font-size:var(--fs-xs);font-weight:800;
 }
+.task-critical-detail--purple .task-critical-table-head,
+.task-critical-detail--purple .task-critical-row{
+  grid-template-columns:48px minmax(0,1fr) 52px 30px;
+}
 .task-critical-head-btn{
   appearance:none;border:0;background:transparent;padding:0;
   color:inherit;font:inherit;font-weight:900;text-align:left;cursor:pointer;

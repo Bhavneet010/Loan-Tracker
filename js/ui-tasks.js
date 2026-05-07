@@ -112,7 +112,7 @@ function criticalRowsHtml(key, items) {
     <div class="task-critical-table-head">
       ${criticalHeadCell(key, 'branch', 'Branch', sort)}
       ${criticalHeadCell(key, 'borrower', 'Borrower', sort)}
-      ${criticalHeadCell(key, 'status', key === 'pending10' ? 'Days' : 'Status', sort)}
+      ${key === 'datesMissing' ? '' : criticalHeadCell(key, 'status', key === 'pending10' ? 'Days' : 'Status', sort)}
       ${criticalHeadCell(key, 'amount', 'Amt', sort)}
       ${criticalHeadCell(key, 'officer', 'Officer', sort)}
     </div>
@@ -170,20 +170,17 @@ function criticalSortValue(key, loan, field) {
 }
 
 function criticalLoanRowHtml(key, loan) {
+  const isMissing = key === 'datesMissing';
   const status = key === 'npa15'
     ? `${loan._rs?.daysUntilNpa ?? 0}d to NPA`
-    : key === 'pending10'
-      ? `${daysPending(loan.receiveDate)}d pending`
-      : 'Integration pending';
+    : `${daysPending(loan.receiveDate)}d pending`;
   const statusShort = key === 'npa15'
     ? `${loan._rs?.daysUntilNpa ?? 0}d`
-    : key === 'pending10'
-      ? `${daysPending(loan.receiveDate)}`
-      : 'Miss';
+    : `${daysPending(loan.receiveDate)}`;
   return `<div class="task-critical-row" onclick="editLoan('${loan.id}')">
     <span class="task-branch-chip">${esc(branchCode(loan.branch))}</span>
     <span class="task-critical-name">${esc(loan.customerName)}</span>
-    <span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>
+    ${isMissing ? '' : `<span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>`}
     <span class="task-critical-amt">&#8377;${fmtAmt(loan.amount)}L</span>
     <span class="task-officer-mini" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
   </div>`;
