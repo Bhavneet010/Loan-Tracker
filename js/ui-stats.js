@@ -5,27 +5,41 @@ import { getTaskCounts } from "./ui-tasks.js";
 
 let lastHeroMode = '';
 let lastHeroSelection = '';
-let heroSwapTimer = null;
+let heroEnterTimer = null;
 
 function setHeroStats(sc, mode, selection, html, configure) {
   const modeChanged = lastHeroMode && lastHeroMode !== mode;
   const selectionChanged = lastHeroMode === mode && lastHeroSelection && lastHeroSelection !== selection;
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const animateMode = modeChanged && !reduceMotion && mode !== 'tasks' && lastHeroMode !== 'tasks';
 
+  // No-op refresh (snapshot tick during/after a mode switch). If a cascade is
+  // in flight, skip the swap so it doesn't restart on fresh DOM nodes; the next
+  // refresh after the timer expires will catch any data delta.
+  if (!modeChanged && !selectionChanged) {
+    if (!sc.classList.contains('stats-mode-enter')) {
+      configure();
+      if (sc.innerHTML !== html) sc.innerHTML = html;
+    }
+    lastHeroMode = mode;
+    lastHeroSelection = selection;
+    return;
+  }
+
+  clearTimeout(heroEnterTimer);
+  sc.classList.remove('stats-mode-enter');
   configure();
-  sc.classList.remove('stats-soft-enter');
   sc.innerHTML = html;
-  clearTimeout(heroSwapTimer);
 
-  if (modeChanged && !reduceMotion) {
+  if (animateMode) {
     void sc.offsetWidth;
-    sc.classList.add('stats-soft-enter');
-    heroSwapTimer = setTimeout(() => sc.classList.remove('stats-soft-enter'), 220);
+    sc.classList.add('stats-mode-enter');
+    heroEnterTimer = setTimeout(() => sc.classList.remove('stats-mode-enter'), 420);
   } else if (selectionChanged && !reduceMotion) {
     const active = sc.querySelector('.stat-fresh-active,.stat-rnw-active');
     if (active) {
       active.classList.add('stat-selected-enter');
-      heroSwapTimer = setTimeout(() => active.classList.remove('stat-selected-enter'), 430);
+      heroEnterTimer = setTimeout(() => active.classList.remove('stat-selected-enter'), 430);
     }
   }
 
@@ -70,7 +84,7 @@ export function updateHero() {
   if (S.appMode === 'tasks') {
     sc.style.display = 'none';
     sc.classList.remove('rnw-grid');
-    sc.classList.remove('stats-soft-enter');
+    sc.classList.remove('stats-mode-enter');
     sc.innerHTML = '';
     lastHeroMode = 'tasks';
     lastHeroSelection = 'tasks';
