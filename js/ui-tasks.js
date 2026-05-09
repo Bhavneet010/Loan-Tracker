@@ -255,7 +255,7 @@ function renewalTargetsHtml(metrics) {
         <span class="targets-tile-name">${esc(officer)}</span>
       </div>
       <div class="targets-tile-donut">
-        ${donutSvg(pct, solid, 64, 11)}
+        ${donutSvg(pct, solid, 48, 8)}
         <span class="targets-tile-num">${done}</span>
       </div>
       <div class="targets-tile-target">of ${target}</div>
