@@ -9,6 +9,8 @@ const CATEGORY_META = {
   datesMissing:    { title: 'Integration Pending',  icon: '📋', urgency: 'purple', type: 'renewal' },
 };
 
+const targetsCelebratedMonths = new Set();
+
 const CRITICAL_META = {
   npa15:        { title: 'NPA in 15 days',     short: 'NPA IN 15D',   tone: 'red' },
   pending10:    { title: 'Pending>10d',        short: 'PENDING >10D', tone: 'amber' },
@@ -249,8 +251,27 @@ function renewalTargetsHtml(metrics) {
   const monthDate = metrics.thisMonth ? new Date(`${metrics.thisMonth}-01T00:00:00`) : new Date();
   const monthName = monthDate.toLocaleString('en-US', { month: 'long' });
 
-  const tiles = officers.map(({ officer, done, target, pct, solid }) => `
-    <div class="targets-tile">
+  const leader = [...officers]
+    .filter(o => o.done > 0 && o.target > 0)
+    .sort((a, b) => (b.pct - a.pct) || (b.done - a.done) || a.officer.localeCompare(b.officer))[0];
+
+  let celebrate = false;
+  if (leader && !targetsCelebratedMonths.has(metrics.thisMonth)) {
+    celebrate = true;
+    targetsCelebratedMonths.add(metrics.thisMonth);
+  }
+
+  const tiles = officers.map(({ officer, done, target, pct, solid }) => {
+    const isLeader = !!leader && officer === leader.officer;
+    const cls = `targets-tile${isLeader ? ' targets-tile--leader' : ''}${isLeader && celebrate ? ' targets-tile--celebrate' : ''}`;
+    const crown = isLeader ? '<span class="targets-tile-crown" aria-hidden="true">👑</span>' : '';
+    const sparkles = isLeader
+      ? '<span class="targets-tile-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>'
+      : '';
+    const click = isLeader ? ' onclick="replayTargetLeaderCelebration(this)" role="button" tabindex="0"' : '';
+    return `<div class="${cls}"${click}>
+      ${crown}
+      ${sparkles}
       <div class="targets-tile-head">
         <span class="targets-tile-name">${esc(officer)}</span>
       </div>
@@ -259,8 +280,8 @@ function renewalTargetsHtml(metrics) {
         <span class="targets-tile-num">${done}</span>
       </div>
       <div class="targets-tile-target">of ${target}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   return `<section class="task-targets task-targets--v1">
     <div class="task-section-head task-target-title-row">
@@ -387,6 +408,13 @@ function taskRenewalItemHtml(loan) {
     </div>
   </div>`;
 }
+
+window.replayTargetLeaderCelebration = function(tile) {
+  if (!tile) return;
+  tile.classList.remove('targets-tile--celebrate');
+  void tile.offsetWidth;
+  tile.classList.add('targets-tile--celebrate');
+};
 
 window.toggleCriticalCare = function(key) {
   if (!CRITICAL_META[key]) return;
