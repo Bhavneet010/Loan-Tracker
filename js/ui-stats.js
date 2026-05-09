@@ -3,42 +3,25 @@ import { getLoanMetrics, sumAmount } from "./derived.js";
 import { fmtAmt } from "./utils.js";
 import { getTaskCounts } from "./ui-tasks.js";
 
-let lastHeroKey = '';
+let lastHeroMode = '';
 let heroSwapTimer = null;
 
-function setHeroStats(sc, key, html, configure) {
-  const sameView = lastHeroKey === key;
+function setHeroStats(sc, mode, html, configure) {
+  const modeChanged = lastHeroMode && lastHeroMode !== mode;
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  sc.querySelectorAll('.stats-layer').forEach(layer => layer.remove());
-  const oldHtml = sc.innerHTML;
-  const oldWasRenewalGrid = sc.classList.contains('rnw-grid');
 
   configure();
+  sc.classList.remove('stats-soft-enter');
+  sc.innerHTML = html;
+  clearTimeout(heroSwapTimer);
 
-  if (!lastHeroKey || sameView || reduceMotion) {
-    sc.classList.remove('stats-transitioning');
-    sc.innerHTML = html;
-    lastHeroKey = key;
-    return;
+  if (modeChanged && !reduceMotion) {
+    void sc.offsetWidth;
+    sc.classList.add('stats-soft-enter');
+    heroSwapTimer = setTimeout(() => sc.classList.remove('stats-soft-enter'), 220);
   }
 
-  const oldLayer = document.createElement('div');
-  oldLayer.className = `stats-layer${oldWasRenewalGrid ? ' rnw-grid' : ''}`;
-  oldLayer.innerHTML = oldHtml;
-
-  sc.innerHTML = html;
-  sc.appendChild(oldLayer);
-  sc.classList.remove('stats-transitioning');
-  void sc.offsetWidth;
-  sc.classList.add('stats-transitioning');
-
-  clearTimeout(heroSwapTimer);
-  heroSwapTimer = setTimeout(() => {
-    oldLayer.remove();
-    sc.classList.remove('stats-transitioning');
-  }, 420);
-
-  lastHeroKey = key;
+  lastHeroMode = mode;
 }
 
 /* BADGES */
@@ -78,9 +61,9 @@ export function updateHero() {
   if (S.appMode === 'tasks') {
     sc.style.display = 'none';
     sc.classList.remove('rnw-grid');
-    sc.classList.remove('stats-transitioning');
+    sc.classList.remove('stats-soft-enter');
     sc.innerHTML = '';
-    lastHeroKey = 'tasks';
+    lastHeroMode = 'tasks';
     const bTasks = document.getElementById('b-tasks');
     if (bTasks) bTasks.textContent = getTaskCounts(metrics) || '';
     return;
@@ -106,7 +89,7 @@ export function updateHero() {
       rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber') +
       rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red') +
       rnwStat('all', 'All CC Accounts', metrics.renewals, '');
-    setHeroStats(sc, `renewals:${S.renewalTab}`, html, () => {
+    setHeroStats(sc, 'renewals', html, () => {
       sc.classList.add('rnw-grid');
     });
     return;
@@ -129,7 +112,7 @@ export function updateHero() {
     freshStat('pending', 'Pending', metrics.pending, `${metrics.pending.length} loans`, metrics.pending.length ? '&nearr; Active' : '') +
     freshStat('sanctioned', 'This Month', metrics.sanctionedThisMonth, `${metrics.sanctionedThisMonth.length} sanctioned`, 'Month total') +
     freshStat('returned', 'Returned', metrics.returned, `${metrics.returned.length} items`);
-  setHeroStats(sc, `fresh:${S.tab}`, html, () => {
+  setHeroStats(sc, 'fresh', html, () => {
     sc.classList.remove('rnw-grid');
   });
 }

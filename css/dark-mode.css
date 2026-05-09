@@ -219,42 +219,42 @@ body.dark .decision-status-pill--returned{
 
 body.dark .loan-item.cat-agri > .loan-row,
 body.dark .loan-item.rnw-s-active > .loan-row{
-  background:linear-gradient(90deg,rgba(16,185,129,0.10),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(16,185,129,0.14),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.cat-sme > .loan-row{
-  background:linear-gradient(90deg,rgba(155,143,228,0.12),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(155,143,228,0.16),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.cat-edu > .loan-row,
 body.dark .loan-item.rnw-s-due-soon > .loan-row,
 body.dark .loan-item.rnw-s-dates-missing > .loan-row{
-  background:linear-gradient(90deg,rgba(245,158,11,0.10),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(245,158,11,0.14),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.rnw-s-pending > .loan-row,
 body.dark .loan-item.rnw-s-npa > .loan-row{
-  background:linear-gradient(90deg,rgba(239,68,68,0.10),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(239,68,68,0.14),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue.cat-agri > .loan-row{
-  background:linear-gradient(90deg,rgba(16,185,129,0.10),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(16,185,129,0.14),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue.cat-sme > .loan-row{
-  background:linear-gradient(90deg,rgba(155,143,228,0.12),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(155,143,228,0.16),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue.cat-edu > .loan-row{
-  background:linear-gradient(90deg,rgba(245,158,11,0.10),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(245,158,11,0.14),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue:not(.cat-agri):not(.cat-sme):not(.cat-edu) > .loan-row{
-  background:linear-gradient(90deg,rgba(239,68,68,0.10),rgba(23,21,47,0.88) 38%);
+  background:linear-gradient(90deg,rgba(239,68,68,0.14),rgba(23,21,47,0.88) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.rnw-s-done > .loan-row{
-  background:linear-gradient(90deg,rgba(16,185,129,0.12),rgba(23,21,47,0.90) 38%);
+  background:linear-gradient(90deg,rgba(16,185,129,0.16),rgba(23,21,47,0.90) 48%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .rnw-expanded-card,

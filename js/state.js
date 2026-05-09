@@ -49,9 +49,24 @@ export const S = {
 export function setNotifReady(val) { notifReady = val; }
 export function setPIN(val) { PIN = val; }
 
+function timeoutAfter(ms) {
+  return new Promise(resolve => setTimeout(() => resolve(null), ms));
+}
+
 export async function loadSettings() {
   try {
-    const snap = await getDoc(doc(db, 'settings', 'config'));
+    const configRef = doc(db, 'settings', 'config');
+    const snap = await Promise.race([
+      getDoc(configRef).catch(e => {
+        console.error(e);
+        return null;
+      }),
+      timeoutAfter(1500)
+    ]);
+    if (!snap) {
+      console.warn('[Settings] Using defaults while Firestore settings are unavailable.');
+      return;
+    }
     if (snap.exists()) {
       const d = snap.data();
       if (d.officers?.length) S.officers = d.officers;
@@ -60,13 +75,13 @@ export async function loadSettings() {
       if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
       if (d.adminPin) PIN = d.adminPin;
     } else {
-      await setDoc(doc(db, 'settings', 'config'), { 
+      setDoc(configRef, {
         officers: S.officers, 
         branches: S.branches, 
         branchOfficers: S.branchOfficers, 
         renewalTargets: S.renewalTargets,
         adminPin: PIN 
-      });
+      }).catch(e => console.error('Error creating default settings:', e));
     }
   } catch (e) { console.error(e); }
 }

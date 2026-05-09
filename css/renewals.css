@@ -29,12 +29,12 @@
 .loan-item.rnw-s-done     > .loan-row::before {background:linear-gradient(180deg,#10B981,#34D399);}
 .loan-item.rnw-s-dates-missing > .loan-row::before {background:linear-gradient(180deg,#F59E0B,#FBBF24);}
 
-.loan-item.rnw-s-active   > .loan-row {background:linear-gradient(90deg,rgba(16,185,129,0.055),rgba(255,255,255,0.68) 34%);}
-.loan-item.rnw-s-due-soon > .loan-row {background:linear-gradient(90deg,rgba(245,158,11,0.065),rgba(255,255,255,0.68) 34%);}
-.loan-item.rnw-s-pending  > .loan-row {background:linear-gradient(90deg,rgba(239,68,68,0.060),rgba(255,255,255,0.68) 34%);}
-.loan-item.rnw-s-npa      > .loan-row {background:linear-gradient(90deg,rgba(127,29,29,0.070),rgba(255,255,255,0.68) 34%);}
-.loan-item.rnw-s-done     > .loan-row {background:linear-gradient(90deg,rgba(16,185,129,0.075),rgba(255,255,255,0.70) 34%);border:1px solid rgba(255,255,255,0.85);}
-.loan-item.rnw-s-dates-missing > .loan-row {background:linear-gradient(90deg,rgba(245,158,11,0.085),rgba(255,255,255,0.70) 34%);border:1px solid rgba(255,255,255,0.85);}
+.loan-item.rnw-s-active   > .loan-row {background:linear-gradient(90deg,rgba(16,185,129,0.09),rgba(255,255,255,0.68) 48%);}
+.loan-item.rnw-s-due-soon > .loan-row {background:linear-gradient(90deg,rgba(245,158,11,0.10),rgba(255,255,255,0.68) 48%);}
+.loan-item.rnw-s-pending  > .loan-row {background:linear-gradient(90deg,rgba(239,68,68,0.095),rgba(255,255,255,0.68) 48%);}
+.loan-item.rnw-s-npa      > .loan-row {background:linear-gradient(90deg,rgba(127,29,29,0.105),rgba(255,255,255,0.68) 48%);}
+.loan-item.rnw-s-done     > .loan-row {background:linear-gradient(90deg,rgba(16,185,129,0.11),rgba(255,255,255,0.70) 48%);border:1px solid rgba(255,255,255,0.85);}
+.loan-item.rnw-s-dates-missing > .loan-row {background:linear-gradient(90deg,rgba(245,158,11,0.12),rgba(255,255,255,0.70) 48%);border:1px solid rgba(255,255,255,0.85);}
 
 body.dark .loan-item.rnw-s-active   > .loan-row {background:rgba(16,185,129,0.13);}
 body.dark .loan-item.rnw-s-due-soon > .loan-row {background:rgba(245,158,11,0.13);}
@@ -59,6 +59,7 @@ body.dark .loan-item.rnw-s-dates-missing > .loan-row {background:rgba(245,158,11
   background:#fff;
   border:1px solid rgba(255,255,255,0.86);
   box-shadow:0 2px 6px rgba(123,111,212,0.10);
+  transition:transform var(--dur-fast) ease,box-shadow var(--dur-fast) ease,border-color var(--dur-fast) ease,background var(--dur-base) ease;
 }
 .rnw-stat-card::before{
   content:'';
