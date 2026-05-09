@@ -219,43 +219,43 @@ body.dark .decision-status-pill--returned{
 
 body.dark .loan-item.cat-agri > .loan-row,
 body.dark .loan-item.rnw-s-active > .loan-row{
-  background:rgba(16,185,129,0.16);
-  border-color:rgba(110,231,183,0.26);
+  background:linear-gradient(90deg,rgba(16,185,129,0.10),rgba(23,21,47,0.88) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.cat-sme > .loan-row{
-  background:rgba(155,143,228,0.18);
-  border-color:rgba(155,143,228,0.28);
+  background:linear-gradient(90deg,rgba(155,143,228,0.12),rgba(23,21,47,0.88) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.cat-edu > .loan-row,
 body.dark .loan-item.rnw-s-due-soon > .loan-row,
 body.dark .loan-item.rnw-s-dates-missing > .loan-row{
-  background:rgba(245,158,11,0.16);
-  border-color:rgba(251,191,36,0.28);
+  background:linear-gradient(90deg,rgba(245,158,11,0.10),rgba(23,21,47,0.88) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.rnw-s-pending > .loan-row,
 body.dark .loan-item.rnw-s-npa > .loan-row{
-  background:rgba(239,68,68,0.17);
-  border-color:rgba(252,165,165,0.28);
+  background:linear-gradient(90deg,rgba(239,68,68,0.10),rgba(23,21,47,0.88) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue.cat-agri > .loan-row{
-  background:rgba(16,185,129,0.16);
-  border-color:rgba(110,231,183,0.26);
+  background:linear-gradient(90deg,rgba(16,185,129,0.10),rgba(23,21,47,0.88) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue.cat-sme > .loan-row{
-  background:rgba(155,143,228,0.18);
-  border-color:rgba(155,143,228,0.28);
+  background:linear-gradient(90deg,rgba(155,143,228,0.12),rgba(23,21,47,0.88) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue.cat-edu > .loan-row{
-  background:rgba(245,158,11,0.16);
-  border-color:rgba(251,191,36,0.28);
+  background:linear-gradient(90deg,rgba(245,158,11,0.10),rgba(23,21,47,0.88) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.overdue:not(.cat-agri):not(.cat-sme):not(.cat-edu) > .loan-row{
-  background:rgba(155,143,228,0.12);
+  background:linear-gradient(90deg,rgba(239,68,68,0.10),rgba(23,21,47,0.88) 38%);
   border-color:rgba(155,143,228,0.24);
 }
 body.dark .loan-item.rnw-s-done > .loan-row{
-  background:rgba(16,185,129,0.22);
-  border-color:rgba(110,231,183,0.36);
+  background:linear-gradient(90deg,rgba(16,185,129,0.12),rgba(23,21,47,0.90) 38%);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .rnw-expanded-card,
 body.dark .rnw-officer-card{
@@ -275,45 +275,64 @@ body.dark .rnw-stat-count{
 }
 body.dark .stat-grad-pending,
 body.dark .rnw-stat-card:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred){
-  background:linear-gradient(135deg,rgba(155,143,228,0.36) 0%,rgba(90,78,175,0.15) 100%);
-  border-color:rgba(155,143,228,0.42);
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .stat-grad-sanctioned,
 body.dark .rnw-grad-green{
-  background:linear-gradient(135deg,rgba(16,185,129,0.30) 0%,rgba(5,150,105,0.11) 100%);
-  border-color:rgba(110,231,183,0.38);
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .stat-grad-returned,
 body.dark .rnw-grad-amber{
-  background:linear-gradient(135deg,rgba(245,158,11,0.30) 0%,rgba(217,119,6,0.11) 100%);
-  border-color:rgba(251,191,36,0.38);
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .rnw-grad-red{
-  background:linear-gradient(135deg,rgba(239,68,68,0.30) 0%,rgba(185,28,28,0.12) 100%);
-  border-color:rgba(252,165,165,0.38);
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .rnw-grad-darkred{
-  background:linear-gradient(135deg,rgba(127,29,29,0.38) 0%,rgba(239,68,68,0.13) 100%);
-  border-color:rgba(252,165,165,0.36);
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
 }
 body.dark .stat-grad-pending.stat-fresh-active,
 body.dark .rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred){
-  background:linear-gradient(135deg,rgba(155,143,228,0.50) 0%,rgba(90,78,175,0.23) 100%);
-  border-color:rgba(207,199,255,0.58);
+  background:rgba(31,28,58,0.92);
+  border-color:var(--p3);
 }
 body.dark .stat-grad-sanctioned.stat-fresh-active,
 body.dark .rnw-grad-green.stat-rnw-active{
-  background:linear-gradient(135deg,rgba(16,185,129,0.42) 0%,rgba(5,150,105,0.18) 100%);
-  border-color:rgba(110,231,183,0.52);
+  background:rgba(31,28,58,0.92);
+  border-color:var(--green);
 }
 body.dark .stat-grad-returned.stat-fresh-active,
 body.dark .rnw-grad-amber.stat-rnw-active{
-  background:linear-gradient(135deg,rgba(245,158,11,0.42) 0%,rgba(217,119,6,0.18) 100%);
-  border-color:rgba(251,191,36,0.52);
+  background:rgba(31,28,58,0.92);
+  border-color:var(--amber);
 }
 body.dark .rnw-grad-red.stat-rnw-active{
-  background:linear-gradient(135deg,rgba(239,68,68,0.42) 0%,rgba(185,28,28,0.19) 100%);
-  border-color:rgba(252,165,165,0.52);
+  background:rgba(31,28,58,0.92);
+  border-color:var(--red);
+}
+body.dark .stat-grad-pending.stat-fresh-active .stat-v,
+body.dark .rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred) .stat-v,
+body.dark .rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred) .rnw-stat-count{
+  color:var(--p3);
+}
+body.dark .stat-grad-sanctioned.stat-fresh-active .stat-v,
+body.dark .rnw-grad-green.stat-rnw-active .stat-v,
+body.dark .rnw-grad-green.stat-rnw-active .rnw-stat-count{
+  color:var(--green);
+}
+body.dark .stat-grad-returned.stat-fresh-active .stat-v,
+body.dark .rnw-grad-amber.stat-rnw-active .stat-v,
+body.dark .rnw-grad-amber.stat-rnw-active .rnw-stat-count{
+  color:var(--amber);
+}
+body.dark .rnw-grad-red.stat-rnw-active .stat-v,
+body.dark .rnw-grad-red.stat-rnw-active .rnw-stat-count{
+  color:var(--red);
 }
 
 body.dark .task-ov-card,

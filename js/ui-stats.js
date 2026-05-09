@@ -3,6 +3,44 @@ import { getLoanMetrics, sumAmount } from "./derived.js";
 import { fmtAmt } from "./utils.js";
 import { getTaskCounts } from "./ui-tasks.js";
 
+let lastHeroKey = '';
+let heroSwapTimer = null;
+
+function setHeroStats(sc, key, html, configure) {
+  const sameView = lastHeroKey === key;
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  sc.querySelectorAll('.stats-layer').forEach(layer => layer.remove());
+  const oldHtml = sc.innerHTML;
+  const oldWasRenewalGrid = sc.classList.contains('rnw-grid');
+
+  configure();
+
+  if (!lastHeroKey || sameView || reduceMotion) {
+    sc.classList.remove('stats-transitioning');
+    sc.innerHTML = html;
+    lastHeroKey = key;
+    return;
+  }
+
+  const oldLayer = document.createElement('div');
+  oldLayer.className = `stats-layer${oldWasRenewalGrid ? ' rnw-grid' : ''}`;
+  oldLayer.innerHTML = oldHtml;
+
+  sc.innerHTML = html;
+  sc.appendChild(oldLayer);
+  sc.classList.remove('stats-transitioning');
+  void sc.offsetWidth;
+  sc.classList.add('stats-transitioning');
+
+  clearTimeout(heroSwapTimer);
+  heroSwapTimer = setTimeout(() => {
+    oldLayer.remove();
+    sc.classList.remove('stats-transitioning');
+  }, 420);
+
+  lastHeroKey = key;
+}
+
 /* BADGES */
 export function updateBadges() {
   const metrics = getLoanMetrics();
@@ -40,7 +78,9 @@ export function updateHero() {
   if (S.appMode === 'tasks') {
     sc.style.display = 'none';
     sc.classList.remove('rnw-grid');
+    sc.classList.remove('stats-transitioning');
     sc.innerHTML = '';
+    lastHeroKey = 'tasks';
     const bTasks = document.getElementById('b-tasks');
     if (bTasks) bTasks.textContent = getTaskCounts(metrics) || '';
     return;
@@ -61,17 +101,18 @@ export function updateHero() {
       </div>`;
     };
 
-    sc.classList.add('rnw-grid');
-    sc.innerHTML =
+    const html =
       rnwStat('done', `Renewals Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green') +
       rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber') +
       rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red') +
       rnwStat('all', 'All CC Accounts', metrics.renewals, '');
+    setHeroStats(sc, `renewals:${S.renewalTab}`, html, () => {
+      sc.classList.add('rnw-grid');
+    });
     return;
   }
 
   sc.style.display = '';
-  sc.classList.remove('rnw-grid');
   const gradMap = { pending: 'stat-grad-pending', sanctioned: 'stat-grad-sanctioned', returned: 'stat-grad-returned' };
   const freshStat = (tab, label, arr, subtitle, badge = '') => {
     const active = S.tab === tab;
@@ -84,8 +125,11 @@ export function updateHero() {
     </button>`;
   };
 
-  sc.innerHTML =
+  const html =
     freshStat('pending', 'Pending', metrics.pending, `${metrics.pending.length} loans`, metrics.pending.length ? '&nearr; Active' : '') +
     freshStat('sanctioned', 'This Month', metrics.sanctionedThisMonth, `${metrics.sanctionedThisMonth.length} sanctioned`, 'Month total') +
     freshStat('returned', 'Returned', metrics.returned, `${metrics.returned.length} items`);
+  setHeroStats(sc, `fresh:${S.tab}`, html, () => {
+    sc.classList.remove('rnw-grid');
+  });
 }
