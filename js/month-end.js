@@ -13,7 +13,7 @@ import { esc, fmtAmt, fmtDate, isFreshCC, toast } from "./utils.js";
 import {
   ensureHtml2Canvas,
   ensureJsPdf,
-} from "./performance-templates.js";
+} from "./performance-snapshot.js";
 import {
   PDF_PAGE_HEIGHT,
   PDF_PAGE_WIDTH,

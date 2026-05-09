@@ -17,17 +17,17 @@ export function renderPending(c) {
   loans = applySort(loans);
   const total = sumAmount(loans);
   const cards = loans.length === 0
-    ? emptyState('📭', 'No pending loans', 'Tap + to add a new loan')
+    ? emptyState('&#128237;', 'No pending loans', 'Tap + to add a new loan')
     : loans.map(l => {
       const days = daysPending(l.receiveDate);
       const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
-        <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
-        ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
+        <button class="btn btn-more" onclick="editLoan('${l.id}')">&#9998;</button>
+        ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">&#128465;</button>` : ''}`;
       return compactLoanItem(l, actions, days > 7 ? 'overdue' : '', '', loans.indexOf(l));
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right"><div class="sec-count">${loans.length} &middot; &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }
 
 export function renderSanctioned(c) {
@@ -35,16 +35,16 @@ export function renderSanctioned(c) {
   loans = applySort(loans);
   const total = sumAmount(loans);
   const cards = loans.length === 0
-    ? emptyState('🎉', 'No sanctioned loans yet', 'Sanction pending loans to see them here')
+    ? emptyState('&#127881;', 'No sanctioned loans yet', 'Sanction pending loans to see them here')
     : loans.map(l => {
       const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
-        <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
-        ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
+        <button class="btn btn-more" onclick="editLoan('${l.id}')">&#9998;</button>
+        ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">&#128465;</button>` : ''}`;
       return compactLoanItem(l, actions, '', 'sanctioned', loans.indexOf(l));
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} &middot; &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }
 
 export function renderReturned(c) {
@@ -52,14 +52,14 @@ export function renderReturned(c) {
   loans = applySort(loans);
   const total = sumAmount(loans);
   const cards = loans.length === 0
-    ? emptyState('📋', 'No returned loans', 'Returned loans will appear here')
+    ? emptyState('&#128203;', 'No returned loans', 'Returned loans will appear here')
     : loans.map(l => {
       const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
-        <button class="btn btn-more" onclick="editLoan('${l.id}')">✎</button>
-        ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">🗑</button>` : ''}`;
+        <button class="btn btn-more" onclick="editLoan('${l.id}')">&#9998;</button>
+        ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">&#128465;</button>` : ''}`;
       return compactLoanItem(l, actions, '', 'returned', loans.indexOf(l));
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} &middot; &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }

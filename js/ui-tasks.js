@@ -3,10 +3,10 @@ import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, daysPending } from "./utils.js";
 
 const CATEGORY_META = {
-  overdueLoans:    { title: 'Overdue Pending',    icon: '⏳', urgency: 'amber', type: 'loan' },
-  dueSoon:         { title: 'Renewals Due Soon',   icon: '⏰', urgency: 'amber', type: 'renewal' },
-  overdueRenewals: { title: 'Overdue Renewals',    icon: '⚠',  urgency: 'red',   type: 'renewal' },
-  datesMissing:    { title: 'Integration Pending',  icon: '📋', urgency: 'purple', type: 'renewal' },
+  overdueLoans:    { title: 'Overdue Pending',    icon: '&#8987;', urgency: 'amber', type: 'loan' },
+  dueSoon:         { title: 'Renewals Due Soon',   icon: '&#9200;', urgency: 'amber', type: 'renewal' },
+  overdueRenewals: { title: 'Overdue Renewals',    icon: '&#9888;',  urgency: 'red',   type: 'renewal' },
+  datesMissing:    { title: 'Integration Pending',  icon: '&#128203;', urgency: 'purple', type: 'renewal' },
 };
 
 const targetsCelebratedMonths = new Set();
@@ -200,7 +200,7 @@ function performerBoardHtml(metrics) {
   const renewalBest = bestOfficer(metrics.renewalDoneThisMonth);
   return `<section class="task-performer-block" aria-label="Best performers">
     <div class="task-performer-head">
-      <div><span class="task-performer-spark">✨</span><b>Best Performer</b></div>
+      <div><span class="task-performer-spark">&#10024;</span><b>Best Performer</b></div>
       <span>This month</span>
     </div>
     <div class="task-performer-grid">
@@ -227,7 +227,7 @@ function performerCardHtml(label, row, type) {
   const empty = row.count === 0;
   const name = empty ? 'No entries yet' : row.officer;
   return `<div class="task-performer task-performer--${type}">
-    <span class="task-performer-av">${empty ? '–' : initials(row.officer)}</span>
+    <span class="task-performer-av">${empty ? '&ndash;' : initials(row.officer)}</span>
     <div class="task-performer-copy">
       <div class="task-performer-title">${label}</div>
       <div class="task-performer-name">${esc(name)}</div>
@@ -264,7 +264,7 @@ function renewalTargetsHtml(metrics) {
   const tiles = officers.map(({ officer, done, target, pct, solid }) => {
     const isLeader = !!leader && officer === leader.officer;
     const cls = `targets-tile${isLeader ? ' targets-tile--leader' : ''}${isLeader && celebrate ? ' targets-tile--celebrate' : ''}`;
-    const crown = isLeader ? '<span class="targets-tile-crown" aria-hidden="true">👑</span>' : '';
+    const crown = isLeader ? '<span class="targets-tile-crown" aria-hidden="true">&#128081;</span>' : '';
     const sparkles = isLeader
       ? '<span class="targets-tile-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>'
       : '';
@@ -285,7 +285,7 @@ function renewalTargetsHtml(metrics) {
 
   return `<section class="task-targets task-targets--v1">
     <div class="task-section-head task-target-title-row">
-      <div class="task-target-month">Renewal Target · ${monthName}</div>
+      <div class="task-target-month">Renewal Target &middot; ${monthName}</div>
     </div>
     <div class="targets-tile-grid">${tiles}</div>
   </section>`;
@@ -333,10 +333,10 @@ function renderTaskOfficers(c, metrics) {
 
   c.innerHTML = `
     <div class="task-drill-head">
-      <button class="task-back-btn" onclick="taskBack()">← Back</button>
+      <button class="task-back-btn" onclick="taskBack()">&larr; Back</button>
       <span class="task-drill-title">${meta.icon} ${meta.title}</span>
     </div>
-    <div class="task-drill-summary">₹${fmtAmt(totalAmt)}L · ${allItems.length} item${allItems.length !== 1 ? 's' : ''} total</div>
+    <div class="task-drill-summary">&#8377;${fmtAmt(totalAmt)}L &middot; ${allItems.length} item${allItems.length !== 1 ? 's' : ''} total</div>
     <div class="task-officer-grid">
       <div class="task-officer-chip task-officer-chip--all" onclick="setTaskOfficer('All')">
         <span class="task-oc-all-av">All</span>
@@ -361,10 +361,10 @@ function renderTaskDetail(c, metrics) {
 
   c.innerHTML = `
     <div class="task-drill-head">
-      <button class="task-back-btn" onclick="taskBack()">← Back</button>
+      <button class="task-back-btn" onclick="taskBack()">&larr; Back</button>
       <span class="task-drill-title">${meta.icon} ${meta.title}</span>
     </div>
-    <div class="task-drill-summary">${esc(officerLabel)} · ${items.length} item${items.length !== 1 ? 's' : ''}</div>
+    <div class="task-drill-summary">${esc(officerLabel)} &middot; ${items.length} item${items.length !== 1 ? 's' : ''}</div>
     <div class="task-detail-list">${rows}</div>`;
 }
 
@@ -376,11 +376,11 @@ function taskLoanItemHtml(loan) {
       <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
       <span class="task-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="task-name">${esc(loan.customerName)}</span>
-      <span class="task-meta">₹${fmtAmt(loan.amount)}L · ${days}d</span>
+      <span class="task-meta">&#8377;${fmtAmt(loan.amount)}L &middot; ${days}d</span>
     </div>
     <div class="task-actions">
-      <button class="btn btn-sanction btn-sm" onclick="sanctionLoan('${loan.id}')">✓ Sanction</button>
-      <button class="btn btn-return btn-sm" onclick="returnLoan('${loan.id}')">↩</button>
+      <button class="btn btn-sanction btn-sm" onclick="sanctionLoan('${loan.id}')">&#10003; Sanction</button>
+      <button class="btn btn-return btn-sm" onclick="returnLoan('${loan.id}')">&#8617;</button>
     </div>
   </div>`;
 }
@@ -403,8 +403,8 @@ function taskRenewalItemHtml(loan) {
       <span class="tag ${statusCls} task-status-tag">${statusLabel}</span>
     </div>
     <div class="task-actions">
-      <button class="btn btn-rnw-done btn-sm" onclick="markRenewalDone('${loan.id}')">♻ Done</button>
-      <button class="btn btn-edit-icon btn-sm" onclick="editLoan('${loan.id}')">✎</button>
+      <button class="btn btn-rnw-done btn-sm" onclick="markRenewalDone('${loan.id}')">&#9850; Done</button>
+      <button class="btn btn-edit-icon btn-sm" onclick="editLoan('${loan.id}')">&#9998;</button>
     </div>
   </div>`;
 }

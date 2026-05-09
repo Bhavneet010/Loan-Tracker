@@ -7,6 +7,7 @@ import { initPushNotifications } from "./push-notifications.js";
 
 // Import modules to register window actions and side effects
 import "./ui-core.js";
+import "./ui-decision-sheet.js";
 import "./importers.js";
 import "./loan-actions.js";
 import "./ui-settings.js";

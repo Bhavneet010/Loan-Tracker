@@ -2,11 +2,11 @@ import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, bran
 import { S } from "./state.js";
 
 export function loanCard(loan, actions, variant = '') {
-  const remarks = loan.remarks ? `<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>` : '';
-  const sanctTag = loan.sanctionDate ? `<span class="tag tag-sanctioned">✓ ${fmtDate(loan.sanctionDate)}</span>` : '';
-  const retTag = loan.returnedDate ? `<span class="tag tag-returned">↩ ${fmtDate(loan.returnedDate)}</span>` : '';
+  const remarks = loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : '';
+  const sanctTag = loan.sanctionDate ? `<span class="tag tag-sanctioned">&#10003; ${fmtDate(loan.sanctionDate)}</span>` : '';
+  const retTag = loan.returnedDate ? `<span class="tag tag-returned">&#8617; ${fmtDate(loan.returnedDate)}</span>` : '';
   const days = loan.status === 'pending' ? daysPending(loan.receiveDate) : 0;
-  const overdueTag = days > 7 ? `<span class="tag overdue">⚠ ${days}d</span>` : '';
+  const overdueTag = days > 7 ? `<span class="tag overdue">&#9888; ${days}d</span>` : '';
   const cls = `${variant} ${days > 7 && loan.status === 'pending' ? 'overdue' : ''}`.trim();
   
   return `
@@ -16,7 +16,7 @@ export function loanCard(loan, actions, variant = '') {
           <div class="lc-name">${esc(loan.customerName)}</div>
           <div class="lc-branch">${esc(loan.branch || '')}</div>
         </div>
-        <div class="lc-amount">₹${fmtAmt(loan.amount)}<span class="u"> L</span></div>
+        <div class="lc-amount">&#8377;${fmtAmt(loan.amount)}<span class="u"> L</span></div>
       </div>
       <div class="lc-tags">
         <span class="tag ${catCls(loan.category)}">${esc(loan.category)}</span>
@@ -30,11 +30,11 @@ export function loanCard(loan, actions, variant = '') {
 }
 
 export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', idx = 0) {
-  const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">⚠ ${daysPending(loan.receiveDate)}d</span>` : '';
+  const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">&#9888; ${daysPending(loan.receiveDate)}d</span>` : '';
   const statusChip = cardVariant === 'sanctioned'
-    ? `<span class="lr-status-chip lr-status-chip--sanctioned">✓</span>`
+    ? `<span class="lr-status-chip lr-status-chip--sanctioned">&#10003;</span>`
     : cardVariant === 'returned'
-    ? `<span class="lr-status-chip lr-status-chip--returned">↩</span>`
+    ? `<span class="lr-status-chip lr-status-chip--returned">&#8617;</span>`
     : '';
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
 
@@ -48,12 +48,12 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
       <div class="lr-meta">
         ${overdueTag}
         ${statusChip}
-        <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
-        <span class="lr-chev">›</span>
+        <span class="lr-amount">&#8377;${fmtAmt(loan.amount)}L</span>
+        <span class="lr-chev">&rsaquo;</span>
       </div>
     </div>
     <div class="loan-detail">
-      <div class="loan-collapse" onclick="toggleExpand('${loan.id}')">▲ collapse</div>
+      <div class="loan-collapse" onclick="toggleExpand('${loan.id}')">&#9650; collapse</div>
       ${loanCard(loan, actions, cardVariant)}
       ${auditTrailHtml(loan.id)}
     </div>
@@ -99,8 +99,8 @@ export function renewalItemHtml(loan, rs, idx = 0) {
       <div class="lr-meta">
         ${loan.renewedDate ? '' : `<span class="tag ${sm.cls}">${sm.label}</span>`}
         ${oldDueChip}
-        <span class="lr-amount">₹${fmtAmt(loan.amount)}L</span>
-        <span class="lr-chev">›</span>
+        <span class="lr-amount">&#8377;${fmtAmt(loan.amount)}L</span>
+        <span class="lr-chev">&rsaquo;</span>
       </div>
     </div>
     <div class="loan-detail">
@@ -108,9 +108,9 @@ export function renewalItemHtml(loan, rs, idx = 0) {
         <div class="lc-top">
           <div class="lc-left">
             <div class="lc-name">${esc(loan.customerName)}</div>
-            <div class="lc-branch">${esc(loan.branch || '')} ${loan.acNumber ? ` • A/C: ${esc(loan.acNumber)}` : ''}</div>
+            <div class="lc-branch">${esc(loan.branch || '')} ${loan.acNumber ? ` &bull; A/C: ${esc(loan.acNumber)}` : ''}</div>
           </div>
-          <div class="lc-amount">₹${fmtAmt(loan.amount)}<span class="u"> L</span></div>
+          <div class="lc-amount">&#8377;${fmtAmt(loan.amount)}<span class="u"> L</span></div>
         </div>
         <div class="rnw-tags-group">
           <div class="tag-row">
@@ -126,18 +126,18 @@ export function renewalItemHtml(loan, rs, idx = 0) {
           </div>
         </div>
         ${datesMissing ? `<div class="rnw-date-warning">New limit expiry date and next renewal due date are pending. Old due warning is retained until the next due date is entered.</div>` : ''}
-        ${loan.remarks ? `<div class="lc-remarks">📝 ${esc(loan.remarks)}</div>` : ''}
+        ${loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : ''}
         <div class="rnw-action-group">
           <button class="btn btn-rnw-done" onclick="openRenewalDecisionSheet('${loan.id}')">
             Renewal Status
           </button>
           <div class="rnw-sub-actions">
-            <button class="btn btn-edit-icon" onclick="editLoan('${loan.id}')" title="Edit">✎</button>
-            ${S.isAdmin ? `<button class="btn btn-del-icon" onclick="${S.renewalTab === 'done' ? `undoRenewalDone('${loan.id}')` : `deleteLoan('${loan.id}')`}" title="${S.renewalTab === 'done' ? 'Undo Renewal Done' : 'Delete'}">🗑</button>` : ''}
+            <button class="btn btn-edit-icon" onclick="editLoan('${loan.id}')" title="Edit">&#9998;</button>
+            ${S.isAdmin ? `<button class="btn btn-del-icon" onclick="${S.renewalTab === 'done' ? `undoRenewalDone('${loan.id}')` : `deleteLoan('${loan.id}')`}" title="${S.renewalTab === 'done' ? 'Undo Renewal Done' : 'Delete'}">&#128465;</button>` : ''}
           </div>
         </div>
         ${auditTrailHtml(loan.id)}
-        <div class="loan-collapse" onclick="toggleExpand('${itemId}')">▲ hide details</div>
+        <div class="loan-collapse" onclick="toggleExpand('${itemId}')">&#9650; hide details</div>
       </div>
     </div>
   </div>`;
@@ -146,11 +146,11 @@ export function renewalItemHtml(loan, rs, idx = 0) {
 function auditTrailHtml(loanId) {
   const entries = S.notifications.filter(n => n.loanId === loanId).slice(0, 10);
   if (!entries.length) return '';
-  const icons = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎' };
+  const icons = { added: '&#10133;', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;' };
   const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated' };
   const rows = entries.map(n => `
     <div class="audit-row">
-      <span class="audit-icon audit-${esc(n.type)}">${icons[n.type] || '•'}</span>
+      <span class="audit-icon audit-${esc(n.type)}">${icons[n.type] || '&bull;'}</span>
       <span class="audit-text">
         <span class="audit-action">${labels[n.type] || esc(n.type)}</span>
         <span class="audit-by">by ${esc(n.by || '?')}</span>

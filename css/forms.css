@@ -1,0 +1,31 @@
+/* Forms & Modals */
+.sheet{padding:0 12px 30px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+.sheet-handle{margin:8px auto 12px;}
+.sheet h2{margin:0 0 12px;font-size:17px;}
+.modal-box{padding:18px;border-radius:var(--radius-lg);}
+.modal-box h2{font-size:var(--fs-lg);}
+.modal-box p{font-size:var(--fs-sm);margin-bottom:12px;}
+.form-group{margin-bottom:10px;}
+.form-group label{font-size:var(--fs-xs);margin-bottom:4px;}
+.form-group input,.form-group select,.form-group textarea{padding:9px 10px;border-radius:var(--radius-sm);font-size:var(--fs-md);}
+.form-group textarea{min-height:56px;}
+.form-row{gap:7px;margin-top:14px;}
+.form-intro{margin-bottom:10px;padding:8px 9px;border-radius:var(--radius-sm);font-size:var(--fs-sm);}
+.category-chips{gap:var(--space-sm);}
+.category-chip{padding:7px 10px;font-size:var(--fs-sm);}
+.setting-item{padding:8px 10px;border-radius:var(--radius-sm);margin-bottom:5px;}
+.setting-item span{font-size:var(--fs-md);font-weight:800;}
+.settings-tabs{gap:5px;margin-bottom:12px;}
+.stab{padding:7px 8px;border-radius:var(--radius-md);font-size:var(--fs-sm);font-weight:800;}
+.user-list{gap:var(--space-sm);}
+.user-btn{padding:10px 12px;border-radius:var(--radius-sm);font-size:var(--fs-md);gap:9px;}
+.user-btn .av{width:30px;height:30px;border-radius:var(--radius-xs);font-size:var(--fs-md);}
+
+body.dark .sheet{background:#1E1C38;}
+body.dark .modal-box{background:#1E1C38;}
+body.dark .user-btn{background:rgba(30,28,58,0.9);border-color:rgba(80,70,130,0.3);color:var(--text1);}
+body.dark .form-group input,body.dark .form-group select,body.dark .form-group textarea{background:var(--dark-glass);color:var(--text1);border-color:rgba(107,95,191,0.3);}
+body.dark .form-intro{background:rgba(107,95,191,0.14);border-color:rgba(107,95,191,0.24);color:var(--text1);}
+body.dark .category-chip{background:var(--dark-glass);border-color:rgba(107,95,191,0.2);color:var(--text1);}
+body.dark .category-chip.active{box-shadow:0 0 0 2px rgba(155,143,228,0.28);}
+body.dark .stab{background:var(--dark-glass);color:var(--p3);border-color:rgba(107,95,191,0.25);}

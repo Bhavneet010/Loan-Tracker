@@ -36,7 +36,7 @@ const SORT_LABELS = { date: 'Date', amount: 'Amount', officer: 'Officer', catego
 
 export function filterSortBarHtml() {
   const fc = (S.filter.category !== 'All' ? 1 : 0) + (S.filter.officer !== 'All' ? 1 : 0);
-  const sortLabel = `${SORT_LABELS[S.sort.field] || 'Date'} ${S.sort.dir === 'asc' ? '↑' : '↓'}`;
+  const sortLabel = `${SORT_LABELS[S.sort.field] || 'Date'} ${S.sort.dir === 'asc' ? '&#8593;' : '&#8595;'}`;
   const officerOpts = [
     { v: 'All', label: 'All officers' },
     ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []),
@@ -63,8 +63,8 @@ export function filterSortBarHtml() {
   const sortStyle = S.openPop === 'sort' ? '' : 'display:none;';
   
   return `<div class="fs-bar" onclick="event.stopPropagation();">
-    <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'filter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('filter')">⚲ Filter<span class="fs-badge">${fc || ''}</span></button>
-    <button class="fs-btn ${S.openPop === 'sort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('sort')">↕ Sort <span class="fs-label">${sortLabel}</span></button>
+    <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'filter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('filter')">&#9906; Filter<span class="fs-badge">${fc || ''}</span></button>
+    <button class="fs-btn ${S.openPop === 'sort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('sort')">&#8597; Sort <span class="fs-label">${sortLabel}</span></button>
     <div class="fs-pop" id="fsFilterPop" style="${filterStyle}">
       <h4>Category</h4>${radio('category', catOpts, S.filter.category)}
       <hr>

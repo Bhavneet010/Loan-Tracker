@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v106';
+const CACHE = 'nirnay-v107';
 const ASSETS = [
   './',
   './index.html',
@@ -39,11 +39,14 @@ const ASSETS = [
   './css/audit.css',
   './css/calendar.css',
   './css/core.css',
+  './css/forms.css',
+  './css/decision-sheet.css',
   './css/notifications.css',
   './css/renewals.css',
   './css/snapshot-modal.css',
   './css/snapshot-report.css',
   './css/tasks.css',
+  './js/animate.js',
   './js/app.js',
   './js/config.js',
   './js/db.js',
@@ -52,11 +55,11 @@ const ASSETS = [
   './js/loan-actions.js',
   './js/month-end.js',
   './js/ui-forms.js',
+  './js/ui-decision-sheet.js',
   './js/notifications.js',
   './js/performance.js',
   './js/push-notifications.js',
   './js/performance-utils.js',
-  './js/performance-templates.js',
   './js/performance-pdf.js',
   './js/performance-snapshot.js',
   './js/state.js',
