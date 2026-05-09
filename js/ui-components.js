@@ -129,7 +129,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
         ${loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : ''}
         <div class="rnw-action-group">
           <button class="btn btn-rnw-done" onclick="openRenewalDecisionSheet('${loan.id}')">
-            Renewal Status
+            &#9850; Renewal Status
           </button>
           <div class="rnw-sub-actions">
             <button class="btn btn-edit-icon" onclick="editLoan('${loan.id}')" title="Edit">&#9998;</button>

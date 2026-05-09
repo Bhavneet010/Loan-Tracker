@@ -32,14 +32,14 @@ export function renderRenewals(c) {
   const total = sumAmount(sorted);
   const tabMeta = {
     'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
-    'done': { title: 'Done This Month', empty: '♻', msg: 'No SME renewals completed this month' },
-    'due-soon': { title: 'Due for Renewal Soon', empty: '⏰', msg: 'No accounts due within 30 days' },
+    'done': { title: 'Done This Month', empty: '&#9850;', msg: 'No SME renewals completed this month' },
+    'due-soon': { title: 'Due for Renewal Soon', empty: '&#9200;', msg: 'No accounts due within 30 days' },
     'overdue': { title: 'Renewal Overdue', empty: '!', msg: 'No overdue renewal accounts' },
-    'all': { title: 'All CC Accounts', empty: '📋', msg: 'No CC accounts found' },
-  }[S.renewalTab] || { title: 'SME CC Renewals', empty: '♻', msg: 'No renewals found' };
+    'all': { title: 'All CC Accounts', empty: '&#128203;', msg: 'No CC accounts found' },
+  }[S.renewalTab] || { title: 'SME CC Renewals', empty: '&#9850;', msg: 'No renewals found' };
 
   const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) + (S.renewalFilter.branch !== 'All' ? 1 : 0) + (S.renewalFilter.completion !== 'All' ? 1 : 0);
-  const sortLabel = `${sl[S.renewalSort.field] || 'Days'} ${S.renewalSort.dir === 'asc' ? '↑' : '↓'}`;
+  const sortLabel = `${sl[S.renewalSort.field] || 'Days'} ${S.renewalSort.dir === 'asc' ? '&#8593;' : '&#8595;'}`;
   const radio = (name, opts, cur) => opts.map(o => `<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur === o.v ? 'checked' : ''} onchange="${name === 'sortField' ? `setRenewalSort('${esc(o.v)}',null)` : name === 'sortDir' ? `setRenewalSort(null,'${esc(o.v)}')` : `setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
 
   const filterStyle = S.openPop === 'rnwFilter' ? '' : 'display:none;';
@@ -71,7 +71,7 @@ export function renderRenewals(c) {
   const officerViewer = renewalOfficerViewerHtml(buildVisibleRenewalOfficerSummary(metrics));
   const searchBar = `<div class="rnw-search-wrap"><input type="text" class="search-inp rnw-search-inp" placeholder="Search account or branch" value="${esc(S.search)}" oninput="handleRenewalSearch(this.value)"></div>`;
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
-  const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · ₹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">▲ collapse all</button></div></div>${list}`;
+  const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} &middot; &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
   const mainContent = S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : listContent;
   c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div><div class="rnw-content">${mainContent}</div>`;
 }
@@ -116,14 +116,14 @@ function buildRenewalListContent(metrics) {
   const total = sumAmount(sorted);
   const tabMeta = {
     'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
-    'done': { title: 'Done This Month', empty: 'â™»', msg: 'No SME renewals completed this month' },
-    'due-soon': { title: 'Due for Renewal Soon', empty: 'â°', msg: 'No accounts due within 30 days' },
+    'done': { title: 'Done This Month', empty: '&#9850;', msg: 'No SME renewals completed this month' },
+    'due-soon': { title: 'Due for Renewal Soon', empty: '&#9200;', msg: 'No accounts due within 30 days' },
     'overdue': { title: 'Renewal Overdue', empty: '!', msg: 'No overdue renewal accounts' },
-    'all': { title: 'All CC Accounts', empty: 'ðŸ“‹', msg: 'No CC accounts found' },
-  }[S.renewalTab] || { title: 'SME CC Renewals', empty: 'â™»', msg: 'No renewals found' };
+    'all': { title: 'All CC Accounts', empty: '&#128203;', msg: 'No CC accounts found' },
+  }[S.renewalTab] || { title: 'SME CC Renewals', empty: '&#9850;', msg: 'No renewals found' };
 
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
-  return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} Â· â‚¹${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">â–² collapse all</button></div></div>${list}`;
+  return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} &middot; &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
 }
 
 export function applyRenewalFilters(enriched) {
@@ -197,11 +197,11 @@ function renewalOfficerViewerHtml(summary) {
 
   return `<section class="rnw-officer-card ${expanded ? '' : 'collapsed'}" aria-label="Renewal officer summary">
     <button class="rnw-officer-summary" onclick="toggleRenewalOfficers()" type="button" aria-expanded="${expanded}">
-      <div class="rnw-officer-title"><span>👥</span><span><b>Officers</b><small>${summary.activeOfficers} active</small></span></div>
+      <div class="rnw-officer-title"><span>&#128101;</span><span><b>Officers</b><small>${summary.activeOfficers} active</small></span></div>
       <div><b>${summary.total}</b><small>Total</small></div>
       <div class="rnw-officer-od"><b>${summary.od}</b><small>OD</small></div>
       <div class="rnw-officer-due"><b>${summary.due}</b><small>Due</small></div>
-      <div class="rnw-officer-caret">${expanded ? '⌃' : '⌄'}</div>
+      <div class="rnw-officer-caret">${expanded ? '&#9650;' : '&#9660;'}</div>
     </button>
     ${expanded ? `<div class="rnw-officer-table">
       <div class="rnw-officer-head"><span>Officer</span><span>Total</span><span>OD</span><span>Due</span></div>

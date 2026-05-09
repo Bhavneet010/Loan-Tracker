@@ -22,9 +22,9 @@ window.toggleUserMenu = function () {
   const menu = document.getElementById('userMenu');
   if (menu.style.display === 'none') {
     menu.innerHTML = `
-      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">⚙️ Settings</button>` : ''}
-      <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark ? '☀️ Light theme' : '🌙 Dark theme'}</button>
-      <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">👤 Change officer</button>`;
+      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
+      <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark ? '&#9728; Light theme' : '&#127769; Dark theme'}</button>
+      <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
     menu.style.display = 'block';
     setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
   } else {
@@ -153,7 +153,7 @@ window.loginWithBiometric = async function () {
     const ok = await authenticateBiometric();
     if (ok) closeOverlay('pinModal', _grantAdminAccess);
   } catch (e) {
-    if (e.name !== 'NotAllowedError') toast('Biometric failed — use PIN instead');
+    if (e.name !== 'NotAllowedError') toast('Biometric failed &mdash; use PIN instead');
   } finally {
     if (bioBtn) { bioBtn.disabled = false; bioBtn.classList.remove('bio-btn--loading'); }
   }
@@ -164,7 +164,7 @@ function _grantAdminAccess() {
   S.filter = { category: 'All', officer: 'All' };
   localStorage.setItem('lpUser', 'Admin'); localStorage.setItem('lpAdmin', 'true');
   const av = document.getElementById('userAv');
-  av.textContent = '🔒'; av.style.background = ''; av.style.color = '';
+  av.textContent = '&#128274;'; av.style.background = ''; av.style.color = '';
   requestNotifPermission();
   toast('Admin mode active'); window.render();
 }

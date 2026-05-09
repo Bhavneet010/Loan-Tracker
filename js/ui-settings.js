@@ -54,12 +54,12 @@ export function renderSettingsList() {
     _renderBiometricSettings();
   } else if (S.settingsTab === 'import') {
     el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;">Bulk-import data from the data/ folder.</div>
-      <button type="button" id="clearRenewalsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="clearAllSmeRenewals()">🗑️ Clear All SME Renewals</button>
-      <button type="button" id="wipeFreshBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#DC2626,#991B1B);" onclick="wipeSanctionedFreshLoans()">🗑️ Wipe All Sanctioned Fresh</button>
-      <button type="button" id="importSanctionedBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importMonthlySanctioned()">📥 Import April 2026 sanctioned</button>
-      <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#F59E0B,#B45309);" onclick="importMonthlyReturns()">📥 Import April 2026 returns</button>
+      <button type="button" id="clearRenewalsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="clearAllSmeRenewals()">&#128465; Clear All SME Renewals</button>
+      <button type="button" id="wipeFreshBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#DC2626,#991B1B);" onclick="wipeSanctionedFreshLoans()">&#128465; Wipe All Sanctioned Fresh</button>
+      <button type="button" id="importSanctionedBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importMonthlySanctioned()">&#128229; Import April 2026 sanctioned</button>
+      <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#F59E0B,#B45309);" onclick="importMonthlyReturns()">&#128229; Import April 2026 returns</button>
       <input type="file" id="csvFileInput" style="display:none;" onchange="handleCsvUpload(event)">
-      <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">📥 Upload CSV</button>`;
+      <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">&#128229; Upload CSV</button>`;
   } else if (S.settingsTab === 'monthend') {
     const label = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
     el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.45;">Generate the previous month PDF first. After admin reviews it, use the cleanup button separately.</div>
@@ -98,7 +98,7 @@ window.removeBranch = async function(i) {
   S.branches.splice(i, 1); await saveSettings(); renderSettingsList();
 };
 window.setBranchOfficer = async function(code, off) {
-  S.branchOfficers[code] = off; await saveSettings(); toast('Assigned officer ✓');
+  S.branchOfficers[code] = off; await saveSettings(); toast('Assigned officer &#10003;');
 };
 window.saveRenewalTargets = async function() {
   const month = currentMonthKey();
@@ -111,7 +111,7 @@ window.saveRenewalTargets = async function() {
   await saveSettings();
   renderSettingsList();
   window.render?.();
-  toast('Targets saved ✓');
+  toast('Targets saved &#10003;');
 };
 window.changePassword = async function() {
   const np = document.getElementById('newPin').value.trim();
@@ -121,7 +121,7 @@ window.changePassword = async function() {
   import("./state.js").then(module => {
     module.setPIN(np); module.saveSettings();
     document.getElementById('newPin').value = ''; document.getElementById('confirmPin').value = '';
-    toast('Admin PIN changed ✓');
+    toast('Admin PIN changed &#10003;');
   });
 };
 
@@ -152,7 +152,7 @@ window.setupBiometric = async function() {
   if (btn) btn.disabled = true;
   try {
     await registerBiometric();
-    toast('Biometric login enabled ✓');
+    toast('Biometric login enabled &#10003;');
     _renderBiometricSettings();
   } catch (e) {
     if (e.name !== 'NotAllowedError') toast('Could not register biometric: ' + e.message);

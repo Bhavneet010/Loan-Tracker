@@ -91,10 +91,10 @@ function calendarHtml(calData, year, month) {
   return `
     <div class="cal-wrap">
       <div class="cal-nav">
-        <button class="cal-nav-btn" onclick="calendarNavMonth(-1)">‹</button>
+        <button class="cal-nav-btn" onclick="calendarNavMonth(-1)">&lsaquo;</button>
         <span class="cal-month-label">${MONTHS[month]} ${year}</span>
         <div class="cal-nav-actions">
-          <button class="cal-nav-btn" onclick="calendarNavMonth(1)">›</button>
+          <button class="cal-nav-btn" onclick="calendarNavMonth(1)">&rsaquo;</button>
         </div>
       </div>
       ${monthTotal > 0 ? `<div class="cal-month-count">${monthTotal} NPA date${monthTotal !== 1 ? 's' : ''} this month</div>` : '<div class="cal-month-count cal-month-count--empty">No NPA dates this month</div>'}
@@ -123,12 +123,12 @@ function dayDetailHtml(dateStr, entry) {
       <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
       <span class="cal-name">${esc(loan.customerName)}</span>
       <span class="cal-bcode">${esc(branchCode(loan.branch))}</span>
-      <span class="cal-amt">₹${fmtAmt(loan.amount)}L</span>
+      <span class="cal-amt">&#8377;${fmtAmt(loan.amount)}L</span>
       <span class="tag ${statusCls}">${statusLabel}</span>
     </div>`;
   }).join('');
   return `<div class="cal-day-detail">
-    <div class="cal-detail-head">NPA date ${label} · ${entry.loans.length} renewal${entry.loans.length !== 1 ? 's' : ''}</div>
+    <div class="cal-detail-head">NPA date ${label} &middot; ${entry.loans.length} renewal${entry.loans.length !== 1 ? 's' : ''}</div>
     ${items}
   </div>`;
 }

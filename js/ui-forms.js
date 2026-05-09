@@ -54,7 +54,7 @@ function branchLabel(branch) {
   const normalized = matchBranchOption(branch);
   const code = branchCode(normalized);
   const name = normalized.includes(':') ? normalized.split(':').slice(1).join(':').trim() : normalized;
-  return code ? `${code} · ${name}` : normalized;
+  return code ? `${code} &middot; ${name}` : normalized;
 }
 
 function duplicateCardHtml(loan) {
@@ -67,7 +67,7 @@ function duplicateCardHtml(loan) {
         <div class="duplicate-name">${esc(loan.customerName || '')}</div>
         <div class="duplicate-meta">${esc(loan.branch || '')}</div>
       </div>
-      <div class="duplicate-amt">₹${amount}L</div>
+      <div class="duplicate-amt">&#8377;${amount}L</div>
     </div>
     <div class="duplicate-tags">
       <span class="tag ${catCls(loan.category)}">${esc(loan.category || 'Loan')}</span>
@@ -480,6 +480,5 @@ window.toggleTermLoan = function(cat) {
   if (renewalGroup) renewalGroup.style.display = cat === 'SME' ? 'block' : 'none';
   if (limitExpiryGroup) limitExpiryGroup.style.display = cat === 'SME' ? 'block' : 'none';
 };
-
 
 export { getBranchSearchInput, getBranchValueInput, getCategorySelect, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve };
