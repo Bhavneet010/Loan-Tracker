@@ -92,7 +92,7 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   if (status) data.status = status;
   if (status === 'sanctioned') data.sanctionDate = draft.sanctionDate || base.sanctionDate || todayStr();
   else if (draft.sanctionDate) data.sanctionDate = draft.sanctionDate;
-  if (status === 'returned') data.returnedDate = base.returnedDate || todayStr();
+  if (status === 'returned') data.returnedDate = draft.returnedDate || base.returnedDate || todayStr();
 
   if (draft.category === 'SME') {
     data.isTermLoan = !!draft.isTermLoan;
@@ -197,7 +197,7 @@ function loanFromDraft(base, draft, status = base.status || 'pending') {
   };
   if (status === 'sanctioned') loan.sanctionDate = draft.sanctionDate || base.sanctionDate || todayStr();
   if (status === 'returned') {
-    loan.returnedDate = base.returnedDate || todayStr();
+    loan.returnedDate = draft.returnedDate || base.returnedDate || todayStr();
     loan.remarks = draft.remarks || '';
   }
   return loan;
@@ -353,7 +353,7 @@ function inlineEditHtml(draft, status, { renewal = false } = {}) {
         ${inlineAccountEditLine('Officer', `<select aria-label="Officer" data-draft="allocatedTo">${inlineSelect(officerOptions, draft.allocatedTo)}</select>`)}
         ${inlineAccountEditLine('Received', `<input aria-label="Receive Date" data-draft="receiveDate" type="date" value="${esc(draft.receiveDate)}">`)}
         ${status === 'sanctioned' ? inlineAccountEditLine('Sanction Date', `<input data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || todayStr())}">`) : ''}
-        ${status === 'returned' ? inlineAccountEditLine('Return Date', `<span class="decision-edit-static">${esc(fmtDate(draft.returnedDate || todayStr()))}</span>`, 'alert') : ''}
+        ${status === 'returned' ? inlineAccountEditLine('Return Date', `<input aria-label="Return Date" data-draft="returnedDate" type="date" value="${esc(draft.returnedDate || todayStr())}">`, 'alert') : ''}
         ${showRenewalDue ? inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="renewalDueDate" type="date" value="${esc(draft.renewalDueDate)}">`) : ''}
         ${showLimitExpiry ? inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="limitExpiryDate" type="date" value="${esc(draft.limitExpiryDate)}">`) : ''}
         ${status === 'pending' ? accountLine('Ageing', `${daysPending(draft.receiveDate)} ${daysPending(draft.receiveDate) === 1 ? 'day' : 'days'}`, daysPending(draft.receiveDate) > 7 ? 'alert' : '') : ''}
