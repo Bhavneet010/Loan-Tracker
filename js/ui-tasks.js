@@ -10,9 +10,9 @@ const CATEGORY_META = {
 };
 
 const CRITICAL_META = {
-  npa15:        { title: 'NPA in 15 days',   tone: 'red' },
-  pending10:    { title: 'Pending>10d',      tone: 'amber' },
-  datesMissing: { title: 'Integration Pending', tone: 'purple' },
+  npa15:        { title: 'NPA in 15 days',     short: 'NPA IN 15D',   tone: 'red' },
+  pending10:    { title: 'Pending>10d',        short: 'PENDING >10D', tone: 'amber' },
+  datesMissing: { title: 'Integration Pending', short: 'INTEGRATION',  tone: 'purple' },
 };
 
 /* ── ENTRY POINT ── */
@@ -48,14 +48,21 @@ function renderTaskOverview(c, metrics) {
   const activeKey = CRITICAL_META[S.taskCategory] ? S.taskCategory : pickDefaultCritical(critical);
   const activeItems = sortCriticalItems(activeKey, critical[activeKey] || []);
 
+  const allCriticalItems = [...critical.npa15, ...critical.pending10, ...critical.datesMissing];
+  const totalAccounts = allCriticalItems.length;
+  const totalAtRisk = sumAmount(allCriticalItems);
+
   c.innerHTML = `
     ${performerBoardHtml(metrics)}
+    ${renewalTargetsHtml(metrics)}
     <section class="task-care">
       <div class="task-care-head">
-        <div>
+        <span class="task-care-icon" aria-hidden="true">&#9888;</span>
+        <div class="task-care-headline">
           <div class="task-care-title">Critical Care</div>
+          <div class="task-care-sub">${totalAccounts} account${totalAccounts === 1 ? '' : 's'} &middot; &#8377;${fmtAmt(totalAtRisk)}L at risk</div>
         </div>
-        <div class="task-care-risk">!</div>
+        ${totalAccounts ? '<span class="task-care-urgent">URGENT</span>' : ''}
       </div>
       <div class="task-critical-tabs">
         ${Object.keys(CRITICAL_META).map(key => criticalTabHtml(key, critical[key], activeKey === key)).join('')}
@@ -64,7 +71,6 @@ function renderTaskOverview(c, metrics) {
         ${criticalRowsHtml(activeKey, activeItems)}
       </div>
     </section>
-    ${renewalTargetsHtml(metrics)}
   `;
 }
 
@@ -88,13 +94,11 @@ function criticalTabHtml(key, items, active) {
   const meta = CRITICAL_META[key];
   const total = sumAmount(items);
   return `<button type="button" class="task-critical-tab task-critical-tab--${meta.tone} ${active ? 'active' : ''}" onclick="toggleCriticalCare('${key}')" aria-expanded="${active}">
-      <span class="task-critical-mark"></span>
-      <span class="task-critical-copy">
-        <span class="task-critical-title">${meta.title}</span>
+      <span class="task-critical-title">${meta.short}</span>
+      <span class="task-critical-stats">
         <span class="task-critical-count">${items.length}</span>
         <span class="task-critical-sub">&#8377;${fmtAmt(total)}L</span>
       </span>
-      <span class="task-critical-chevron">${active ? '&#8963;' : '&#8250;'}</span>
     </button>`;
 }
 
