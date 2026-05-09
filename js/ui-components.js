@@ -3,8 +3,8 @@ import { S } from "./state.js";
 
 export function loanCard(loan, actions, variant = '') {
   const remarks = loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : '';
-  const sanctTag = loan.sanctionDate ? `<span class="tag tag-sanctioned">&#10003; ${fmtDate(loan.sanctionDate)}</span>` : '';
-  const retTag = loan.returnedDate ? `<span class="tag tag-returned">&#8617; ${fmtDate(loan.returnedDate)}</span>` : '';
+  const sanctTag = loan.sanctionDate ? `<span class="tag tag-sanctioned">${fmtDate(loan.sanctionDate)}</span>` : '';
+  const retTag = loan.returnedDate ? `<span class="tag tag-returned">${fmtDate(loan.returnedDate)}</span>` : '';
   const days = loan.status === 'pending' ? daysPending(loan.receiveDate) : 0;
   const overdueTag = days > 7 ? `<span class="tag overdue">&#9888; ${days}d</span>` : '';
   const cls = `${variant} ${days > 7 && loan.status === 'pending' ? 'overdue' : ''}`.trim();
@@ -31,11 +31,6 @@ export function loanCard(loan, actions, variant = '') {
 
 export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', idx = 0) {
   const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">&#9888; ${daysPending(loan.receiveDate)}d</span>` : '';
-  const statusChip = cardVariant === 'sanctioned'
-    ? `<span class="lr-status-chip lr-status-chip--sanctioned">&#10003;</span>`
-    : cardVariant === 'returned'
-    ? `<span class="lr-status-chip lr-status-chip--returned">&#8617;</span>`
-    : '';
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
 
   return `<div class="loan-item ${cls}" id="li-${loan.id}" style="--i:${idx}">
@@ -47,7 +42,6 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
       </div>
       <div class="lr-meta">
         ${overdueTag}
-        ${statusChip}
         <span class="lr-amount">&#8377;${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">&rsaquo;</span>
       </div>

@@ -4,10 +4,12 @@ import { fmtAmt } from "./utils.js";
 import { getTaskCounts } from "./ui-tasks.js";
 
 let lastHeroMode = '';
+let lastHeroSelection = '';
 let heroSwapTimer = null;
 
-function setHeroStats(sc, mode, html, configure) {
+function setHeroStats(sc, mode, selection, html, configure) {
   const modeChanged = lastHeroMode && lastHeroMode !== mode;
+  const selectionChanged = lastHeroMode === mode && lastHeroSelection && lastHeroSelection !== selection;
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   configure();
@@ -19,9 +21,16 @@ function setHeroStats(sc, mode, html, configure) {
     void sc.offsetWidth;
     sc.classList.add('stats-soft-enter');
     heroSwapTimer = setTimeout(() => sc.classList.remove('stats-soft-enter'), 220);
+  } else if (selectionChanged && !reduceMotion) {
+    const active = sc.querySelector('.stat-fresh-active,.stat-rnw-active');
+    if (active) {
+      active.classList.add('stat-selected-enter');
+      heroSwapTimer = setTimeout(() => active.classList.remove('stat-selected-enter'), 430);
+    }
   }
 
   lastHeroMode = mode;
+  lastHeroSelection = selection;
 }
 
 /* BADGES */
@@ -64,6 +73,7 @@ export function updateHero() {
     sc.classList.remove('stats-soft-enter');
     sc.innerHTML = '';
     lastHeroMode = 'tasks';
+    lastHeroSelection = 'tasks';
     const bTasks = document.getElementById('b-tasks');
     if (bTasks) bTasks.textContent = getTaskCounts(metrics) || '';
     return;
@@ -89,7 +99,7 @@ export function updateHero() {
       rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber') +
       rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red') +
       rnwStat('all', 'All CC Accounts', metrics.renewals, '');
-    setHeroStats(sc, 'renewals', html, () => {
+    setHeroStats(sc, 'renewals', S.renewalTab, html, () => {
       sc.classList.add('rnw-grid');
     });
     return;
@@ -112,7 +122,7 @@ export function updateHero() {
     freshStat('pending', 'Pending', metrics.pending, `${metrics.pending.length} loans`, metrics.pending.length ? '&nearr; Active' : '') +
     freshStat('sanctioned', 'This Month', metrics.sanctionedThisMonth, `${metrics.sanctionedThisMonth.length} sanctioned`, 'Month total') +
     freshStat('returned', 'Returned', metrics.returned, `${metrics.returned.length} items`);
-  setHeroStats(sc, 'fresh', html, () => {
+  setHeroStats(sc, 'fresh', S.tab, html, () => {
     sc.classList.remove('rnw-grid');
   });
 }
