@@ -194,7 +194,7 @@ function performerBoardHtml(metrics) {
   const renewalBest = bestOfficer(metrics.renewalDoneThisMonth);
   return `<section class="task-performer-block" aria-label="Best performers">
     <div class="task-performer-head">
-      <div><span class="task-performer-spark">✦</span><b>Best Performer</b></div>
+      <div><span class="task-performer-spark">✨</span><b>Best Performer</b></div>
       <span>This month</span>
     </div>
     <div class="task-performer-grid">
@@ -221,15 +221,10 @@ function performerCardHtml(label, row, type) {
   const empty = row.count === 0;
   const name = empty ? 'No entries yet' : row.officer;
   return `<div class="task-performer task-performer--${type}">
+    <span class="task-performer-av">${empty ? '–' : initials(row.officer)}</span>
     <div class="task-performer-copy">
       <div class="task-performer-title">${label}</div>
-      <div class="task-performer-line">
-        <span class="task-performer-av" style="background:${officerColor(row.officer).bg};">${initials(row.officer)}</span>
-        <span>
-          <b>${esc(name)}</b>
-          <small>${row.count} ${type === 'fresh' ? 'loans sanctioned' : 'renewals'}</small>
-        </span>
-      </div>
+      <div class="task-performer-name">${esc(name)}</div>
       <div class="task-performer-amount">&#8377;${fmtAmt(row.amount)}L</div>
     </div>
   </div>`;
