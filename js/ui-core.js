@@ -4,7 +4,8 @@ import { toast, initials, officerColor } from "./utils.js";
 import { getLoanMetrics } from "./derived.js";
 import { requestNotifPermission } from "./notifications.js";
 import { isBiometricRegistered, authenticateBiometric, isBiometricAvailable } from "./biometric.js";
-import { openOverlay, closeOverlay } from "./animate.js";
+import { openOverlay, closeOverlay, transitionContentSwap } from "./animate.js";
+import { updateBadges, updateHero } from "./ui-stats.js";
 
 window.toggleDark = function () {
   S.dark = !S.dark;
@@ -71,12 +72,14 @@ window.handleSearch = v => {
 };
 
 window.setFreshTab = function (tab) {
+  if (S.tab === tab) return;
   S.tab = tab;
   S.openPop = null;
   S.search = '';
   const si = document.getElementById('searchInput');
   if (si) si.value = '';
-  window.render();
+  updateHero();
+  transitionContentSwap(() => window.renderContentOnly?.() || window.render());
 };
 
 window.toggleTasksMode = function () {
@@ -84,16 +87,24 @@ window.toggleTasksMode = function () {
 };
 
 window.setAppMode = function (v) {
+  if (S.appMode === v) return;
   if (S.appMode === 'renewals' && v !== 'renewals') { S.renewalView = 'calendar'; S.calendarOpenDay = null; }
   if (S.appMode === 'tasks' && v !== 'tasks') { S.taskView = 'overview'; S.taskCategory = null; S.taskOfficer = null; }
   S.appMode = v; S.openPop = null;
   if (v === 'renewals') { S.renewalView = 'calendar'; S.calendarOpenDay = null; }
+  document.body.classList.toggle('tasks-mode', v === 'tasks');
+  document.body.classList.toggle('fresh-mode', v === 'fresh');
+  document.body.classList.toggle('renewals-mode', v === 'renewals');
   localStorage.setItem('lpMode', v);
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'modeBtn-' + v));
   document.querySelector('.brand')?.classList.toggle('brand--tasks-active', v === 'tasks');
   const mainTabs = document.getElementById('mainTabs');
   if (mainTabs) mainTabs.style.display = v === 'fresh' ? '' : 'none';
-  window.render();
+  const searchWrap = document.getElementById('searchWrap');
+  if (searchWrap) searchWrap.style.display = v === 'fresh' ? '' : 'none';
+  updateHero();
+  updateBadges();
+  transitionContentSwap(() => window.renderContentOnly?.() || window.render());
 };
 
 window.showUserSelect = function () {

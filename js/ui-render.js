@@ -5,7 +5,7 @@ import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
 import { renderRenewals } from "./ui-tabs-renewals.js";
 import { renderTasks } from "./ui-tasks.js";
-import { animateContent } from "./animate.js";
+import { animateContent, transitionContentSwap } from "./animate.js";
 
 let renderQueued = false;
 
@@ -25,6 +25,10 @@ export function render() {
   const c = document.getElementById('content');
   if (!c) return;
 
+  renderCurrentContent(c);
+}
+
+function renderCurrentContent(c) {
   if (S.appMode === 'renewals') { renderRenewals(c); animateContent('renewals', S.renewalTab); return; }
   if (S.appMode === 'tasks') { renderTasks(c); animateContent('tasks', S.taskView); return; }
 
@@ -32,6 +36,16 @@ export function render() {
   else if (S.tab === 'sanctioned') renderSanctioned(c);
   else if (S.tab === 'returned') renderReturned(c);
   animateContent('fresh', S.tab);
+}
+
+export function renderContentOnly() {
+  if (!S.user) {
+    if (typeof window.showUserSelect === 'function') window.showUserSelect();
+    return;
+  }
+  const c = document.getElementById('content');
+  if (!c) return;
+  renderCurrentContent(c);
 }
 
 export function scheduleRender() {
@@ -45,6 +59,7 @@ export function scheduleRender() {
 
 // Expose render globally so other modules can trigger refreshes without a circular import
 window.render = render;
+window.renderContentOnly = renderContentOnly;
 window.scheduleRender = scheduleRender;
 
 /* ── WINDOW ACTION WRAPPERS ── */
@@ -55,11 +70,13 @@ window.setSort = function(f, d) { if (f) S.sort.field = f; if (d) S.sort.dir = d
 window.setRenewalFilter = function(k, v) { S.renewalFilter[k] = S.renewalFilter[k] === v ? 'All' : v; render(); };
 window.setRenewalSort = function(f, d) { if (f) S.renewalSort.field = f; if (d) S.renewalSort.dir = d; render(); };
 window.setRenewalTab = function(t) {
+  if (S.renewalTab === t && S.renewalView === 'list') return;
   S.renewalTab = t;
   S.renewalView = 'list';
   S.calendarOpenDay = null;
   S.openPop = null;
-  render();
+  updateHero();
+  transitionContentSwap(() => renderContentOnly());
 };
 window.setRenewalOfficer = function(officer) {
   S.renewalFilter.officer = S.renewalFilter.officer === officer ? 'All' : officer;

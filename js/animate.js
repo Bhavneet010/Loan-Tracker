@@ -57,6 +57,8 @@ export function animateOverlayOut(el, cb) {
 
 // ── Content entrance ───────────────────────────────────────────────────────────
 
+let contentSwapTimer = null;
+
 /**
  * Trigger a calm entrance animation on #content after innerHTML is replaced.
  * The motion stays intentionally small so frequent stat tab changes feel responsive.
@@ -65,7 +67,37 @@ export function animateContent(mode, tab) {
   const c = document.getElementById('content');
   if (!c) return;
 
-  c.classList.remove('content-enter', 'content-enter-left', 'content-enter-right');
+  c.classList.remove('content-enter', 'content-enter-left', 'content-enter-right', 'content-leaving');
   void c.offsetWidth; // force reflow so re-adding the same class re-triggers animation
   c.classList.add('content-enter');
+}
+
+export function transitionContentSwap(renderNext) {
+  const c = document.getElementById('content');
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  clearTimeout(contentSwapTimer);
+
+  if (!c || reduceMotion) {
+    renderNext();
+    return;
+  }
+
+  if (c.classList.contains('content-leaving')) {
+    contentSwapTimer = setTimeout(renderNext, 120);
+    return;
+  }
+
+  c.classList.remove('content-enter', 'content-enter-left', 'content-enter-right');
+  c.classList.add('content-leaving');
+
+  let swapped = false;
+  const swap = () => {
+    if (swapped) return;
+    swapped = true;
+    renderNext();
+  };
+
+  c.addEventListener('animationend', swap, { once: true });
+  contentSwapTimer = setTimeout(swap, 210);
 }
