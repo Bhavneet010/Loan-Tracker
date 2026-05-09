@@ -36,7 +36,7 @@ function setHeroStats(sc, mode, selection, html, configure) {
     if (animateMode) {
       void sc.offsetWidth;
       sc.classList.add('stats-mode-enter');
-      heroEnterTimer = setTimeout(() => sc.classList.remove('stats-mode-enter'), 420);
+      heroEnterTimer = setTimeout(() => sc.classList.remove('stats-mode-enter'), 460);
     }
   };
 
@@ -47,7 +47,7 @@ function setHeroStats(sc, mode, selection, html, configure) {
       configure();
       sc.innerHTML = html;
       enter();
-    }, 140);
+    }, 170);
   } else {
     configure();
     sc.innerHTML = html;
