@@ -87,21 +87,19 @@ export function updateHero() {
     }
     const monthName = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(metrics.thisMonth.slice(5)) - 1];
 
-    const rnwStat = (tab, label, arr, gradCls) => {
+    const rnwStat = (tab, label, arr, gradCls, subtitle) => {
       const active = S.renewalTab === tab;
       return `<div class="stat rnw-stat-card ${gradCls} ${active ? 'stat-rnw-active' : ''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
-        <div class="rnw-stat-copy">
-          <div class="stat-l">${label}</div>
-          <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
-        </div>
-        <div class="rnw-stat-count" aria-label="${arr.length} accounts">${arr.length}</div>
+        <div class="stat-l">${label}</div>
+        <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
+        <div class="stat-s">${subtitle || `${arr.length} accounts`}</div>
       </div>`;
     };
 
     const html =
-      rnwStat('done', `Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green') +
-      rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red') +
-      rnwStat('all', 'All CC', metrics.renewals, '');
+      rnwStat('done', `Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green', `${metrics.renewalDoneThisMonth.length} done`) +
+      rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red', `${metrics.renewalOverdue.length} accounts`) +
+      rnwStat('all', 'All CC', metrics.renewals, '', `${metrics.renewals.length} accounts`);
     setHeroStats(sc, 'renewals', S.renewalTab, html, () => {
       sc.classList.add('rnw-grid');
     });
@@ -110,20 +108,19 @@ export function updateHero() {
 
   sc.style.display = '';
   const gradMap = { pending: 'stat-grad-pending', sanctioned: 'stat-grad-sanctioned', returned: 'stat-grad-returned' };
-  const freshStat = (tab, label, arr, subtitle, badge = '') => {
+  const freshStat = (tab, label, arr, subtitle) => {
     const active = S.tab === tab;
     const gradCls = gradMap[tab] || '';
     return `<button type="button" class="stat fresh-stat-card ${gradCls} ${active ? 'stat-fresh-active' : ''}" onclick="setFreshTab('${tab}')" aria-pressed="${active}">
       <div class="stat-l">${label}</div>
       <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
       <div class="stat-s">${subtitle}</div>
-      ${badge ? `<div class="stat-badge">${badge}</div>` : ''}
     </button>`;
   };
 
   const html =
-    freshStat('pending', 'Pending', metrics.pending, `${metrics.pending.length} loans`, metrics.pending.length ? '&nearr; Active' : '') +
-    freshStat('sanctioned', 'This Month', metrics.sanctionedThisMonth, `${metrics.sanctionedThisMonth.length} sanctioned`, 'Month total') +
+    freshStat('pending', 'Pending', metrics.pending, `${metrics.pending.length} loans`) +
+    freshStat('sanctioned', 'This Month', metrics.sanctionedThisMonth, `${metrics.sanctionedThisMonth.length} sanctioned`) +
     freshStat('returned', 'Returned', metrics.returned, `${metrics.returned.length} items`);
   setHeroStats(sc, 'fresh', S.tab, html, () => {
     sc.classList.remove('rnw-grid');

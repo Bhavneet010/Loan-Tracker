@@ -80,20 +80,15 @@ body.dark .loan-item.rnw-s-dates-missing > .loan-row {background:rgba(245,158,11
   border-color:rgba(107,95,191,0.26);
   box-shadow:0 0 0 1.5px rgba(90,78,175,0.26),0 4px 12px rgba(107,95,191,0.10);
 }
-.rnw-stat-card.stat-rnw-active .stat-v,
-.rnw-stat-card.stat-rnw-active .rnw-stat-count{color:var(--p1);}
+.rnw-stat-card.stat-rnw-active .stat-v{color:var(--p1);}
 .rnw-grad-green.stat-rnw-active{border-color:#10B981;}
 .rnw-grad-amber.stat-rnw-active{border-color:#F59E0B;}
 .rnw-grad-red.stat-rnw-active{border-color:#EF4444;}
 .rnw-grad-darkred.stat-rnw-active{border-color:#7F1D1D;}
-.rnw-grad-green.stat-rnw-active .stat-v,
-.rnw-grad-green.stat-rnw-active .rnw-stat-count{color:var(--green);}
-.rnw-grad-amber.stat-rnw-active .stat-v,
-.rnw-grad-amber.stat-rnw-active .rnw-stat-count{color:var(--amber);}
-.rnw-grad-red.stat-rnw-active .stat-v,
-.rnw-grad-red.stat-rnw-active .rnw-stat-count{color:var(--red);}
-.rnw-grad-darkred.stat-rnw-active .stat-v,
-.rnw-grad-darkred.stat-rnw-active .rnw-stat-count{color:var(--red);}
+.rnw-grad-green.stat-rnw-active .stat-v{color:var(--green);}
+.rnw-grad-amber.stat-rnw-active .stat-v{color:var(--amber);}
+.rnw-grad-red.stat-rnw-active .stat-v{color:var(--red);}
+.rnw-grad-darkred.stat-rnw-active .stat-v{color:var(--red);}
 
 .rnw-officer-card{
   background:rgba(255,255,255,0.78);
@@ -316,38 +311,35 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
   align-content:stretch;
 }
 .stats-scroll.rnw-grid .rnw-stat-card{
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  align-content:center;
+  display:flex;
+  flex-direction:column;
   min-height:0;
   height:100%;
   gap:var(--space-xs);
   padding:7px 8px!important;
   border-radius:var(--radius-sm);
 }
-.rnw-stat-copy{min-width:0;}
 .rnw-stat-card .stat-l{
   font-size:var(--fs-xs);
-  line-height:1.05;
-  letter-spacing:0.2px;
+  line-height:1;
+  letter-spacing:0.45px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .stats-scroll.rnw-grid .rnw-stat-card .stat-v{
-  margin-top:2px;
-  font-size:var(--fs-md);
+  margin-top:1px;
+  font-size:17px;
   line-height:1.1;
   white-space:nowrap;
 }
-.rnw-stat-count{
-  min-width:0;
-  text-align:left;
-  font-size:18px;
-  line-height:1;
-  font-weight:900;
-  color:var(--text1);
+.stats-scroll.rnw-grid .rnw-stat-card .stat-s{
+  color:var(--text2);
 }
+.rnw-grad-green.stat-rnw-active .stat-s{color:var(--green);border-color:var(--green-bd);background:var(--green-bg);}
+.rnw-grad-amber.stat-rnw-active .stat-s{color:var(--amber);border-color:var(--amber-bd);background:var(--amber-bg);}
+.rnw-grad-red.stat-rnw-active .stat-s{color:var(--red);border-color:var(--red-bd);background:var(--red-bg);}
+.rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred) .stat-s{color:var(--p1);border-color:var(--p-bd);background:var(--p-bg);}
 .stat.stat-rnw-active{box-shadow:0 0 0 1.5px rgba(90,78,175,0.26),0 4px 12px rgba(107,95,191,0.10);}
 .rnw-page-chrome{
   display:flex;
@@ -413,7 +405,6 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
   color:white;
 }
 .rnw-list-head{margin-top:4px;}
-body.dark .rnw-stat-count{color:rgba(255,255,255,0.8);}
 body.dark .rnw-view-toggle{
   background:var(--dark-glass);
   border-color:rgba(107,95,191,0.25);

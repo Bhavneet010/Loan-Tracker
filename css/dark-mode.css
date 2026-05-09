@@ -191,7 +191,6 @@ body.dark .audit-row{
 
 body.dark .tag.date,
 body.dark .tag.officer,
-body.dark .stat-badge,
 body.dark .officer-count,
 body.dark .task-section-pill,
 body.dark .decision-status-pill,
@@ -270,9 +269,6 @@ body.dark .rnw-stat-card .stat-l,
 body.dark .rnw-stat-card .stat-s{
   color:var(--text3);
 }
-body.dark .rnw-stat-count{
-  color:var(--text1);
-}
 body.dark .stat-grad-pending,
 body.dark .rnw-stat-card:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred){
   background:rgba(23,21,47,0.88);
@@ -316,22 +312,18 @@ body.dark .rnw-grad-red.stat-rnw-active{
   border-color:var(--red);
 }
 body.dark .stat-grad-pending.stat-fresh-active .stat-v,
-body.dark .rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred) .stat-v,
-body.dark .rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred) .rnw-stat-count{
+body.dark .rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred) .stat-v{
   color:var(--p3);
 }
 body.dark .stat-grad-sanctioned.stat-fresh-active .stat-v,
-body.dark .rnw-grad-green.stat-rnw-active .stat-v,
-body.dark .rnw-grad-green.stat-rnw-active .rnw-stat-count{
+body.dark .rnw-grad-green.stat-rnw-active .stat-v{
   color:var(--green);
 }
 body.dark .stat-grad-returned.stat-fresh-active .stat-v,
-body.dark .rnw-grad-amber.stat-rnw-active .stat-v,
-body.dark .rnw-grad-amber.stat-rnw-active .rnw-stat-count{
+body.dark .rnw-grad-amber.stat-rnw-active .stat-v{
   color:var(--amber);
 }
-body.dark .rnw-grad-red.stat-rnw-active .stat-v,
-body.dark .rnw-grad-red.stat-rnw-active .rnw-stat-count{
+body.dark .rnw-grad-red.stat-rnw-active .stat-v{
   color:var(--red);
 }
 
