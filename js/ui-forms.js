@@ -54,7 +54,7 @@ function branchLabel(branch) {
   const normalized = matchBranchOption(branch);
   const code = branchCode(normalized);
   const name = normalized.includes(':') ? normalized.split(':').slice(1).join(':').trim() : normalized;
-  return code ? `${code} &middot; ${name}` : normalized;
+  return code ? `${code} · ${name}` : normalized;
 }
 
 function duplicateCardHtml(loan) {

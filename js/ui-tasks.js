@@ -62,7 +62,7 @@ function renderTaskOverview(c, metrics) {
         <span class="task-care-icon" aria-hidden="true">&#9888;</span>
         <div class="task-care-headline">
           <div class="task-care-title">Critical Care</div>
-          <div class="task-care-sub">${totalAccounts} account${totalAccounts === 1 ? '' : 's'} &middot; &#8377;${fmtAmt(totalAtRisk)}L at risk</div>
+          <div class="task-care-sub">${totalAccounts} account${totalAccounts === 1 ? '' : 's'} · &#8377;${fmtAmt(totalAtRisk)}L at risk</div>
         </div>
         ${totalAccounts ? '<span class="task-care-urgent">URGENT</span>' : ''}
       </div>
@@ -285,7 +285,7 @@ function renewalTargetsHtml(metrics) {
 
   return `<section class="task-targets task-targets--v1">
     <div class="task-section-head task-target-title-row">
-      <div class="task-target-month">Renewal Target &middot; ${monthName}</div>
+      <div class="task-target-month">Renewal Target · ${monthName}</div>
     </div>
     <div class="targets-tile-grid">${tiles}</div>
   </section>`;
@@ -336,7 +336,7 @@ function renderTaskOfficers(c, metrics) {
       <button class="task-back-btn" onclick="taskBack()">&larr; Back</button>
       <span class="task-drill-title">${meta.icon} ${meta.title}</span>
     </div>
-    <div class="task-drill-summary">&#8377;${fmtAmt(totalAmt)}L &middot; ${allItems.length} item${allItems.length !== 1 ? 's' : ''} total</div>
+    <div class="task-drill-summary">&#8377;${fmtAmt(totalAmt)}L · ${allItems.length} item${allItems.length !== 1 ? 's' : ''} total</div>
     <div class="task-officer-grid">
       <div class="task-officer-chip task-officer-chip--all" onclick="setTaskOfficer('All')">
         <span class="task-oc-all-av">All</span>
@@ -364,7 +364,7 @@ function renderTaskDetail(c, metrics) {
       <button class="task-back-btn" onclick="taskBack()">&larr; Back</button>
       <span class="task-drill-title">${meta.icon} ${meta.title}</span>
     </div>
-    <div class="task-drill-summary">${esc(officerLabel)} &middot; ${items.length} item${items.length !== 1 ? 's' : ''}</div>
+    <div class="task-drill-summary">${esc(officerLabel)} · ${items.length} item${items.length !== 1 ? 's' : ''}</div>
     <div class="task-detail-list">${rows}</div>`;
 }
 
@@ -376,7 +376,7 @@ function taskLoanItemHtml(loan) {
       <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
       <span class="task-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="task-name">${esc(loan.customerName)}</span>
-      <span class="task-meta">&#8377;${fmtAmt(loan.amount)}L &middot; ${days}d</span>
+      <span class="task-meta">&#8377;${fmtAmt(loan.amount)}L · ${days}d</span>
     </div>
     <div class="task-actions">
       <button class="btn btn-sanction btn-sm" onclick="sanctionLoan('${loan.id}')">&#10003; Sanction</button>

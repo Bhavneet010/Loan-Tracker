@@ -108,7 +108,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
         <div class="lc-top">
           <div class="lc-left">
             <div class="lc-name">${esc(loan.customerName)}</div>
-            <div class="lc-branch">${esc(loan.branch || '')} ${loan.acNumber ? ` &bull; A/C: ${esc(loan.acNumber)}` : ''}</div>
+            <div class="lc-branch">${esc(loan.branch || '')} ${loan.acNumber ? ` • A/C: ${esc(loan.acNumber)}` : ''}</div>
           </div>
           <div class="lc-amount">&#8377;${fmtAmt(loan.amount)}<span class="u"> L</span></div>
         </div>
@@ -150,7 +150,7 @@ function auditTrailHtml(loanId) {
   const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated' };
   const rows = entries.map(n => `
     <div class="audit-row">
-      <span class="audit-icon audit-${esc(n.type)}">${icons[n.type] || '&bull;'}</span>
+      <span class="audit-icon audit-${esc(n.type)}">${icons[n.type] || '•'}</span>
       <span class="audit-text">
         <span class="audit-action">${labels[n.type] || esc(n.type)}</span>
         <span class="audit-by">by ${esc(n.by || '?')}</span>

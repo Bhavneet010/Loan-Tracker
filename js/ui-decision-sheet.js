@@ -118,9 +118,9 @@ function categoryBadgeHtml(loan) {
 
 function renewalStatusLineHtml(loan, rs) {
   if (loan.renewedDate) return accountLine('Sanction Date', fmtDate(loan.renewedDate || loan.sanctionDate));
-  if (rs?.status === 'pending-renewal') return accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` &bull; ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert');
+  if (rs?.status === 'pending-renewal') return accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert');
   if (rs?.status === 'due-soon') return accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn');
-  if (rs?.status === 'npa') return accountLine('Status', `${rs.daysOverdue} days overdue &bull; NPA`, 'alert');
+  if (rs?.status === 'npa') return accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert');
   return '';
 }
 
@@ -261,9 +261,9 @@ function renewalDecisionLines(loan, rs) {
     renewalDateAccountLine('Limit Expiry', loan, 'limitExpiryDate'),
   ];
   if (loan.renewedDate) rows.push(accountLine('Sanction Date', fmtDate(loan.renewedDate || loan.sanctionDate)));
-  else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` &bull; ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
+  else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
   else if (rs?.status === 'due-soon') rows.push(accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn'));
-  else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue &bull; NPA`, 'alert'));
+  else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert'));
   return rows.join('');
 }
 
@@ -275,7 +275,7 @@ function activityRowsHtml(loanId) {
   const icons = { added: '+', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;' };
   const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated' };
   return entries.map(n => `<div class="decision-activity-row">
-    <span class="decision-activity-icon decision-activity-${esc(n.type)}">${icons[n.type] || '&bull;'}</span>
+    <span class="decision-activity-icon decision-activity-${esc(n.type)}">${icons[n.type] || '•'}</span>
     <span class="decision-activity-main">
       <b>${labels[n.type] || esc(n.type)}</b>
       <small>by ${esc(n.by || '?')}</small>

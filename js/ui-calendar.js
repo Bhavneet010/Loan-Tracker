@@ -128,7 +128,7 @@ function dayDetailHtml(dateStr, entry) {
     </div>`;
   }).join('');
   return `<div class="cal-day-detail">
-    <div class="cal-detail-head">NPA date ${label} &middot; ${entry.loans.length} renewal${entry.loans.length !== 1 ? 's' : ''}</div>
+    <div class="cal-detail-head">NPA date ${label} · ${entry.loans.length} renewal${entry.loans.length !== 1 ? 's' : ''}</div>
     ${items}
   </div>`;
 }
