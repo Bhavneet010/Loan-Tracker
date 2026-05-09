@@ -1,0 +1,512 @@
+/* Final dark-mode pass. This file is loaded last so feature styles cannot leak light surfaces. */
+body.dark{
+  color-scheme:dark;
+  --p1:#B8ACFF;
+  --p2:#9B8FE4;
+  --p3:#CFC7FF;
+  --p-bg:rgba(155,143,228,0.18);
+  --p-bd:rgba(155,143,228,0.34);
+  --p-subtle:rgba(155,143,228,0.12);
+  --glass:rgba(30,28,58,0.74);
+  --glass-bd:rgba(133,119,210,0.30);
+  --text1:#F4F2FF;
+  --text2:#D7D0FF;
+  --text3:rgba(244,242,255,0.66);
+  --muted:rgba(244,242,255,0.58);
+  --surface:#15142C;
+  --surface-alt:#1B1935;
+  --overlay:rgba(6,5,18,0.70);
+  --header-bg:rgba(17,15,38,0.86);
+  --dark-glass:rgba(31,28,58,0.86);
+  --green:#6EE7B7;
+  --green-bg:rgba(16,185,129,0.16);
+  --green-bd:rgba(110,231,183,0.30);
+  --amber:#FBBF24;
+  --amber-bg:rgba(245,158,11,0.18);
+  --amber-bd:rgba(251,191,36,0.32);
+  --red:#FCA5A5;
+  --red-bg:rgba(239,68,68,0.17);
+  --red-bd:rgba(252,165,165,0.32);
+}
+
+body.dark::before,
+body.dark::after{
+  background:
+    radial-gradient(circle at 14% 6%,rgba(79,70,160,0.34) 0%,transparent 38%),
+    radial-gradient(circle at 88% 22%,rgba(36,99,235,0.16) 0%,transparent 42%),
+    radial-gradient(circle at 48% 38%,rgba(16,185,129,0.08) 0%,transparent 48%),
+    linear-gradient(160deg,#17152F 0%,#0E0D22 58%,#16142D 100%);
+}
+
+body.dark .header{
+  background:var(--header-bg);
+  border-bottom-color:rgba(155,143,228,0.20);
+  box-shadow:0 8px 28px rgba(0,0,0,0.22);
+}
+body.dark .panel,
+body.dark .sheet,
+body.dark .modal-box,
+body.dark .user-dropdown,
+body.dark .perf-overlay,
+body.dark .perf-overlay-header{
+  background:var(--surface);
+  color:var(--text1);
+  border-color:rgba(155,143,228,0.22);
+}
+body.dark .sheet,
+body.dark .modal-box,
+body.dark .user-dropdown{
+  box-shadow:0 -16px 42px rgba(0,0,0,0.38);
+}
+body.dark .panel-handle,
+body.dark .sheet-handle{
+  background:rgba(155,143,228,0.34);
+}
+body.dark .brand-av,
+body.dark .hbtn,
+body.dark .user-pill,
+body.dark .uav,
+body.dark .stat,
+body.dark .loan-row,
+body.dark .loan-card,
+body.dark .empty-state,
+body.dark .user-btn,
+body.dark .setting-item,
+body.dark .duplicate-card,
+body.dark .notif-card,
+body.dark .activity-bubble{
+  background:var(--glass);
+  border-color:var(--glass-bd);
+  color:var(--text1);
+  box-shadow:0 8px 22px rgba(0,0,0,0.18);
+}
+body.dark .uav{
+  color:var(--p3);
+}
+body.dark .brand-tasks-badge{
+  border-color:var(--header-bg);
+}
+
+body.dark .mode-toggle-bar,
+body.dark .rnw-view-toggle{
+  background:rgba(155,143,228,0.11);
+  border-color:rgba(155,143,228,0.24);
+}
+body.dark .mode-btn,
+body.dark .tab,
+body.dark .stab,
+body.dark .fs-btn,
+body.dark .rnw-npa-toggle,
+body.dark .cal-nav-btn,
+body.dark .btn-cancel-full,
+body.dark .btn-return,
+body.dark .btn-more,
+body.dark .btn-outline,
+body.dark .category-chip,
+body.dark .branch-chip,
+body.dark .decision-mini-btn,
+body.dark .decision-icon-btn,
+body.dark .btn-edit-icon{
+  background:rgba(31,28,58,0.88);
+  border-color:rgba(155,143,228,0.26)!important;
+  color:var(--text2);
+}
+body.dark .mode-btn:not(.active):hover,
+body.dark .tab:not(.active):hover,
+body.dark .stab:not(.active):hover,
+body.dark .fs-btn:not(.active):hover,
+body.dark .btn-cancel-full:hover,
+body.dark .btn-return:hover,
+body.dark .btn-outline:hover,
+body.dark .category-chip:hover,
+body.dark .branch-chip:hover,
+body.dark .udrop-item:hover{
+  background:rgba(155,143,228,0.18);
+}
+body.dark .tab.active,
+body.dark .stab.active,
+body.dark .mode-btn.active,
+body.dark .branch-chip.active,
+body.dark .rnw-view-toggle button.active{
+  color:#fff;
+}
+
+body.dark .form-group input,
+body.dark .form-group select,
+body.dark .form-group textarea,
+body.dark .search-inp,
+body.dark .input-light,
+body.dark .pin-input,
+body.dark .decision-name--edit input,
+body.dark .decision-amount--edit input,
+body.dark .decision-account-line--edit input,
+body.dark .decision-account-line--edit select,
+body.dark .decision-account-line--edit textarea,
+body.dark .decision-edit-field input,
+body.dark .decision-edit-field select,
+body.dark .decision-edit-field textarea,
+body.dark .decision-return-note textarea{
+  background:rgba(13,12,31,0.72);
+  border-color:rgba(155,143,228,0.28);
+  color:var(--text1);
+}
+body.dark input::placeholder,
+body.dark textarea::placeholder{
+  color:rgba(244,242,255,0.40);
+}
+body.dark .form-group input:focus,
+body.dark .form-group select:focus,
+body.dark .form-group textarea:focus,
+body.dark .search-inp:focus,
+body.dark .input-light:focus,
+body.dark .pin-input:focus{
+  border-color:rgba(207,199,255,0.58);
+  box-shadow:0 0 0 3px rgba(155,143,228,0.18);
+}
+
+body.dark .fs-pop,
+body.dark .cal-nav,
+body.dark .cal-wrap,
+body.dark .cal-day-detail,
+body.dark .task-critical-detail,
+body.dark .decision-account-lines,
+body.dark .decision-edit-lines,
+body.dark .decision-outcome-block,
+body.dark .decision-return-note,
+body.dark .decision-activity-empty{
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
+}
+body.dark .fs-pop hr,
+body.dark .lc-actions,
+body.dark .rnw-action-group,
+body.dark .cal-detail-item,
+body.dark .task-critical-table-head,
+body.dark .task-critical-row,
+body.dark .rnw-officer-row,
+body.dark .rnw-officer-summary,
+body.dark .audit-row{
+  border-color:rgba(155,143,228,0.18);
+}
+
+body.dark .tag.date,
+body.dark .tag.officer,
+body.dark .stat-badge,
+body.dark .officer-count,
+body.dark .task-section-pill,
+body.dark .decision-status-pill,
+body.dark .task-branch-chip{
+  background:rgba(155,143,228,0.16);
+  border-color:rgba(155,143,228,0.28);
+  color:var(--text2);
+}
+body.dark .tag.sme,
+body.dark .category-chip.sme{
+  color:#D7D0FF;
+}
+body.dark .tag.agri,
+body.dark .category-chip.agri{
+  color:#6EE7B7;
+}
+body.dark .tag.edu,
+body.dark .category-chip.edu{
+  color:#FBBF24;
+}
+body.dark .tag.overdue,
+body.dark .decision-status-pill--returned{
+  color:#FCA5A5;
+}
+
+body.dark .loan-item.cat-agri > .loan-row,
+body.dark .loan-item.rnw-s-active > .loan-row{
+  background:rgba(16,185,129,0.16);
+  border-color:rgba(110,231,183,0.26);
+}
+body.dark .loan-item.cat-sme > .loan-row{
+  background:rgba(155,143,228,0.18);
+  border-color:rgba(155,143,228,0.28);
+}
+body.dark .loan-item.cat-edu > .loan-row,
+body.dark .loan-item.rnw-s-due-soon > .loan-row,
+body.dark .loan-item.rnw-s-dates-missing > .loan-row{
+  background:rgba(245,158,11,0.16);
+  border-color:rgba(251,191,36,0.28);
+}
+body.dark .loan-item.rnw-s-pending > .loan-row,
+body.dark .loan-item.rnw-s-npa > .loan-row{
+  background:rgba(239,68,68,0.17);
+  border-color:rgba(252,165,165,0.28);
+}
+body.dark .loan-item.overdue.cat-agri > .loan-row{
+  background:rgba(16,185,129,0.16);
+  border-color:rgba(110,231,183,0.26);
+}
+body.dark .loan-item.overdue.cat-sme > .loan-row{
+  background:rgba(155,143,228,0.18);
+  border-color:rgba(155,143,228,0.28);
+}
+body.dark .loan-item.overdue.cat-edu > .loan-row{
+  background:rgba(245,158,11,0.16);
+  border-color:rgba(251,191,36,0.28);
+}
+body.dark .loan-item.overdue:not(.cat-agri):not(.cat-sme):not(.cat-edu) > .loan-row{
+  background:rgba(155,143,228,0.12);
+  border-color:rgba(155,143,228,0.24);
+}
+body.dark .loan-item.rnw-s-done > .loan-row{
+  background:rgba(16,185,129,0.22);
+  border-color:rgba(110,231,183,0.36);
+}
+body.dark .rnw-expanded-card,
+body.dark .rnw-officer-card{
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
+  box-shadow:0 8px 22px rgba(0,0,0,0.18);
+}
+body.dark .rnw-stat-card{
+  color:var(--text1);
+}
+body.dark .rnw-stat-card .stat-l,
+body.dark .rnw-stat-card .stat-s{
+  color:var(--text3);
+}
+body.dark .rnw-stat-count{
+  color:var(--text1);
+}
+body.dark .stat-grad-pending,
+body.dark .rnw-stat-card:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred){
+  background:linear-gradient(135deg,rgba(155,143,228,0.36) 0%,rgba(90,78,175,0.15) 100%);
+  border-color:rgba(155,143,228,0.42);
+}
+body.dark .stat-grad-sanctioned,
+body.dark .rnw-grad-green{
+  background:linear-gradient(135deg,rgba(16,185,129,0.30) 0%,rgba(5,150,105,0.11) 100%);
+  border-color:rgba(110,231,183,0.38);
+}
+body.dark .stat-grad-returned,
+body.dark .rnw-grad-amber{
+  background:linear-gradient(135deg,rgba(245,158,11,0.30) 0%,rgba(217,119,6,0.11) 100%);
+  border-color:rgba(251,191,36,0.38);
+}
+body.dark .rnw-grad-red{
+  background:linear-gradient(135deg,rgba(239,68,68,0.30) 0%,rgba(185,28,28,0.12) 100%);
+  border-color:rgba(252,165,165,0.38);
+}
+body.dark .rnw-grad-darkred{
+  background:linear-gradient(135deg,rgba(127,29,29,0.38) 0%,rgba(239,68,68,0.13) 100%);
+  border-color:rgba(252,165,165,0.36);
+}
+body.dark .stat-grad-pending.stat-fresh-active,
+body.dark .rnw-stat-card.stat-rnw-active:not(.rnw-grad-green):not(.rnw-grad-amber):not(.rnw-grad-red):not(.rnw-grad-darkred){
+  background:linear-gradient(135deg,rgba(155,143,228,0.50) 0%,rgba(90,78,175,0.23) 100%);
+  border-color:rgba(207,199,255,0.58);
+}
+body.dark .stat-grad-sanctioned.stat-fresh-active,
+body.dark .rnw-grad-green.stat-rnw-active{
+  background:linear-gradient(135deg,rgba(16,185,129,0.42) 0%,rgba(5,150,105,0.18) 100%);
+  border-color:rgba(110,231,183,0.52);
+}
+body.dark .stat-grad-returned.stat-fresh-active,
+body.dark .rnw-grad-amber.stat-rnw-active{
+  background:linear-gradient(135deg,rgba(245,158,11,0.42) 0%,rgba(217,119,6,0.18) 100%);
+  border-color:rgba(251,191,36,0.52);
+}
+body.dark .rnw-grad-red.stat-rnw-active{
+  background:linear-gradient(135deg,rgba(239,68,68,0.42) 0%,rgba(185,28,28,0.19) 100%);
+  border-color:rgba(252,165,165,0.52);
+}
+
+body.dark .task-ov-card,
+body.dark .task-officer-chip,
+body.dark .task-item,
+body.dark .task-performer-block,
+body.dark .task-performer,
+body.dark .task-targets,
+body.dark .task-critical-tab,
+body.dark .targets-tile{
+  background:rgba(23,21,47,0.88);
+  border-color:rgba(155,143,228,0.24);
+  box-shadow:0 8px 22px rgba(0,0,0,0.18);
+}
+body.dark .task-care{
+  background:linear-gradient(135deg,rgba(127,29,29,0.28),rgba(88,28,135,0.12));
+  border-color:rgba(252,165,165,0.22);
+}
+body.dark .task-care-urgent{
+  background:rgba(239,68,68,0.18);
+  border-color:rgba(252,165,165,0.30);
+  color:#FCA5A5;
+}
+body.dark .task-critical-tab{
+  color:var(--text1);
+}
+body.dark .task-care-sub{
+  color:var(--text3);
+}
+body.dark .task-target-bar,
+body.dark .editorial-leader-bar-track{
+  background:rgba(155,143,228,0.18);
+}
+
+body.dark .cal-cell{
+  background:rgba(31,28,58,0.82);
+  border-color:rgba(155,143,228,0.22);
+}
+body.dark .cal-cell--past{
+  background:rgba(31,28,58,0.48);
+  opacity:0.58;
+}
+body.dark .cal-cell--overdue{
+  background:rgba(127,29,29,0.30);
+  border-color:rgba(252,165,165,0.32);
+}
+body.dark .cal-cell--soon{
+  background:rgba(239,68,68,0.22);
+  border-color:rgba(252,165,165,0.34);
+}
+body.dark .cal-cell--active-has{
+  background:rgba(245,158,11,0.20);
+  border-color:rgba(251,191,36,0.34);
+}
+
+body.dark .notif-card.unread{
+  background:rgba(155,143,228,0.16);
+  border-color:rgba(155,143,228,0.34);
+}
+body.dark #activityOverlay,
+body.dark .overlay{
+  background:var(--overlay);
+}
+
+body.dark .decision-sheet,
+body.dark .decision-account-card,
+body.dark .decision-edit-card,
+body.dark .decision-activity-row{
+  background:rgba(23,21,47,0.94);
+  border-color:rgba(155,143,228,0.24);
+}
+body.dark .decision-slider-thumb{
+  background:#272244;
+  border-color:rgba(155,143,228,0.36);
+  color:var(--text1);
+}
+body.dark .decision-slider--selected-pending .decision-slider-thumb{
+  background:#272244;
+  color:var(--text1);
+}
+body.dark .decision-slider-labels .pending.active{
+  color:var(--text1);
+}
+
+body.dark .perf-overlay-header{
+  border-bottom-color:rgba(155,143,228,0.20);
+}
+body.dark .perf-header-share-btn,
+body.dark .perf-export-btn-secondary,
+body.dark .share-snap-close,
+body.dark .report-mockup-tab{
+  background:rgba(155,143,228,0.16);
+  border-color:rgba(155,143,228,0.28);
+  color:var(--text2);
+}
+body.dark .share-snap-modal-box,
+body.dark .share-snap-card,
+body.dark .share-snap-metric,
+body.dark .share-snap-section,
+body.dark .share-snap-attention-item,
+body.dark .report-mockup-preview-wrap,
+body.dark .report-mockup,
+body.dark .report-block{
+  background:rgba(23,21,47,0.92);
+  border-color:rgba(155,143,228,0.24);
+  color:var(--text1);
+}
+body.dark .share-snap-card::before{
+  background:rgba(155,143,228,0.14);
+}
+body.dark .share-snap-header h3,
+body.dark .share-snap-metric-value,
+body.dark .share-snap-section-title,
+body.dark .share-snap-attention-item strong,
+body.dark .report-block-head h4,
+body.dark .report-matrix-table tbody th{
+  color:var(--text1);
+}
+body.dark .share-snap-sub,
+body.dark .share-snap-metric-label,
+body.dark .share-snap-metric-sub,
+body.dark .share-snap-section-note,
+body.dark .share-snap-attention-item p,
+body.dark .share-snap-attention-meta,
+body.dark .share-snap-footer,
+body.dark .report-dual-metric span{
+  color:var(--text3);
+}
+body.dark .report-matrix-table thead th{
+  background:rgba(155,143,228,0.12);
+  color:var(--text2);
+}
+body.dark .report-matrix-table tbody th,
+body.dark .report-matrix-table tbody td{
+  border-top-color:rgba(155,143,228,0.18);
+}
+
+body.dark .editorial-phone-report,
+body.dark .editorial-top,
+body.dark .editorial-callout,
+body.dark .editorial-leader-card,
+body.dark .editorial-officer-card,
+body.dark .editorial-pill,
+body.dark .editorial-status-card,
+body.dark .editorial-renewal-row{
+  background:#17152F;
+  border-color:rgba(155,143,228,0.22);
+  color:var(--text1);
+}
+body.dark .editorial-brand-mark{
+  background:#242041;
+}
+body.dark .editorial-brand-copy strong,
+body.dark .editorial-hero-title,
+body.dark .editorial-hero-mtd strong,
+body.dark .editorial-callout strong,
+body.dark .editorial-section-title h2,
+body.dark .editorial-leader-head h4,
+body.dark .editorial-leader-name,
+body.dark .editorial-leader-metric,
+body.dark .editorial-officer-name,
+body.dark .editorial-officer-hero-metric strong,
+body.dark .editorial-pill strong,
+body.dark .editorial-status-card strong,
+body.dark .editorial-renewal-metrics strong{
+  color:var(--text1);
+}
+body.dark .editorial-hero-sub,
+body.dark .editorial-tagline,
+body.dark .editorial-hero-mtd label,
+body.dark .editorial-callout label,
+body.dark .editorial-callout span,
+body.dark .editorial-section-title span,
+body.dark .editorial-leader-kicker,
+body.dark .editorial-leader-sub,
+body.dark .editorial-officer-rank,
+body.dark .editorial-subhead-row span,
+body.dark .editorial-subhead-row small,
+body.dark .editorial-pill span,
+body.dark .editorial-pill small,
+body.dark .editorial-status-card label,
+body.dark .editorial-status-card span,
+body.dark .editorial-renewal-metrics label,
+body.dark .editorial-renewal-metrics span,
+body.dark .editorial-footer{
+  color:var(--text3);
+}
+body.dark .editorial-callout.primary{
+  background:#101234 url("../assets/snapshot/top-performer-bg.png") center/cover no-repeat;
+}
+
+body.dark .toast{
+  background:#272244;
+  color:var(--text1);
+  border:1px solid rgba(155,143,228,0.24);
+}

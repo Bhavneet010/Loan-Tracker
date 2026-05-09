@@ -43,6 +43,8 @@ async function init() {
     S.dark = true;
     document.body.classList.add('dark');
   }
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.setAttribute('content', S.dark ? '#15142C' : '#7c3aed');
   
   S.appMode = 'tasks';
   S.taskView = 'overview';

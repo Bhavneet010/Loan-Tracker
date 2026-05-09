@@ -10,7 +10,13 @@ window.toggleDark = function () {
   S.dark = !S.dark;
   document.body.classList.toggle('dark', S.dark);
   localStorage.setItem('lpDark', S.dark ? '1' : '0');
+  updateThemeColor();
 };
+
+function updateThemeColor() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', S.dark ? '#15142C' : '#7c3aed');
+}
 
 window.toggleUserMenu = function () {
   const menu = document.getElementById('userMenu');
