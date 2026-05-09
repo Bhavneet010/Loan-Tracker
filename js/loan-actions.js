@@ -599,7 +599,6 @@ function legacyOpenLoanDecisionSheet(id, preferredStatus = null) {
       <span class="decision-title-actions">
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
         <button type="button" class="decision-icon-btn" title="Edit loan" onclick="closeDecisionSheet();editLoan('${esc(id)}')">✎</button>
-        <span class="decision-status-pill decision-status-pill--${esc(current)}">${esc(current[0].toUpperCase() + current.slice(1))}</span>
       </span>
     </div>
     <p class="decision-copy">Review the account before changing its status.</p>
@@ -666,7 +665,6 @@ function legacyOpenRenewalDecisionSheet(id) {
       <span class="decision-title-actions">
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
         <button type="button" class="decision-icon-btn" title="Edit loan" onclick="closeDecisionSheet();editLoan('${esc(id)}')">✎</button>
-        <span class="decision-status-pill decision-status-pill--renewal">${esc(statusLabel)}</span>
       </span>
     </div>
     <p class="decision-copy">Review the account before updating the renewal status.</p>
@@ -725,7 +723,6 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
         ${S.isAdmin ? `<button type="button" class="decision-icon-btn decision-icon-btn--danger" title="Delete loan" onclick="closeDecisionSheet();deleteLoan('${esc(id)}')">🗑</button>` : ''}
         <button type="button" class="decision-icon-btn" title="Edit loan" data-decision-edit>&#9998;</button>
-        <span class="decision-status-pill decision-status-pill--${esc(current)}">${esc(current[0].toUpperCase() + current.slice(1))}</span>
       </span>
     </div>
     <div data-decision-card></div>
@@ -798,7 +795,6 @@ window.openRenewalDecisionSheet = function(id) {
         <button type="button" class="decision-mini-btn" onclick="openDecisionActivity('${esc(id)}')">Activity</button>
         ${S.isAdmin ? `<button type="button" class="decision-icon-btn decision-icon-btn--danger" title="Delete loan" onclick="closeDecisionSheet();deleteLoan('${esc(id)}')">🗑</button>` : ''}
         <button type="button" class="decision-icon-btn" title="Edit loan" data-decision-edit>&#9998;</button>
-        <span class="decision-status-pill decision-status-pill--renewal">Pending</span>
       </span>
     </div>
     <div data-decision-card></div>

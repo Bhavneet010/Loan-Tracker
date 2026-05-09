@@ -734,14 +734,17 @@ body.dark .skel-circle,body.dark .skel-bar{background:rgba(155,143,228,0.14);}
   display:inline-flex;align-items:center;gap:var(--space-sm);flex-shrink:0;
 }
 .decision-mini-btn{
-  display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 8px;border-radius:var(--radius-pill);
-  border:1px solid rgba(107,95,191,0.16);background:rgba(255,255,255,0.62);color:var(--text2);
-  font:900 9px/1 inherit;cursor:pointer;white-space:nowrap;
+  display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 13px;border-radius:var(--radius-pill);
+  border:1px solid rgba(107,95,191,0.28);background:#fff;color:var(--text1);
+  font-family:inherit;font-weight:900;font-size:11px;line-height:1;letter-spacing:0.2px;
+  cursor:pointer;white-space:nowrap;box-shadow:0 1px 2px rgba(31,28,55,0.06);
 }
 .decision-icon-btn{
-  width:22px;height:22px;border-radius:var(--radius-pill);border:1px solid rgba(107,95,191,0.16);
-  background:rgba(255,255,255,0.62);color:var(--text2);font:900 11px/1 inherit;
+  width:30px;height:30px;border-radius:var(--radius-pill);border:1px solid rgba(107,95,191,0.28);
+  background:#fff;color:var(--text1);
+  font-family:inherit;font-weight:900;font-size:14px;line-height:1;
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 1px 2px rgba(31,28,55,0.06);
 }
 .decision-icon-btn.active{
   background:var(--p-bg);border-color:var(--p-bd);color:var(--p1);
@@ -820,7 +823,7 @@ body.dark .skel-circle,body.dark .skel-bar{background:rgba(155,143,228,0.14);}
 }
 .decision-account-line{
   display:grid;grid-template-columns:78px minmax(0,1fr) 18px;gap:var(--space-sm);align-items:center;
-  height:40px;padding:6px 8px;border-top:1px solid rgba(107,95,191,0.09);
+  height:30px;padding:2px 8px;border-top:1px solid rgba(107,95,191,0.09);
   transition:background var(--dur-fast) ease;
 }
 .decision-account-line:first-child{border-top:0;}
@@ -837,7 +840,7 @@ body.dark .skel-circle,body.dark .skel-bar{background:rgba(155,143,228,0.14);}
   min-width:0;color:var(--text1);font-size:10.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   line-height:22px;
 }
-.decision-account-line--edit{cursor:default;height:40px;padding:6px 8px;}
+.decision-account-line--edit{cursor:default;height:30px;padding:2px 8px;}
 .decision-edit-control{min-width:0;display:flex;align-items:center;width:100%;}
 .decision-account-line--edit input,
 .decision-account-line--edit select,
