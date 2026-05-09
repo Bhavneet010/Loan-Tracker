@@ -237,29 +237,49 @@ function performerCardHtml(label, row, type) {
 function renewalTargetsHtml(metrics) {
   const doneByOfficer = countByOfficer(metrics.renewalDoneThisMonth);
   const monthTargets = S.renewalTargets?.[metrics.thisMonth] || {};
-  const rows = S.officers.map(officer => {
+  const officers = S.officers.map(officer => {
     const done = doneByOfficer.get(officer) || 0;
     const target = Math.max(0, Number(monthTargets[officer]) || 0);
     const pct = target > 0 ? Math.min(100, Math.round((done / target) * 100)) : 0;
-    return `<div class="task-target-row">
-      <div class="task-target-person">
-        <span class="lr-av" style="background:${officerColor(officer).bg};">${initials(officer)}</span>
-        <span>${esc(officer)}</span>
-      </div>
-      <div class="task-target-bar"><span style="width:${pct}%"></span></div>
-      <div class="task-target-score">${done}/${target}</div>
-    </div>`;
-  }).join('');
+    const bg = officerColor(officer).bg;
+    const solid = (bg.match(/#[0-9a-f]{3,8}/i) || ['#7c6ee0'])[0];
+    return { officer, done, target, pct, color: bg, solid };
+  });
 
-  return `<section class="task-targets">
-    <div class="task-section-head task-target-title-row">
-      <div>
-        <div class="task-kicker">Renewal Targets</div>
+  const monthDate = metrics.thisMonth ? new Date(`${metrics.thisMonth}-01T00:00:00`) : new Date();
+  const monthName = monthDate.toLocaleString('en-US', { month: 'long' });
+
+  const tiles = officers.map(({ officer, done, target, pct, solid }) => `
+    <div class="targets-tile">
+      <div class="targets-tile-head">
+        <span class="targets-tile-name">${esc(officer)}</span>
       </div>
-      <div class="task-target-head">Done / target</div>
+      <div class="targets-tile-donut">
+        ${donutSvg(pct, solid, 64, 11)}
+        <span class="targets-tile-num">${done}</span>
+      </div>
+      <div class="targets-tile-target">of ${target}</div>
     </div>
-    <div class="task-target-list">${rows}</div>
+  `).join('');
+
+  return `<section class="task-targets task-targets--v1">
+    <div class="task-section-head task-target-title-row">
+      <div class="task-target-month">Renewal Target · ${monthName}</div>
+    </div>
+    <div class="targets-tile-grid">${tiles}</div>
   </section>`;
+}
+
+function donutSvg(pct, color, size = 60, stroke = 8) {
+  const c = size / 2;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const safe = Math.max(0, Math.min(100, pct));
+  const off = circ * (1 - safe / 100);
+  return `<svg class="task-donut" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(107,95,191,0.14)" stroke-width="${stroke}"></circle>
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 ${c} ${c})"></circle>
+  </svg>`;
 }
 
 function countByOfficer(loans) {

@@ -338,6 +338,41 @@
 .task-target-bar span{display:block;height:100%;border-radius:var(--radius-pill);background:linear-gradient(90deg,#10B981,var(--p2));}
 .task-target-score{text-align:right;font-size:var(--fs-md);font-weight:900;color:var(--text2);}
 
+/* ── Renewal Targets : donut tiles ── */
+.task-target-month{
+  font-size:var(--fs-md);font-weight:900;color:var(--text1);letter-spacing:-0.3px;
+}
+.task-target-month::after{content:'';}
+.task-targets--v1 .task-section-head{justify-content:flex-start;}
+
+.targets-tile-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:6px;
+}
+.targets-tile{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:8px 6px 8px;border-radius:var(--radius-md);
+  background:#fff;border:1px solid rgba(107,95,191,0.10);
+  box-shadow:0 2px 6px rgba(107,95,191,0.06);
+}
+.targets-tile-head{
+  display:flex;align-items:center;justify-content:center;
+  max-width:100%;
+}
+.targets-tile-name{
+  font-size:var(--fs-sm);font-weight:900;color:var(--text1);line-height:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.targets-tile-donut{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:64px;height:64px;
+}
+.targets-tile-num{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:900;color:var(--text1);letter-spacing:-0.4px;line-height:1;
+}
+.task-donut{display:block;}
+.targets-tile-target{font-size:var(--fs-xs);font-weight:800;color:var(--text3);letter-spacing:0.1px;line-height:1;}
+
 /* ── Hero stat cards for tasks mode ── */
 .tasks-stat-card{cursor:default;}
 .tasks-stat-num{font-size:28px;font-weight:800;line-height:1.1;}
