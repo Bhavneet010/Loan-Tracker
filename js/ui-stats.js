@@ -81,6 +81,10 @@ export function updateHero() {
 
   if (S.appMode === 'renewals') {
     sc.style.display = '';
+    if (S.renewalTab === 'due-soon') {
+      S.renewalTab = 'all';
+      S.renewalFilter.status = 'DueSoon';
+    }
     const monthName = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(metrics.thisMonth.slice(5)) - 1];
 
     const rnwStat = (tab, label, arr, gradCls) => {
@@ -95,10 +99,9 @@ export function updateHero() {
     };
 
     const html =
-      rnwStat('done', `Renewals Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green') +
-      rnwStat('due-soon', 'Due Soon', metrics.renewalDueSoon, 'rnw-grad-amber') +
+      rnwStat('done', `Done ${monthName}`, metrics.renewalDoneThisMonth, 'rnw-grad-green') +
       rnwStat('overdue', 'Overdue', metrics.renewalOverdue, 'rnw-grad-red') +
-      rnwStat('all', 'All CC Accounts', metrics.renewals, '');
+      rnwStat('all', 'All CC', metrics.renewals, '');
     setHeroStats(sc, 'renewals', S.renewalTab, html, () => {
       sc.classList.add('rnw-grid');
     });

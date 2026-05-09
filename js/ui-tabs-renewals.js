@@ -30,23 +30,29 @@ export function renderRenewals(c) {
   }).filter(searchMatch);
 
   const total = sumAmount(sorted);
-  const tabMeta = {
+  let tabMeta = {
     'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
     'done': { title: 'Done This Month', empty: '&#9850;', msg: 'No SME renewals completed this month' },
     'due-soon': { title: 'Due for Renewal Soon', empty: '&#9200;', msg: 'No accounts due within 30 days' },
     'overdue': { title: 'Renewal Overdue', empty: '!', msg: 'No overdue renewal accounts' },
     'all': { title: 'All CC Accounts', empty: '&#128203;', msg: 'No CC accounts found' },
   }[S.renewalTab] || { title: 'SME CC Renewals', empty: '&#9850;', msg: 'No renewals found' };
+  if (S.renewalFilter.status === 'DueSoon') {
+    tabMeta = { title: 'Due Soon Accounts', empty: '&#9200;', msg: 'No accounts due within 30 days' };
+  }
 
-  const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) + (S.renewalFilter.branch !== 'All' ? 1 : 0) + (S.renewalFilter.completion !== 'All' ? 1 : 0);
+  const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) +
+    (S.renewalFilter.branch !== 'All' ? 1 : 0) +
+    (S.renewalFilter.completion !== 'All' ? 1 : 0) +
+    (S.renewalFilter.status && S.renewalFilter.status !== 'All' ? 1 : 0);
   const sortLabel = `${sl[S.renewalSort.field] || 'Days'} ${S.renewalSort.dir === 'asc' ? '&#8593;' : '&#8595;'}`;
   const radio = (name, opts, cur) => opts.map(o => `<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur === o.v ? 'checked' : ''} onchange="${name === 'sortField' ? `setRenewalSort('${esc(o.v)}',null)` : name === 'sortDir' ? `setRenewalSort(null,'${esc(o.v)}')` : `setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
 
   const filterStyle = S.openPop === 'rnwFilter' ? '' : 'display:none;';
   const sortStyle = S.openPop === 'rnwSort' ? '' : 'display:none;';
   const viewToggle = `<div class="rnw-view-toggle" role="group" aria-label="Renewal view">
-    <button type="button" class="${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('calendar')">Calendar</button>
-    <button type="button" class="${S.renewalView === 'list' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('list')">List</button>
+    <button type="button" data-renewal-view="calendar" class="${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('calendar')">Calendar</button>
+    <button type="button" data-renewal-view="list" class="${S.renewalView === 'list' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('list')">List</button>
   </div>`;
 
   const fsBar = `<div class="fs-bar rnw-control-row" onclick="event.stopPropagation();">
@@ -58,6 +64,8 @@ export function renderRenewals(c) {
       <span>Show NPA</span>
     </label>` : ''}
     <div class="fs-pop" style="${filterStyle}">
+      <h4>Status</h4>${radio('status', [{ v: 'All', label: 'All statuses' }, { v: 'DueSoon', label: 'Due soon accounts' }], S.renewalFilter.status || 'All')}
+      <hr>
       <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Integration pending' }, { v: 'Complete', label: 'Integration complete' }], S.renewalFilter.completion)}
       <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}
       <hr><h4>Branch</h4>${radio('branch', [{ v: 'All', label: 'All branches' }, ...S.branches.map(b => ({ v: b, label: b }))], S.renewalFilter.branch)}
@@ -74,6 +82,55 @@ export function renderRenewals(c) {
   const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
   const mainContent = S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : listContent;
   c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div><div class="rnw-content">${mainContent}</div>`;
+}
+
+export function updateRenewalMainContent({ transition = true } = {}) {
+  const content = document.querySelector('.rnw-content');
+  if (!content) {
+    window.render?.();
+    return;
+  }
+
+  syncRenewalChromeState();
+
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const replaceContent = () => {
+    content.innerHTML = buildRenewalMainContent();
+    content.classList.remove('content-leaving', 'content-enter');
+    if (!reduceMotion) {
+      void content.offsetWidth;
+      content.classList.add('content-enter');
+    }
+  };
+
+  if (!transition || reduceMotion) {
+    replaceContent();
+    return;
+  }
+
+  if (content.classList.contains('content-leaving')) {
+    setTimeout(replaceContent, 120);
+    return;
+  }
+
+  content.classList.remove('content-enter');
+  content.classList.add('content-leaving');
+
+  let swapped = false;
+  const swap = () => {
+    if (swapped) return;
+    swapped = true;
+    replaceContent();
+  };
+
+  content.addEventListener('animationend', swap, { once: true });
+  setTimeout(swap, 210);
+}
+
+function syncRenewalChromeState() {
+  document.querySelectorAll('.rnw-view-toggle [data-renewal-view]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.renewalView === S.renewalView);
+  });
 }
 
 window.handleRenewalSearch = function(v) {
@@ -114,13 +171,16 @@ function buildRenewalListContent(metrics) {
   }).filter(searchMatch);
 
   const total = sumAmount(sorted);
-  const tabMeta = {
+  let tabMeta = {
     'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
     'done': { title: 'Done This Month', empty: '&#9850;', msg: 'No SME renewals completed this month' },
     'due-soon': { title: 'Due for Renewal Soon', empty: '&#9200;', msg: 'No accounts due within 30 days' },
     'overdue': { title: 'Renewal Overdue', empty: '!', msg: 'No overdue renewal accounts' },
     'all': { title: 'All CC Accounts', empty: '&#128203;', msg: 'No CC accounts found' },
   }[S.renewalTab] || { title: 'SME CC Renewals', empty: '&#9850;', msg: 'No renewals found' };
+  if (S.renewalFilter.status === 'DueSoon') {
+    tabMeta = { title: 'Due Soon Accounts', empty: '&#9200;', msg: 'No accounts due within 30 days' };
+  }
 
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
   return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
@@ -128,6 +188,7 @@ function buildRenewalListContent(metrics) {
 
 export function applyRenewalFilters(enriched) {
   let out = enriched;
+  if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon' && !l.renewedDate);
   if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => l.allocatedTo === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') {

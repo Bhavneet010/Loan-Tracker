@@ -3,9 +3,9 @@ import { S } from "./state.js";
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
-import { renderRenewals } from "./ui-tabs-renewals.js";
+import { renderRenewals, updateRenewalMainContent } from "./ui-tabs-renewals.js";
 import { renderTasks } from "./ui-tasks.js";
-import { animateContent, transitionContentSwap } from "./animate.js";
+import { animateContent } from "./animate.js";
 
 let renderQueued = false;
 
@@ -67,7 +67,15 @@ export const toggleFsMenu = function(which) { S.openPop = S.openPop === which ? 
 window.toggleFsMenu = toggleFsMenu;
 window.setFilter = function(k, v) { S.filter[k] = v; render(); };
 window.setSort = function(f, d) { if (f) S.sort.field = f; if (d) S.sort.dir = d; render(); };
-window.setRenewalFilter = function(k, v) { S.renewalFilter[k] = S.renewalFilter[k] === v ? 'All' : v; render(); };
+window.setRenewalFilter = function(k, v) {
+  S.renewalFilter[k] = S.renewalFilter[k] === v ? 'All' : v;
+  if (k === 'status' && S.renewalFilter.status === 'DueSoon') {
+    S.renewalTab = 'all';
+    S.renewalView = 'list';
+    S.calendarOpenDay = null;
+  }
+  render();
+};
 window.setRenewalSort = function(f, d) { if (f) S.renewalSort.field = f; if (d) S.renewalSort.dir = d; render(); };
 window.setRenewalTab = function(t) {
   if (S.renewalTab === t && S.renewalView === 'list') return;
@@ -76,7 +84,7 @@ window.setRenewalTab = function(t) {
   S.calendarOpenDay = null;
   S.openPop = null;
   updateHero();
-  transitionContentSwap(() => renderContentOnly());
+  updateRenewalMainContent();
 };
 window.setRenewalOfficer = function(officer) {
   S.renewalFilter.officer = S.renewalFilter.officer === officer ? 'All' : officer;

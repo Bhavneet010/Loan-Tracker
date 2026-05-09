@@ -23,6 +23,7 @@ export function renderCalendar(c) {
 
 function getFilteredRenewals(metrics) {
   let out = metrics.renewals.filter(l => !l.renewedDate);
+  if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
   if (!S.isAdmin) out = out.filter(l => l.allocatedTo === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') {
