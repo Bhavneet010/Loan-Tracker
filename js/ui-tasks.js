@@ -177,7 +177,10 @@ function criticalLoanRowHtml(key, loan) {
   const statusShort = key === 'npa15'
     ? `${loan._rs?.daysUntilNpa ?? 0}d`
     : `${daysPending(loan.receiveDate)}`;
-  return `<div class="task-critical-row" onclick="editLoan('${loan.id}')">
+  const sheetCall = key === 'pending10'
+    ? `openLoanDecisionSheet('${loan.id}')`
+    : `openRenewalDecisionSheet('${loan.id}')`;
+  return `<div class="task-critical-row" onclick="${sheetCall}">
     <span class="task-branch-chip">${esc(branchCode(loan.branch))}</span>
     <span class="task-critical-name">${esc(loan.customerName)}</span>
     ${isMissing ? '' : `<span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>`}
