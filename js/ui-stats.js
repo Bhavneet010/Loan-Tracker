@@ -5,6 +5,7 @@ import { getTaskCounts } from "./ui-tasks.js";
 
 let lastHeroMode = '';
 let lastHeroSelection = '';
+let heroLeaveTimer = null;
 let heroEnterTimer = null;
 
 function setHeroStats(sc, mode, selection, html, configure) {
@@ -13,11 +14,11 @@ function setHeroStats(sc, mode, selection, html, configure) {
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const animateMode = modeChanged && !reduceMotion && mode !== 'tasks' && lastHeroMode !== 'tasks';
 
-  // No-op refresh (snapshot tick during/after a mode switch). If a cascade is
-  // in flight, skip the swap so it doesn't restart on fresh DOM nodes; the next
-  // refresh after the timer expires will catch any data delta.
+  // No-op refresh (snapshot tick during/after a mode switch). If an exit or
+  // entrance is in flight, leave the DOM alone so the cascade can finish; the
+  // next render will pick up any data delta.
   if (!modeChanged && !selectionChanged) {
-    if (!sc.classList.contains('stats-mode-enter')) {
+    if (!sc.classList.contains('stats-mode-leave') && !sc.classList.contains('stats-mode-enter')) {
       configure();
       if (sc.innerHTML !== html) sc.innerHTML = html;
     }
@@ -26,20 +27,37 @@ function setHeroStats(sc, mode, selection, html, configure) {
     return;
   }
 
+  clearTimeout(heroLeaveTimer);
   clearTimeout(heroEnterTimer);
   sc.classList.remove('stats-mode-enter');
-  configure();
-  sc.innerHTML = html;
 
-  if (animateMode) {
-    void sc.offsetWidth;
-    sc.classList.add('stats-mode-enter');
-    heroEnterTimer = setTimeout(() => sc.classList.remove('stats-mode-enter'), 420);
-  } else if (selectionChanged && !reduceMotion) {
-    const active = sc.querySelector('.stat-fresh-active,.stat-rnw-active');
-    if (active) {
-      active.classList.add('stat-selected-enter');
-      heroEnterTimer = setTimeout(() => active.classList.remove('stat-selected-enter'), 430);
+  const enter = () => {
+    sc.classList.remove('stats-mode-leave');
+    if (animateMode) {
+      void sc.offsetWidth;
+      sc.classList.add('stats-mode-enter');
+      heroEnterTimer = setTimeout(() => sc.classList.remove('stats-mode-enter'), 420);
+    }
+  };
+
+  if (animateMode && sc.children.length > 0) {
+    // Fade container out, swap behind the curtain, then cascade the new cards in.
+    sc.classList.add('stats-mode-leave');
+    heroLeaveTimer = setTimeout(() => {
+      configure();
+      sc.innerHTML = html;
+      enter();
+    }, 140);
+  } else {
+    configure();
+    sc.innerHTML = html;
+    enter();
+    if (selectionChanged && !reduceMotion) {
+      const active = sc.querySelector('.stat-fresh-active,.stat-rnw-active');
+      if (active) {
+        active.classList.add('stat-selected-enter');
+        heroEnterTimer = setTimeout(() => active.classList.remove('stat-selected-enter'), 430);
+      }
     }
   }
 
@@ -84,7 +102,7 @@ export function updateHero() {
   if (S.appMode === 'tasks') {
     sc.style.display = 'none';
     sc.classList.remove('rnw-grid');
-    sc.classList.remove('stats-mode-enter');
+    sc.classList.remove('stats-mode-leave', 'stats-mode-enter');
     sc.innerHTML = '';
     lastHeroMode = 'tasks';
     lastHeroSelection = 'tasks';

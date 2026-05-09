@@ -836,7 +836,16 @@ body.fresh-mode #statsScroll .stat-s{line-height:1.15;}
 #statsScroll .stat-s{
   transition:color .16s ease,border-color .16s ease,box-shadow .16s ease,background-color .16s ease;
 }
-/* Mode-change cascade: subtle per-card fade so Fresh ↔ Renewals feels gentle. */
+/* Mode-change crossfade: container fades out so the layout swap (flex→grid,
+   different card sizes) happens behind opacity 0, then cards cascade in. */
+#statsScroll.stats-mode-leave{
+  animation:statsModeLeave .14s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes statsModeLeave{
+  from{opacity:1;}
+  to{opacity:0;}
+}
 #statsScroll.stats-mode-enter .stat{
   animation:statCardIn .26s cubic-bezier(.22,1,.36,1) both;
   will-change:transform,opacity;
@@ -858,6 +867,7 @@ body.fresh-mode #statsScroll .stat-s{line-height:1.15;}
   to{opacity:1;transform:translateY(0) scale(1);}
 }
 @media (prefers-reduced-motion:reduce){
+  #statsScroll.stats-mode-leave,
   #statsScroll.stats-mode-enter .stat,
   .stat-selected-enter{animation:none;}
 }
