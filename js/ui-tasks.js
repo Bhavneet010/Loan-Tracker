@@ -93,7 +93,7 @@ function pickDefaultCritical(critical) {
 function criticalTabHtml(key, items, active) {
   const meta = CRITICAL_META[key];
   const total = sumAmount(items);
-  return `<button type="button" class="task-critical-tab task-critical-tab--${meta.tone} ${active ? 'active' : ''}" onclick="toggleCriticalCare('${key}')" aria-expanded="${active}">
+  return `<button type="button" data-critical-key="${key}" class="task-critical-tab task-critical-tab--${meta.tone} ${active ? 'active' : ''}" onclick="toggleCriticalCare('${key}')" aria-expanded="${active}">
       <span class="task-critical-title">${meta.short}</span>
       <span class="task-critical-stats">
         <span class="task-critical-count">${items.length}</span>
@@ -369,9 +369,45 @@ function taskRenewalItemHtml(loan) {
 }
 
 window.toggleCriticalCare = function(key) {
+  if (!CRITICAL_META[key]) return;
+  if (S.taskCategory === key) return;
   S.taskCategory = key;
   S.taskView = 'overview';
-  window.render?.();
+
+  const careSection = document.querySelector('.task-care');
+  const oldDetail = careSection?.querySelector('.task-critical-detail');
+  if (!careSection || !oldDetail) { window.render?.(); return; }
+
+  const metrics = getLoanMetrics();
+  const critical = buildCriticalCare(metrics);
+  const items = sortCriticalItems(key, critical[key] || []);
+  const tone = CRITICAL_META[key].tone;
+
+  careSection.querySelectorAll('.task-critical-tab').forEach(tab => {
+    const isActive = tab.dataset.criticalKey === key;
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-expanded', isActive);
+  });
+
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `<div class="task-critical-detail task-critical-detail--${tone}">${criticalRowsHtml(key, items)}</div>`;
+  const newDetail = wrapper.firstElementChild;
+
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion || oldDetail.classList.contains('task-critical-detail--leaving')) {
+    oldDetail.replaceWith(newDetail);
+    return;
+  }
+
+  oldDetail.classList.add('task-critical-detail--leaving');
+  let swapped = false;
+  const doSwap = () => {
+    if (swapped) return;
+    swapped = true;
+    if (oldDetail.parentNode) oldDetail.replaceWith(newDetail);
+  };
+  oldDetail.addEventListener('animationend', doSwap, { once: true });
+  setTimeout(doSwap, 220);
 };
 
 window.expandCriticalCare = function(key) {
