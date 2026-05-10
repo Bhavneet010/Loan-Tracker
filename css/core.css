@@ -568,6 +568,17 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
   padding:5px 10px;border-radius:var(--radius-xs);font-size:var(--fs-md);font-weight:600;
   background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);cursor:pointer;
 }
+.btn-sm-ghost{
+  padding:5px 8px;border-radius:var(--radius-xs);font-size:15px;font-weight:600;
+  background:transparent;color:var(--text3);border:1px solid rgba(107,95,191,0.18);cursor:pointer;
+  transition:background var(--dur-fast);flex-shrink:0;
+}
+.btn-sm-ghost:hover{background:rgba(107,95,191,0.10);}
+.officer-av-initials{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  color:#fff;font-size:var(--fs-md);font-weight:900;
+}
 
 .fab{
   position:fixed;bottom:22px;right:18px;

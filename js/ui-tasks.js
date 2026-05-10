@@ -226,8 +226,14 @@ function bestOfficer(loans) {
 function performerCardHtml(label, row, type) {
   const empty = row.count === 0;
   const name = empty ? 'No entries yet' : row.officer;
+  const photo = !empty && S.officerPhotos?.[row.officer];
+  const avHtml = empty
+    ? `<span class="task-performer-av">&ndash;</span>`
+    : photo
+      ? `<img class="task-performer-av task-performer-av--photo" src="${photo}" alt="${esc(initials(row.officer))}">`
+      : `<span class="task-performer-av">${initials(row.officer)}</span>`;
   return `<div class="task-performer task-performer--${type}">
-    <span class="task-performer-av">${empty ? '&ndash;' : initials(row.officer)}</span>
+    ${avHtml}
     <div class="task-performer-copy">
       <div class="task-performer-title">${label}</div>
       <div class="task-performer-name">${esc(name)}</div>

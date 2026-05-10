@@ -1,6 +1,6 @@
 import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
-import { esc, toast } from "./utils.js";
+import { esc, toast, initials, officerColor } from "./utils.js";
 import { renderMonthEndSettings } from "./month-end.js";
 import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";
 
@@ -13,8 +13,21 @@ export function renderSettingsList() {
   if (!el) return;
   
   if (S.settingsTab === 'officers') {
-    el.innerHTML = `<div style="max-height:280px;overflow-y:auto;margin-bottom:8px;">
-        ${S.officers.map((o, i) => `<div class="setting-item"><span>${esc(o)}</span><button class="btn-sm-danger" onclick="removeOfficer(${i})">Remove</button></div>`).join('')}
+    el.innerHTML = `<div style="max-height:320px;overflow-y:auto;margin-bottom:8px;">
+        ${S.officers.map((o, i) => {
+          const photo = S.officerPhotos?.[o];
+          const avatar = photo
+            ? `<img src="${photo}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;flex-shrink:0;" alt="${esc(o)}">`
+            : `<span class="officer-av-initials" style="background:${officerColorInline(o)}">${esc(initials(o))}</span>`;
+          return `<div class="setting-item" style="gap:10px;align-items:center;">
+            ${avatar}
+            <span style="flex:1;font-weight:600;">${esc(o)}</span>
+            <input type="file" id="photoInput_${i}" accept="image/*" style="display:none;" onchange="handleOfficerPhotoUpload(event,${i})">
+            <button class="btn-sm-ghost" onclick="document.getElementById('photoInput_${i}').click()" title="${photo ? 'Change photo' : 'Upload photo'}">&#128247;</button>
+            ${photo ? `<button class="btn-sm-ghost" onclick="removeOfficerPhoto(${i})" title="Remove photo" style="color:#EF4444;">&#215;</button>` : ''}
+            <button class="btn-sm-danger" onclick="removeOfficer(${i})">Remove</button>
+          </div>`;
+        }).join('')}
       </div>
       <div style="display:flex;gap:8px;"><input type="text" id="newOfficer" placeholder="Add officer name" style="flex:1;"><button type="button" class="btn btn-primary-full" style="flex:none;padding:10px 16px;font-size:14px;border-radius:12px;" onclick="addOfficer()">Add</button></div>`;
   } else if (S.settingsTab === 'branches') {
@@ -100,6 +113,63 @@ window.removeBranch = async function(i) {
 window.setBranchOfficer = async function(code, off) {
   S.branchOfficers[code] = off; await saveSettings(); toast('Assigned officer &#10003;');
 };
+/* ── OFFICER PHOTO HELPERS ── */
+function officerColorInline(name) {
+  return officerColor(name).bg;
+}
+
+function compressOfficerPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const SIZE = 96;
+        const scale = Math.min(SIZE / img.width, SIZE / img.height, 1);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.80));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+window.handleOfficerPhotoUpload = async function(event, i) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const dataUrl = await compressOfficerPhoto(file);
+    const officer = S.officers[i];
+    if (!officer) return;
+    S.officerPhotos = { ...(S.officerPhotos || {}), [officer]: dataUrl };
+    await saveSettings();
+    renderSettingsList();
+    window.render?.();
+    toast('Photo updated &#10003;');
+  } catch (e) {
+    toast('Could not process photo');
+    console.error(e);
+  }
+};
+
+window.removeOfficerPhoto = async function(i) {
+  const officer = S.officers[i];
+  if (!officer) return;
+  if (!S.officerPhotos?.[officer]) return;
+  delete S.officerPhotos[officer];
+  await saveSettings();
+  renderSettingsList();
+  window.render?.();
+  toast('Photo removed');
+};
+
 window.saveRenewalTargets = async function() {
   const month = currentMonthKey();
   const targets = {};
