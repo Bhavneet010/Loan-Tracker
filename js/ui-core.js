@@ -195,7 +195,7 @@ function _grantAdminAccess() {
   S.filter = { category: 'All', officer: 'All' };
   localStorage.setItem('lpUser', 'Admin'); localStorage.setItem('lpAdmin', 'true');
   const av = document.getElementById('userAv');
-  av.textContent = '&#128274;'; av.style.background = ''; av.style.color = '';
+  av.textContent = '🔒'; av.style.background = ''; av.style.color = '';
   requestNotifPermission();
   toast('Admin mode active'); window.render();
 }
