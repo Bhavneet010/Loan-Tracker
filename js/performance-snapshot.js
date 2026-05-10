@@ -1,6 +1,6 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
-import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
+import { catCls, esc, fmtAmt, fmtDate, fmtShortDate, isFreshCC, shortCat, toast } from "./utils.js";
 import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
 
 import { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSections, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss } from "./performance-pdf.js";
@@ -53,6 +53,7 @@ const DAILY_SNAPSHOT = {
   className: "report-mockup-a",
 };
 const SNAPSHOT_BG_ASSETS = ["assets/snapshot/top-performer-bg.png"];
+const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function officerNamesFromMetrics(metrics) {
   const seen = new Set(S.officers);
@@ -569,11 +570,257 @@ function buildDailySnapshotPageHtml() {
   </div>`;
 }
 
-function renderPerformanceView(target) {
+function isoDate(date) {
+  const d = new Date(date);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function previousWeekDates() {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const day = today.getDay() || 7;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - day - 6);
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    return isoDate(date);
+  });
+}
+
+function weeklyDateLabel(dates) {
+  const start = fmtShortDate(dates[0]);
+  const end = fmtShortDate(dates[dates.length - 1]);
+  return `${start} - ${end}`;
+}
+
+function metricSeed() {
+  return { count: 0, amount: 0 };
+}
+
+function addLoanToMetric(metric, loan) {
+  metric.count++;
+  metric.amount += amountOf(loan);
+}
+
+function officerNamesFromWeekly(freshLoans, renewalLoans) {
+  const seen = new Set(S.officers);
+  const extra = [];
+  [freshLoans, renewalLoans].flat().forEach(loan => {
+    const name = loan.allocatedTo || "Unassigned";
+    if (!seen.has(name)) {
+      seen.add(name);
+      extra.push(name);
+    }
+  });
+  return [...S.officers, ...extra];
+}
+
+function buildWeeklyPerformanceData() {
+  const dates = previousWeekDates();
+  const dateSet = new Set(dates);
+  const freshLoans = S.loans.filter(loan =>
+    isFreshCC(loan) &&
+    loan.status === "sanctioned" &&
+    dateSet.has(loan.sanctionDate || "")
+  );
+  const renewalLoans = S.loans.filter(loan =>
+    !isFreshCC(loan) &&
+    loan.category === "SME" &&
+    dateSet.has(loan.renewedDate || "")
+  );
+  const officers = officerNamesFromWeekly(freshLoans, renewalLoans);
+  const createRows = () => officers.map(name => ({
+    name,
+    days: dates.map(date => ({ date, ...metricSeed() })),
+    total: metricSeed(),
+  }));
+  const freshRows = createRows();
+  const renewalRows = createRows();
+  const freshByOfficer = new Map(freshRows.map(row => [row.name, row]));
+  const renewalByOfficer = new Map(renewalRows.map(row => [row.name, row]));
+  const dateIndex = new Map(dates.map((date, index) => [date, index]));
+
+  const addToRows = (rowsByOfficer, loan, dateKey) => {
+    const name = loan.allocatedTo || "Unassigned";
+    const row = rowsByOfficer.get(name);
+    const index = dateIndex.get(loan[dateKey]);
+    if (!row || index === undefined) return;
+    addLoanToMetric(row.days[index], loan);
+    addLoanToMetric(row.total, loan);
+  };
+
+  freshLoans.forEach(loan => addToRows(freshByOfficer, loan, "sanctionDate"));
+  renewalLoans.forEach(loan => addToRows(renewalByOfficer, loan, "renewedDate"));
+
+  const freshTotal = freshRows.reduce((total, row) => {
+    total.count += row.total.count;
+    total.amount += row.total.amount;
+    return total;
+  }, metricSeed());
+  const renewalTotal = renewalRows.reduce((total, row) => {
+    total.count += row.total.count;
+    total.amount += row.total.amount;
+    return total;
+  }, metricSeed());
+
+  const officerRows = officers.map(name => {
+    const fresh = freshByOfficer.get(name)?.total || metricSeed();
+    const renewal = renewalByOfficer.get(name)?.total || metricSeed();
+    return { name, fresh, renewal, combined: fresh.amount + renewal.amount };
+  }).sort((a, b) => b.combined - a.combined || b.fresh.amount - a.fresh.amount || a.name.localeCompare(b.name));
+
+  return {
+    dates,
+    label: weeklyDateLabel(dates),
+    officers,
+    fresh: { loans: freshLoans, rows: freshRows, total: freshTotal },
+    renewal: { loans: renewalLoans, rows: renewalRows, total: renewalTotal },
+    officerRows,
+  };
+}
+
+function heatValueClass(metric, maxAmount) {
+  if (!metric.count) return "empty";
+  const pct = maxAmount > 0 ? metric.amount / maxAmount : 0;
+  if (pct >= 0.72) return "hot";
+  if (pct >= 0.38) return "mid";
+  return "low";
+}
+
+function renderWeeklyMetricChip(label, metric, tone) {
+  return `<div class="weekly-metric-chip ${tone}">
+    <span>${esc(label)}</span>
+    <strong>${esc(metric.count)}</strong>
+    <small>Rs ${esc(fmtAmt(metric.amount))}L</small>
+  </div>`;
+}
+
+function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
+  const maxAmount = Math.max(1, ...rows.flatMap(row => row.days.map(day => day.amount)));
+  return `<section class="weekly-heatmap-card ${tone}">
+    <div class="weekly-card-head">
+      <div>
+        <span>${esc(kicker)}</span>
+        <h3>${esc(title)}</h3>
+      </div>
+      <div class="weekly-legend">
+        <i></i><b>Low</b><i></i><b>High</b>
+      </div>
+    </div>
+    <div class="weekly-heatmap-grid" style="--weekly-cols:${dates.length + 2}">
+      <div class="weekly-grid-head officer">Officer</div>
+      ${dates.map((date, index) => `<div class="weekly-grid-head"><strong>${esc(WEEK_DAYS[index])}</strong><span>${esc(fmtShortDate(date))}</span></div>`).join("")}
+      <div class="weekly-grid-head total">Total</div>
+      ${rows.map(row => `
+        <div class="weekly-officer-name">${esc(row.name)}</div>
+        ${row.days.map(day => `<div class="weekly-heat-cell ${tone} ${heatValueClass(day, maxAmount)}">
+          <strong>${esc(day.count || "-")}</strong>
+          <span>${day.count ? `Rs ${esc(fmtAmt(day.amount))}L` : "Nil"}</span>
+        </div>`).join("")}
+        <div class="weekly-row-total">
+          <strong>${esc(row.total.count)}</strong>
+          <span>Rs ${esc(fmtAmt(row.total.amount))}L</span>
+        </div>
+      `).join("")}
+    </div>
+  </section>`;
+}
+
+function renderWeeklyOfficerStrip(rows) {
+  return `<section class="weekly-officer-strip">
+    <div class="weekly-strip-head">
+      <span>Officer Summary</span>
+      <strong>Fresh + renewal totals</strong>
+    </div>
+    <div class="weekly-strip-grid">
+      ${rows.map((row, index) => `<article class="weekly-officer-mini">
+        <div class="weekly-mini-rank">${esc(ordinal(index + 1))}</div>
+        <div>
+          <h4>${esc(row.name)}</h4>
+          <p>Fresh ${esc(row.fresh.count)} / Rs ${esc(fmtAmt(row.fresh.amount))}L</p>
+          <p>Renewal ${esc(row.renewal.count)} / Rs ${esc(fmtAmt(row.renewal.amount))}L</p>
+        </div>
+      </article>`).join("")}
+    </div>
+  </section>`;
+}
+
+function buildWeeklyPerformancePageHtml() {
+  const data = buildWeeklyPerformanceData();
+  const topFresh = [...data.officerRows].sort((a, b) =>
+    b.fresh.amount - a.fresh.amount || b.fresh.count - a.fresh.count || a.name.localeCompare(b.name)
+  )[0];
+  return `<div class="weekly-performance-wrap">
+    <div class="weekly-performance-report">
+      <header class="weekly-report-top">
+        <div class="weekly-brand-row">
+          <div class="weekly-brand-lock">
+            <div class="weekly-brand-mark"><img src="icon-192.png" alt="Nirnay logo"></div>
+            <strong><span>Nirnay</span></strong>
+          </div>
+          <div class="weekly-tagline">Decisions | Delivered</div>
+        </div>
+        <div class="weekly-hero-row">
+          <div>
+            <div class="weekly-kicker">Previous Week</div>
+            <h2>Weekly Performance</h2>
+            <p>${esc(data.label)}</p>
+          </div>
+          <div class="weekly-hero-total">
+            <label>Top Fresh</label>
+            <strong>${esc(topFresh ? topFresh.name : "-")}</strong>
+            <span>${topFresh ? `Rs ${esc(fmtAmt(topFresh.fresh.amount))}L - ${esc(topFresh.fresh.count)} cases` : "No data"}</span>
+          </div>
+        </div>
+        <div class="weekly-summary-row">
+          ${renderWeeklyMetricChip("Fresh Sanctions", data.fresh.total, "fresh")}
+          ${renderWeeklyMetricChip("Renewals", data.renewal.total, "renewal")}
+          ${renderWeeklyMetricChip("Officers", { count: data.officers.length, amount: data.fresh.total.amount + data.renewal.total.amount }, "total")}
+        </div>
+      </header>
+      <main class="weekly-report-main">
+        ${renderWeeklyHeatmapCard("Fresh Sanctions", "Daily officer heatmap", data.fresh.rows, data.dates, "fresh")}
+        ${renderWeeklyHeatmapCard("Renewals", "Daily officer heatmap", data.renewal.rows, data.dates, "renewal")}
+        ${renderWeeklyOfficerStrip(data.officerRows)}
+      </main>
+      <footer class="weekly-report-footer">
+        <span>Generated from Nirnay by Bhavneet</span>
+        <span>AMCC Paonta Sahib</span>
+      </footer>
+    </div>
+  </div>`;
+}
+
+function buildMonthlyPerformancePageHtml() {
+  const report = buildReportMockupData();
+  return `<div class="perf-period-placeholder monthly">
+    <div class="perf-period-placeholder-kicker">Monthly View</div>
+    <h2>Monthly Performance</h2>
+    <p>Detailed snapshot for ${esc(report.metrics.thisMonth)}.</p>
+  </div>`;
+}
+
+function renderDailyPerformanceView(target) {
   if (!target) return;
   target.innerHTML = buildDailySnapshotPageHtml();
 }
 
+function renderWeeklyPerformanceView(target) {
+  if (!target) return;
+  target.innerHTML = buildWeeklyPerformancePageHtml();
+}
+
+function renderMonthlyPerformanceView(target) {
+  if (!target) return;
+  target.innerHTML = buildMonthlyPerformancePageHtml();
+}
+
+function renderPerformanceView(target) {
+  renderDailyPerformanceView(target);
+}
 
 
-export { ensureHtml2Canvas, ensureJsPdf, ensureImageLoaded, officerNamesFromMetrics, emptyCatTotals, buildOfficerCategoryRows, buildOfficerRenewalRows, buildCategoryTotal, buildRenewalTotal, dualMetricCell, renderCategorySection, renderRenewalSection, buildReportMockupData, ordinal, renderLeaderChartCard, renderEditorialCategoryPills, renderEditorialOfficerCard, buildEditorialShareMockupHtml, renderMockupHeader, buildReportMockupHtml, buildDailySnapshotPageHtml, renderPerformanceView, DAILY_SNAPSHOT, SNAPSHOT_BG_ASSETS };
+
+export { ensureHtml2Canvas, ensureJsPdf, ensureImageLoaded, officerNamesFromMetrics, emptyCatTotals, buildOfficerCategoryRows, buildOfficerRenewalRows, buildCategoryTotal, buildRenewalTotal, dualMetricCell, renderCategorySection, renderRenewalSection, buildReportMockupData, buildWeeklyPerformanceData, ordinal, renderLeaderChartCard, renderEditorialCategoryPills, renderEditorialOfficerCard, buildEditorialShareMockupHtml, renderMockupHeader, buildReportMockupHtml, buildDailySnapshotPageHtml, buildWeeklyPerformancePageHtml, buildMonthlyPerformancePageHtml, renderDailyPerformanceView, renderWeeklyPerformanceView, renderMonthlyPerformanceView, renderPerformanceView, DAILY_SNAPSHOT, SNAPSHOT_BG_ASSETS };
