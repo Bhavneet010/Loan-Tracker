@@ -24,27 +24,6 @@ export function updateUserAvatar(officer) {
   }
 }
 
-/* ── DOUBLE-TAP → PHOTO OVERLAY ── */
-(function initAvatarTripleTap() {
-  const av = document.getElementById('userAv');
-  if (!av) return;
-  let count = 0, timer = null;
-  av.addEventListener('click', e => {
-    count++;
-    clearTimeout(timer);
-    timer = setTimeout(() => { count = 0; }, 600);
-    if (count >= 2) {
-      count = 0;
-      clearTimeout(timer);
-      if (!S.isAdmin && S.user) {
-        e.stopPropagation();
-        window.closeUserMenu?.();
-        window.openPhotoOverlay();
-      }
-    }
-  });
-})();
-
 window.toggleDark = function () {
   S.dark = !S.dark;
   document.body.classList.toggle('dark', S.dark);
@@ -62,6 +41,7 @@ window.toggleUserMenu = function () {
   if (menu.style.display === 'none') {
     menu.innerHTML = `
       ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
+      ${!S.isAdmin && S.user ? `<button class="udrop-item" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
       <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark ? '&#9728; Light theme' : '&#127769; Dark theme'}</button>
       <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
     menu.style.display = 'block';
