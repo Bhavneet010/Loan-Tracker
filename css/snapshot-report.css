@@ -1962,11 +1962,11 @@ body.dark .report-mockup{
   display:block;
   font-style:normal;
   font-size:7px;
-  font-weight:900;
-  color:#9A94AE;
-  letter-spacing:0.04em;
+  font-weight:950;
+  color:#6B5FBF;
+  letter-spacing:0.06em;
   text-transform:uppercase;
-  margin-top:2px;
+  margin-top:3px;
   max-width:52px;
   white-space:nowrap;
   overflow:hidden;
@@ -1975,8 +1975,23 @@ body.dark .report-mockup{
 
 /* ── Weekly heatmap: holiday data cells (no loans on holiday) ── */
 .weekly-heat-cell.holiday-day{
-  background:#EEEDF4;
-  opacity:0.55;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      rgba(107,95,191,0.09) 5px,
+      rgba(107,95,191,0.09) 6px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 5px,
+      rgba(107,95,191,0.09) 5px,
+      rgba(107,95,191,0.09) 6px
+    ),
+    #EEECF4;
+  opacity:0.7;
 }
 
 @media (max-width:560px){
