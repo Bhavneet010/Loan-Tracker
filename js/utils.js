@@ -1,7 +1,9 @@
-export const todayStr = () => { 
-  const d = new Date(); 
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); 
-  return d.toISOString().slice(0, 10); 
+import { countWorkingDaysBetween } from "./bank-holidays.js";
+
+export const todayStr = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
 };
 
 export const fmtDate = s => { 
@@ -84,8 +86,9 @@ export function computeRenewalStatus(loan) {
   const dueDateStr = new Date(msDue).toISOString().slice(0, 10);
   const npaDateStr = new Date(msNpa).toISOString().slice(0, 10);
   const daysToDue = Math.floor((msDue - now) / 86400000);
-  // Ceil so the last partial day shows as 1d, not 0d
-  const npaCountdown = Math.ceil((msNpa - now) / 86400000);
+  // Working days from today (exclusive) to NPA date (inclusive). Skips Sundays,
+  // 2nd/4th Saturdays, and admin-marked bank holidays.
+  const npaCountdown = countWorkingDaysBetween(todayStr(), npaDateStr);
 
   let status, daysUntilDue = 0, daysOverdue = 0, daysUntilNpa = 0;
 

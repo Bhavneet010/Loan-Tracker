@@ -49,6 +49,22 @@ export function countWorkingDaysInMonth(year, month) {
   return n;
 }
 
+// Working days where startStr < date <= endStr.
+// Excludes the start date itself, includes the end date if it's a working day.
+export function countWorkingDaysBetween(startStr, endStr) {
+  if (!startStr || !endStr || startStr >= endStr) return 0;
+  const cur = parseDate(startStr);
+  const end = parseDate(endStr);
+  cur.setDate(cur.getDate() + 1);
+  let n = 0;
+  while (cur <= end) {
+    const dateStr = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
+    if (!isBankHoliday(dateStr)) n++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return n;
+}
+
 // Working days remaining in (year, month) starting from today (inclusive).
 // Past months return 0; future months return the full count.
 export function countWorkingDaysLeft(year, month) {
