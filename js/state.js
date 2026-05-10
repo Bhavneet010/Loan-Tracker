@@ -53,34 +53,39 @@ function timeoutAfter(ms) {
   return new Promise(resolve => setTimeout(() => resolve(null), ms));
 }
 
+function applySettings(d) {
+  if (d.officers?.length) S.officers = d.officers;
+  if (d.branches?.length) S.branches = d.branches;
+  if (d.branchOfficers) S.branchOfficers = { ...S.branchOfficers, ...d.branchOfficers };
+  if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
+  if (d.adminPin) PIN = d.adminPin;
+}
+
 export async function loadSettings() {
   try {
     const configRef = doc(db, 'settings', 'config');
-    const snap = await Promise.race([
-      getDoc(configRef).catch(e => {
-        console.error(e);
-        return null;
-      }),
-      timeoutAfter(1500)
-    ]);
+    const fetchPromise = getDoc(configRef).catch(e => { console.error(e); return null; });
+    const snap = await Promise.race([fetchPromise, timeoutAfter(1500)]);
     if (!snap) {
       console.warn('[Settings] Using defaults while Firestore settings are unavailable.');
+      // Settings arrived after the timeout — apply them and re-render when they do arrive
+      fetchPromise.then(lateSnap => {
+        if (lateSnap?.exists()) {
+          applySettings(lateSnap.data());
+          window.scheduleRender?.();
+        }
+      });
       return;
     }
     if (snap.exists()) {
-      const d = snap.data();
-      if (d.officers?.length) S.officers = d.officers;
-      if (d.branches?.length) S.branches = d.branches;
-      if (d.branchOfficers) S.branchOfficers = { ...S.branchOfficers, ...d.branchOfficers };
-      if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
-      if (d.adminPin) PIN = d.adminPin;
+      applySettings(snap.data());
     } else {
       setDoc(configRef, {
-        officers: S.officers, 
-        branches: S.branches, 
-        branchOfficers: S.branchOfficers, 
+        officers: S.officers,
+        branches: S.branches,
+        branchOfficers: S.branchOfficers,
         renewalTargets: S.renewalTargets,
-        adminPin: PIN 
+        adminPin: PIN
       }).catch(e => console.error('Error creating default settings:', e));
     }
   } catch (e) { console.error(e); }
