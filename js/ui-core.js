@@ -150,16 +150,47 @@ window.selectUser = function (name) {
   closeOverlay('userModal', () => { requestNotifPermission(); window.render(); });
 };
 
+let _bioAvailableForModal = false;
+
+function _showBiometricView() {
+  document.getElementById('biometricView').style.display = '';
+  document.getElementById('pinView').style.display = 'none';
+  document.getElementById('pinUnlockBtn').style.display = 'none';
+}
+
+function _showPinView() {
+  document.getElementById('biometricView').style.display = 'none';
+  document.getElementById('pinView').style.display = '';
+  document.getElementById('pinUnlockBtn').style.display = '';
+  document.getElementById('biometricSwitchBtn').style.display = _bioAvailableForModal ? '' : 'none';
+  setTimeout(() => document.getElementById('pinInput').focus(), 50);
+}
+
+window.showBiometricView = function () {
+  _showBiometricView();
+  loginWithBiometric();
+};
+
+window.showPinView = function () {
+  _showPinView();
+};
+
 window.promptAdmin = async function () {
   closeOverlay('userModal', async () => {
-    const bioBtn = document.getElementById('biometricBtn');
-    if (bioBtn) {
-      const registered = isBiometricRegistered();
-      const available = registered && await isBiometricAvailable();
-      bioBtn.style.display = available ? 'flex' : 'none';
+    const registered = isBiometricRegistered();
+    _bioAvailableForModal = registered && await isBiometricAvailable();
+
+    if (_bioAvailableForModal) {
+      _showBiometricView();
+    } else {
+      _showPinView();
     }
+
     openOverlay('pinModal');
-    setTimeout(() => document.getElementById('pinInput').focus(), 260);
+
+    if (_bioAvailableForModal) {
+      loginWithBiometric();
+    }
   });
 };
 
@@ -184,7 +215,12 @@ window.loginWithBiometric = async function () {
     const ok = await authenticateBiometric();
     if (ok) closeOverlay('pinModal', _grantAdminAccess);
   } catch (e) {
-    if (e.name !== 'NotAllowedError') toast('Biometric failed &mdash; use PIN instead');
+    if (e.name === 'NotAllowedError') {
+      // user dismissed the prompt — stay on biometric view so they can retry
+    } else {
+      toast('Biometric failed &mdash; use PIN instead');
+      _showPinView();
+    }
   } finally {
     if (bioBtn) { bioBtn.disabled = false; bioBtn.classList.remove('bio-btn--loading'); }
   }
