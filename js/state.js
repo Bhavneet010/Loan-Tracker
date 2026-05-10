@@ -44,7 +44,8 @@ export const S = {
     '2413': 'Ritika', '6784': 'Ritika', '1755': 'Ritika', '4590': 'Ritika',
     '3399': 'Anchal', '4589': 'Anchal', '7459': 'Anchal', '50569': 'Anchal', '63982': 'Anchal',
     '1680': 'Nikita', '686': 'Nikita', '8117': 'Nikita', '50536': 'Nikita'
-  }
+  },
+  bankHolidays: []
 };
 
 export function setNotifReady(val) { notifReady = val; }
@@ -60,6 +61,7 @@ function applySettings(d) {
   if (d.branchOfficers) S.branchOfficers = { ...S.branchOfficers, ...d.branchOfficers };
   if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
   if (d.officerPhotos) S.officerPhotos = d.officerPhotos;
+  if (Array.isArray(d.bankHolidays)) S.bankHolidays = d.bankHolidays;
   if (d.adminPin) PIN = d.adminPin;
 }
 
@@ -102,6 +104,7 @@ export async function saveSettings() {
       branchOfficers: S.branchOfficers,
       renewalTargets: S.renewalTargets,
       officerPhotos: S.officerPhotos,
+      bankHolidays: S.bankHolidays,
       adminPin: PIN
     });
   } catch (e) { console.error('Error saving settings:', e); }

@@ -59,3 +59,35 @@ body.dark .cal-nav-btn{background:var(--dark-glass);border-color:rgba(107,95,191
 .cal-name{font-size:var(--fs-xs);font-weight:800;}
 .cal-bcode{font-size:var(--fs-xs);}
 .cal-amt{font-size:var(--fs-xs);}
+
+/* Bank holidays */
+.cal-cell--holiday{background:repeating-linear-gradient(45deg,rgba(120,120,140,0.10) 0 4px,rgba(120,120,140,0.18) 4px 8px);border-color:rgba(120,120,140,0.28);}
+.cal-cell--holiday .cal-day-num{color:var(--text3);}
+.cal-cell--holiday-custom{background:repeating-linear-gradient(45deg,rgba(180,120,40,0.13) 0 4px,rgba(180,120,40,0.22) 4px 8px);border-color:rgba(180,120,40,0.36);}
+.cal-cell--holiday-custom .cal-day-num{color:#8a5a10;}
+.cal-cell--holiday.cal-cell--overdue,
+.cal-cell--holiday.cal-cell--soon,
+.cal-cell--holiday.cal-cell--active-has{background:rgba(245,158,11,0.13);}
+.cal-holiday-mark{font-size:9px;font-weight:800;color:var(--text3);line-height:1;letter-spacing:0;}
+.cal-cell--holiday-custom .cal-holiday-mark{color:#8a5a10;}
+.cal-dot--holiday{background:repeating-linear-gradient(45deg,#9a9aa8 0 2px,#c8c8d0 2px 4px);}
+
+.cal-month-meta{display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);font-weight:600;color:var(--text3);margin-bottom:4px;flex-wrap:wrap;}
+.cal-month-meta .cal-month-count{margin-bottom:0;}
+.cal-month-sep{opacity:0.5;}
+.cal-working-days{color:var(--text2);font-weight:700;}
+
+.cal-holiday-row{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:6px;border-radius:var(--radius-xs);font-size:var(--fs-xs);font-weight:700;}
+.cal-holiday-row--auto{background:rgba(120,120,140,0.10);color:var(--text3);}
+.cal-holiday-row--custom{background:rgba(180,120,40,0.12);color:#7a4f0d;}
+.cal-holiday-row--add{background:transparent;padding:4px 0;}
+.cal-holiday-label{flex:1;}
+.cal-holiday-remove,.cal-holiday-add{background:rgba(255,255,255,0.7);border:1px solid rgba(107,95,191,0.18);color:var(--p1);border-radius:var(--radius-xs);padding:3px 8px;font-size:var(--fs-xs);font-weight:700;cursor:pointer;}
+.cal-holiday-remove:hover,.cal-holiday-add:hover{background:var(--p-bg);}
+
+body.dark .cal-cell--holiday{background:repeating-linear-gradient(45deg,rgba(160,160,180,0.10) 0 4px,rgba(160,160,180,0.18) 4px 8px);border-color:rgba(160,160,180,0.28);}
+body.dark .cal-cell--holiday-custom{background:repeating-linear-gradient(45deg,rgba(220,160,70,0.13) 0 4px,rgba(220,160,70,0.22) 4px 8px);border-color:rgba(220,160,70,0.36);}
+body.dark .cal-cell--holiday-custom .cal-day-num{color:#e9b56a;}
+body.dark .cal-cell--holiday-custom .cal-holiday-mark{color:#e9b56a;}
+body.dark .cal-holiday-row--custom{background:rgba(220,160,70,0.16);color:#f0c98a;}
+body.dark .cal-holiday-row--auto{background:rgba(160,160,180,0.12);}

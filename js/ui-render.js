@@ -1,4 +1,4 @@
-import { S } from "./state.js";
+import { S, saveSettings } from "./state.js";
 
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
@@ -6,6 +6,7 @@ import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans
 import { renderRenewals, updateRenewalMainContent } from "./ui-tabs-renewals.js";
 import { renderTasks } from "./ui-tasks.js";
 import { animateContent } from "./animate.js";
+import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
 
 let renderQueued = false;
 
@@ -121,6 +122,86 @@ window.toggleCalendarDay = function(dateStr) {
   S.calendarOpenDay = S.calendarOpenDay === dateStr ? null : dateStr;
   render();
 };
+
+window.addBankHoliday = function(dateStr) {
+  if (!S.isAdmin) return;
+  if (holidayReason(dateStr) && holidayReason(dateStr) !== 'custom') return;
+  const existing = findCustomHoliday(dateStr);
+  const promptMsg = existing
+    ? `Edit holiday label for ${dateStr}:`
+    : `Mark ${dateStr} as bank holiday.\nOptional label (e.g. Buddha Purnima):`;
+  const label = window.prompt(promptMsg, existing?.label || '');
+  if (label === null) return;
+  const trimmed = label.trim();
+  const list = (S.bankHolidays || []).filter(h => h.date !== dateStr);
+  list.push({ date: dateStr, label: trimmed });
+  list.sort((a, b) => a.date.localeCompare(b.date));
+  S.bankHolidays = list;
+  saveSettings();
+  render();
+};
+
+window.removeBankHoliday = function(dateStr) {
+  if (!S.isAdmin) return;
+  if (!findCustomHoliday(dateStr)) return;
+  if (!window.confirm(`Remove bank holiday on ${dateStr}?`)) return;
+  S.bankHolidays = (S.bankHolidays || []).filter(h => h.date !== dateStr);
+  saveSettings();
+  render();
+};
+
+/* ── CALENDAR LONG-PRESS (admin: add holiday) ── */
+(function attachCalendarLongPress() {
+  const LONG_PRESS_MS = 500;
+  let timer = null;
+  let suppressClick = false;
+  let pressedDate = null;
+
+  function clearTimer() {
+    if (timer) { clearTimeout(timer); timer = null; }
+  }
+
+  function start(e) {
+    if (!S.isAdmin) return;
+    const cell = e.target.closest('.cal-cell[data-date]');
+    if (!cell) return;
+    const dateStr = cell.dataset.date;
+    const reason = holidayReason(dateStr);
+    // Auto holidays (Sunday/2nd-4th Sat) cannot be customised
+    if (reason === 'sunday' || reason === 'saturday') return;
+    pressedDate = dateStr;
+    clearTimer();
+    timer = setTimeout(() => {
+      timer = null;
+      suppressClick = true;
+      if (navigator.vibrate) { try { navigator.vibrate(20); } catch {} }
+      window.addBankHoliday(pressedDate);
+    }, LONG_PRESS_MS);
+  }
+
+  function cancel() {
+    clearTimer();
+    pressedDate = null;
+  }
+
+  document.addEventListener('pointerdown', start);
+  document.addEventListener('pointerup', cancel);
+  document.addEventListener('pointercancel', cancel);
+  document.addEventListener('pointerleave', cancel);
+  document.addEventListener('pointermove', e => {
+    if (!timer) return;
+    // Cancel long-press on noticeable movement (scrolling)
+    if (Math.abs(e.movementX) > 4 || Math.abs(e.movementY) > 4) cancel();
+  });
+  // Suppress the click that follows a long-press so detail panel doesn't open
+  document.addEventListener('click', e => {
+    if (suppressClick) {
+      suppressClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
+})();
 
 window.setTaskCategory = function(cat) {
   S.taskCategory = cat;
