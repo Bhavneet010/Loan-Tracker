@@ -1904,3 +1904,100 @@ body.dark .report-mockup{
 .report-summary-chip{padding:7px 8px;border-radius:12px;}
 .report-summary-label{font-size:8px;}
 .report-summary-value{font-size:15px;}
+
+/* ── Weekly dashboard: week-selector bar ─────────────────────── */
+.weekly-selector-bar{
+  display:flex;
+  justify-content:center;
+  padding:10px 6px 4px;
+}
+.weekly-week-selector{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:#fff;
+  border:1px solid rgba(107,95,191,0.18);
+  border-radius:12px;
+  padding:8px 16px;
+  box-shadow:0 2px 8px rgba(43,32,100,0.06);
+}
+.weekly-week-selector-label{
+  color:#6B5FBF;
+  font-size:10px;
+  font-weight:950;
+  letter-spacing:0.10em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  font-family:'Outfit','Inter',sans-serif;
+}
+.weekly-week-selector-select{
+  border:1px solid rgba(107,95,191,0.22);
+  border-radius:8px;
+  background:#F7F4FC;
+  color:#050A2F;
+  font-size:13px;
+  font-weight:850;
+  padding:5px 10px;
+  cursor:pointer;
+  font-family:'Outfit','Inter',sans-serif;
+  outline:none;
+  min-width:200px;
+}
+.weekly-week-selector-select:focus{
+  border-color:#6B5FBF;
+}
+
+/* ── Weekly heatmap: holiday column headers ──────────────────── */
+.weekly-grid-head.weekly-grid-holiday{
+  background:#FFF0ED;
+  border:1px solid rgba(239,68,68,0.18);
+}
+.weekly-grid-head.weekly-grid-holiday strong{
+  color:#B91C1C;
+}
+.weekly-grid-head.weekly-grid-holiday span{
+  color:#E07060;
+}
+.weekly-holiday-badge{
+  display:block;
+  font-style:normal;
+  font-size:7px;
+  font-weight:950;
+  color:#D95040;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  margin-top:2px;
+  max-width:52px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* ── Weekly heatmap: holiday data cells (no loans on holiday) ── */
+.weekly-heat-cell.holiday-day{
+  background:#FFF5F3;
+  border:1px dashed rgba(239,68,68,0.28);
+}
+.weekly-heat-cell.holiday-day strong{
+  color:#B91C1C;
+  font-size:12px;
+}
+.weekly-heat-cell.holiday-day span{
+  color:#D97060;
+  font-size:7px;
+}
+
+@media (max-width:560px){
+  .weekly-week-selector{
+    gap:8px;
+    padding:6px 10px;
+    border-radius:10px;
+  }
+  .weekly-week-selector-select{
+    font-size:11px;
+    min-width:140px;
+  }
+  .weekly-holiday-badge{
+    display:none;
+  }
+}

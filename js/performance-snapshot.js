@@ -4,6 +4,7 @@ import { catCls, esc, fmtAmt, fmtDate, fmtShortDate, isFreshCC, shortCat, toast 
 import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
 
 import { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSections, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss } from "./performance-pdf.js";
+import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
 
 let localHtml2CanvasPromise = null;
 let localJsPdfPromise = null;
@@ -54,6 +55,8 @@ const DAILY_SNAPSHOT = {
 };
 const SNAPSHOT_BG_ASSETS = ["assets/snapshot/top-performer-bg.png"];
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+let _selectedWeekDates = null;
 
 function officerNamesFromMetrics(metrics) {
   const seen = new Set(S.officers);
@@ -595,6 +598,61 @@ function weeklyDateLabel(dates) {
   return `${start} - ${end}`;
 }
 
+function getWeeksInCurrentMonth() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const firstOfMonth = new Date(year, month, 1, 12, 0, 0);
+  const dow = firstOfMonth.getDay() || 7;
+  const firstMonday = new Date(firstOfMonth);
+  firstMonday.setDate(1 - (dow - 1));
+  firstMonday.setHours(12, 0, 0, 0);
+  const lastOfMonth = new Date(year, month + 1, 0, 12, 0, 0);
+  const weeks = [];
+  const cursor = new Date(firstMonday);
+  while (cursor <= lastOfMonth) {
+    const weekDates = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(cursor);
+      d.setDate(cursor.getDate() + i);
+      return isoDate(d);
+    });
+    weeks.push(weekDates);
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return weeks;
+}
+
+function getDefaultWeekDates(weeks) {
+  const prevMonday = previousWeekDates()[0];
+  return weeks.find(w => w[0] === prevMonday) || weeks[weeks.length - 1] || weeks[0];
+}
+
+function getWeekDatesFromMonday(mondayISO) {
+  const monday = new Date(mondayISO);
+  monday.setHours(12, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return isoDate(d);
+  });
+}
+
+function renderWeekSelectorHtml(weeks, selectedDates) {
+  const selectedMonday = selectedDates[0];
+  const now = new Date();
+  const monthName = now.toLocaleString("en-IN", { month: "long", year: "numeric" });
+  return `<div class="weekly-week-selector">
+    <span class="weekly-week-selector-label">${esc(monthName)}</span>
+    <select class="weekly-week-selector-select" onchange="selectWeekForPerformance(this.value)">
+      ${weeks.map(week => {
+        const label = weeklyDateLabel(week);
+        const sel = week[0] === selectedMonday ? " selected" : "";
+        return `<option value="${esc(week[0])}"${sel}>${esc(label)}</option>`;
+      }).join("")}
+    </select>
+  </div>`;
+}
+
 function metricSeed() {
   return { count: 0, amount: 0 };
 }
@@ -617,8 +675,8 @@ function officerNamesFromWeekly(freshLoans, renewalLoans) {
   return [...S.officers, ...extra];
 }
 
-function buildWeeklyPerformanceData() {
-  const dates = previousWeekDates();
+function buildWeeklyPerformanceData(targetDates) {
+  const dates = targetDates || previousWeekDates();
   const dateSet = new Set(dates);
   const freshLoans = S.loans.filter(loan =>
     isFreshCC(loan) &&
@@ -711,14 +769,31 @@ function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
     </div>
     <div class="weekly-heatmap-grid" style="--weekly-cols:${dates.length + 2}">
       <div class="weekly-grid-head officer">Officer</div>
-      ${dates.map((date, index) => `<div class="weekly-grid-head"><strong>${esc(WEEK_DAYS[index])}</strong><span>${esc(fmtShortDate(date))}</span></div>`).join("")}
+      ${dates.map((date, index) => {
+        const reason = holidayReason(date);
+        const holLabel = reason === "custom" ? (findCustomHoliday(date)?.label || "Holiday") : reason === "saturday" ? "Sat Off" : reason === "sunday" ? "Sunday" : "";
+        return `<div class="weekly-grid-head${reason ? " weekly-grid-holiday" : ""}">
+          <strong>${esc(WEEK_DAYS[index])}</strong>
+          <span>${esc(fmtShortDate(date))}</span>
+          ${reason ? `<em class="weekly-holiday-badge">${esc(holLabel)}</em>` : ""}
+        </div>`;
+      }).join("")}
       <div class="weekly-grid-head total">Total</div>
       ${rows.map(row => `
         <div class="weekly-officer-name">${esc(row.name)}</div>
-        ${row.days.map(day => `<div class="weekly-heat-cell ${tone} ${heatValueClass(day, maxAmount)}">
-          <strong>${esc(day.count || "-")}</strong>
-          <span>${day.count ? `Rs ${esc(fmtAmt(day.amount))}L` : "Nil"}</span>
-        </div>`).join("")}
+        ${row.days.map(day => {
+          const reason = holidayReason(day.date);
+          if (!day.count && reason) {
+            return `<div class="weekly-heat-cell holiday-day">
+              <strong>H</strong>
+              <span>Holiday</span>
+            </div>`;
+          }
+          return `<div class="weekly-heat-cell ${tone} ${heatValueClass(day, maxAmount)}">
+            <strong>${esc(day.count || "-")}</strong>
+            <span>${day.count ? `Rs ${esc(fmtAmt(day.amount))}L` : "Nil"}</span>
+          </div>`;
+        }).join("")}
         <div class="weekly-row-total">
           <strong>${esc(row.total.count)}</strong>
           <span>Rs ${esc(fmtAmt(row.total.amount))}L</span>
@@ -747,8 +822,10 @@ function renderWeeklyOfficerStrip(rows) {
   </section>`;
 }
 
-function buildWeeklyPerformancePageHtml() {
-  const data = buildWeeklyPerformanceData();
+function buildWeeklyPerformancePageHtml(targetDates) {
+  const data = buildWeeklyPerformanceData(targetDates);
+  const prevMonday = previousWeekDates()[0];
+  const kickerText = data.dates[0] === prevMonday ? "Previous Week" : "Selected Week";
   const topFresh = [...data.officerRows].sort((a, b) =>
     b.fresh.amount - a.fresh.amount || b.fresh.count - a.fresh.count || a.name.localeCompare(b.name)
   )[0];
@@ -764,7 +841,7 @@ function buildWeeklyPerformancePageHtml() {
         </div>
         <div class="weekly-hero-row">
           <div>
-            <div class="weekly-kicker">Previous Week</div>
+            <div class="weekly-kicker">${esc(kickerText)}</div>
             <h2>Weekly Performance</h2>
             <p>${esc(data.label)}</p>
           </div>
@@ -809,8 +886,18 @@ function renderDailyPerformanceView(target) {
 
 function renderWeeklyPerformanceView(target) {
   if (!target) return;
-  target.innerHTML = buildWeeklyPerformancePageHtml();
+  const weeks = getWeeksInCurrentMonth();
+  if (!_selectedWeekDates || !weeks.some(w => w[0] === _selectedWeekDates[0])) {
+    _selectedWeekDates = getDefaultWeekDates(weeks);
+  }
+  target.innerHTML = `<div class="weekly-selector-bar">${renderWeekSelectorHtml(weeks, _selectedWeekDates)}</div>${buildWeeklyPerformancePageHtml(_selectedWeekDates)}`;
 }
+
+window.selectWeekForPerformance = function (mondayISO) {
+  _selectedWeekDates = getWeekDatesFromMonday(mondayISO);
+  const target = document.getElementById("perfOverlayContent");
+  if (target) renderWeeklyPerformanceView(target);
+};
 
 function renderMonthlyPerformanceView(target) {
   if (!target) return;
