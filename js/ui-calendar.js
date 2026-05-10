@@ -82,7 +82,7 @@ function calendarHtml(calData, year, month) {
     if (hReason === 'custom') cls += ' cal-cell--holiday-custom';
     const isOpen = S.calendarOpenDay === dateStr;
     if (isOpen) cls += ' cal-cell--open';
-    const tappable = !!entry || S.isAdmin;
+    const tappable = !!entry || S.isAdmin || !!hReason;
     const titleAttr = customHoliday?.label ? ` title="${esc(customHoliday.label)}"` : (hReason === 'sunday' ? ' title="Sunday"' : hReason === 'saturday' ? ' title="2nd/4th Saturday"' : '');
     cells.push(`<div class="${cls}" data-date="${dateStr}"${tappable ? ` onclick="toggleCalendarDay('${dateStr}')"` : ''}${titleAttr}>
       <span class="cal-day-num">${day}</span>
