@@ -1953,7 +1953,7 @@ body.dark .report-mockup{
   border:1px solid rgba(107,95,191,0.10);
 }
 .weekly-grid-head.weekly-grid-holiday strong{
-  color:#7A748F;
+  color:#6B5FBF;
 }
 .weekly-grid-head.weekly-grid-holiday span{
   color:#9A94AE;
@@ -2005,6 +2005,7 @@ body.dark .report-mockup{
     min-width:140px;
   }
   .weekly-holiday-badge{
-    display:none;
+    font-size:6px;
+    max-width:36px;
   }
 }
