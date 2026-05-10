@@ -32,6 +32,7 @@ export const S = {
   loanMap: new Map(),
   notifications: [],
   renewalTargets: {},
+  officerPhotos: {},
   officers: ['Anchal', 'Nikita', 'Ritika'],
   branches: [
     '686 : NAHAN', '1680 : ADB PAONTA SAHIB', '1755 : PAONTA SAHIB',
@@ -58,6 +59,7 @@ function applySettings(d) {
   if (d.branches?.length) S.branches = d.branches;
   if (d.branchOfficers) S.branchOfficers = { ...S.branchOfficers, ...d.branchOfficers };
   if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
+  if (d.officerPhotos) S.officerPhotos = d.officerPhotos;
   if (d.adminPin) PIN = d.adminPin;
 }
 
@@ -85,6 +87,7 @@ export async function loadSettings() {
         branches: S.branches,
         branchOfficers: S.branchOfficers,
         renewalTargets: S.renewalTargets,
+        officerPhotos: S.officerPhotos,
         adminPin: PIN
       }).catch(e => console.error('Error creating default settings:', e));
     }
@@ -92,13 +95,14 @@ export async function loadSettings() {
 }
 
 export async function saveSettings() {
-  try { 
-    await setDoc(doc(db, 'settings', 'config'), { 
-      officers: S.officers, 
-      branches: S.branches, 
-      branchOfficers: S.branchOfficers, 
+  try {
+    await setDoc(doc(db, 'settings', 'config'), {
+      officers: S.officers,
+      branches: S.branches,
+      branchOfficers: S.branchOfficers,
       renewalTargets: S.renewalTargets,
-      adminPin: PIN 
-    }); 
+      officerPhotos: S.officerPhotos,
+      adminPin: PIN
+    });
   } catch (e) { console.error('Error saving settings:', e); }
 }

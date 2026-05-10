@@ -130,6 +130,7 @@
 }
 .task-performer--fresh .task-performer-av{background:linear-gradient(135deg,#fb923c,#f97316);}
 .task-performer--renewal .task-performer-av{background:linear-gradient(135deg,#8b7cf6,#7c6ee0);}
+.task-performer-av--photo{object-fit:cover;background:none;}
 .task-performer-copy{min-width:0;flex:1;}
 .task-performer-title{
   font-size:var(--fs-xs);font-weight:800;color:var(--text3);
