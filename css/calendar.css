@@ -61,10 +61,10 @@ body.dark .cal-nav-btn{background:var(--dark-glass);border-color:rgba(107,95,191
 .cal-amt{font-size:var(--fs-xs);}
 
 /* Bank holidays */
-.cal-cell--holiday{background:repeating-linear-gradient(45deg,rgba(120,120,140,0.10) 0 4px,rgba(120,120,140,0.18) 4px 8px);border-color:rgba(120,120,140,0.28);}
+.cal-cell--holiday{background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(120,120,140,0.07) 6px 12px);border-color:rgba(120,120,140,0.18);}
 .cal-cell--holiday .cal-day-num{color:var(--text3);}
-.cal-cell--holiday-custom{background:repeating-linear-gradient(45deg,rgba(180,120,40,0.13) 0 4px,rgba(180,120,40,0.22) 4px 8px);border-color:rgba(180,120,40,0.36);}
-.cal-cell--holiday-custom .cal-day-num{color:#8a5a10;}
+.cal-cell--holiday-custom{background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(180,120,40,0.09) 6px 12px);border-color:rgba(180,120,40,0.22);}
+.cal-cell--holiday-custom .cal-day-num{color:#a0701f;}
 .cal-cell--holiday.cal-cell--overdue,
 .cal-cell--holiday.cal-cell--soon,
 .cal-cell--holiday.cal-cell--active-has{background:rgba(245,158,11,0.13);}
@@ -85,8 +85,8 @@ body.dark .cal-nav-btn{background:var(--dark-glass);border-color:rgba(107,95,191
 .cal-holiday-remove,.cal-holiday-add{background:rgba(255,255,255,0.7);border:1px solid rgba(107,95,191,0.18);color:var(--p1);border-radius:var(--radius-xs);padding:3px 8px;font-size:var(--fs-xs);font-weight:700;cursor:pointer;}
 .cal-holiday-remove:hover,.cal-holiday-add:hover{background:var(--p-bg);}
 
-body.dark .cal-cell--holiday{background:repeating-linear-gradient(45deg,rgba(160,160,180,0.10) 0 4px,rgba(160,160,180,0.18) 4px 8px);border-color:rgba(160,160,180,0.28);}
-body.dark .cal-cell--holiday-custom{background:repeating-linear-gradient(45deg,rgba(220,160,70,0.13) 0 4px,rgba(220,160,70,0.22) 4px 8px);border-color:rgba(220,160,70,0.36);}
+body.dark .cal-cell--holiday{background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(180,180,200,0.06) 6px 12px);border-color:rgba(180,180,200,0.18);}
+body.dark .cal-cell--holiday-custom{background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(220,160,70,0.08) 6px 12px);border-color:rgba(220,160,70,0.22);}
 body.dark .cal-cell--holiday-custom .cal-day-num{color:#e9b56a;}
 body.dark .cal-cell--holiday-custom .cal-holiday-mark{color:#e9b56a;}
 body.dark .cal-holiday-row--custom{background:rgba(220,160,70,0.16);color:#f0c98a;}

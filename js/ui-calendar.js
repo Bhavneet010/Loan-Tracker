@@ -2,7 +2,7 @@ import { S } from "./state.js";
 import { getLoanMetrics } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { searchMatch } from "./ui-logic.js";
-import { holidayReason, findCustomHoliday, countWorkingDaysInMonth } from "./bank-holidays.js";
+import { holidayReason, findCustomHoliday, countWorkingDaysLeft } from "./bank-holidays.js";
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS = ['M','T','W','T','F','S','S'];
@@ -95,7 +95,7 @@ function calendarHtml(calData, year, month) {
     : '';
 
   const monthTotal = [...calData.values()].reduce((s, e) => s + e.loans.length, 0);
-  const workingDays = countWorkingDaysInMonth(year, month);
+  const workingDays = countWorkingDaysLeft(year, month);
 
   return `
     <div class="cal-wrap">
@@ -109,7 +109,7 @@ function calendarHtml(calData, year, month) {
       <div class="cal-month-meta">
         ${monthTotal > 0 ? `<span class="cal-month-count">${monthTotal} NPA date${monthTotal !== 1 ? 's' : ''}</span>` : '<span class="cal-month-count cal-month-count--empty">No NPA dates</span>'}
         <span class="cal-month-sep">·</span>
-        <span class="cal-working-days">${workingDays} working day${workingDays !== 1 ? 's' : ''}</span>
+        <span class="cal-working-days">${workingDays} working day${workingDays !== 1 ? 's' : ''} left</span>
       </div>
       <div class="cal-legend">
         <span class="cal-dot cal-dot--overdue"></span>NPA

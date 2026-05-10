@@ -1,6 +1,7 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, daysPending } from "./utils.js";
+import { countWorkingDaysLeft } from "./bank-holidays.js";
 
 const CATEGORY_META = {
   overdueLoans:    { title: 'Overdue Pending',    icon: '&#8987;', urgency: 'amber', type: 'loan' },
@@ -256,6 +257,7 @@ function renewalTargetsHtml(metrics) {
 
   const monthDate = metrics.thisMonth ? new Date(`${metrics.thisMonth}-01T00:00:00`) : new Date();
   const monthName = monthDate.toLocaleString('en-US', { month: 'long' });
+  const daysLeft = countWorkingDaysLeft(monthDate.getFullYear(), monthDate.getMonth());
 
   const leader = [...officers]
     .filter(o => o.done > 0 && o.target > 0)
@@ -292,6 +294,7 @@ function renewalTargetsHtml(metrics) {
   return `<section class="task-targets task-targets--v1">
     <div class="task-section-head task-target-title-row">
       <div class="task-target-month">Renewal Target · ${monthName}</div>
+      <div class="task-target-daysleft">${daysLeft} working day${daysLeft !== 1 ? 's' : ''} left</div>
     </div>
     <div class="targets-tile-grid">${tiles}</div>
   </section>`;

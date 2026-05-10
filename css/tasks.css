@@ -344,7 +344,9 @@
   font-size:var(--fs-md);font-weight:900;color:var(--text1);letter-spacing:-0.3px;
 }
 .task-target-month::after{content:'';}
-.task-targets--v1 .task-section-head{justify-content:flex-start;}
+.task-targets--v1 .task-section-head{justify-content:space-between;}
+.task-target-daysleft{font-size:var(--fs-xs);font-weight:800;color:var(--text2);background:rgba(107,95,191,0.10);border:1px solid rgba(107,95,191,0.18);border-radius:var(--radius-pill);padding:2px 8px;white-space:nowrap;letter-spacing:0.1px;}
+body.dark .task-target-daysleft{background:rgba(139,124,246,0.16);border-color:rgba(139,124,246,0.30);color:var(--text2);}
 
 .targets-tile-grid{
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:5px;

@@ -48,3 +48,22 @@ export function countWorkingDaysInMonth(year, month) {
   }
   return n;
 }
+
+// Working days remaining in (year, month) starting from today (inclusive).
+// Past months return 0; future months return the full count.
+export function countWorkingDaysLeft(year, month) {
+  const now = new Date();
+  const todayY = now.getFullYear();
+  const todayM = now.getMonth();
+  const todayD = now.getDate();
+  // Past month
+  if (year < todayY || (year === todayY && month < todayM)) return 0;
+  const days = new Date(year, month + 1, 0).getDate();
+  const startDay = (year === todayY && month === todayM) ? todayD : 1;
+  let n = 0;
+  for (let day = startDay; day <= days; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (!isBankHoliday(dateStr)) n++;
+  }
+  return n;
+}
