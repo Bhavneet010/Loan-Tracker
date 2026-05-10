@@ -251,25 +251,37 @@
 <div class="overlay center" id="pinModal" style="display:none;">
   <div class="modal-box">
     <h2>Admin Login</h2>
-    <p>Enter 6-digit PIN to continue</p>
-    <div class="form-group">
-      <input type="password" id="pinInput" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPin()">
+
+    <!-- Biometric view — shown by default when biometric is registered -->
+    <div id="biometricView" style="display:none;">
+      <p class="pin-modal__hint">Touch the sensor to authenticate</p>
+      <button id="biometricBtn" class="bio-btn bio-btn--hero" onclick="loginWithBiometric()" aria-label="Authenticate with biometric">
+        <svg class="bio-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2C8.5 2 5.5 4.5 5 8"/>
+          <path d="M5 12c0 3.87 3.13 7 7 7s7-3.13 7-7"/>
+          <path d="M19 8c-.5-3.5-3.5-6-7-6"/>
+          <path d="M12 8v4l2 2"/>
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 6c-3.31 0-6 2.69-6 6"/>
+          <path d="M12 18c3.31 0 6-2.69 6-6"/>
+        </svg>
+        <span class="bio-btn__label">Authenticate</span>
+      </button>
+      <button class="pin-modal__switch-link" onclick="showPinView()">Use PIN instead</button>
     </div>
-    <button id="biometricBtn" class="bio-btn" onclick="loginWithBiometric()" style="display:none;" aria-label="Use biometric login">
-      <svg class="bio-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2C8.5 2 5.5 4.5 5 8"/>
-        <path d="M5 12c0 3.87 3.13 7 7 7s7-3.13 7-7"/>
-        <path d="M19 8c-.5-3.5-3.5-6-7-6"/>
-        <path d="M12 8v4l2 2"/>
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M12 6c-3.31 0-6 2.69-6 6"/>
-        <path d="M12 18c3.31 0 6-2.69 6-6"/>
-      </svg>
-      <span class="bio-btn__label">Use Biometric</span>
-    </button>
+
+    <!-- PIN view — fallback or default when no biometric registered -->
+    <div id="pinView" style="display:none;">
+      <p class="pin-modal__hint">Enter 6-digit PIN to continue</p>
+      <div class="form-group">
+        <input type="password" id="pinInput" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPin()">
+      </div>
+      <button id="biometricSwitchBtn" class="pin-modal__switch-link" onclick="showBiometricView()" style="display:none;">Use Biometric instead</button>
+    </div>
+
     <div class="form-row">
       <button class="btn btn-cancel-full" onclick="closePinModal()">Cancel</button>
-      <button class="btn btn-primary-full" onclick="checkPin()">Unlock</button>
+      <button id="pinUnlockBtn" class="btn btn-primary-full" onclick="checkPin()" style="display:none;">Unlock</button>
     </div>
   </div>
 </div>
