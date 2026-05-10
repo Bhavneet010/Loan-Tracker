@@ -784,10 +784,7 @@ function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
         ${row.days.map(day => {
           const reason = holidayReason(day.date);
           if (!day.count && reason) {
-            return `<div class="weekly-heat-cell holiday-day">
-              <strong>H</strong>
-              <span>Holiday</span>
-            </div>`;
+            return `<div class="weekly-heat-cell holiday-day"></div>`;
           }
           return `<div class="weekly-heat-cell ${tone} ${heatValueClass(day, maxAmount)}">
             <strong>${esc(day.count || "-")}</strong>
