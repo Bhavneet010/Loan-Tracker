@@ -1108,6 +1108,44 @@ body.dark .tag.tag-returned{background:rgba(245,158,11,0.16);color:#FBBF24;borde
 .mode-btn { transition: transform 0.08s ease, background var(--dur-fast) ease, color var(--dur-fast) ease; }
 .mode-btn:active { transform: scale(0.93); }
 
+/* ── Officer photo overlay ───────────────────────────── */
+.photo-modal-box{
+  display:flex;flex-direction:column;align-items:center;
+  gap:14px;padding:32px 28px 24px;position:relative;
+  background:rgba(242,240,250,0.97);backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,0.85);border-radius:var(--radius-xl);
+  min-width:220px;
+}
+.photo-modal-close{
+  position:absolute;top:12px;right:14px;
+  background:none;border:none;font-size:18px;color:var(--text3);
+  cursor:pointer;line-height:1;padding:4px;
+}
+.photo-modal-av{
+  width:110px;height:110px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;font-weight:900;color:#fff;
+  overflow:hidden;flex-shrink:0;
+  box-shadow:0 6px 24px rgba(107,95,191,0.22);
+}
+.photo-modal-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.photo-modal-name{
+  font-size:var(--fs-base);font-weight:800;color:var(--text1);
+  letter-spacing:-0.3px;margin-top:-4px;
+}
+.photo-modal-actions{display:flex;flex-direction:column;gap:9px;width:100%;margin-top:4px;}
+.photo-modal-btn{
+  width:100%;padding:11px;border-radius:var(--radius-md);
+  font-size:var(--fs-md);font-weight:700;border:none;cursor:pointer;
+}
+.photo-modal-btn--edit{
+  background:linear-gradient(135deg,var(--p2),var(--p3));color:#fff;
+}
+.photo-modal-btn--delete{
+  background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);
+}
+body.dark .photo-modal-box{background:rgba(22,20,46,0.97);}
+
 /* ── Respect prefers-reduced-motion ───────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .content-enter, .content-enter-left, .content-enter-right,

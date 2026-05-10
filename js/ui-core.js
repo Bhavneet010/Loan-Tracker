@@ -1,4 +1,4 @@
-import { S, PIN } from "./state.js";
+import { S, PIN, saveSettings } from "./state.js";
 import { renderSettingsList } from "./ui-settings.js";
 import { toast, initials, officerColor } from "./utils.js";
 import { getLoanMetrics } from "./derived.js";
@@ -6,6 +6,44 @@ import { requestNotifPermission } from "./notifications.js";
 import { isBiometricRegistered, authenticateBiometric, isBiometricAvailable } from "./biometric.js";
 import { openOverlay, closeOverlay, transitionContentSwap } from "./animate.js";
 import { updateBadges, updateHero } from "./ui-stats.js";
+
+/* ── AVATAR HELPER ── */
+export function updateUserAvatar(officer) {
+  const el = document.getElementById('userAv');
+  if (!el) return;
+  const photo = S.officerPhotos?.[officer];
+  if (photo) {
+    el.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${initials(officer)}">`;
+    el.style.background = '';
+    el.style.color = '';
+  } else {
+    el.innerHTML = '';
+    el.textContent = initials(officer);
+    el.style.background = officerColor(officer).bg;
+    el.style.color = '#fff';
+  }
+}
+
+/* ── DOUBLE-TAP → PHOTO OVERLAY ── */
+(function initAvatarTripleTap() {
+  const av = document.getElementById('userAv');
+  if (!av) return;
+  let count = 0, timer = null;
+  av.addEventListener('click', e => {
+    count++;
+    clearTimeout(timer);
+    timer = setTimeout(() => { count = 0; }, 600);
+    if (count >= 2) {
+      count = 0;
+      clearTimeout(timer);
+      if (!S.isAdmin && S.user) {
+        e.stopPropagation();
+        window.closeUserMenu?.();
+        window.openPhotoOverlay();
+      }
+    }
+  });
+})();
 
 window.toggleDark = function () {
   S.dark = !S.dark;
@@ -112,8 +150,13 @@ window.showUserSelect = function () {
   document.getElementById('userList').innerHTML = S.officers.map(o => {
     const n = pending.filter(l => l.allocatedTo === o).length;
     const badge = n ? `<span class="officer-count">${n}</span>` : '';
+    const photo = S.officerPhotos?.[o];
+    const avInner = photo
+      ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);" alt="${initials(o)}">`
+      : initials(o);
+    const avStyle = photo ? '' : `background:${officerColor(o).bg};`;
     return `<button class="user-btn" onclick="selectUser('${o}')">
-      <div class="av" style="background:${officerColor(o).bg};">${initials(o)}</div><span>${o}</span>${badge}
+      <div class="av" style="${avStyle}">${avInner}</div><span>${o}</span>${badge}
     </button>`;
   }).join('');
   openOverlay('userModal');
@@ -123,10 +166,7 @@ window.selectUser = function (name) {
   S.user = name; S.isAdmin = false;
   S.filter = { category: 'All', officer: 'Mine' };
   localStorage.setItem('lpUser', name); localStorage.setItem('lpAdmin', 'false');
-  const av = document.getElementById('userAv');
-  av.textContent = initials(name);
-  av.style.background = officerColor(name).bg;
-  av.style.color = '#fff';
+  updateUserAvatar(name);
   closeOverlay('userModal', () => { requestNotifPermission(); window.render(); });
 };
 
@@ -179,6 +219,89 @@ function _grantAdminAccess() {
   requestNotifPermission();
   toast('Admin mode active'); window.render();
 }
+
+/* ── OFFICER PHOTO OVERLAY ── */
+function _compressAvatarPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const SIZE = 96;
+        const scale = Math.min(SIZE / img.width, SIZE / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.80));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function _refreshPhotoOverlayAv() {
+  const officer = S.user;
+  const photo = S.officerPhotos?.[officer];
+  const avEl = document.getElementById('photoOverlayAv');
+  const delBtn = document.getElementById('photoOverlayDeleteBtn');
+  if (!avEl) return;
+  if (photo) {
+    avEl.innerHTML = `<img src="${photo}" alt="${initials(officer)}">`;
+    avEl.style.background = '';
+    avEl.style.color = '';
+  } else {
+    avEl.innerHTML = '';
+    avEl.textContent = initials(officer);
+    avEl.style.background = officerColor(officer).bg;
+    avEl.style.color = '#fff';
+  }
+  if (delBtn) delBtn.style.display = photo ? '' : 'none';
+}
+
+window.openPhotoOverlay = function () {
+  if (!S.user || S.isAdmin) return;
+  const nameEl = document.getElementById('photoOverlayName');
+  if (nameEl) nameEl.textContent = S.user;
+  _refreshPhotoOverlayAv();
+  const fi = document.getElementById('avatarPhotoInput');
+  if (fi) fi.value = '';
+  openOverlay('photoOverlay');
+};
+
+window.closePhotoOverlay = function () {
+  closeOverlay('photoOverlay');
+};
+
+window.handleAvatarPhotoUpload = async function (event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const dataUrl = await _compressAvatarPhoto(file);
+    S.officerPhotos = { ...(S.officerPhotos || {}), [S.user]: dataUrl };
+    await saveSettings();
+    updateUserAvatar(S.user);
+    _refreshPhotoOverlayAv();
+    window.render?.();
+    toast('Photo updated &#10003;');
+  } catch (e) {
+    toast('Could not process photo');
+    console.error(e);
+  }
+};
+
+window.deleteAvatarPhoto = async function () {
+  if (!S.officerPhotos?.[S.user]) return;
+  delete S.officerPhotos[S.user];
+  await saveSettings();
+  updateUserAvatar(S.user);
+  _refreshPhotoOverlayAv();
+  window.render?.();
+  toast('Photo removed');
+};
 
 window.handleSettings = function () {
   if (!S.isAdmin) { toast('Admin access required'); return; }
