@@ -1,12 +1,11 @@
 import { S, loadSettings } from "./state.js";
-import { initials, officerColor } from "./utils.js";
 import { subscribeLoans } from "./db.js";
 import { subscribeNotifications } from "./notifications.js";
 import { render } from "./ui-render.js";
 import { initPushNotifications } from "./push-notifications.js";
 
 // Import modules to register window actions and side effects
-import "./ui-core.js";
+import { updateUserAvatar } from "./ui-core.js";
 import "./ui-decision-sheet.js";
 import "./importers.js";
 import "./loan-actions.js";
@@ -70,9 +69,7 @@ async function init() {
       if (su === 'Admin') {
         av.textContent = '🔒';
       } else {
-        av.textContent = initials(su);
-        av.style.background = (officerColor(su) || {bg:''}).bg;
-        av.style.color = '#fff';
+        updateUserAvatar(su);
       }
     }
   }

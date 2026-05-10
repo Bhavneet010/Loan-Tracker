@@ -139,6 +139,20 @@
   </div>
 </div>
 
+<!-- OFFICER PHOTO OVERLAY -->
+<div class="overlay center" id="photoOverlay" style="display:none;" onclick="if(event.target===this)closePhotoOverlay()">
+  <div class="modal-box photo-modal-box">
+    <button class="photo-modal-close" onclick="closePhotoOverlay()" aria-label="Close">&#10005;</button>
+    <div id="photoOverlayAv" class="photo-modal-av"></div>
+    <div id="photoOverlayName" class="photo-modal-name"></div>
+    <div class="photo-modal-actions">
+      <input type="file" id="avatarPhotoInput" accept="image/*" style="display:none;" onchange="handleAvatarPhotoUpload(event)">
+      <button class="btn photo-modal-btn photo-modal-btn--edit" onclick="document.getElementById('avatarPhotoInput').click()">&#128247; Change Photo</button>
+      <button class="btn photo-modal-btn photo-modal-btn--delete" id="photoOverlayDeleteBtn" onclick="deleteAvatarPhoto()">&#128465; Remove</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD/EDIT FORM -->
 <div class="overlay" id="formModal" style="display:none;">
   <div class="sheet">
