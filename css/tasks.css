@@ -360,7 +360,7 @@
   max-width:100%;
 }
 .targets-tile-name{
-  font-size:var(--fs-xs);font-weight:900;color:var(--text1);line-height:1;
+  font-size:var(--fs-sm);font-weight:900;color:var(--text1);line-height:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
 .targets-tile-donut{
