@@ -769,22 +769,18 @@ function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
     </div>
     <div class="weekly-heatmap-grid" style="--weekly-cols:${dates.length + 2}">
       <div class="weekly-grid-head officer">Officer</div>
-      ${dates.map((date, index) => {
-        const reason = holidayReason(date);
-        const holLabel = reason === "custom" ? (findCustomHoliday(date)?.label || "Holiday") : reason === "saturday" ? "Sat Off" : reason === "sunday" ? "Sunday" : "";
-        return `<div class="weekly-grid-head${reason ? " weekly-grid-holiday" : ""}">
+      ${dates.map((date, index) => `<div class="weekly-grid-head">
           <strong>${esc(WEEK_DAYS[index])}</strong>
           <span>${esc(fmtShortDate(date))}</span>
-          ${reason ? `<em class="weekly-holiday-badge">${esc(holLabel)}</em>` : ""}
-        </div>`;
-      }).join("")}
+        </div>`).join("")}
       <div class="weekly-grid-head total">Total</div>
       ${rows.map(row => `
         <div class="weekly-officer-name">${esc(row.name)}</div>
         ${row.days.map(day => {
           const reason = holidayReason(day.date);
           if (!day.count && reason) {
-            return `<div class="weekly-heat-cell holiday-day"></div>`;
+            const holLabel = reason === "custom" ? (findCustomHoliday(day.date)?.label || "Holiday") : "Holiday";
+            return `<div class="weekly-heat-cell holiday-day"><span>${esc(holLabel)}</span></div>`;
           }
           return `<div class="weekly-heat-cell ${tone} ${heatValueClass(day, maxAmount)}">
             <strong>${esc(day.count || "-")}</strong>

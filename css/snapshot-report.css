@@ -1947,32 +1947,6 @@ body.dark .report-mockup{
   border-color:#6B5FBF;
 }
 
-/* ── Weekly heatmap: holiday column headers ──────────────────── */
-.weekly-grid-head.weekly-grid-holiday{
-  background:#EEECF4;
-  border:1px solid rgba(107,95,191,0.10);
-}
-.weekly-grid-head.weekly-grid-holiday strong{
-  color:#6B5FBF;
-}
-.weekly-grid-head.weekly-grid-holiday span{
-  color:#9A94AE;
-}
-.weekly-holiday-badge{
-  display:block;
-  font-style:normal;
-  font-size:7px;
-  font-weight:950;
-  color:#6B5FBF;
-  letter-spacing:0.06em;
-  text-transform:uppercase;
-  margin-top:3px;
-  max-width:52px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
 /* ── Weekly heatmap: holiday data cells (no loans on holiday) ── */
 .weekly-heat-cell.holiday-day{
   background:
@@ -1993,6 +1967,13 @@ body.dark .report-mockup{
     #EEECF4;
   opacity:0.7;
 }
+.weekly-heat-cell.holiday-day span{
+  color:#6B5FBF;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+}
 
 @media (max-width:560px){
   .weekly-week-selector{
@@ -2003,9 +1984,5 @@ body.dark .report-mockup{
   .weekly-week-selector-select{
     font-size:11px;
     min-width:140px;
-  }
-  .weekly-holiday-badge{
-    font-size:6px;
-    max-width:36px;
   }
 }
