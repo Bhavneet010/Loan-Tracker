@@ -479,6 +479,21 @@
   max-width:none;
   min-height:1123px;
 }
+.weekly-performance-report.weekly-export .weekly-officer-name{
+  font-size:14px;
+}
+.weekly-performance-report.weekly-export .weekly-heat-cell strong,
+.weekly-performance-report.weekly-export .weekly-row-total strong{
+  font-size:17px;
+}
+.weekly-performance-report.weekly-export .weekly-heat-cell span,
+.weekly-performance-report.weekly-export .weekly-row-total span{
+  font-size:9.5px;
+}
+.weekly-performance-report.weekly-export .weekly-heat-cell.holiday-day span,
+.weekly-performance-report.weekly-export .weekly-heat-cell.officer-away span{
+  font-size:9px;
+}
 @media (max-width:560px){
   .weekly-performance-wrap{
     padding:1px 0 14px;
