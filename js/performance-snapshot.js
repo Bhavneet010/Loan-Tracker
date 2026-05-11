@@ -754,7 +754,6 @@ function renderWeeklyMetricChip(label, metric, tone) {
     <div class="weekly-metric-copy">
       <span>${esc(label)}</span>
       <strong>${esc(metric.count)}<small>${esc(noun)}</small></strong>
-      <em>This week</em>
     </div>
     <div class="weekly-metric-amount">
       <b>Rs ${esc(fmtAmt(metric.amount))}L</b>
