@@ -87,7 +87,7 @@ export function renderSettingsList() {
               <strong>${esc(item.officer)}</strong>
               <span>${esc(typeLabel)} · ${esc(dateText)}${item.label ? ` · ${esc(item.label)}` : ''}</span>
             </div>
-            <button class="btn-sm-danger" onclick="removeOfficerAvailability(${JSON.stringify(item.id)})">Remove</button>
+            <button class="btn-sm-danger" data-id="${esc(item.id)}" onclick="removeOfficerAvailability(this.dataset.id)">Remove</button>
           </div>`;
         }).join('') : '<div class="setting-item"><span>No officer availability marked yet.</span></div>'}
       </div>`;
@@ -123,6 +123,13 @@ function currentMonthKey() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 7);
+}
+
+window.renderSettingsList = renderSettingsList;
+
+function refreshAvailabilityViews() {
+  window.render?.();
+  window.refreshWeeklyPerformanceIfVisible?.();
 }
 
 /* ── SETTINGS ACTIONS ── */
@@ -245,7 +252,7 @@ window.addOfficerAvailability = async function() {
   S.officerAvailability = [...(S.officerAvailability || []), item];
   await saveSettings();
   renderSettingsList();
-  window.render?.();
+  refreshAvailabilityViews();
   toast(`${availabilityLabel(item)} marked`);
 };
 
@@ -253,7 +260,7 @@ window.removeOfficerAvailability = async function(id) {
   S.officerAvailability = (S.officerAvailability || []).filter(item => normalizeAvailability(item)?.id !== id);
   await saveSettings();
   renderSettingsList();
-  window.render?.();
+  refreshAvailabilityViews();
   toast('Availability removed');
 };
 

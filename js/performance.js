@@ -128,6 +128,12 @@ window.showDailySnapshot = function () {
   window.showPerformanceSnapshot("daily");
 };
 
+window.refreshWeeklyPerformanceIfVisible = function () {
+  const overlay = document.getElementById("perfOverlay");
+  if (!overlay || getComputedStyle(overlay).display === "none") return;
+  if (activePerformancePeriod === "weekly") window.showPerformanceSnapshot("weekly");
+};
+
 window.shareDailySnapshotJpeg = async function () {
   const card = document.querySelector(".editorial-phone-report");
   if (!card) {
@@ -316,6 +322,7 @@ window.saveWeeklyOfficerAvailability = async function (officer, date, type) {
 
   S.officerAvailability = [...list, item];
   await saveSettings();
+  window.renderSettingsList?.();
   window.closeWeeklyAvailabilitySheet();
   window.showPerformanceSnapshot("weekly");
   toast(`${AVAILABILITY_TYPES[type]} marked`);
@@ -333,6 +340,7 @@ window.removeWeeklyOfficerAvailability = async function (officer, date) {
   }
   S.officerAvailability = removeAvailabilityDate(S.officerAvailability || [], existing, date);
   await saveSettings();
+  window.renderSettingsList?.();
   window.closeWeeklyAvailabilitySheet();
   window.showPerformanceSnapshot("weekly");
   toast("Availability removed");

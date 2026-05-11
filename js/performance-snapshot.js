@@ -580,12 +580,12 @@ function isoDate(date) {
   return d.toISOString().slice(0, 10);
 }
 
-function previousWeekDates() {
+function currentWeekDates() {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
   const day = today.getDay() || 7;
   const monday = new Date(today);
-  monday.setDate(today.getDate() - day - 6);
+  monday.setDate(today.getDate() - day + 1);
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(monday);
     date.setDate(monday.getDate() + index);
@@ -624,8 +624,8 @@ function getWeeksInCurrentMonth() {
 }
 
 function getDefaultWeekDates(weeks) {
-  const prevMonday = previousWeekDates()[0];
-  return weeks.find(w => w[0] === prevMonday) || weeks[weeks.length - 1] || weeks[0];
+  const currentMonday = currentWeekDates()[0];
+  return weeks.find(w => w[0] === currentMonday) || weeks[weeks.length - 1] || weeks[0];
 }
 
 function getWeekDatesFromMonday(mondayISO) {
@@ -677,7 +677,7 @@ function officerNamesFromWeekly(freshLoans, renewalLoans) {
 }
 
 function buildWeeklyPerformanceData(targetDates) {
-  const dates = targetDates || previousWeekDates();
+  const dates = targetDates || currentWeekDates();
   const dateSet = new Set(dates);
   const freshLoans = S.loans.filter(loan =>
     isFreshCC(loan) &&
@@ -829,8 +829,8 @@ function renderWeeklyOfficerStrip(rows) {
 
 function buildWeeklyPerformancePageHtml(targetDates) {
   const data = buildWeeklyPerformanceData(targetDates);
-  const prevMonday = previousWeekDates()[0];
-  const kickerText = data.dates[0] === prevMonday ? "Previous Week" : "Selected Week";
+  const currentMonday = currentWeekDates()[0];
+  const kickerText = data.dates[0] === currentMonday ? "Current Week" : "Selected Week";
   const topFresh = [...data.officerRows].sort((a, b) =>
     b.fresh.amount - a.fresh.amount || b.fresh.count - a.fresh.count || a.name.localeCompare(b.name)
   )[0];
