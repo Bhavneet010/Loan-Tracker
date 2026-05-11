@@ -5,6 +5,7 @@ import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, build
 
 import { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSections, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss } from "./performance-pdf.js";
 import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
+import { availabilityLabel, availabilityShortLabel, officerAvailabilityForDate } from "./officer-availability.js";
 
 let localHtml2CanvasPromise = null;
 let localJsPdfPromise = null;
@@ -755,6 +756,10 @@ function renderWeeklyMetricChip(label, metric, tone) {
   </div>`;
 }
 
+function weeklyCellActionAttrs(officer, date) {
+  return ` data-officer="${esc(officer)}" data-date="${esc(date)}" onclick="markWeeklyOfficerAvailability(this.dataset.officer,this.dataset.date)" title="Mark officer availability"`;
+}
+
 function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
   const maxAmount = Math.max(1, ...rows.flatMap(row => row.days.map(day => day.amount)));
   return `<section class="weekly-heatmap-card ${tone}">
@@ -777,14 +782,21 @@ function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
       ${rows.map(row => `
         <div class="weekly-officer-name">${esc(row.name)}</div>
         ${row.days.map(day => {
+          const availability = officerAvailabilityForDate(row.name, day.date);
+          if (!day.count && availability) {
+            return `<div class="weekly-heat-cell weekly-heat-cell-action officer-away ${esc(availability.type)}"${weeklyCellActionAttrs(row.name, day.date)}>
+              <span>${esc(availabilityLabel(availability))}</span>
+            </div>`;
+          }
           const reason = holidayReason(day.date);
           if (!day.count && reason) {
             const holLabel = reason === "custom" ? (findCustomHoliday(day.date)?.label || "Holiday") : "Holiday";
-            return `<div class="weekly-heat-cell holiday-day"><span>${esc(holLabel)}</span></div>`;
+            return `<div class="weekly-heat-cell weekly-heat-cell-action holiday-day"${weeklyCellActionAttrs(row.name, day.date)}><span>${esc(holLabel)}</span></div>`;
           }
-          return `<div class="weekly-heat-cell ${tone} ${heatValueClass(day, maxAmount)}">
+          return `<div class="weekly-heat-cell weekly-heat-cell-action ${tone} ${heatValueClass(day, maxAmount)} ${availability ? `has-away ${esc(availability.type)}` : ""}"${weeklyCellActionAttrs(row.name, day.date)}>
             <strong>${esc(day.count || "-")}</strong>
             <span>${day.count ? `Rs ${esc(fmtAmt(day.amount))}L` : "Nil"}</span>
+            ${availability ? `<em>${esc(availabilityShortLabel(availability))}</em>` : ""}
           </div>`;
         }).join("")}
         <div class="weekly-row-total">

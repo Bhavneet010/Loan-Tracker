@@ -1,11 +1,12 @@
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-import { S } from "./state.js";
+import { S, saveSettings } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
 import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
 import { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSections, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss } from "./performance-pdf.js";
 import { ensureHtml2Canvas, ensureJsPdf, ensureImageLoaded, officerNamesFromMetrics, emptyCatTotals, buildOfficerCategoryRows, buildOfficerRenewalRows, buildCategoryTotal, buildRenewalTotal, dualMetricCell, renderCategorySection, renderRenewalSection, buildReportMockupData, ordinal, renderLeaderChartCard, renderEditorialCategoryPills, renderEditorialOfficerCard, buildEditorialShareMockupHtml, renderMockupHeader, buildReportMockupHtml, buildDailySnapshotPageHtml, renderDailyPerformanceView, renderWeeklyPerformanceView, renderMonthlyPerformanceView, renderPerformanceView, DAILY_SNAPSHOT, SNAPSHOT_BG_ASSETS } from "./performance-snapshot.js";
+import { AVAILABILITY_TYPES, availabilityLabel, normalizeAvailability, officerAvailabilityForDate } from "./officer-availability.js";
 
 const PERFORMANCE_PERIODS = {
   daily: {
@@ -265,6 +266,78 @@ window.shareWeeklyPerformanceJpeg = async function () {
   }
 };
 
+window.markWeeklyOfficerAvailability = function (officer, date) {
+  if (!S.isAdmin) {
+    toast("Admin only");
+    return;
+  }
+  if (!officer || !date) return;
+
+  const existing = officerAvailabilityForDate(officer, date);
+  showWeeklyAvailabilitySheet(officer, date, existing);
+};
+
+window.closeWeeklyAvailabilitySheet = function () {
+  document.querySelector(".weekly-availability-overlay")?.remove();
+};
+
+window.saveWeeklyOfficerAvailabilityFromSheet = function (type) {
+  const sheet = document.querySelector(".weekly-availability-sheet");
+  if (!sheet) return;
+  window.saveWeeklyOfficerAvailability(sheet.dataset.officer, sheet.dataset.date, type);
+};
+
+window.removeWeeklyOfficerAvailabilityFromSheet = function () {
+  const sheet = document.querySelector(".weekly-availability-sheet");
+  if (!sheet) return;
+  window.removeWeeklyOfficerAvailability(sheet.dataset.officer, sheet.dataset.date);
+};
+
+window.saveWeeklyOfficerAvailability = async function (officer, date, type) {
+  if (!S.isAdmin) {
+    toast("Admin only");
+    return;
+  }
+  const existing = officerAvailabilityForDate(officer, date);
+  const label = document.getElementById("weeklyAvailabilityNote")?.value.trim() || "";
+  const list = removeAvailabilityDate(S.officerAvailability || [], existing, date);
+  const item = normalizeAvailability({
+    id: `${officer}_${type}_${date}_${Date.now()}`.replace(/[^a-z0-9_-]+/gi, "_"),
+    officer,
+    type,
+    startDate: date,
+    endDate: date,
+    label,
+  });
+  if (!item) {
+    toast("Could not mark availability");
+    return;
+  }
+
+  S.officerAvailability = [...list, item];
+  await saveSettings();
+  window.closeWeeklyAvailabilitySheet();
+  window.showPerformanceSnapshot("weekly");
+  toast(`${AVAILABILITY_TYPES[type]} marked`);
+};
+
+window.removeWeeklyOfficerAvailability = async function (officer, date) {
+  if (!S.isAdmin) {
+    toast("Admin only");
+    return;
+  }
+  const existing = officerAvailabilityForDate(officer, date);
+  if (!existing) {
+    window.closeWeeklyAvailabilitySheet();
+    return;
+  }
+  S.officerAvailability = removeAvailabilityDate(S.officerAvailability || [], existing, date);
+  await saveSettings();
+  window.closeWeeklyAvailabilitySheet();
+  window.showPerformanceSnapshot("weekly");
+  toast("Availability removed");
+};
+
 function todayFileName() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -275,6 +348,37 @@ function formatShareDate(date) {
     month: "long",
     year: "numeric",
   });
+}
+
+function showWeeklyAvailabilitySheet(officer, date, existing) {
+  window.closeWeeklyAvailabilitySheet();
+  const overlay = document.createElement("div");
+  overlay.className = "weekly-availability-overlay";
+  overlay.innerHTML = `<div class="weekly-availability-sheet" role="dialog" aria-modal="true" data-officer="${esc(officer)}" data-date="${esc(date)}">
+    <div class="sheet-handle"></div>
+    <div class="weekly-availability-head">
+      <div>
+        <span>Officer Availability</span>
+        <h3>${esc(officer)}</h3>
+        <p>${esc(date)}${existing ? ` · ${esc(availabilityLabel(existing))}` : ""}</p>
+      </div>
+      <button type="button" class="weekly-availability-close" onclick="closeWeeklyAvailabilitySheet()">Close</button>
+    </div>
+    <label class="weekly-availability-note">
+      <span>Note</span>
+      <input id="weeklyAvailabilityNote" type="text" value="${esc(existing?.label || "")}" placeholder="Optional note">
+    </label>
+    <div class="weekly-availability-actions">
+      <button type="button" class="weekly-availability-btn holiday" onclick="saveWeeklyOfficerAvailabilityFromSheet('holiday')">On Leave</button>
+      <button type="button" class="weekly-availability-btn deputation" onclick="saveWeeklyOfficerAvailabilityFromSheet('deputation')">Deputation</button>
+      ${existing ? `<button type="button" class="weekly-availability-btn remove" onclick="removeWeeklyOfficerAvailabilityFromSheet()">Remove</button>` : ""}
+    </div>
+  </div>`;
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) window.closeWeeklyAvailabilitySheet();
+  });
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById("weeklyAvailabilityNote")?.focus(), 80);
 }
 
 function renderPerformancePeriodToggle(currentPeriod = activePerformancePeriod) {
@@ -301,4 +405,39 @@ async function logSnapshot() {
     const dateStr = today.toISOString().split("T")[0];
     await setDoc(doc(db, "snapshotLogs", dateStr), { sharedAt: new Date().toISOString() }, { merge: true });
   } catch(e) {}
+}
+
+function addDays(dateStr, days) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d, 12, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 10);
+}
+
+function cloneAvailabilityRange(item, startDate, endDate, suffix) {
+  if (!item || startDate > endDate) return null;
+  return {
+    ...item,
+    id: `${item.id}_${suffix}_${startDate}_${endDate}`.replace(/[^a-z0-9_-]+/gi, "_"),
+    startDate,
+    endDate,
+  };
+}
+
+function removeAvailabilityDate(items, existing, date) {
+  if (!existing) return [...items];
+  const out = [];
+  items.forEach(item => {
+    const normalized = normalizeAvailability(item);
+    if (!normalized || normalized.id !== existing.id) {
+      out.push(item);
+      return;
+    }
+    const before = cloneAvailabilityRange(normalized, normalized.startDate, addDays(date, -1), "before");
+    const after = cloneAvailabilityRange(normalized, addDays(date, 1), normalized.endDate, "after");
+    if (before) out.push(before);
+    if (after) out.push(after);
+  });
+  return out;
 }

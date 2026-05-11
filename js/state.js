@@ -33,6 +33,7 @@ export const S = {
   notifications: [],
   renewalTargets: {},
   officerPhotos: {},
+  officerAvailability: [],
   officers: ['Anchal', 'Nikita', 'Ritika'],
   branches: [
     '686 : NAHAN', '1680 : ADB PAONTA SAHIB', '1755 : PAONTA SAHIB',
@@ -61,6 +62,7 @@ function applySettings(d) {
   if (d.branchOfficers) S.branchOfficers = { ...S.branchOfficers, ...d.branchOfficers };
   if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
   if (d.officerPhotos) S.officerPhotos = d.officerPhotos;
+  if (Array.isArray(d.officerAvailability)) S.officerAvailability = d.officerAvailability;
   if (Array.isArray(d.bankHolidays)) S.bankHolidays = d.bankHolidays;
   if (d.adminPin) PIN = d.adminPin;
 }
@@ -90,6 +92,7 @@ export async function loadSettings() {
         branchOfficers: S.branchOfficers,
         renewalTargets: S.renewalTargets,
         officerPhotos: S.officerPhotos,
+        officerAvailability: S.officerAvailability,
         adminPin: PIN
       }).catch(e => console.error('Error creating default settings:', e));
     }
@@ -104,6 +107,7 @@ export async function saveSettings() {
       branchOfficers: S.branchOfficers,
       renewalTargets: S.renewalTargets,
       officerPhotos: S.officerPhotos,
+      officerAvailability: S.officerAvailability,
       bankHolidays: S.bankHolidays,
       adminPin: PIN
     });

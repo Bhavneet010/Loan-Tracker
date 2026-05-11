@@ -255,6 +255,13 @@
   text-align:center;
   padding:5px;
 }
+.weekly-heat-cell-action{
+  cursor:pointer;
+  position:relative;
+}
+.weekly-heat-cell-action:hover{
+  box-shadow:0 0 0 2px rgba(107,95,191,0.22) inset;
+}
 .weekly-heat-cell strong,
 .weekly-row-total strong{
   color:#050A2F;
@@ -263,10 +270,15 @@
 }
 .weekly-heat-cell span,
 .weekly-row-total span{
+  display:block;
+  max-width:100%;
   margin-top:3px;
   color:#555070;
   font-size:8px;
   font-weight:850;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 .weekly-heat-cell.empty{
   background:#F5F2FA;
@@ -281,6 +293,69 @@
 .weekly-heat-cell.hot strong,
 .weekly-heat-cell.hot span{
   color:#fff;
+}
+.weekly-heat-cell em{
+  position:absolute;
+  top:3px;
+  right:4px;
+  display:block;
+  max-width:28px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.78);
+  color:#7C3AED;
+  font-size:6px;
+  font-style:normal;
+  font-weight:950;
+  line-height:1;
+  padding:2px 3px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.weekly-heat-cell.holiday-day{
+  background:repeating-linear-gradient(45deg,#F5F2FA 0 6px,#ECE8F8 6px 12px);
+  border:1px solid rgba(107,95,191,0.10);
+}
+.weekly-heat-cell.holiday-day span{
+  margin-top:0;
+  color:#78758B;
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:0;
+}
+.weekly-heat-cell.officer-away{
+  border:1px solid rgba(120,120,140,0.16);
+  background:
+    repeating-linear-gradient(45deg,#F6F4FA 0 6px,#ECEAF2 6px 12px);
+  opacity:0.82;
+}
+.weekly-heat-cell.officer-away.deputation{
+  border-color:rgba(100,116,139,0.18);
+  background:
+    repeating-linear-gradient(45deg,#F3F5F8 0 6px,#E8ECF1 6px 12px);
+}
+.weekly-heat-cell.officer-away strong{
+  color:#5F5B72;
+}
+.weekly-heat-cell.officer-away.deputation strong{
+  color:#475569;
+}
+.weekly-heat-cell.officer-away span{
+  margin-top:0;
+  color:#6F6A80;
+  font-size:8px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:0;
+}
+.weekly-heat-cell.officer-away.deputation span{
+  color:#566273;
+}
+.weekly-heat-cell.has-away.holiday{
+  box-shadow:0 0 0 2px rgba(120,120,140,0.16) inset;
+}
+.weekly-heat-cell.has-away.deputation{
+  box-shadow:0 0 0 2px rgba(100,116,139,0.18) inset;
 }
 .weekly-row-total{
   background:#ECE8F8;
@@ -1952,26 +2027,18 @@ body.dark .report-mockup{
   background:
     repeating-linear-gradient(
       45deg,
-      transparent,
-      transparent 5px,
-      rgba(107,95,191,0.09) 5px,
-      rgba(107,95,191,0.09) 6px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 5px,
-      rgba(107,95,191,0.09) 5px,
-      rgba(107,95,191,0.09) 6px
+      #F6F4FA 0 6px,
+      #ECEAF2 6px 12px
     ),
     #EEECF4;
-  opacity:0.7;
+  border:1px solid rgba(120,120,140,0.16);
+  opacity:0.82;
 }
 .weekly-heat-cell.holiday-day span{
-  color:#6B5FBF;
-  font-size:7px;
+  color:#78758B;
+  font-size:8px;
   font-weight:900;
-  letter-spacing:0.04em;
+  letter-spacing:0;
   text-transform:uppercase;
 }
 

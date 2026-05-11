@@ -13,7 +13,7 @@
 .cal-dot--active{background:#F59E0B;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:10px;}
 .cal-dow{text-align:center;font-size:var(--fs-xs);font-weight:800;color:var(--text3);padding:4px 0;}
-.cal-cell{aspect-ratio:1;border-radius:var(--radius-sm);position:relative;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all var(--dur-fast);}
+.cal-cell{aspect-ratio:1;border-radius:var(--radius-sm);position:relative;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all var(--dur-fast);overflow:hidden;min-width:0;}
 .cal-cell--empty{background:transparent;border-color:transparent;cursor:default;}
 .cal-cell--past{background:rgba(255,255,255,0.25);opacity:0.6;}
 .cal-cell--today{border:2px solid var(--p2);}
@@ -68,7 +68,7 @@ body.dark .cal-nav-btn{background:var(--dark-glass);border-color:rgba(107,95,191
 .cal-cell--holiday.cal-cell--overdue,
 .cal-cell--holiday.cal-cell--soon,
 .cal-cell--holiday.cal-cell--active-has{background:rgba(245,158,11,0.13);}
-.cal-holiday-mark{font-size:9px;font-weight:800;color:var(--text3);line-height:1;letter-spacing:0;}
+.cal-holiday-mark{display:block;max-width:calc(100% - 4px);font-size:8px;font-weight:900;color:var(--text3);line-height:1;letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
 .cal-cell--holiday-custom .cal-holiday-mark{color:#8a5a10;}
 .cal-dot--holiday{background:repeating-linear-gradient(45deg,#9a9aa8 0 2px,#c8c8d0 2px 4px);}
 

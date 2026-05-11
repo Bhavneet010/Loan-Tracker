@@ -3,6 +3,7 @@ import { S, saveSettings } from "./state.js";
 import { esc, toast, initials, officerColor } from "./utils.js";
 import { renderMonthEndSettings } from "./month-end.js";
 import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";
+import { AVAILABILITY_TYPES, availabilityLabel, normalizeAvailability } from "./officer-availability.js";
 
 /* ── SETTINGS UI ── */
 export function renderSettingsList() {
@@ -56,6 +57,40 @@ export function renderSettingsList() {
         </div>`).join('')}
       </div>
       <button type="button" class="btn btn-primary-full" style="width:100%;padding:13px;border-radius:13px;" onclick="saveRenewalTargets()">Save Targets</button>`;
+  } else if (S.settingsTab === 'availability') {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    const todayStr = today.toISOString().slice(0, 10);
+    const records = (S.officerAvailability || [])
+      .map(normalizeAvailability)
+      .filter(Boolean)
+      .sort((a, b) => b.startDate.localeCompare(a.startDate) || a.officer.localeCompare(b.officer));
+    el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.45;">Mark officer-specific leave or deputation days. These do not change bank working-day calculations; they only show officer availability on weekly performance.</div>
+      <div class="availability-form">
+        <select id="availabilityOfficer">
+          ${S.officers.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('')}
+        </select>
+        <select id="availabilityType">
+          ${Object.entries(AVAILABILITY_TYPES).map(([value, label]) => `<option value="${value}">${esc(label)}</option>`).join('')}
+        </select>
+        <input type="date" id="availabilityStart" value="${todayStr}">
+        <input type="date" id="availabilityEnd" value="${todayStr}">
+        <input type="text" id="availabilityLabel" placeholder="Optional note">
+        <button type="button" class="btn btn-primary-full" onclick="addOfficerAvailability()">Add</button>
+      </div>
+      <div class="availability-list">
+        ${records.length ? records.map(item => {
+          const typeLabel = AVAILABILITY_TYPES[item.type] || 'Unavailable';
+          const dateText = item.startDate === item.endDate ? item.startDate : `${item.startDate} to ${item.endDate}`;
+          return `<div class="availability-item">
+            <div class="availability-main">
+              <strong>${esc(item.officer)}</strong>
+              <span>${esc(typeLabel)} · ${esc(dateText)}${item.label ? ` · ${esc(item.label)}` : ''}</span>
+            </div>
+            <button class="btn-sm-danger" onclick="removeOfficerAvailability(${JSON.stringify(item.id)})">Remove</button>
+          </div>`;
+        }).join('') : '<div class="setting-item"><span>No officer availability marked yet.</span></div>'}
+      </div>`;
   } else if (S.settingsTab === 'adminid') {
     el.innerHTML = `<div class="form-group"><label>New PIN (6 digits)</label><input type="password" id="newPin" class="pin-input" maxlength="6" inputmode="numeric"></div>
       <div class="form-group"><label>Confirm New PIN</label><input type="password" id="confirmPin" class="pin-input" maxlength="6" inputmode="numeric"></div>
@@ -183,6 +218,45 @@ window.saveRenewalTargets = async function() {
   window.render?.();
   toast('Targets saved &#10003;');
 };
+
+window.addOfficerAvailability = async function() {
+  const officer = document.getElementById('availabilityOfficer')?.value;
+  const type = document.getElementById('availabilityType')?.value || 'holiday';
+  const startDate = document.getElementById('availabilityStart')?.value;
+  const rawEndDate = document.getElementById('availabilityEnd')?.value;
+  const label = document.getElementById('availabilityLabel')?.value.trim() || '';
+  if (!officer || !startDate) {
+    toast('Select officer and date');
+    return;
+  }
+  const endDate = rawEndDate && rawEndDate >= startDate ? rawEndDate : startDate;
+  const item = normalizeAvailability({
+    id: `${officer}_${type}_${startDate}_${endDate}_${Date.now()}`.replace(/[^a-z0-9_-]+/gi, '_'),
+    officer,
+    type,
+    startDate,
+    endDate,
+    label,
+  });
+  if (!item) {
+    toast('Could not add availability');
+    return;
+  }
+  S.officerAvailability = [...(S.officerAvailability || []), item];
+  await saveSettings();
+  renderSettingsList();
+  window.render?.();
+  toast(`${availabilityLabel(item)} marked`);
+};
+
+window.removeOfficerAvailability = async function(id) {
+  S.officerAvailability = (S.officerAvailability || []).filter(item => normalizeAvailability(item)?.id !== id);
+  await saveSettings();
+  renderSettingsList();
+  window.render?.();
+  toast('Availability removed');
+};
+
 window.changePassword = async function() {
   const np = document.getElementById('newPin').value.trim();
   const cp = document.getElementById('confirmPin').value.trim();
