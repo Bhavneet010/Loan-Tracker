@@ -6,10 +6,13 @@
 .report-mockup-gallery-single{
   gap:12px;
 }
+#perfOverlayContent.weekly-performance-content{
+  padding:2px 10px 10px!important;
+}
 .weekly-performance-wrap{
   display:flex;
   justify-content:center;
-  padding:10px 6px 18px;
+  padding:2px 6px 18px;
 }
 .weekly-performance-report{
   width:min(100%, 794px);
@@ -122,9 +125,11 @@
 }
 .weekly-summary-row{
   margin-top:14px;
+  align-items:stretch;
 }
 .weekly-metric-chip{
   flex:1 1 0;
+  min-width:0;
   border-radius:15px;
   border:1px solid rgba(107,95,191,0.12);
   background:#fff;
@@ -428,9 +433,10 @@
 }
 @media (max-width:560px){
   .weekly-performance-wrap{
-    padding:8px 0 14px;
+    padding:1px 0 14px;
   }
   .weekly-performance-report{
+    min-height:0;
     border-radius:0;
     padding:16px 8px 34px;
   }
@@ -460,8 +466,13 @@
   }
   .weekly-summary-row{
     gap:6px;
+    margin-top:9px;
   }
   .weekly-metric-chip{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    min-height:58px;
     padding:9px 7px;
   }
   .weekly-metric-chip strong{
@@ -522,26 +533,39 @@
     font-size:6px;
   }
   .weekly-strip-grid{
-    grid-template-columns:1fr;
-    gap:6px;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:4px;
   }
   .weekly-officer-mini{
-    grid-template-columns:34px 1fr;
-    padding:7px;
+    grid-template-columns:24px minmax(0, 1fr);
+    gap:4px;
+    padding:5px 4px;
+    border-radius:10px;
   }
   .weekly-mini-rank{
-    width:31px;
-    height:31px;
-    border-radius:9px;
-    font-size:10px;
+    width:23px;
+    height:23px;
+    border-radius:7px;
+    font-size:8px;
   }
   .weekly-officer-mini h4{
-    font-size:13px;
+    overflow:hidden;
+    margin-bottom:2px;
+    font-size:10px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+  .weekly-officer-mini p{
+    overflow:hidden;
+    margin-top:1px;
+    font-size:6px;
+    line-height:1.15;
+    white-space:nowrap;
+    text-overflow:ellipsis;
   }
   .weekly-report-footer{
-    left:10px;
-    right:10px;
-    bottom:12px;
+    position:static;
+    margin-top:12px;
   }
 }
 .perf-snapshot-share-row{
@@ -1984,7 +2008,7 @@ body.dark .report-mockup{
 .weekly-selector-bar{
   display:flex;
   justify-content:center;
-  padding:4px 4px 2px;
+  padding:1px 4px 0;
 }
 .weekly-week-selector{
   display:flex;

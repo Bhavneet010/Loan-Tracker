@@ -120,8 +120,11 @@ window.showPerformanceSnapshot = function (period = "daily") {
     overlayActions.innerHTML = current.actions;
   }
   const content = document.getElementById("perfOverlayContent");
-  if (content) content.style.padding = "0";
-  current.render(content);
+  if (content) {
+    content.style.padding = "0";
+    content.classList.toggle("weekly-performance-content", currentPeriod === "weekly");
+    current.render(content);
+  }
 };
 
 window.showDailySnapshot = function () {

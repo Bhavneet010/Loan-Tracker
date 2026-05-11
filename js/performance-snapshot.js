@@ -859,7 +859,6 @@ function buildWeeklyPerformancePageHtml(targetDates) {
         <div class="weekly-summary-row">
           ${renderWeeklyMetricChip("Fresh Sanctions", data.fresh.total, "fresh")}
           ${renderWeeklyMetricChip("Renewals", data.renewal.total, "renewal")}
-          ${renderWeeklyMetricChip("Officers", { count: data.officers.length, amount: data.fresh.total.amount + data.renewal.total.amount }, "total")}
         </div>
       </header>
       <main class="weekly-report-main">
