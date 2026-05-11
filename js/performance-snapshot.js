@@ -749,10 +749,17 @@ function heatValueClass(metric, maxAmount) {
 }
 
 function renderWeeklyMetricChip(label, metric, tone) {
+  const noun = metric.count === 1 ? "case" : "cases";
   return `<div class="weekly-metric-chip ${tone}">
-    <span>${esc(label)}</span>
-    <strong>${esc(metric.count)}</strong>
-    <small>Rs ${esc(fmtAmt(metric.amount))}L</small>
+    <div class="weekly-metric-copy">
+      <span>${esc(label)}</span>
+      <strong>${esc(metric.count)}<small>${esc(noun)}</small></strong>
+      <em>This week</em>
+    </div>
+    <div class="weekly-metric-amount">
+      <b>Rs ${esc(fmtAmt(metric.amount))}L</b>
+      <i>Total amount</i>
+    </div>
   </div>`;
 }
 
