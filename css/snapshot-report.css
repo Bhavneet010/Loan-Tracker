@@ -379,13 +379,15 @@
 .weekly-heat-cell.officer-away{
   border:1px solid rgba(120,120,140,0.16);
   background:
-    repeating-linear-gradient(45deg,#F6F4FA 0 6px,#ECEAF2 6px 12px);
+    repeating-linear-gradient(45deg,#F6F4FA 0 6px,#ECEAF2 6px 12px),
+    #EEECF4;
   opacity:0.82;
 }
 .weekly-heat-cell.officer-away.deputation{
   border-color:rgba(100,116,139,0.18);
   background:
-    repeating-linear-gradient(45deg,#F3F5F8 0 6px,#E8ECF1 6px 12px);
+    repeating-linear-gradient(45deg,#F3F5F8 0 6px,#E8ECF1 6px 12px),
+    #EDF1F5;
 }
 .weekly-heat-cell.officer-away strong{
   color:#5F5B72;
