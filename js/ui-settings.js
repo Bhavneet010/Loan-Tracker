@@ -1,12 +1,22 @@
 import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
-import { esc, toast, initials, officerColor } from "./utils.js";
+import { esc, toast, initials, officerColor, timeAgo } from "./utils.js";
 import { renderMonthEndSettings } from "./month-end.js";
 import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";
 import { AVAILABILITY_TYPES, availabilityLabel, normalizeAvailability } from "./officer-availability.js";
 
+/* ── PRESENCE TAB STATE ── */
+let _presenceUnsub = null;
+let _presenceRefreshTimer = null;
+
+function _stopPresence() {
+  if (_presenceUnsub) { _presenceUnsub(); _presenceUnsub = null; }
+  if (_presenceRefreshTimer) { clearInterval(_presenceRefreshTimer); _presenceRefreshTimer = null; }
+}
+
 /* ── SETTINGS UI ── */
 export function renderSettingsList() {
+  _stopPresence();
   document.querySelectorAll('.settings-tabs .stab').forEach(b => {
     b.classList.toggle('active', b.dataset.stab === S.settingsTab);
   });
@@ -108,6 +118,44 @@ export function renderSettingsList() {
       <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#F59E0B,#B45309);" onclick="importMonthlyReturns()">&#128229; Import April 2026 returns</button>
       <input type="file" id="csvFileInput" style="display:none;" onchange="handleCsvUpload(event)">
       <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">&#128229; Upload CSV</button>`;
+  } else if (S.settingsTab === 'userstatus') {
+    el.innerHTML = `
+      <div style="padding:4px 2px 10px;font-size:13px;color:#7B7A9A;line-height:1.45;">Who is currently active in the app. Presence updates every 2 minutes.</div>
+      <div id="presenceList"><div class="skeleton-wrap"><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div></div></div>`;
+    import("./presence.js").then(m => {
+      let latestData = {};
+      function renderPresence() {
+        const listEl = document.getElementById('presenceList');
+        if (!listEl) { _stopPresence(); return; }
+        const users = [...S.officers, 'Admin'];
+        listEl.innerHTML = users.map(user => {
+          const p = latestData[user];
+          const lastSeen = p?.lastSeen;
+          const online = m.isOnline(lastSeen);
+          const recent = lastSeen && !online && (Date.now() - new Date(lastSeen).getTime()) < 60 * 60 * 1000;
+          const dotColor = online ? '#10B981' : recent ? '#F59E0B' : '#D1D5DB';
+          const statusText = lastSeen ? timeAgo(lastSeen) : 'Never seen';
+          const deviceText = p?.isMobile ? ' · Mobile' : p?.lastSeen ? ' · Desktop' : '';
+          const isAdmin = user === 'Admin';
+          const avInner = isAdmin ? '🔒'
+            : (S.officerPhotos?.[user]
+              ? `<img src="${S.officerPhotos[user]}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${esc(initials(user))}">` 
+              : esc(initials(user)));
+          const avStyle = isAdmin ? 'font-size:18px;' : (!S.officerPhotos?.[user] ? `background:${officerColor(user).bg};` : '');
+          return `<div class="setting-item" style="gap:10px;align-items:center;">
+            <div style="width:10px;height:10px;border-radius:50%;background:${dotColor};flex-shrink:0;box-shadow:${online ? '0 0 6px ' + dotColor : 'none'};"></div>
+            <div class="officer-av-initials" style="${avStyle}display:flex;align-items:center;justify-content:center;">${avInner}</div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:14px;">${esc(user)}</div>
+              <div style="font-size:12px;color:#7B7A9A;">${statusText}${deviceText}</div>
+            </div>
+            ${online ? '<span style="font-size:11px;font-weight:700;color:#10B981;background:rgba(16,185,129,0.1);padding:2px 8px;border-radius:20px;">Online</span>' : ''}
+          </div>`;
+        }).join('');
+      }
+      _presenceUnsub = m.subscribePresence(data => { latestData = data; renderPresence(); });
+      _presenceRefreshTimer = setInterval(renderPresence, 60 * 1000);
+    });
   } else if (S.settingsTab === 'monthend') {
     const label = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
     el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.45;">Generate the previous month PDF first. After admin reviews it, use the cleanup button separately.</div>
