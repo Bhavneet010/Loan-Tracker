@@ -1,6 +1,6 @@
 import { S, PIN, saveSettings } from "./state.js";
 import { renderSettingsList } from "./ui-settings.js";
-import { toast, initials, officerColor } from "./utils.js";
+import { toast, initials, officerColor, timeAgo, esc } from "./utils.js";
 import { initPresence } from "./presence.js";
 import { getLoanMetrics } from "./derived.js";
 import { requestNotifPermission } from "./notifications.js";
@@ -14,7 +14,7 @@ export function updateUserAvatar(officer) {
   if (!el) return;
   const photo = S.officerPhotos?.[officer];
   if (photo) {
-    el.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${initials(officer)}">`,
+    el.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${initials(officer)}">`;
     el.style.background = '';
     el.style.color = '';
   } else {
@@ -42,6 +42,7 @@ window.toggleUserMenu = function () {
   if (menu.style.display === 'none') {
     menu.innerHTML = `
       ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
+      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who's Online</button>` : ''}
       ${!S.isAdmin && S.user ? `<button class="udrop-item" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
       <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark ? '&#9728; Light theme' : '&#127769; Dark theme'}</button>
       <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
@@ -319,6 +320,60 @@ window.deleteAvatarPhoto = async function () {
   _refreshPhotoOverlayAv();
   window.render?.();
   toast('Photo removed');
+};
+
+/* ── WHO'S ONLINE OVERLAY ── */
+let _onlineUnsub = null;
+let _onlineTimer = null;
+
+function _stopOnline() {
+  if (_onlineUnsub) { _onlineUnsub(); _onlineUnsub = null; }
+  if (_onlineTimer) { clearInterval(_onlineTimer); _onlineTimer = null; }
+}
+
+window.showOnlineOverlay = function () {
+  if (!S.isAdmin) return;
+  openOverlay('onlineOverlay');
+  document.getElementById('onlineList').innerHTML = '<div class="skeleton-wrap"><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div></div>';
+  import('./presence.js').then(m => {
+    let latestData = {};
+    function renderOnline() {
+      const listEl = document.getElementById('onlineList');
+      if (!listEl) { _stopOnline(); return; }
+      const users = [...S.officers, 'Admin'];
+      listEl.innerHTML = users.map(user => {
+        const p = latestData[user];
+        const lastSeen = p?.lastSeen;
+        const online = m.isOnline(lastSeen);
+        const recent = lastSeen && !online && (Date.now() - new Date(lastSeen).getTime()) < 60 * 60 * 1000;
+        const dotColor = online ? '#10B981' : recent ? '#F59E0B' : '#D1D5DB';
+        const statusText = lastSeen ? timeAgo(lastSeen) : 'Never seen';
+        const deviceText = p?.isMobile ? ' · Mobile' : p?.lastSeen ? ' · Desktop' : '';
+        const isAdmin = user === 'Admin';
+        const avInner = isAdmin ? '🔒'
+          : (S.officerPhotos?.[user]
+            ? `<img src="${S.officerPhotos[user]}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${esc(initials(user))}">` 
+            : esc(initials(user)));
+        const avStyle = isAdmin ? 'font-size:18px;' : (!S.officerPhotos?.[user] ? `background:${officerColor(user).bg};` : '');
+        return `<div class="setting-item" style="gap:10px;align-items:center;">
+          <div style="width:10px;height:10px;border-radius:50%;background:${dotColor};flex-shrink:0;box-shadow:${online ? '0 0 6px ' + dotColor : 'none'};"></div>
+          <div class="officer-av-initials" style="${avStyle}display:flex;align-items:center;justify-content:center;">${avInner}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;">${esc(user)}</div>
+            <div style="font-size:12px;color:#7B7A9A;">${statusText}${deviceText}</div>
+          </div>
+          ${online ? '<span style="font-size:11px;font-weight:700;color:#10B981;background:rgba(16,185,129,0.1);padding:2px 8px;border-radius:20px;">Online</span>' : ''}
+        </div>`;
+      }).join('');
+    }
+    _onlineUnsub = m.subscribePresence(data => { latestData = data; renderOnline(); });
+    _onlineTimer = setInterval(renderOnline, 60 * 1000);
+  });
+};
+
+window.closeOnlineOverlay = function () {
+  _stopOnline();
+  closeOverlay('onlineOverlay');
 };
 
 window.handleSettings = function () {

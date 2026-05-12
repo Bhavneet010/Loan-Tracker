@@ -286,6 +286,19 @@
   </div>
 </div>
 
+<!-- WHO'S ONLINE OVERLAY -->
+<div class="overlay center" id="onlineOverlay" style="display:none;" onclick="if(event.target===this)closeOnlineOverlay()">
+  <div class="modal-box" style="width:min(400px,92vw);max-height:80vh;display:flex;flex-direction:column;">
+    <button class="photo-modal-close" onclick="closeOnlineOverlay()" aria-label="Close">&#10005;</button>
+    <h2 style="margin:0 0 2px;">Who's Online</h2>
+    <p style="font-size:13px;color:#7B7A9A;margin:0 0 14px;">Presence updates every 2 minutes.</p>
+    <div id="onlineList" style="overflow-y:auto;flex:1;"></div>
+    <div class="form-row" style="margin-top:12px;">
+      <button class="btn btn-cancel-full" onclick="closeOnlineOverlay()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADMIN SETTINGS -->
 <div class="overlay" id="settingsModal" style="display:none;">
   <div class="sheet">
