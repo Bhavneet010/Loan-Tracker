@@ -1,6 +1,7 @@
 import { S, PIN, saveSettings } from "./state.js";
 import { renderSettingsList } from "./ui-settings.js";
 import { toast, initials, officerColor } from "./utils.js";
+import { initPresence } from "./presence.js";
 import { getLoanMetrics } from "./derived.js";
 import { requestNotifPermission } from "./notifications.js";
 import { isBiometricRegistered, authenticateBiometric, isBiometricAvailable } from "./biometric.js";
@@ -147,7 +148,7 @@ window.selectUser = function (name) {
   S.filter = { category: 'All', officer: 'Mine' };
   localStorage.setItem('lpUser', name); localStorage.setItem('lpAdmin', 'false');
   updateUserAvatar(name);
-  closeOverlay('userModal', () => { requestNotifPermission(); window.render(); });
+  closeOverlay('userModal', () => { requestNotifPermission(); initPresence(); window.render(); });
 };
 
 let _bioAvailableForModal = false;
@@ -233,6 +234,7 @@ function _grantAdminAccess() {
   const av = document.getElementById('userAv');
   av.textContent = '🔒'; av.style.background = ''; av.style.color = '';
   requestNotifPermission();
+  initPresence();
   toast('Admin mode active'); window.render();
 }
 

@@ -3,6 +3,7 @@ import { subscribeLoans } from "./db.js";
 import { subscribeNotifications } from "./notifications.js";
 import { render } from "./ui-render.js";
 import { initPushNotifications } from "./push-notifications.js";
+import { initPresence } from "./presence.js";
 
 // Import modules to register window actions and side effects
 import { updateUserAvatar } from "./ui-core.js";
@@ -61,7 +62,7 @@ async function init() {
   const su = localStorage.getItem('lpUser');
   const sa = localStorage.getItem('lpAdmin') === 'true';
   if (su) {
-    S.user = su; 
+    S.user = su;
     S.isAdmin = sa;
     S.filter = { category: 'All', officer: sa ? 'All' : 'Mine' };
     const av = document.getElementById('userAv');
@@ -72,6 +73,7 @@ async function init() {
         updateUserAvatar(su);
       }
     }
+    initPresence();
   }
   
   console.log('[INIT] Connecting to database...');
