@@ -398,6 +398,8 @@ window.openForm = function(loan = null, mode = null, options = {}) {
   setFormEntryMode(entryMode, { duplicateSource: !!prefills });
   setCategoryValue('');
   if (modeInput) modeInput.value = mode || '';
+  const sanctionLabel = document.querySelector('#fSanctionGroup label');
+  if (sanctionLabel) sanctionLabel.textContent = 'Sanction Date';
 
   document.getElementById('loanId').value = isEdit ? loan.id : '';
   document.getElementById('fReceive').value = todayStr();
@@ -428,6 +430,7 @@ window.openForm = function(loan = null, mode = null, options = {}) {
       if (termLoanGroup) termLoanGroup.style.display = 'flex';
       if (renewalGroup) renewalGroup.style.display = 'block';
       if (limitExpiryGroup) limitExpiryGroup.style.display = 'block';
+      if (sanctionLabel) sanctionLabel.textContent = 'Original Sanction Date *';
       setCategoryValue('SME');
     } else {
       if (termLoanGroup) termLoanGroup.style.display = 'none';
