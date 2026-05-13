@@ -590,6 +590,7 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
   display:none;align-items:center;justify-content:center;
 }
 body.fresh-mode .fab{display:flex;}
+body.renewals-mode .fab{display:flex;}
 
 .toast{
   position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
