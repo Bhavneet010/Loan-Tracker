@@ -1179,8 +1179,8 @@ body.dark .tag.tag-returned{background:rgba(245,158,11,0.16);color:#FBBF24;borde
 .content-enter-right .loan-item:nth-child(n+6){animation-delay:.15s;}
 
 /* ── FAB spring entrance on first load ────────────────── */
-@keyframes fabIn { from{opacity:0;transform:translateX(-50%) scale(0.3)} to{opacity:1;transform:translateX(-50%) scale(1)} }
-.fab { animation: fabIn 0.5s cubic-bezier(0.34,1.7,0.64,1) 0.3s both; }
+@keyframes fabIn { from{opacity:0;transform:scale(0.3)} to{opacity:1;transform:scale(1)} }
+body.fresh-mode .fab, body.renewals-mode .fab { animation: fabIn 0.3s cubic-bezier(0.34,1.7,0.64,1) forwards; }
 
 /* ── Mode bar button press feedback ───────────────────── */
 .mode-btn { transition: transform 0.08s ease, background var(--dur-fast) ease, color var(--dur-fast) ease; }
