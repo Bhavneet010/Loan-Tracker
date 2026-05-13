@@ -81,8 +81,7 @@ export function renderRenewals(c) {
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
   const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
   const mainContent = S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : listContent;
-  const renewalFab = `<button class="fab rnw-fab" onclick="openAddBackRenewal()" aria-label="Add back renewal account">+</button>`;
-  c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div><div class="rnw-content">${mainContent}</div>${renewalFab}`;
+  c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div><div class="rnw-content">${mainContent}</div>`;
 }
 
 export function updateRenewalMainContent({ transition = true } = {}) {

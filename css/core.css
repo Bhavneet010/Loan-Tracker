@@ -589,9 +589,8 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
   cursor:pointer;z-index:80;
   display:none;align-items:center;justify-content:center;
 }
-body.fresh-mode .fab{display:flex !important;opacity:1 !important;}
-body.renewals-mode .fab{display:flex !important;opacity:1 !important;}
-.rnw-fab{display:flex !important;opacity:1 !important;}
+body.fresh-mode .fab,
+body.renewals-mode .fab{display:flex;}
 
 .toast{
   position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
@@ -1179,9 +1178,6 @@ body.dark .tag.tag-returned{background:rgba(245,158,11,0.16);color:#FBBF24;borde
 .content-enter-left .loan-item:nth-child(n+6),
 .content-enter-right .loan-item:nth-child(n+6){animation-delay:.15s;}
 
-/* ── FAB spring entrance on first load ────────────────── */
-@keyframes fabIn { from{opacity:0;transform:scale(0.3)} to{opacity:1;transform:scale(1)} }
-body.fresh-mode .fab, body.renewals-mode .fab { animation: fabIn 0.3s cubic-bezier(0.34,1.7,0.64,1) forwards; }
 
 /* ── Mode bar button press feedback ───────────────────── */
 .mode-btn { transition: transform 0.08s ease, background var(--dur-fast) ease, color var(--dur-fast) ease; }
