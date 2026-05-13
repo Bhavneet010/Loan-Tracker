@@ -123,7 +123,7 @@ window.setAppMode = function (v) {
   const searchWrap = document.getElementById('searchWrap');
   if (searchWrap) searchWrap.style.display = v === 'fresh' ? '' : 'none';
   const fab = document.getElementById('mainFab');
-  if (fab) fab.style.display = (v === 'fresh' || v === 'renewals') ? 'flex' : 'none';
+  if (fab) fab.style.display = v === 'fresh' ? 'flex' : 'none';
   updateHero();
   updateBadges();
   transitionContentSwap(() => window.renderContentOnly?.() || window.render());
