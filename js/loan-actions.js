@@ -210,6 +210,12 @@ window.saveLoan = async function(e) {
     return;
   }
 
+  if (mode === 'renewal-addback' && !document.getElementById('fSanction').value) {
+    toast('Enter the original sanction date');
+    document.getElementById('fSanction').focus();
+    return;
+  }
+
   if (!await confirmPotentialDuplicate({ id, customerName, branch })) return;
 
   let termLoan = false;
@@ -280,7 +286,6 @@ window.saveLoan = async function(e) {
 
   const sanctionDate = document.getElementById('fSanction').value;
   if (sanctionDate) data.sanctionDate = sanctionDate;
-  else if (mode === 'renewal-addback') data.sanctionDate = todayStr();
   if (mode === 'renewal-done' && sanctionDate) data.renewedDate = sanctionDate;
 
   try {
