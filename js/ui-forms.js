@@ -414,21 +414,36 @@ window.openForm = function(loan = null, mode = null, options = {}) {
     document.getElementById('formTitle').textContent = mode === 'renewal-done' ? 'Mark Renewal Done' : 'Edit Loan';
     fillFormFromLoan(loan, { isEdit: true, mode });
   } else {
-    document.getElementById('formTitle').textContent = entryMode === 'quick' ? 'Quick Add Loan' : 'Add New Loan';
+    const isRenewalAddBack = mode === 'renewal-addback';
+    if (isRenewalAddBack) {
+      document.getElementById('formTitle').textContent = 'Add Back Renewal Account';
+    } else {
+      document.getElementById('formTitle').textContent = entryMode === 'quick' ? 'Quick Add Loan' : 'Add New Loan';
+    }
     const termLoanGroup = document.getElementById('fTermLoanGroup');
     const renewalGroup = document.getElementById('fRenewalGroup');
     const limitExpiryGroup = document.getElementById('fLimitExpiryGroup');
     const termLoanCheckbox = document.getElementById('fTermLoan');
-    if (termLoanGroup) termLoanGroup.style.display = 'none';
-    if (renewalGroup) renewalGroup.style.display = 'none';
-    if (limitExpiryGroup) limitExpiryGroup.style.display = 'none';
+    if (isRenewalAddBack) {
+      if (termLoanGroup) termLoanGroup.style.display = 'flex';
+      if (renewalGroup) renewalGroup.style.display = 'block';
+      if (limitExpiryGroup) limitExpiryGroup.style.display = 'block';
+      setCategoryValue('SME');
+    } else {
+      if (termLoanGroup) termLoanGroup.style.display = 'none';
+      if (renewalGroup) renewalGroup.style.display = 'none';
+      if (limitExpiryGroup) limitExpiryGroup.style.display = 'none';
+    }
     if (termLoanCheckbox) termLoanCheckbox.checked = false;
     if (S.user && !S.isAdmin) document.getElementById('fOfficer').value = S.user;
     updateAssignedOfficerHint('');
   }
 
+  const submitBtn = document.getElementById('formSubmitBtn');
+  if (submitBtn) submitBtn.textContent = mode === 'renewal-addback' ? 'Add to Renewals' : 'Save Loan';
+
   const isRenewalDoneEdit = isEdit && !!loan?.renewedDate;
-  if (mode === 'renewal-done' || isRenewalDoneEdit) {
+  if (mode === 'renewal-done' || isRenewalDoneEdit || mode === 'renewal-addback') {
     document.getElementById('fReceiveGroup').style.display = 'none';
     document.getElementById('fSanctionGroup').style.display = 'block';
   } else {
@@ -456,6 +471,19 @@ window.openQuickAdd = function(sourceId = null) {
     entryMode: 'quick',
     prefillLoan: sourceLoan || null
   });
+};
+
+window.openContextualAdd = function() {
+  if (S.appMode === 'renewals') {
+    window.openAddBackRenewal();
+  } else {
+    window.openQuickAdd();
+  }
+};
+
+window.openAddBackRenewal = function() {
+  if (!S.user) { if (window.showUserSelect) window.showUserSelect(); return; }
+  window.openForm(null, 'renewal-addback', { entryMode: 'full' });
 };
 
 window.closeForm = function() {

@@ -11,13 +11,13 @@ export const ts = () => ({ updatedAt: new Date().toISOString(), updatedBy: S.use
 
 export async function createLoan(data) { 
   const id = newId(); 
-  await setDoc(doc(db, 'loans', id), { 
-    ...data, 
-    status: 'pending', 
-    createdAt: new Date().toISOString(), 
-    createdBy: S.user, 
-    ...ts() 
-  }); 
+  await setDoc(doc(db, 'loans', id), {
+    status: 'pending',
+    ...data,
+    createdAt: new Date().toISOString(),
+    createdBy: S.user,
+    ...ts()
+  });
   return id; 
 }
 

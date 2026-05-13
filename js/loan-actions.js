@@ -231,7 +231,12 @@ window.saveLoan = async function(e) {
     data.isTermLoan = termLoan;
     const existing = id ? S.loans.find(x => x.id === id) : null;
     const isImported = (existing && existing.isImported) || (id && id.startsWith('import_sme_csv_'));
-    if (!isImported) {
+    const isRenewalAddBack = mode === 'renewal-addback';
+    if (isRenewalAddBack) {
+      data.isFreshCC = false;
+      data.manuallyCreated = true;
+      data.status = 'sanctioned';
+    } else if (!isImported) {
       data.isFreshCC = true;
       data.manuallyCreated = true;
     } else {
@@ -273,6 +278,7 @@ window.saveLoan = async function(e) {
 
   const sanctionDate = document.getElementById('fSanction').value;
   if (sanctionDate) data.sanctionDate = sanctionDate;
+  else if (mode === 'renewal-addback') data.sanctionDate = todayStr();
   if (mode === 'renewal-done' && sanctionDate) data.renewedDate = sanctionDate;
 
   try {

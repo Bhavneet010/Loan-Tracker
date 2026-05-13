@@ -123,7 +123,7 @@
 </div>
 
 <!-- FAB -->
-<button class="fab" onclick="openQuickAdd()">+</button>
+<button class="fab" id="mainFab" onclick="openContextualAdd()">+</button>
 
 <!-- USER SELECT -->
 <div class="overlay center" id="userModal" style="display:none;">
@@ -228,7 +228,7 @@
       </div>
       <div class="form-row">
         <button type="button" class="btn btn-cancel-full" onclick="closeForm()">Cancel</button>
-        <button type="submit" class="btn btn-primary-full">Save Loan</button>
+        <button type="submit" class="btn btn-primary-full" id="formSubmitBtn">Save Loan</button>
       </div>
     </form>
   </div>
