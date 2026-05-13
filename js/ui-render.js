@@ -23,6 +23,8 @@ export function render() {
 
   const sw = document.getElementById('searchWrap');
   if (sw) sw.style.display = S.appMode === 'fresh' ? '' : 'none';
+  const fab = document.getElementById('mainFab');
+  if (fab) fab.style.display = (S.appMode === 'fresh' || S.appMode === 'renewals') ? 'flex' : 'none';
   const c = document.getElementById('content');
   if (!c) return;
 
