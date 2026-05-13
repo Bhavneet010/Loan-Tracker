@@ -591,6 +591,7 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 }
 body.fresh-mode .fab{display:flex !important;opacity:1 !important;}
 body.renewals-mode .fab{display:flex !important;opacity:1 !important;}
+.rnw-fab{display:flex !important;opacity:1 !important;}
 
 .toast{
   position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
