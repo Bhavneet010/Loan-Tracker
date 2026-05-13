@@ -14,6 +14,8 @@ export function render() {
   document.body.classList.toggle('tasks-mode', S.appMode === 'tasks');
   document.body.classList.toggle('fresh-mode', S.appMode === 'fresh');
   document.body.classList.toggle('renewals-mode', S.appMode === 'renewals');
+  const fab = document.getElementById('mainFab');
+  if (fab) fab.style.display = (S.appMode === 'fresh' || S.appMode === 'renewals') ? 'flex' : 'none';
   if (!S.user) {
     if (typeof window.showUserSelect === 'function') window.showUserSelect();
     return;
@@ -23,8 +25,6 @@ export function render() {
 
   const sw = document.getElementById('searchWrap');
   if (sw) sw.style.display = S.appMode === 'fresh' ? '' : 'none';
-  const fab = document.getElementById('mainFab');
-  if (fab) fab.style.display = (S.appMode === 'fresh' || S.appMode === 'renewals') ? 'flex' : 'none';
   const c = document.getElementById('content');
   if (!c) return;
 
