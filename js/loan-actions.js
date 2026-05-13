@@ -97,7 +97,8 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   if (draft.category === 'SME') {
     data.isTermLoan = !!draft.isTermLoan;
     const isImported = (base && base.isImported) || (base?.id && base.id.startsWith('import_sme_csv_'));
-    data.isFreshCC = !isImported;
+    const isAddBack = !isImported && base?.isFreshCC === false;
+    data.isFreshCC = !isImported && !isAddBack;
     if (isImported) data.isImported = true;
     else data.manuallyCreated = true;
     if (renewalState !== 'renewed') {
@@ -232,10 +233,11 @@ window.saveLoan = async function(e) {
     const existing = id ? S.loans.find(x => x.id === id) : null;
     const isImported = (existing && existing.isImported) || (id && id.startsWith('import_sme_csv_'));
     const isRenewalAddBack = mode === 'renewal-addback';
-    if (isRenewalAddBack) {
+    const isAddBack = !isRenewalAddBack && !isImported && existing?.isFreshCC === false;
+    if (isRenewalAddBack || isAddBack) {
       data.isFreshCC = false;
       data.manuallyCreated = true;
-      data.status = 'sanctioned';
+      if (isRenewalAddBack) data.status = 'sanctioned';
     } else if (!isImported) {
       data.isFreshCC = true;
       data.manuallyCreated = true;
