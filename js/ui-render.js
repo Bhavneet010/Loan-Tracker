@@ -15,7 +15,7 @@ export function render() {
   document.body.classList.toggle('fresh-mode', S.appMode === 'fresh');
   document.body.classList.toggle('renewals-mode', S.appMode === 'renewals');
   const fab = document.getElementById('mainFab');
-  if (fab) fab.style.display = (S.appMode === 'fresh' || S.appMode === 'renewals') ? 'flex' : 'none';
+  if (fab) fab.style.display = S.appMode === 'fresh' ? 'flex' : 'none';
   if (!S.user) {
     if (typeof window.showUserSelect === 'function') window.showUserSelect();
     return;
