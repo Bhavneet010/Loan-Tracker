@@ -221,25 +221,16 @@ window.shareWeeklyPerformanceJpeg = async function () {
     const hdScale = 3;
     const exportHost = document.createElement("div");
     const exportReport = report.cloneNode(true);
-    // Use absolute (not fixed) so the element is not viewport-constrained
-    exportHost.style.position = "absolute";
-    exportHost.style.left = "-10000px";
-    exportHost.style.top = "0";
-    exportHost.style.width = `${exportWidth}px`;
-    exportHost.style.height = "10000px";
-    exportHost.style.pointerEvents = "none";
+    exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${exportWidth}px;pointer-events:none;`;
     exportReport.classList.add("weekly-export");
     exportReport.style.width = `${exportWidth}px`;
     exportReport.style.maxWidth = "none";
-    exportReport.style.overflow = "visible";
-    exportReport.style.height = "auto";
-    exportReport.style.minHeight = "0";
     exportHost.appendChild(exportReport);
     document.body.appendChild(exportHost);
 
-    // Force reflow so the browser calculates full natural height
-    void exportReport.getBoundingClientRect();
-    const fullHeight = exportReport.offsetHeight;
+    // Measure and capture inside onclone where html2canvas controls the layout
+    const CAPTURE_HEIGHT = 3000;
+    let contentHeight = 0;
 
     let canvas;
     try {
@@ -248,12 +239,36 @@ window.shareWeeklyPerformanceJpeg = async function () {
         scale: hdScale,
         useCORS: true,
         width: exportWidth,
-        height: fullHeight,
+        height: CAPTURE_HEIGHT,
         windowWidth: exportWidth,
-        windowHeight: fullHeight,
+        windowHeight: CAPTURE_HEIGHT,
+        onclone: (_doc, clonedEl) => {
+          // Remove height constraints so natural content height is measurable
+          clonedEl.style.overflow = "visible";
+          clonedEl.style.height = "auto";
+          clonedEl.style.minHeight = "0";
+          // Ensure 2-column grid regardless of phone media queries
+          const grid = clonedEl.querySelector(".weekly-comp-charts");
+          if (grid) grid.style.setProperty("grid-template-columns", "1fr 1fr", "important");
+          // Measure the true content height inside the clone
+          void clonedEl.getBoundingClientRect();
+          contentHeight = clonedEl.scrollHeight;
+          // Now make the element tall enough for html2canvas to render all content
+          clonedEl.style.height = CAPTURE_HEIGHT + "px";
+        },
       });
     } finally {
       exportHost.remove();
+    }
+
+    // Crop canvas to actual content — removes the blank buffer at the bottom
+    if (contentHeight > 0) {
+      const cropPx = Math.min(Math.ceil(contentHeight * hdScale), canvas.height);
+      const cropCanvas = document.createElement("canvas");
+      cropCanvas.width = canvas.width;
+      cropCanvas.height = cropPx;
+      cropCanvas.getContext("2d").drawImage(canvas, 0, 0);
+      canvas = cropCanvas;
     }
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
