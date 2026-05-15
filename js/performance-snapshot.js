@@ -863,34 +863,64 @@ function renderWeeklyLineChart(officerSeries, prevTotals, tone) {
   const yOf = v => padT + plotH * (1 - v / maxVal);
   const PREV_COLOR = "#B0A8CC";
 
-  const gridLines = [0, 1 / 3, 2 / 3, 1].map(pct => {
-    const yPos = (padT + plotH * (1 - pct)).toFixed(1);
-    const label = `${Math.round(maxVal * pct)}`;
-    return `<line x1="${padL}" y1="${yPos}" x2="${W - padR}" y2="${yPos}" stroke="#EDE8FA" stroke-width="1"${pct > 0 ? ' stroke-dasharray="3 3"' : ''}/>` +
-      `<text x="${padL - 4}" y="${(+yPos + 3.5).toFixed(1)}" text-anchor="end" fill="#A49DC2" font-size="7.5" font-weight="800">${esc(label)}</text>`;
+  // Smart Y-axis ticks — integer steps, no duplicates
+  const ceiled = Math.ceil(maxVal);
+  const step = Math.max(1, Math.ceil(ceiled / 3));
+  const tickVals = [];
+  for (let v = 0; v <= ceiled; v += step) tickVals.push(v);
+
+  const gridLines = tickVals.map(v => {
+    const yPos = yOf(v).toFixed(1);
+    return `<line x1="${padL}" y1="${yPos}" x2="${W - padR}" y2="${yPos}" stroke="#EDE8FA" stroke-width="1"${v > 0 ? ' stroke-dasharray="3 3"' : ''}/>` +
+      `<text x="${padL - 4}" y="${(+yPos + 3.5).toFixed(1)}" text-anchor="end" fill="#A49DC2" font-size="7.5" font-weight="800">${v}</text>`;
   }).join("");
 
   const xLabels = WEEK_DAYS.map((day, i) =>
     `<text x="${xOf(i).toFixed(1)}" y="${(padT + plotH + 16).toFixed(1)}" text-anchor="middle" fill="#8A84A4" font-size="8" font-weight="800">${esc(day)}</text>`
   ).join("");
 
-  const prevPoints = prevTotals.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+  // Cubic bezier smooth path through data points (Catmull-Rom → bezier)
+  const smoothPath = vals => {
+    const pts = vals.map((v, i) => [+xOf(i).toFixed(2), +yOf(v).toFixed(2)]);
+    if (pts.length < 2) return "";
+    let d = `M ${pts[0][0]},${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(pts.length - 1, i + 2)];
+      const cp1x = (p1[0] + (p2[0] - p0[0]) / 6).toFixed(2);
+      const cp1y = (p1[1] + (p2[1] - p0[1]) / 6).toFixed(2);
+      const cp2x = (p2[0] - (p3[0] - p1[0]) / 6).toFixed(2);
+      const cp2y = (p2[1] - (p3[1] - p1[1]) / 6).toFixed(2);
+      d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
+    }
+    return d;
+  };
+
   const prevDots = prevTotals.map((v, i) =>
     `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="2.5" fill="#fff" stroke="${PREV_COLOR}" stroke-width="1.5"><title>${esc("Last Wk " + WEEK_DAYS[i] + ": " + v)}</title></circle>`
   ).join("");
 
-  const officerLines = officerSeries.map(s => {
-    const pts = s.values.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
-    const dots = s.values.map((v, i) =>
+  // White halos drawn first so officer lines visually separate at crossings
+  const halos = officerSeries.map(s =>
+    `<path d="${smoothPath(s.values)}" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`
+  ).join("");
+
+  const officerPaths = officerSeries.map(s =>
+    `<path d="${smoothPath(s.values)}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+  ).join("");
+
+  const officerDots = officerSeries.flatMap(s =>
+    s.values.map((v, i) =>
       `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3" fill="${s.color}" stroke="#fff" stroke-width="1.5"><title>${esc(s.name + " " + WEEK_DAYS[i] + ": " + v)}</title></circle>`
-    ).join("");
-    return `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
-  }).join("");
+    )
+  ).join("");
 
   return `<svg class="weekly-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     ${gridLines}${xLabels}
-    <polyline points="${prevPoints}" fill="none" stroke="${PREV_COLOR}" stroke-width="1.8" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round"/>
-    ${prevDots}${officerLines}
+    <path d="${smoothPath(prevTotals)}" fill="none" stroke="${PREV_COLOR}" stroke-width="1.8" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round"/>
+    ${prevDots}${halos}${officerPaths}${officerDots}
   </svg>`;
 }
 
