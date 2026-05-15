@@ -35,7 +35,6 @@
 .weekly-hero-row,
 .weekly-summary-row,
 .weekly-card-head,
-.weekly-strip-head,
 .weekly-report-footer{
   display:flex;
   align-items:center;
@@ -72,8 +71,7 @@
   margin-top:18px;
 }
 .weekly-kicker,
-.weekly-card-head span,
-.weekly-strip-head span{
+.weekly-card-head span{
   display:block;
   color:#6B5FBF;
   font-size:10px;
@@ -213,12 +211,98 @@
   margin-top:16px;
 }
 .weekly-heatmap-card,
-.weekly-officer-strip{
+.weekly-comparative-section{
   border-radius:18px;
   border:1px solid rgba(107,95,191,0.12);
   background:#fff;
   padding:15px;
   box-shadow:0 8px 18px rgba(43,32,100,0.06);
+}
+.weekly-comp-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.weekly-comp-head span{
+  display:block;
+  color:#6B5FBF;
+  font-size:10px;
+  font-weight:950;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+}
+.weekly-comp-head strong{
+  color:#6F6A8D;
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.weekly-comp-charts{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.weekly-chart-card{
+  border-radius:14px;
+  padding:12px;
+  background:#FBFAFE;
+  border:1px solid rgba(107,95,191,0.08);
+}
+.weekly-chart-card.fresh{
+  background:rgba(16,185,129,0.04);
+  border-color:rgba(16,185,129,0.15);
+}
+.weekly-chart-card.renewal{
+  background:rgba(59,130,246,0.04);
+  border-color:rgba(59,130,246,0.15);
+}
+.weekly-chart-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  margin-bottom:8px;
+}
+.weekly-chart-kicker{
+  display:block;
+  color:#8A84A4;
+  font-size:8.5px;
+  font-weight:950;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  margin-bottom:3px;
+}
+.weekly-chart-card h4{
+  margin:0;
+  font-size:15px;
+  font-weight:950;
+  color:#050A2F;
+  line-height:1;
+}
+.weekly-chart-legend{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.weekly-legend-item{
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.weekly-legend-item span{
+  color:#6F6A8D;
+  font-size:8px;
+  font-weight:850;
+}
+.weekly-chart-card.fresh .weekly-legend-item{ color:#10B981; }
+.weekly-chart-card.fresh .weekly-legend-item.wk-prev{ color:#6EE7B7; }
+.weekly-chart-card.renewal .weekly-legend-item{ color:#3B82F6; }
+.weekly-chart-card.renewal .weekly-legend-item.wk-prev{ color:#93C5FD; }
+.weekly-chart-svg{
+  width:100%;
+  height:auto;
+  display:block;
+  overflow:visible;
 }
 .weekly-card-head{
   align-items:flex-start;
@@ -416,57 +500,6 @@
   background:#ECE8F8;
   border:1px solid rgba(107,95,191,0.12);
 }
-.weekly-officer-strip{
-  padding:13px 15px;
-}
-.weekly-strip-head{
-  margin-bottom:10px;
-}
-.weekly-strip-head strong{
-  color:#6F6A8D;
-  font-size:10px;
-  font-weight:900;
-  text-transform:uppercase;
-}
-.weekly-strip-grid{
-  display:grid;
-  grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:9px;
-}
-.weekly-officer-mini{
-  display:grid;
-  grid-template-columns:42px 1fr;
-  gap:9px;
-  align-items:center;
-  border-radius:14px;
-  background:#F8F6FC;
-  border:1px solid rgba(107,95,191,0.10);
-  padding:10px;
-}
-.weekly-mini-rank{
-  width:38px;
-  height:38px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#6B5FBF;
-  color:#fff;
-  font-size:13px;
-  font-weight:950;
-}
-.weekly-officer-mini h4{
-  margin:0 0 4px;
-  color:#050A2F;
-  font-size:16px;
-  line-height:1;
-}
-.weekly-officer-mini p{
-  margin:2px 0 0;
-  color:#595374;
-  font-size:9px;
-  font-weight:850;
-}
 .weekly-report-footer{
   position:absolute;
   left:34px;
@@ -566,7 +599,7 @@
     font-size:6px;
   }
   .weekly-heatmap-card,
-  .weekly-officer-strip{
+  .weekly-comparative-section{
     border-radius:13px;
     padding:9px 7px;
   }
@@ -614,36 +647,15 @@
   .weekly-row-total span{
     font-size:6px;
   }
-  .weekly-strip-grid{
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:4px;
+  .weekly-comp-charts{
+    grid-template-columns:1fr;
+    gap:8px;
   }
-  .weekly-officer-mini{
-    grid-template-columns:24px minmax(0, 1fr);
-    gap:4px;
-    padding:5px 4px;
-    border-radius:10px;
+  .weekly-chart-card h4{
+    font-size:12px;
   }
-  .weekly-mini-rank{
-    width:23px;
-    height:23px;
-    border-radius:7px;
-    font-size:8px;
-  }
-  .weekly-officer-mini h4{
-    overflow:hidden;
-    margin-bottom:2px;
-    font-size:10px;
-    white-space:nowrap;
-    text-overflow:ellipsis;
-  }
-  .weekly-officer-mini p{
-    overflow:hidden;
-    margin-top:1px;
-    font-size:6px;
-    line-height:1.15;
-    white-space:nowrap;
-    text-overflow:ellipsis;
+  .weekly-chart-kicker{
+    font-size:7px;
   }
   .weekly-report-footer{
     position:static;
