@@ -825,30 +825,47 @@ function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
   </section>`;
 }
 
+const OFFICER_PALETTE = [
+  TREND_COLORS.officerA,
+  TREND_COLORS.officerB,
+  TREND_COLORS.officerC,
+  TREND_COLORS.officerD,
+  "#14B8A6",
+  "#F97316",
+];
+
 function getDailyTotals(rows) {
   if (!rows.length) return new Array(7).fill(0);
   return Array.from({ length: rows[0].days.length }, (_, i) =>
-    rows.reduce((sum, row) => sum + (row.days[i]?.amount || 0), 0)
+    rows.reduce((sum, row) => sum + (row.days[i]?.count || 0), 0)
   );
 }
 
-function renderWeeklyLineChart(thisValues, prevValues, tone) {
+function getOfficerDailyCounts(rows) {
+  return rows
+    .filter(row => row.days.some(d => d.count > 0))
+    .map((row, idx) => ({
+      name: row.name,
+      color: OFFICER_PALETTE[idx % OFFICER_PALETTE.length],
+      values: row.days.map(d => d.count),
+    }));
+}
+
+function renderWeeklyLineChart(officerSeries, prevTotals, tone) {
   const W = 420, H = 185;
   const padL = 38, padR = 10, padT = 14, padB = 30;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
   const n = WEEK_DAYS.length;
-  const maxVal = Math.max(1, ...thisValues, ...prevValues);
+  const allVals = officerSeries.flatMap(s => s.values);
+  const maxVal = Math.max(1, ...(allVals.length ? allVals : [0]), ...prevTotals);
   const xOf = i => padL + (i / (n - 1)) * plotW;
   const yOf = v => padT + plotH * (1 - v / maxVal);
-  const C = tone === "fresh"
-    ? { solid: "#10B981", light: "#6EE7B7" }
-    : { solid: "#3B82F6", light: "#93C5FD" };
-  const gradId = `wcg-${tone}`;
+  const PREV_COLOR = "#B0A8CC";
 
   const gridLines = [0, 1 / 3, 2 / 3, 1].map(pct => {
     const yPos = (padT + plotH * (1 - pct)).toFixed(1);
-    const label = `${fmtAmt(+(maxVal * pct).toFixed(1))}L`;
+    const label = `${Math.round(maxVal * pct)}`;
     return `<line x1="${padL}" y1="${yPos}" x2="${W - padR}" y2="${yPos}" stroke="#EDE8FA" stroke-width="1"${pct > 0 ? ' stroke-dasharray="3 3"' : ''}/>` +
       `<text x="${padL - 4}" y="${(+yPos + 3.5).toFixed(1)}" text-anchor="end" fill="#A49DC2" font-size="7.5" font-weight="800">${esc(label)}</text>`;
   }).join("");
@@ -857,64 +874,60 @@ function renderWeeklyLineChart(thisValues, prevValues, tone) {
     `<text x="${xOf(i).toFixed(1)}" y="${(padT + plotH + 16).toFixed(1)}" text-anchor="middle" fill="#8A84A4" font-size="8" font-weight="800">${esc(day)}</text>`
   ).join("");
 
-  const thisPoints = thisValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
-  const prevPoints = prevValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
-  const areaPoints = [
-    `${xOf(0).toFixed(1)},${(padT + plotH).toFixed(1)}`,
-    ...thisValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`),
-    `${xOf(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)}`,
-  ].join(" ");
+  const prevPoints = prevTotals.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+  const prevDots = prevTotals.map((v, i) =>
+    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="2.5" fill="#fff" stroke="${PREV_COLOR}" stroke-width="1.5"><title>${esc("Last Wk " + WEEK_DAYS[i] + ": " + v)}</title></circle>`
+  ).join("");
 
-  const thisDots = thisValues.map((v, i) =>
-    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3.5" fill="${C.solid}" stroke="#fff" stroke-width="1.5"><title>${esc(WEEK_DAYS[i] + ": Rs " + fmtAmt(v) + "L")}</title></circle>`
-  ).join("");
-  const prevDots = prevValues.map((v, i) =>
-    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="2.5" fill="#fff" stroke="${C.light}" stroke-width="1.5"><title>${esc("Prev " + WEEK_DAYS[i] + ": Rs " + fmtAmt(v) + "L")}</title></circle>`
-  ).join("");
+  const officerLines = officerSeries.map(s => {
+    const pts = s.values.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+    const dots = s.values.map((v, i) =>
+      `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3" fill="${s.color}" stroke="#fff" stroke-width="1.5"><title>${esc(s.name + " " + WEEK_DAYS[i] + ": " + v)}</title></circle>`
+    ).join("");
+    return `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
+  }).join("");
 
   return `<svg class="weekly-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${C.solid}" stop-opacity="0.14"/>
-      <stop offset="100%" stop-color="${C.solid}" stop-opacity="0"/>
-    </linearGradient></defs>
     ${gridLines}${xLabels}
-    <polygon points="${areaPoints}" fill="url(#${gradId})"/>
-    <polyline points="${prevPoints}" fill="none" stroke="${C.light}" stroke-width="1.8" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="${thisPoints}" fill="none" stroke="${C.solid}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    ${prevDots}${thisDots}
+    <polyline points="${prevPoints}" fill="none" stroke="${PREV_COLOR}" stroke-width="1.8" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round"/>
+    ${prevDots}${officerLines}
   </svg>`;
 }
 
 function renderWeeklyComparativeCharts(thisData, prevData) {
-  const renderChartCard = (kicker, thisVals, prevVals, tone) => `
-    <div class="weekly-chart-card ${esc(tone)}">
+  const renderChartCard = (kicker, officerSeries, prevTotals, tone) => {
+    const legendItems = officerSeries.map(s =>
+      `<div class="weekly-legend-item" style="color:${s.color}">
+        <svg width="14" height="3" viewBox="0 0 14 3"><line x1="0" y1="1.5" x2="14" y2="1.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <span>${esc(s.name)}</span>
+      </div>`
+    ).join("");
+    const prevLegend = `<div class="weekly-legend-item wk-prev">
+      <svg width="14" height="3" viewBox="0 0 14 3"><line x1="0" y1="1.5" x2="14" y2="1.5" stroke="#B0A8CC" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/></svg>
+      <span>Last Week</span>
+    </div>`;
+    return `<div class="weekly-chart-card ${esc(tone)}">
       <div class="weekly-chart-card-head">
         <div>
-          <span class="weekly-chart-kicker">Daily amount trend</span>
+          <span class="weekly-chart-kicker">Daily count trend</span>
           <h4>${esc(kicker)}</h4>
         </div>
         <div class="weekly-chart-legend">
-          <div class="weekly-legend-item">
-            <svg width="16" height="3" viewBox="0 0 16 3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-            <span>This Week</span>
-          </div>
-          <div class="weekly-legend-item wk-prev">
-            <svg width="16" height="3" viewBox="0 0 16 3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/></svg>
-            <span>Last Week</span>
-          </div>
+          ${legendItems}${prevLegend}
         </div>
       </div>
-      ${renderWeeklyLineChart(thisVals, prevVals, tone)}
+      ${renderWeeklyLineChart(officerSeries, prevTotals, tone)}
     </div>`;
+  };
 
   return `<section class="weekly-comparative-section">
     <div class="weekly-comp-head">
       <span>Week-on-Week Trend</span>
-      <strong>Daily amount comparison</strong>
+      <strong>Daily count comparison</strong>
     </div>
     <div class="weekly-comp-charts">
-      ${renderChartCard("Fresh Sanctions", getDailyTotals(thisData.fresh.rows), getDailyTotals(prevData.fresh.rows), "fresh")}
-      ${renderChartCard("Renewals", getDailyTotals(thisData.renewal.rows), getDailyTotals(prevData.renewal.rows), "renewal")}
+      ${renderChartCard("Fresh Sanctions", getOfficerDailyCounts(thisData.fresh.rows), getDailyTotals(prevData.fresh.rows), "fresh")}
+      ${renderChartCard("Renewals", getOfficerDailyCounts(thisData.renewal.rows), getDailyTotals(prevData.renewal.rows), "renewal")}
     </div>
   </section>`;
 }

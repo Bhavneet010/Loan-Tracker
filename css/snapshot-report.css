@@ -281,8 +281,11 @@
 }
 .weekly-chart-legend{
   display:flex;
-  flex-direction:column;
-  gap:4px;
+  flex-direction:row;
+  flex-wrap:wrap;
+  gap:4px 8px;
+  justify-content:flex-end;
+  max-width:130px;
 }
 .weekly-legend-item{
   display:flex;
@@ -294,10 +297,7 @@
   font-size:8px;
   font-weight:850;
 }
-.weekly-chart-card.fresh .weekly-legend-item{ color:#10B981; }
-.weekly-chart-card.fresh .weekly-legend-item.wk-prev{ color:#6EE7B7; }
-.weekly-chart-card.renewal .weekly-legend-item{ color:#3B82F6; }
-.weekly-chart-card.renewal .weekly-legend-item.wk-prev{ color:#93C5FD; }
+.weekly-legend-item.wk-prev span{ color:#9B93BC; }
 .weekly-chart-svg{
   width:100%;
   height:auto;
