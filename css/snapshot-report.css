@@ -239,19 +239,16 @@
   text-transform:uppercase;
 }
 .weekly-comp-charts{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
 }
 .weekly-chart-section-head{
-  display:flex;
-  align-items:flex-end;
-  gap:8px;
-  margin-bottom:10px;
+  margin-bottom:12px;
 }
 .weekly-chart-section-head h4{
-  margin:0;
-  font-size:15px;
+  margin:4px 0 0;
+  font-size:18px;
   font-weight:950;
   color:#050A2F;
   line-height:1;
@@ -263,55 +260,65 @@
   font-weight:950;
   letter-spacing:0.06em;
   text-transform:uppercase;
-  margin-bottom:3px;
 }
-.weekly-officer-chart-grid{
-  display:grid;
-  grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:10px;
+.weekly-sparkline-list{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
 }
-.weekly-officer-mini-card{
-  border-radius:12px;
-  padding:10px 10px 8px;
-  background:#FBFAFE;
-  border:1px solid rgba(107,95,191,0.10);
-}
-.weekly-officer-mini-card.fresh{
-  background:rgba(16,185,129,0.03);
-  border-color:rgba(16,185,129,0.14);
-}
-.weekly-officer-mini-card.renewal{
-  background:rgba(59,130,246,0.03);
-  border-color:rgba(59,130,246,0.14);
-}
-.weekly-mini-card-head{
+.weekly-sparkline-row{
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  margin-bottom:5px;
-}
-.weekly-mini-officer-name{
-  font-size:11px;
-  font-weight:950;
-  color:#050A2F;
-}
-.weekly-mini-card-legend{
-  display:flex;
   gap:6px;
 }
-.wkleg{
-  display:flex;
-  align-items:center;
-  gap:3px;
-  font-size:7px;
-  font-weight:850;
-  color:#8A84A4;
+.weekly-sparkline-meta{
+  width:72px;
+  flex-shrink:0;
 }
-.weekly-mini-chart-svg{
+.weekly-sparkline-name{
+  display:block;
+  font-size:10px;
+  font-weight:950;
+  line-height:1.1;
+  margin-bottom:2px;
+}
+.weekly-sparkline-total{
+  display:flex;
+  align-items:baseline;
+  gap:3px;
+}
+.weekly-sparkline-total strong{
+  font-size:22px;
+  font-weight:950;
+  color:#050A2F;
+  line-height:1;
+}
+.weekly-sparkline-total span{
+  font-size:8px;
+  font-weight:850;
+  color:#9B93BC;
+}
+.weekly-sparkline-svg{
+  flex:1;
+  min-width:0;
   width:100%;
-  height:auto;
   display:block;
   overflow:visible;
+}
+.weekly-sparkline-row.last-wk-row{
+  margin-top:4px;
+  padding-top:8px;
+  border-top:1px solid rgba(107,95,191,0.12);
+}
+.weekly-sparkline-row.last-wk-row .weekly-sparkline-total strong{
+  font-size:18px;
+  color:#9B93BC;
+}
+.weekly-sparkline-axis-svg{
+  flex:1;
+  min-width:0;
+  width:100%;
+  display:block;
 }
 .weekly-card-head{
   align-items:flex-start;
@@ -657,17 +664,20 @@
     font-size:6px;
   }
   .weekly-comp-charts{
-    gap:12px;
-  }
-  .weekly-officer-chart-grid{
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:7px;
+    grid-template-columns:1fr;
+    gap:16px;
   }
   .weekly-chart-section-head h4{
-    font-size:13px;
+    font-size:15px;
   }
-  .weekly-chart-kicker{
-    font-size:7px;
+  .weekly-sparkline-meta{
+    width:60px;
+  }
+  .weekly-sparkline-total strong{
+    font-size:18px;
+  }
+  .weekly-sparkline-row.last-wk-row .weekly-sparkline-total strong{
+    font-size:15px;
   }
   .weekly-report-footer{
     position:static;

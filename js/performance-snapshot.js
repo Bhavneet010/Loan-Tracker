@@ -843,73 +843,85 @@ function smoothCurve(vals, xOf, yOf) {
   return d;
 }
 
-function renderOfficerMiniChart(name, thisVals, prevVals, tone) {
-  const W = 200, H = 82;
-  const padL = 20, padR = 6, padT = 8, padB = 20;
+const SPARKLINE_OFFICER_COLORS = ["#6B5FBF", "#F59E0B", "#EC4899", "#0EA5E9", "#14B8A6", "#F97316"];
+const SPARKLINE_PREV_COLOR = "#B0A8CC";
+
+function renderSparklineSvg(vals, color, isDashed, maxVal) {
+  const W = 280, H = 54;
+  const padL = 6, padR = 6, padT = 14, padB = 10;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
-  const n = 7;
-  const maxVal = Math.max(1, ...thisVals, ...prevVals);
-  const xOf = i => padL + (i / (n - 1)) * plotW;
+  const xOf = i => padL + (i / (vals.length - 1)) * plotW;
   const yOf = v => padT + plotH * (1 - v / maxVal);
-  const lineColor = tone === "fresh" ? "#10B981" : "#3B82F6";
-  const PREV_COLOR = "#C8C0E0";
-
-  const ceiled = Math.ceil(maxVal);
-  const ticks = ceiled <= 2 ? [0, ceiled] : [0, Math.round(ceiled / 2), ceiled];
-
-  const gridLines = ticks.map(v => {
-    const yPos = yOf(v).toFixed(1);
-    return `<line x1="${padL}" y1="${yPos}" x2="${W - padR}" y2="${yPos}" stroke="#EDE8FA" stroke-width="0.75"${v > 0 ? ' stroke-dasharray="2 2"' : ''}/>` +
-      `<text x="${padL - 3}" y="${(+yPos + 3).toFixed(1)}" text-anchor="end" fill="#B0A8CC" font-size="6.5" font-weight="800">${v}</text>`;
+  const dots = vals.map((v, i) => {
+    const cx = xOf(i).toFixed(1);
+    const cy = yOf(v).toFixed(1);
+    return isDashed
+      ? `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#fff" stroke="${color}" stroke-width="1.5"><title>${esc(WEEK_DAYS[i] + ": " + v)}</title></circle>`
+      : `<circle cx="${cx}" cy="${cy}" r="3" fill="${color}" stroke="#fff" stroke-width="1.5"><title>${esc(WEEK_DAYS[i] + ": " + v)}</title></circle>`;
   }).join("");
+  return `<svg class="weekly-sparkline-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <path d="${smoothCurve(vals, xOf, yOf)}" fill="none" stroke="${color}" stroke-width="${isDashed ? 1.6 : 2.2}"${isDashed ? ' stroke-dasharray="5 3"' : ''} stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+  </svg>`;
+}
 
-  const xLabels = ["M", "T", "W", "T", "F", "S", "S"].map((letter, i) =>
-    `<text x="${xOf(i).toFixed(1)}" y="${(padT + plotH + 13).toFixed(1)}" text-anchor="middle" fill="#B0A8CC" font-size="6.5" font-weight="800">${letter}</text>`
-  ).join("");
-
-  const thisDots = thisVals.map((v, i) =>
-    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="2" fill="${lineColor}" stroke="#fff" stroke-width="1"><title>${esc(WEEK_DAYS[i] + ": " + v)}</title></circle>`
-  ).join("");
-
-  return `<div class="weekly-officer-mini-card ${esc(tone)}">
-    <div class="weekly-mini-card-head">
-      <span class="weekly-mini-officer-name">${esc(name)}</span>
-      <div class="weekly-mini-card-legend">
-        <span class="wkleg"><svg width="10" height="2" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="${lineColor}" stroke-width="2" stroke-linecap="round"/></svg>This</span>
-        <span class="wkleg wkleg-last"><svg width="10" height="2" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="${PREV_COLOR}" stroke-width="1.5" stroke-dasharray="3 2" stroke-linecap="round"/></svg>Last</span>
-      </div>
-    </div>
-    <svg class="weekly-mini-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-      ${gridLines}${xLabels}
-      <path d="${smoothCurve(prevVals, xOf, yOf)}" fill="none" stroke="${PREV_COLOR}" stroke-width="1.2" stroke-dasharray="3 2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="${smoothCurve(thisVals, xOf, yOf)}" fill="none" stroke="${lineColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      ${thisDots}
-    </svg>
-  </div>`;
+function renderSparklineAxisSvg() {
+  const W = 280, padL = 6, padR = 6;
+  const xOf = i => padL + (i / 6) * (W - padL - padR);
+  return `<svg class="weekly-sparkline-axis-svg" viewBox="0 0 ${W} 16" xmlns="http://www.w3.org/2000/svg">
+    ${["M","T","W","T","F","S","S"].map((l, i) =>
+      `<text x="${xOf(i).toFixed(1)}" y="12" text-anchor="middle" fill="#B0A8CC" font-size="8.5" font-weight="800">${l}</text>`
+    ).join("")}
+  </svg>`;
 }
 
 function renderWeeklyComparativeCharts(thisData, prevData) {
-  const prevFreshByName = new Map(prevData.fresh.rows.map(r => [r.name, r]));
-  const prevRenewalByName = new Map(prevData.renewal.rows.map(r => [r.name, r]));
-  const zeroDays = () => new Array(7).fill(0);
+  const renderSection = (title, thisRows, prevRows) => {
+    const prevDailyTotals = Array.from({ length: 7 }, (_, i) =>
+      prevRows.reduce((s, r) => s + (r.days[i]?.count || 0), 0)
+    );
+    const maxVal = Math.max(1,
+      ...thisRows.flatMap(r => r.days.map(d => d.count)),
+      ...prevDailyTotals
+    );
+    const prevWeekTotal = prevRows.reduce((s, r) => s + r.total.count, 0);
 
-  const renderSection = (title, tone, thisRows, prevByName) => {
-    const cards = thisRows.map(row => {
-      const thisVals = row.days.map(d => d.count);
-      const prevRow = prevByName.get(row.name);
-      const prevVals = prevRow ? prevRow.days.map(d => d.count) : zeroDays();
-      return renderOfficerMiniChart(row.name, thisVals, prevVals, tone);
+    const officerRows = thisRows.map((row, idx) => {
+      const color = SPARKLINE_OFFICER_COLORS[idx % SPARKLINE_OFFICER_COLORS.length];
+      return `<div class="weekly-sparkline-row">
+        <div class="weekly-sparkline-meta">
+          <span class="weekly-sparkline-name" style="color:${color}">${esc(row.name)}</span>
+          <div class="weekly-sparkline-total">
+            <strong>${row.total.count}</strong>
+            <span>Total</span>
+          </div>
+        </div>
+        ${renderSparklineSvg(row.days.map(d => d.count), color, false, maxVal)}
+      </div>`;
     }).join("");
+
     return `<div class="weekly-chart-section">
       <div class="weekly-chart-section-head">
-        <div>
-          <span class="weekly-chart-kicker">Daily count trend</span>
-          <h4>${esc(title)}</h4>
-        </div>
+        <span class="weekly-chart-kicker">Daily count trend</span>
+        <h4>${esc(title)}</h4>
       </div>
-      <div class="weekly-officer-chart-grid">
-        ${cards}
+      <div class="weekly-sparkline-list">
+        ${officerRows}
+        <div class="weekly-sparkline-row last-wk-row">
+          <div class="weekly-sparkline-meta">
+            <span class="weekly-sparkline-name" style="color:${SPARKLINE_PREV_COLOR}">Last Week</span>
+            <div class="weekly-sparkline-total">
+              <strong>${prevWeekTotal}</strong>
+              <span>Total</span>
+            </div>
+          </div>
+          ${renderSparklineSvg(prevDailyTotals, SPARKLINE_PREV_COLOR, true, maxVal)}
+        </div>
+        <div class="weekly-sparkline-row x-axis-row">
+          <div class="weekly-sparkline-meta"></div>
+          ${renderSparklineAxisSvg()}
+        </div>
       </div>
     </div>`;
   };
@@ -920,8 +932,8 @@ function renderWeeklyComparativeCharts(thisData, prevData) {
       <strong>Daily count comparison</strong>
     </div>
     <div class="weekly-comp-charts">
-      ${renderSection("Fresh Sanctions", "fresh", thisData.fresh.rows, prevFreshByName)}
-      ${renderSection("Renewals", "renewal", thisData.renewal.rows, prevRenewalByName)}
+      ${renderSection("Fresh Sanctions", thisData.fresh.rows, prevData.fresh.rows)}
+      ${renderSection("Renewals", thisData.renewal.rows, prevData.renewal.rows)}
     </div>
   </section>`;
 }
