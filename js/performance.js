@@ -219,6 +219,12 @@ window.shareWeeklyPerformanceJpeg = async function () {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const exportWidth = 794;
     const hdScale = 3;
+
+    // Measure the live element's scroll height BEFORE cloning.
+    // The phone renders 1-column, which is taller than the 2-column export —
+    // this gives a safe upper bound that always includes all content.
+    const liveHeight = Math.max(report.scrollHeight, report.offsetHeight);
+
     const exportHost = document.createElement("div");
     const exportReport = report.cloneNode(true);
     exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${exportWidth}px;pointer-events:none;`;
@@ -228,9 +234,7 @@ window.shareWeeklyPerformanceJpeg = async function () {
     exportHost.appendChild(exportReport);
     document.body.appendChild(exportHost);
 
-    // Measure and capture inside onclone where html2canvas controls the layout
     const CAPTURE_HEIGHT = 3000;
-    let contentHeight = 0;
 
     let canvas;
     try {
@@ -243,28 +247,20 @@ window.shareWeeklyPerformanceJpeg = async function () {
         windowWidth: exportWidth,
         windowHeight: CAPTURE_HEIGHT,
         onclone: (_doc, clonedEl) => {
-          // Remove height constraints so natural content height is measurable
           clonedEl.style.overflow = "visible";
-          clonedEl.style.height = "auto";
           clonedEl.style.minHeight = "0";
-          // Ensure 2-column grid regardless of phone media queries
+          clonedEl.style.height = CAPTURE_HEIGHT + "px";
           const grid = clonedEl.querySelector(".weekly-comp-charts");
           if (grid) grid.style.setProperty("grid-template-columns", "1fr 1fr", "important");
-          // Measure the true content height inside the clone
-          void clonedEl.getBoundingClientRect();
-          contentHeight = clonedEl.scrollHeight;
-          // Now make the element tall enough for html2canvas to render all content
-          clonedEl.style.height = CAPTURE_HEIGHT + "px";
         },
       });
     } finally {
       exportHost.remove();
     }
 
-    // Crop canvas to actual content — removes the blank buffer at the bottom
-    if (contentHeight > 0) {
-      // Add 80px to include bottom padding, border-radius, and footer
-      const cropPx = Math.min(Math.ceil((contentHeight + 80) * hdScale), canvas.height);
+    // Crop using the live height (safe upper bound) so all content is included
+    {
+      const cropPx = Math.min(Math.ceil(liveHeight * hdScale), canvas.height);
       const cropCanvas = document.createElement("canvas");
       cropCanvas.width = canvas.width;
       cropCanvas.height = cropPx;
