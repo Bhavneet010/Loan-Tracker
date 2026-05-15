@@ -78,7 +78,7 @@ window.showPerfOverlay = async function () {
   document.body.style.overflow = 'hidden';
   const target = document.getElementById('perfOverlayContent');
   if (target) target.innerHTML = '<div class="skeleton-wrap"><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div></div>';
-  await import("./performance.js");
+  await import("./performance.js?v=133");
   if (typeof window.showDailySnapshot === 'function') window.showDailySnapshot();
 };
 
