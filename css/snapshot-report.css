@@ -303,16 +303,6 @@
   min-width:0;
   width:100%;
   display:block;
-  overflow:visible;
-}
-.weekly-sparkline-row.last-wk-row{
-  margin-top:4px;
-  padding-top:8px;
-  border-top:1px solid rgba(107,95,191,0.12);
-}
-.weekly-sparkline-row.last-wk-row .weekly-sparkline-total strong{
-  font-size:18px;
-  color:#9B93BC;
 }
 .weekly-sparkline-axis-svg{
   flex:1;
