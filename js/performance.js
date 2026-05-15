@@ -221,22 +221,23 @@ window.shareWeeklyPerformanceJpeg = async function () {
     const hdScale = 3;
     const exportHost = document.createElement("div");
     const exportReport = report.cloneNode(true);
-    exportHost.style.position = "fixed";
+    // Use absolute (not fixed) so the element is not viewport-constrained
+    exportHost.style.position = "absolute";
     exportHost.style.left = "-10000px";
     exportHost.style.top = "0";
     exportHost.style.width = `${exportWidth}px`;
+    exportHost.style.height = "10000px";
     exportHost.style.pointerEvents = "none";
     exportReport.classList.add("weekly-export");
     exportReport.style.width = `${exportWidth}px`;
     exportReport.style.maxWidth = "none";
-    exportHost.appendChild(exportReport);
-    document.body.appendChild(exportHost);
-
-    // Let the element expand to its full content height before capture
     exportReport.style.overflow = "visible";
     exportReport.style.height = "auto";
     exportReport.style.minHeight = "0";
-    // Force a synchronous reflow so offsetHeight reflects full content
+    exportHost.appendChild(exportReport);
+    document.body.appendChild(exportHost);
+
+    // Force reflow so the browser calculates full natural height
     void exportReport.getBoundingClientRect();
     const fullHeight = exportReport.offsetHeight;
 
