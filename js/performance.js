@@ -219,6 +219,7 @@ window.shareWeeklyPerformanceJpeg = async function () {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const exportWidth = 794;
     const hdScale = 3;
+    toast("Preparing export…");
 
     // Measure the live element's scroll height BEFORE cloning.
     // The phone renders 1-column, which is taller than the 2-column export —
