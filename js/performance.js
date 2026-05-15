@@ -232,9 +232,13 @@ window.shareWeeklyPerformanceJpeg = async function () {
     exportHost.appendChild(exportReport);
     document.body.appendChild(exportHost);
 
-    // Remove overflow clip so html2canvas sees the full content height
+    // Let the element expand to its full content height before capture
     exportReport.style.overflow = "visible";
-    const fullHeight = exportReport.scrollHeight;
+    exportReport.style.height = "auto";
+    exportReport.style.minHeight = "0";
+    // Force a synchronous reflow so offsetHeight reflects full content
+    void exportReport.getBoundingClientRect();
+    const fullHeight = exportReport.offsetHeight;
 
     let canvas;
     try {
