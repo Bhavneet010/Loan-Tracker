@@ -263,7 +263,8 @@ window.shareWeeklyPerformanceJpeg = async function () {
 
     // Crop canvas to actual content — removes the blank buffer at the bottom
     if (contentHeight > 0) {
-      const cropPx = Math.min(Math.ceil(contentHeight * hdScale), canvas.height);
+      // Add 80px to include bottom padding, border-radius, and footer
+      const cropPx = Math.min(Math.ceil((contentHeight + 80) * hdScale), canvas.height);
       const cropCanvas = document.createElement("canvas");
       cropCanvas.width = canvas.width;
       cropCanvas.height = cropPx;
