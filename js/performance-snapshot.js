@@ -825,96 +825,121 @@ function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
   </section>`;
 }
 
-function getDailyTotals(rows) {
-  if (!rows.length) return new Array(7).fill(0);
-  return Array.from({ length: rows[0].days.length }, (_, i) =>
-    rows.reduce((sum, row) => sum + (row.days[i]?.amount || 0), 0)
-  );
+function smoothCurve(vals, xOf, yOf) {
+  const pts = vals.map((v, i) => [+xOf(i).toFixed(2), +yOf(v).toFixed(2)]);
+  if (pts.length < 2) return "";
+  let d = `M ${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const cp1x = (p1[0] + (p2[0] - p0[0]) / 6).toFixed(2);
+    const cp1y = (p1[1] + (p2[1] - p0[1]) / 6).toFixed(2);
+    const cp2x = (p2[0] - (p3[0] - p1[0]) / 6).toFixed(2);
+    const cp2y = (p2[1] - (p3[1] - p1[1]) / 6).toFixed(2);
+    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
+  }
+  return d;
 }
 
-function renderWeeklyLineChart(thisValues, prevValues, tone) {
-  const W = 420, H = 185;
-  const padL = 38, padR = 10, padT = 14, padB = 30;
+const SPARKLINE_OFFICER_COLORS = ["#6B5FBF", "#F59E0B", "#EC4899", "#0EA5E9", "#14B8A6", "#F97316"];
+const SPARKLINE_PREV_COLOR = "#B0A8CC";
+
+function renderSparklineSvg(thisVals, prevVals, color, gradId, maxVal) {
+  const W = 280, H = 54;
+  const padL = 6, padR = 6, padT = 14, padB = 10;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
-  const n = WEEK_DAYS.length;
-  const maxVal = Math.max(1, ...thisValues, ...prevValues);
-  const xOf = i => padL + (i / (n - 1)) * plotW;
+  const baselineY = (padT + plotH).toFixed(1);
+  const xOf = i => padL + (i / (thisVals.length - 1)) * plotW;
   const yOf = v => padT + plotH * (1 - v / maxVal);
-  const C = tone === "fresh"
-    ? { solid: "#10B981", light: "#6EE7B7" }
-    : { solid: "#3B82F6", light: "#93C5FD" };
-  const gradId = `wcg-${tone}`;
-
-  const gridLines = [0, 1 / 3, 2 / 3, 1].map(pct => {
-    const yPos = (padT + plotH * (1 - pct)).toFixed(1);
-    const label = `${fmtAmt(+(maxVal * pct).toFixed(1))}L`;
-    return `<line x1="${padL}" y1="${yPos}" x2="${W - padR}" y2="${yPos}" stroke="#EDE8FA" stroke-width="1"${pct > 0 ? ' stroke-dasharray="3 3"' : ''}/>` +
-      `<text x="${padL - 4}" y="${(+yPos + 3.5).toFixed(1)}" text-anchor="end" fill="#A49DC2" font-size="7.5" font-weight="800">${esc(label)}</text>`;
+  const thisCurve = smoothCurve(thisVals, xOf, yOf);
+  const prevCurve = smoothCurve(prevVals, xOf, yOf);
+  const firstX = xOf(0).toFixed(1);
+  const lastX = xOf(thisVals.length - 1).toFixed(1);
+  const areaPath = `${thisCurve} L ${lastX},${baselineY} L ${firstX},${baselineY} Z`;
+  const thisDots = thisVals.map((v, i) => {
+    const cx = xOf(i).toFixed(1), cy = yOf(v).toFixed(1);
+    return `<circle cx="${cx}" cy="${cy}" r="3" fill="${color}" stroke="#fff" stroke-width="1.5"><title>${esc(WEEK_DAYS[i] + ": " + v)}</title></circle>`;
   }).join("");
+  const prevDots = prevVals.map((v, i) => {
+    const cx = xOf(i).toFixed(1), cy = yOf(v).toFixed(1);
+    return `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#fff" stroke="${color}" stroke-width="1.5" opacity="0.45"><title>${esc(WEEK_DAYS[i] + ": " + v + " (prev)")}</title></circle>`;
+  }).join("");
+  return `<svg class="weekly-sparkline-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.30"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${areaPath}" fill="url(#${gradId})" stroke="none"/>
+    <path d="${prevCurve}" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 3" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+    <path d="${thisCurve}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${prevDots}
+    ${thisDots}
+  </svg>`;
+}
 
-  const xLabels = WEEK_DAYS.map((day, i) =>
-    `<text x="${xOf(i).toFixed(1)}" y="${(padT + plotH + 16).toFixed(1)}" text-anchor="middle" fill="#8A84A4" font-size="8" font-weight="800">${esc(day)}</text>`
-  ).join("");
-
-  const thisPoints = thisValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
-  const prevPoints = prevValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
-  const areaPoints = [
-    `${xOf(0).toFixed(1)},${(padT + plotH).toFixed(1)}`,
-    ...thisValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`),
-    `${xOf(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)}`,
-  ].join(" ");
-
-  const thisDots = thisValues.map((v, i) =>
-    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3.5" fill="${C.solid}" stroke="#fff" stroke-width="1.5"><title>${esc(WEEK_DAYS[i] + ": Rs " + fmtAmt(v) + "L")}</title></circle>`
-  ).join("");
-  const prevDots = prevValues.map((v, i) =>
-    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="2.5" fill="#fff" stroke="${C.light}" stroke-width="1.5"><title>${esc("Prev " + WEEK_DAYS[i] + ": Rs " + fmtAmt(v) + "L")}</title></circle>`
-  ).join("");
-
-  return `<svg class="weekly-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${C.solid}" stop-opacity="0.14"/>
-      <stop offset="100%" stop-color="${C.solid}" stop-opacity="0"/>
-    </linearGradient></defs>
-    ${gridLines}${xLabels}
-    <polygon points="${areaPoints}" fill="url(#${gradId})"/>
-    <polyline points="${prevPoints}" fill="none" stroke="${C.light}" stroke-width="1.8" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="${thisPoints}" fill="none" stroke="${C.solid}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    ${prevDots}${thisDots}
+function renderSparklineAxisSvg() {
+  const W = 280, padL = 6, padR = 6;
+  const xOf = i => padL + (i / 6) * (W - padL - padR);
+  return `<svg class="weekly-sparkline-axis-svg" viewBox="0 0 ${W} 16" xmlns="http://www.w3.org/2000/svg">
+    ${["M","T","W","T","F","S","S"].map((l, i) =>
+      `<text x="${xOf(i).toFixed(1)}" y="12" text-anchor="middle" fill="#B0A8CC" font-size="8.5" font-weight="800">${l}</text>`
+    ).join("")}
   </svg>`;
 }
 
 function renderWeeklyComparativeCharts(thisData, prevData) {
-  const renderChartCard = (kicker, thisVals, prevVals, tone) => `
-    <div class="weekly-chart-card ${esc(tone)}">
-      <div class="weekly-chart-card-head">
-        <div>
-          <span class="weekly-chart-kicker">Daily amount trend</span>
-          <h4>${esc(kicker)}</h4>
+  const renderSection = (title, thisRows, prevRows, sectionIdx) => {
+    const prevByName = new Map(prevRows.map(r => [r.name, r]));
+    const maxVal = Math.max(1,
+      ...thisRows.flatMap(r => r.days.map(d => d.count)),
+      ...prevRows.flatMap(r => r.days.map(d => d.count))
+    );
+
+    const officerRows = thisRows.map((row, idx) => {
+      const color = SPARKLINE_OFFICER_COLORS[idx % SPARKLINE_OFFICER_COLORS.length];
+      const prevRow = prevByName.get(row.name);
+      const prevVals = prevRow ? prevRow.days.map(d => d.count) : new Array(7).fill(0);
+      const gradId = `wksg-${sectionIdx}-${idx}`;
+      return `<div class="weekly-sparkline-row">
+        <div class="weekly-sparkline-meta">
+          <span class="weekly-sparkline-name" style="color:${color}">${esc(row.name)}</span>
+          <div class="weekly-sparkline-total">
+            <strong>${row.total.count}</strong>
+            <span>Total</span>
+          </div>
         </div>
-        <div class="weekly-chart-legend">
-          <div class="weekly-legend-item">
-            <svg width="16" height="3" viewBox="0 0 16 3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-            <span>This Week</span>
-          </div>
-          <div class="weekly-legend-item wk-prev">
-            <svg width="16" height="3" viewBox="0 0 16 3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/></svg>
-            <span>Last Week</span>
-          </div>
+        ${renderSparklineSvg(row.days.map(d => d.count), prevVals, color, gradId, maxVal)}
+      </div>`;
+    }).join("");
+
+    return `<div class="weekly-chart-section">
+      <div class="weekly-chart-section-head">
+        <span class="weekly-chart-kicker">Daily count trend</span>
+        <h4>${esc(title)}</h4>
+      </div>
+      <div class="weekly-sparkline-list">
+        ${officerRows}
+        <div class="weekly-sparkline-row x-axis-row">
+          <div class="weekly-sparkline-meta"></div>
+          ${renderSparklineAxisSvg()}
         </div>
       </div>
-      ${renderWeeklyLineChart(thisVals, prevVals, tone)}
     </div>`;
+  };
 
   return `<section class="weekly-comparative-section">
     <div class="weekly-comp-head">
       <span>Week-on-Week Trend</span>
-      <strong>Daily amount comparison</strong>
+      <strong>Daily count comparison</strong>
     </div>
     <div class="weekly-comp-charts">
-      ${renderChartCard("Fresh Sanctions", getDailyTotals(thisData.fresh.rows), getDailyTotals(prevData.fresh.rows), "fresh")}
-      ${renderChartCard("Renewals", getDailyTotals(thisData.renewal.rows), getDailyTotals(prevData.renewal.rows), "renewal")}
+      ${renderSection("Fresh Sanctions", thisData.fresh.rows, prevData.fresh.rows, 0)}
+      ${renderSection("Renewals", thisData.renewal.rows, prevData.renewal.rows, 1)}
     </div>
   </section>`;
 }
