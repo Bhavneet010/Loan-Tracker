@@ -239,29 +239,22 @@
   text-transform:uppercase;
 }
 .weekly-comp-charts{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.weekly-chart-card{
-  border-radius:14px;
-  padding:12px;
-  background:#FBFAFE;
-  border:1px solid rgba(107,95,191,0.08);
-}
-.weekly-chart-card.fresh{
-  background:rgba(16,185,129,0.04);
-  border-color:rgba(16,185,129,0.15);
-}
-.weekly-chart-card.renewal{
-  background:rgba(59,130,246,0.04);
-  border-color:rgba(59,130,246,0.15);
-}
-.weekly-chart-card-head{
   display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  margin-bottom:8px;
+  flex-direction:column;
+  gap:16px;
+}
+.weekly-chart-section-head{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  margin-bottom:10px;
+}
+.weekly-chart-section-head h4{
+  margin:0;
+  font-size:15px;
+  font-weight:950;
+  color:#050A2F;
+  line-height:1;
 }
 .weekly-chart-kicker{
   display:block;
@@ -272,33 +265,49 @@
   text-transform:uppercase;
   margin-bottom:3px;
 }
-.weekly-chart-card h4{
-  margin:0;
-  font-size:15px;
-  font-weight:950;
-  color:#050A2F;
-  line-height:1;
+.weekly-officer-chart-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
 }
-.weekly-chart-legend{
-  display:flex;
-  flex-direction:row;
-  flex-wrap:wrap;
-  gap:4px 8px;
-  justify-content:flex-end;
-  max-width:130px;
+.weekly-officer-mini-card{
+  border-radius:12px;
+  padding:10px 10px 8px;
+  background:#FBFAFE;
+  border:1px solid rgba(107,95,191,0.10);
 }
-.weekly-legend-item{
+.weekly-officer-mini-card.fresh{
+  background:rgba(16,185,129,0.03);
+  border-color:rgba(16,185,129,0.14);
+}
+.weekly-officer-mini-card.renewal{
+  background:rgba(59,130,246,0.03);
+  border-color:rgba(59,130,246,0.14);
+}
+.weekly-mini-card-head{
   display:flex;
   align-items:center;
-  gap:5px;
+  justify-content:space-between;
+  margin-bottom:5px;
 }
-.weekly-legend-item span{
-  color:#6F6A8D;
-  font-size:8px;
+.weekly-mini-officer-name{
+  font-size:11px;
+  font-weight:950;
+  color:#050A2F;
+}
+.weekly-mini-card-legend{
+  display:flex;
+  gap:6px;
+}
+.wkleg{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  font-size:7px;
   font-weight:850;
+  color:#8A84A4;
 }
-.weekly-legend-item.wk-prev span{ color:#9B93BC; }
-.weekly-chart-svg{
+.weekly-mini-chart-svg{
   width:100%;
   height:auto;
   display:block;
@@ -648,11 +657,14 @@
     font-size:6px;
   }
   .weekly-comp-charts{
-    grid-template-columns:1fr;
-    gap:8px;
+    gap:12px;
   }
-  .weekly-chart-card h4{
-    font-size:12px;
+  .weekly-officer-chart-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:7px;
+  }
+  .weekly-chart-section-head h4{
+    font-size:13px;
   }
   .weekly-chart-kicker{
     font-size:7px;

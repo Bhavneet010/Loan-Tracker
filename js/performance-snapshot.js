@@ -825,128 +825,92 @@ function renderWeeklyHeatmapCard(title, kicker, rows, dates, tone) {
   </section>`;
 }
 
-const OFFICER_PALETTE = [
-  TREND_COLORS.officerA,
-  TREND_COLORS.officerB,
-  TREND_COLORS.officerC,
-  TREND_COLORS.officerD,
-  "#14B8A6",
-  "#F97316",
-];
-
-function getDailyTotals(rows) {
-  if (!rows.length) return new Array(7).fill(0);
-  return Array.from({ length: rows[0].days.length }, (_, i) =>
-    rows.reduce((sum, row) => sum + (row.days[i]?.count || 0), 0)
-  );
+function smoothCurve(vals, xOf, yOf) {
+  const pts = vals.map((v, i) => [+xOf(i).toFixed(2), +yOf(v).toFixed(2)]);
+  if (pts.length < 2) return "";
+  let d = `M ${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const cp1x = (p1[0] + (p2[0] - p0[0]) / 6).toFixed(2);
+    const cp1y = (p1[1] + (p2[1] - p0[1]) / 6).toFixed(2);
+    const cp2x = (p2[0] - (p3[0] - p1[0]) / 6).toFixed(2);
+    const cp2y = (p2[1] - (p3[1] - p1[1]) / 6).toFixed(2);
+    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
+  }
+  return d;
 }
 
-function getOfficerDailyCounts(rows) {
-  return rows
-    .filter(row => row.days.some(d => d.count > 0))
-    .map((row, idx) => ({
-      name: row.name,
-      color: OFFICER_PALETTE[idx % OFFICER_PALETTE.length],
-      values: row.days.map(d => d.count),
-    }));
-}
-
-function renderWeeklyLineChart(officerSeries, prevTotals, tone) {
-  const W = 420, H = 185;
-  const padL = 38, padR = 10, padT = 14, padB = 30;
+function renderOfficerMiniChart(name, thisVals, prevVals, tone) {
+  const W = 200, H = 82;
+  const padL = 20, padR = 6, padT = 8, padB = 20;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
-  const n = WEEK_DAYS.length;
-  const allVals = officerSeries.flatMap(s => s.values);
-  const maxVal = Math.max(1, ...(allVals.length ? allVals : [0]), ...prevTotals);
+  const n = 7;
+  const maxVal = Math.max(1, ...thisVals, ...prevVals);
   const xOf = i => padL + (i / (n - 1)) * plotW;
   const yOf = v => padT + plotH * (1 - v / maxVal);
-  const PREV_COLOR = "#B0A8CC";
+  const lineColor = tone === "fresh" ? "#10B981" : "#3B82F6";
+  const PREV_COLOR = "#C8C0E0";
 
-  // Smart Y-axis ticks — integer steps, no duplicates
   const ceiled = Math.ceil(maxVal);
-  const step = Math.max(1, Math.ceil(ceiled / 3));
-  const tickVals = [];
-  for (let v = 0; v <= ceiled; v += step) tickVals.push(v);
+  const ticks = ceiled <= 2 ? [0, ceiled] : [0, Math.round(ceiled / 2), ceiled];
 
-  const gridLines = tickVals.map(v => {
+  const gridLines = ticks.map(v => {
     const yPos = yOf(v).toFixed(1);
-    return `<line x1="${padL}" y1="${yPos}" x2="${W - padR}" y2="${yPos}" stroke="#EDE8FA" stroke-width="1"${v > 0 ? ' stroke-dasharray="3 3"' : ''}/>` +
-      `<text x="${padL - 4}" y="${(+yPos + 3.5).toFixed(1)}" text-anchor="end" fill="#A49DC2" font-size="7.5" font-weight="800">${v}</text>`;
+    return `<line x1="${padL}" y1="${yPos}" x2="${W - padR}" y2="${yPos}" stroke="#EDE8FA" stroke-width="0.75"${v > 0 ? ' stroke-dasharray="2 2"' : ''}/>` +
+      `<text x="${padL - 3}" y="${(+yPos + 3).toFixed(1)}" text-anchor="end" fill="#B0A8CC" font-size="6.5" font-weight="800">${v}</text>`;
   }).join("");
 
-  const xLabels = WEEK_DAYS.map((day, i) =>
-    `<text x="${xOf(i).toFixed(1)}" y="${(padT + plotH + 16).toFixed(1)}" text-anchor="middle" fill="#8A84A4" font-size="8" font-weight="800">${esc(day)}</text>`
+  const xLabels = ["M", "T", "W", "T", "F", "S", "S"].map((letter, i) =>
+    `<text x="${xOf(i).toFixed(1)}" y="${(padT + plotH + 13).toFixed(1)}" text-anchor="middle" fill="#B0A8CC" font-size="6.5" font-weight="800">${letter}</text>`
   ).join("");
 
-  // Cubic bezier smooth path through data points (Catmull-Rom → bezier)
-  const smoothPath = vals => {
-    const pts = vals.map((v, i) => [+xOf(i).toFixed(2), +yOf(v).toFixed(2)]);
-    if (pts.length < 2) return "";
-    let d = `M ${pts[0][0]},${pts[0][1]}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[Math.max(0, i - 1)];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[Math.min(pts.length - 1, i + 2)];
-      const cp1x = (p1[0] + (p2[0] - p0[0]) / 6).toFixed(2);
-      const cp1y = (p1[1] + (p2[1] - p0[1]) / 6).toFixed(2);
-      const cp2x = (p2[0] - (p3[0] - p1[0]) / 6).toFixed(2);
-      const cp2y = (p2[1] - (p3[1] - p1[1]) / 6).toFixed(2);
-      d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
-    }
-    return d;
-  };
-
-  const prevDots = prevTotals.map((v, i) =>
-    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="2.5" fill="#fff" stroke="${PREV_COLOR}" stroke-width="1.5"><title>${esc("Last Wk " + WEEK_DAYS[i] + ": " + v)}</title></circle>`
+  const thisDots = thisVals.map((v, i) =>
+    `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="2" fill="${lineColor}" stroke="#fff" stroke-width="1"><title>${esc(WEEK_DAYS[i] + ": " + v)}</title></circle>`
   ).join("");
 
-  // White halos drawn first so officer lines visually separate at crossings
-  const halos = officerSeries.map(s =>
-    `<path d="${smoothPath(s.values)}" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`
-  ).join("");
-
-  const officerPaths = officerSeries.map(s =>
-    `<path d="${smoothPath(s.values)}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
-  ).join("");
-
-  const officerDots = officerSeries.flatMap(s =>
-    s.values.map((v, i) =>
-      `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3" fill="${s.color}" stroke="#fff" stroke-width="1.5"><title>${esc(s.name + " " + WEEK_DAYS[i] + ": " + v)}</title></circle>`
-    )
-  ).join("");
-
-  return `<svg class="weekly-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    ${gridLines}${xLabels}
-    <path d="${smoothPath(prevTotals)}" fill="none" stroke="${PREV_COLOR}" stroke-width="1.8" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round"/>
-    ${prevDots}${halos}${officerPaths}${officerDots}
-  </svg>`;
+  return `<div class="weekly-officer-mini-card ${esc(tone)}">
+    <div class="weekly-mini-card-head">
+      <span class="weekly-mini-officer-name">${esc(name)}</span>
+      <div class="weekly-mini-card-legend">
+        <span class="wkleg"><svg width="10" height="2" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="${lineColor}" stroke-width="2" stroke-linecap="round"/></svg>This</span>
+        <span class="wkleg wkleg-last"><svg width="10" height="2" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="${PREV_COLOR}" stroke-width="1.5" stroke-dasharray="3 2" stroke-linecap="round"/></svg>Last</span>
+      </div>
+    </div>
+    <svg class="weekly-mini-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      ${gridLines}${xLabels}
+      <path d="${smoothCurve(prevVals, xOf, yOf)}" fill="none" stroke="${PREV_COLOR}" stroke-width="1.2" stroke-dasharray="3 2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${smoothCurve(thisVals, xOf, yOf)}" fill="none" stroke="${lineColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      ${thisDots}
+    </svg>
+  </div>`;
 }
 
 function renderWeeklyComparativeCharts(thisData, prevData) {
-  const renderChartCard = (kicker, officerSeries, prevTotals, tone) => {
-    const legendItems = officerSeries.map(s =>
-      `<div class="weekly-legend-item" style="color:${s.color}">
-        <svg width="14" height="3" viewBox="0 0 14 3"><line x1="0" y1="1.5" x2="14" y2="1.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-        <span>${esc(s.name)}</span>
-      </div>`
-    ).join("");
-    const prevLegend = `<div class="weekly-legend-item wk-prev">
-      <svg width="14" height="3" viewBox="0 0 14 3"><line x1="0" y1="1.5" x2="14" y2="1.5" stroke="#B0A8CC" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/></svg>
-      <span>Last Week</span>
-    </div>`;
-    return `<div class="weekly-chart-card ${esc(tone)}">
-      <div class="weekly-chart-card-head">
+  const prevFreshByName = new Map(prevData.fresh.rows.map(r => [r.name, r]));
+  const prevRenewalByName = new Map(prevData.renewal.rows.map(r => [r.name, r]));
+  const zeroDays = () => new Array(7).fill(0);
+
+  const renderSection = (title, tone, thisRows, prevByName) => {
+    const cards = thisRows.map(row => {
+      const thisVals = row.days.map(d => d.count);
+      const prevRow = prevByName.get(row.name);
+      const prevVals = prevRow ? prevRow.days.map(d => d.count) : zeroDays();
+      return renderOfficerMiniChart(row.name, thisVals, prevVals, tone);
+    }).join("");
+    return `<div class="weekly-chart-section">
+      <div class="weekly-chart-section-head">
         <div>
           <span class="weekly-chart-kicker">Daily count trend</span>
-          <h4>${esc(kicker)}</h4>
-        </div>
-        <div class="weekly-chart-legend">
-          ${legendItems}${prevLegend}
+          <h4>${esc(title)}</h4>
         </div>
       </div>
-      ${renderWeeklyLineChart(officerSeries, prevTotals, tone)}
+      <div class="weekly-officer-chart-grid">
+        ${cards}
+      </div>
     </div>`;
   };
 
@@ -956,8 +920,8 @@ function renderWeeklyComparativeCharts(thisData, prevData) {
       <strong>Daily count comparison</strong>
     </div>
     <div class="weekly-comp-charts">
-      ${renderChartCard("Fresh Sanctions", getOfficerDailyCounts(thisData.fresh.rows), getDailyTotals(prevData.fresh.rows), "fresh")}
-      ${renderChartCard("Renewals", getOfficerDailyCounts(thisData.renewal.rows), getDailyTotals(prevData.renewal.rows), "renewal")}
+      ${renderSection("Fresh Sanctions", "fresh", thisData.fresh.rows, prevFreshByName)}
+      ${renderSection("Renewals", "renewal", thisData.renewal.rows, prevRenewalByName)}
     </div>
   </section>`;
 }
