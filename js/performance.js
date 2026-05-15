@@ -221,21 +221,25 @@ window.shareWeeklyPerformanceJpeg = async function () {
     const hdScale = 3;
     toast("Preparing export…");
 
-    // Measure the live element's scroll height BEFORE cloning.
-    // The phone renders 1-column, which is taller than the 2-column export —
-    // this gives a safe upper bound that always includes all content.
-    const liveHeight = Math.max(report.scrollHeight, report.offsetHeight);
-
+    // Build off-screen export element
     const exportHost = document.createElement("div");
     const exportReport = report.cloneNode(true);
-    exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${exportWidth}px;pointer-events:none;`;
+    exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${exportWidth}px;pointer-events:none;overflow:visible;`;
     exportReport.classList.add("weekly-export");
-    exportReport.style.width = `${exportWidth}px`;
-    exportReport.style.maxWidth = "none";
+    exportReport.style.cssText = `width:${exportWidth}px;max-width:none;overflow:visible;min-height:0;`;
+    // Force 2-column grid inline to override media-query-driven 1-column layout on phone viewport
+    const exportGrid = exportReport.querySelector(".weekly-comp-charts");
+    if (exportGrid) {
+      exportGrid.style.display = "grid";
+      exportGrid.style.gridTemplateColumns = "1fr 1fr";
+      exportGrid.style.gap = "20px";
+    }
     exportHost.appendChild(exportReport);
     document.body.appendChild(exportHost);
 
-    const CAPTURE_HEIGHT = 3000;
+    // Wait two animation frames for the layout engine to compute dimensions at 794px width
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const contentH = Math.max(exportReport.scrollHeight, exportReport.offsetHeight, 800);
 
     let canvas;
     try {
@@ -244,24 +248,30 @@ window.shareWeeklyPerformanceJpeg = async function () {
         scale: hdScale,
         useCORS: true,
         width: exportWidth,
-        height: CAPTURE_HEIGHT,
+        height: contentH,
         windowWidth: exportWidth,
-        windowHeight: CAPTURE_HEIGHT,
+        windowHeight: contentH,
+        scrollX: 0,
+        scrollY: 0,
         onclone: (_doc, clonedEl) => {
           clonedEl.style.overflow = "visible";
           clonedEl.style.minHeight = "0";
-          clonedEl.style.height = CAPTURE_HEIGHT + "px";
-          const grid = clonedEl.querySelector(".weekly-comp-charts");
-          if (grid) grid.style.setProperty("grid-template-columns", "1fr 1fr", "important");
+          clonedEl.style.height = contentH + "px";
+          const g = clonedEl.querySelector(".weekly-comp-charts");
+          if (g) {
+            g.style.display = "grid";
+            g.style.gridTemplateColumns = "1fr 1fr";
+            g.style.gap = "20px";
+          }
         },
       });
     } finally {
       exportHost.remove();
     }
 
-    // Crop using the live height (safe upper bound) so all content is included
+    // Trim canvas to content height (no trailing blank rows)
     {
-      const cropPx = Math.min(Math.ceil(liveHeight * hdScale), canvas.height);
+      const cropPx = Math.min(Math.ceil(contentH * hdScale), canvas.height);
       const cropCanvas = document.createElement("canvas");
       cropCanvas.width = canvas.width;
       cropCanvas.height = cropPx;
