@@ -518,7 +518,16 @@
 .weekly-performance-report.weekly-export{
   width:794px;
   max-width:none;
-  min-height:1123px;
+  min-height:0;
+  padding:30px 34px 46px;
+}
+.weekly-performance-report.weekly-export .weekly-comp-charts{
+  grid-template-columns:1fr 1fr!important;
+  gap:20px;
+}
+.weekly-performance-report.weekly-export .weekly-comparative-section,
+.weekly-performance-report.weekly-export .weekly-heatmap-card{
+  overflow:visible;
 }
 .weekly-performance-report.weekly-export .weekly-officer-name{
   font-size:14px;
