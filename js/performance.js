@@ -217,17 +217,19 @@ window.shareWeeklyPerformanceJpeg = async function () {
     await ensureHtml2Canvas();
     await Promise.all(SNAPSHOT_BG_ASSETS.map(ensureImageLoaded));
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const exportWidth = 794;
+    const A4_W = 794;
+    const A4_H = 1123;
     const hdScale = 3;
     toast("Preparing export…");
 
-    // Build off-screen export element
+    // Build off-screen export element at A4 width
     const exportHost = document.createElement("div");
     const exportReport = report.cloneNode(true);
-    exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${exportWidth}px;pointer-events:none;overflow:visible;`;
+    exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${A4_W}px;pointer-events:none;overflow:visible;`;
     exportReport.classList.add("weekly-export");
-    exportReport.style.cssText = `width:${exportWidth}px;max-width:none;overflow:visible;min-height:0;`;
-    // Force 2-column grid inline to override media-query-driven 1-column layout on phone viewport
+    exportReport.style.cssText = `width:${A4_W}px;max-width:none;overflow:visible;min-height:0;`;
+    // Force 2-column grid inline — phone viewport triggers @media(max-width:560px)
+    // on the real viewport even though the element is 794px wide
     const exportGrid = exportReport.querySelector(".weekly-comp-charts");
     if (exportGrid) {
       exportGrid.style.display = "grid";
@@ -237,19 +239,19 @@ window.shareWeeklyPerformanceJpeg = async function () {
     exportHost.appendChild(exportReport);
     document.body.appendChild(exportHost);
 
-    // Wait two animation frames for the layout engine to compute dimensions at 794px width
+    // Wait two animation frames so layout engine computes dimensions at 794px
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const contentH = Math.max(exportReport.scrollHeight, exportReport.offsetHeight, 800);
 
-    let canvas;
+    let contentCanvas;
     try {
-      canvas = await window.html2canvas(exportReport, {
+      contentCanvas = await window.html2canvas(exportReport, {
         backgroundColor: "#f7f4fc",
         scale: hdScale,
         useCORS: true,
-        width: exportWidth,
+        width: A4_W,
         height: contentH,
-        windowWidth: exportWidth,
+        windowWidth: A4_W,
         windowHeight: contentH,
         scrollX: 0,
         scrollY: 0,
@@ -269,15 +271,23 @@ window.shareWeeklyPerformanceJpeg = async function () {
       exportHost.remove();
     }
 
-    // Trim canvas to content height (no trailing blank rows)
-    {
-      const cropPx = Math.min(Math.ceil(contentH * hdScale), canvas.height);
-      const cropCanvas = document.createElement("canvas");
-      cropCanvas.width = canvas.width;
-      cropCanvas.height = cropPx;
-      cropCanvas.getContext("2d").drawImage(canvas, 0, 0);
-      canvas = cropCanvas;
-    }
+    // Scale rendered content to fit exactly on an A4 canvas.
+    // If content is shorter than A4 height, fitScale = 1 (no upscaling).
+    // If content overflows A4 height, it is scaled down proportionally.
+    const a4PxW = A4_W * hdScale;
+    const a4PxH = A4_H * hdScale;
+    const fitScale = Math.min(1, a4PxW / contentCanvas.width, a4PxH / contentCanvas.height);
+    const drawW = Math.round(contentCanvas.width * fitScale);
+    const drawH = Math.round(contentCanvas.height * fitScale);
+
+    const a4Canvas = document.createElement("canvas");
+    a4Canvas.width = a4PxW;
+    a4Canvas.height = a4PxH;
+    const a4Ctx = a4Canvas.getContext("2d");
+    a4Ctx.fillStyle = "#f7f4fc";
+    a4Ctx.fillRect(0, 0, a4PxW, a4PxH);
+    a4Ctx.drawImage(contentCanvas, 0, 0, drawW, drawH);
+    const canvas = a4Canvas;
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
