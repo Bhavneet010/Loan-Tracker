@@ -221,34 +221,20 @@ window.shareWeeklyPerformanceJpeg = async function () {
     const hdScale = 3;
     toast("Generating report…");
 
+    // Mirror the daily snapshot pattern exactly: CSS class does all the layout work,
+    // JS only clones, adds the class, and calls html2canvas with no height constraints.
     const exportHost = document.createElement("div");
     const exportReport = report.cloneNode(true);
-    exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${A4_W}px;pointer-events:none;overflow:visible;`;
+    exportHost.style.position = "fixed";
+    exportHost.style.left = "-10000px";
+    exportHost.style.top = "0";
+    exportHost.style.width = `${A4_W}px`;
+    exportHost.style.pointerEvents = "none";
     exportReport.classList.add("weekly-export");
-    exportReport.style.cssText = `width:${A4_W}px;max-width:none;overflow:visible;min-height:0;`;
-
-    // The footer is `position:absolute; bottom:18px` by default — that places it
-    // over content whenever the element height doesn't match the natural content,
-    // and excludes it from scrollHeight measurements. Force it into normal flow
-    // for export so it always sits cleanly after the last sparkline row.
-    const exportFooter = exportReport.querySelector(".weekly-report-footer");
-    if (exportFooter) {
-      exportFooter.style.position = "static";
-      exportFooter.style.marginTop = "20px";
-    }
-
-    const exportGrid = exportReport.querySelector(".weekly-comp-charts");
-    if (exportGrid) {
-      exportGrid.style.display = "grid";
-      exportGrid.style.gridTemplateColumns = "1fr 1fr";
-      exportGrid.style.gap = "20px";
-    }
+    exportReport.style.width = `${A4_W}px`;
+    exportReport.style.maxWidth = "none";
     exportHost.appendChild(exportReport);
     document.body.appendChild(exportHost);
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-    // With the footer in normal flow, scrollHeight now includes everything.
-    const contentH = Math.max(exportReport.scrollHeight, exportReport.offsetHeight, 600);
 
     let canvas;
     try {
@@ -257,34 +243,12 @@ window.shareWeeklyPerformanceJpeg = async function () {
         scale: hdScale,
         useCORS: true,
         width: A4_W,
-        height: contentH,
         windowWidth: A4_W,
-        windowHeight: contentH,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (_doc, clonedEl) => {
-          clonedEl.style.overflow = "visible";
-          clonedEl.style.minHeight = "0";
-          clonedEl.style.height = contentH + "px";
-          const fc = clonedEl.querySelector(".weekly-report-footer");
-          if (fc) {
-            fc.style.position = "static";
-            fc.style.marginTop = "20px";
-          }
-          const g = clonedEl.querySelector(".weekly-comp-charts");
-          if (g) {
-            g.style.display = "grid";
-            g.style.gridTemplateColumns = "1fr 1fr";
-            g.style.gap = "20px";
-          }
-        },
       });
     } finally {
       exportHost.remove();
     }
 
-    // Output at A4 width × natural content height. No A4 height enforcement,
-    // no scaling — content fills the image cleanly with no blank space and no overlap.
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
