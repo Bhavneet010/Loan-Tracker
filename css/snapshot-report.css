@@ -242,6 +242,11 @@
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:20px;
+  overflow:hidden;
+}
+.weekly-chart-section{
+  overflow:hidden;
+  min-width:0;
 }
 .weekly-chart-section-head{
   margin-bottom:12px;

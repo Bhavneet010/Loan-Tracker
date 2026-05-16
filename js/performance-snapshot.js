@@ -867,18 +867,24 @@ function renderSparklineSvg(thisVals, prevVals, color, gradId, maxVal) {
     const cx = xOf(i).toFixed(1), cy = yOf(v).toFixed(1);
     return `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#fff" stroke="${color}" stroke-width="1.5" opacity="0.45"><title>${esc(WEEK_DAYS[i] + ": " + v + " (prev)")}</title></circle>`;
   }).join("");
-  return `<svg class="weekly-sparkline-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" overflow="hidden">
+  const clipId = `clip-${gradId}`;
+  return `<svg class="weekly-sparkline-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     <defs>
+      <clipPath id="${clipId}">
+        <rect x="0" y="0" width="${W}" height="${H}"/>
+      </clipPath>
       <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity="0.30"/>
         <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient>
     </defs>
-    <path d="${areaPath}" fill="url(#${gradId})" stroke="none"/>
-    <path d="${prevCurve}" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 3" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
-    <path d="${thisCurve}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-    ${prevDots}
-    ${thisDots}
+    <g clip-path="url(#${clipId})">
+      <path d="${areaPath}" fill="url(#${gradId})" stroke="none"/>
+      <path d="${prevCurve}" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 3" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+      <path d="${thisCurve}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${prevDots}
+      ${thisDots}
+    </g>
   </svg>`;
 }
 
