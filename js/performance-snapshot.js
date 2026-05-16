@@ -847,8 +847,8 @@ const SPARKLINE_OFFICER_COLORS = ["#6B5FBF", "#F59E0B", "#EC4899", "#0EA5E9", "#
 const SPARKLINE_PREV_COLOR = "#B0A8CC";
 
 function renderSparklineSvg(thisVals, prevVals, color, gradId, maxVal) {
-  const W = 280, H = 54;
-  const padL = 6, padR = 6, padT = 14, padB = 10;
+  const W = 280, H = 72;
+  const padL = 8, padR = 8, padT = 18, padB = 14;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
   const baselineY = (padT + plotH).toFixed(1);

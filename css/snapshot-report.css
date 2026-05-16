@@ -222,7 +222,7 @@
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:12px;
+  margin-bottom:16px;
 }
 .weekly-comp-head span{
   display:block;
@@ -249,7 +249,7 @@
   min-width:0;
 }
 .weekly-chart-section-head{
-  margin-bottom:12px;
+  margin-bottom:16px;
 }
 .weekly-chart-section-head h4{
   margin:4px 0 0;
@@ -269,12 +269,12 @@
 .weekly-sparkline-list{
   display:flex;
   flex-direction:column;
-  gap:4px;
+  gap:10px;
 }
 .weekly-sparkline-row{
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:8px;
 }
 .weekly-sparkline-meta{
   width:72px;
