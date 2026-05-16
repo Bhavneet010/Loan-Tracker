@@ -218,7 +218,6 @@ window.shareWeeklyPerformanceJpeg = async function () {
     await Promise.all(SNAPSHOT_BG_ASSETS.map(ensureImageLoaded));
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const A4_W = 794;
-    const A4_H = 1123;
     const hdScale = 3;
     toast("Generating report…");
 
@@ -226,9 +225,18 @@ window.shareWeeklyPerformanceJpeg = async function () {
     const exportReport = report.cloneNode(true);
     exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${A4_W}px;pointer-events:none;overflow:visible;`;
     exportReport.classList.add("weekly-export");
-    // min-height:A4_H ensures short content still fills the full A4 page.
-    // If content is taller than A4, the element grows naturally and we scale down.
-    exportReport.style.cssText = `width:${A4_W}px;max-width:none;overflow:visible;min-height:${A4_H}px;`;
+    exportReport.style.cssText = `width:${A4_W}px;max-width:none;overflow:visible;min-height:0;`;
+
+    // The footer is `position:absolute; bottom:18px` by default — that places it
+    // over content whenever the element height doesn't match the natural content,
+    // and excludes it from scrollHeight measurements. Force it into normal flow
+    // for export so it always sits cleanly after the last sparkline row.
+    const exportFooter = exportReport.querySelector(".weekly-report-footer");
+    if (exportFooter) {
+      exportFooter.style.position = "static";
+      exportFooter.style.marginTop = "20px";
+    }
+
     const exportGrid = exportReport.querySelector(".weekly-comp-charts");
     if (exportGrid) {
       exportGrid.style.display = "grid";
@@ -239,12 +247,12 @@ window.shareWeeklyPerformanceJpeg = async function () {
     document.body.appendChild(exportHost);
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-    // Measure actual rendered height (always >= A4_H due to min-height above)
-    const contentH = Math.max(exportReport.scrollHeight, exportReport.offsetHeight, A4_H);
+    // With the footer in normal flow, scrollHeight now includes everything.
+    const contentH = Math.max(exportReport.scrollHeight, exportReport.offsetHeight, 600);
 
-    let contentCanvas;
+    let canvas;
     try {
-      contentCanvas = await window.html2canvas(exportReport, {
+      canvas = await window.html2canvas(exportReport, {
         backgroundColor: "#f7f4fc",
         scale: hdScale,
         useCORS: true,
@@ -256,8 +264,13 @@ window.shareWeeklyPerformanceJpeg = async function () {
         scrollY: 0,
         onclone: (_doc, clonedEl) => {
           clonedEl.style.overflow = "visible";
-          clonedEl.style.minHeight = A4_H + "px";
+          clonedEl.style.minHeight = "0";
           clonedEl.style.height = contentH + "px";
+          const fc = clonedEl.querySelector(".weekly-report-footer");
+          if (fc) {
+            fc.style.position = "static";
+            fc.style.marginTop = "20px";
+          }
           const g = clonedEl.querySelector(".weekly-comp-charts");
           if (g) {
             g.style.display = "grid";
@@ -270,21 +283,8 @@ window.shareWeeklyPerformanceJpeg = async function () {
       exportHost.remove();
     }
 
-    // Fit onto A4 canvas: if content == A4 height → 1:1, if taller → scale down
-    const a4PxW = A4_W * hdScale;
-    const a4PxH = A4_H * hdScale;
-    const fitScale = Math.min(1, a4PxH / contentCanvas.height);
-    const drawW = Math.round(contentCanvas.width * fitScale);
-    const drawH = Math.round(contentCanvas.height * fitScale);
-
-    const a4Canvas = document.createElement("canvas");
-    a4Canvas.width = a4PxW;
-    a4Canvas.height = a4PxH;
-    const a4Ctx = a4Canvas.getContext("2d");
-    a4Ctx.fillStyle = "#f7f4fc";
-    a4Ctx.fillRect(0, 0, a4PxW, a4PxH);
-    a4Ctx.drawImage(contentCanvas, 0, 0, drawW, drawH);
-    const canvas = a4Canvas;
+    // Output at A4 width × natural content height. No A4 height enforcement,
+    // no scaling — content fills the image cleanly with no blank space and no overlap.
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
