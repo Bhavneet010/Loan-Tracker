@@ -226,7 +226,9 @@ window.shareWeeklyPerformanceJpeg = async function () {
     const exportReport = report.cloneNode(true);
     exportHost.style.cssText = `position:absolute;left:-10000px;top:0;width:${A4_W}px;pointer-events:none;overflow:visible;`;
     exportReport.classList.add("weekly-export");
-    exportReport.style.cssText = `width:${A4_W}px;max-width:none;overflow:visible;min-height:0;`;
+    // min-height:A4_H ensures short content still fills the full A4 page.
+    // If content is taller than A4, the element grows naturally and we scale down.
+    exportReport.style.cssText = `width:${A4_W}px;max-width:none;overflow:visible;min-height:${A4_H}px;`;
     const exportGrid = exportReport.querySelector(".weekly-comp-charts");
     if (exportGrid) {
       exportGrid.style.display = "grid";
@@ -237,9 +239,9 @@ window.shareWeeklyPerformanceJpeg = async function () {
     document.body.appendChild(exportHost);
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-    // Use a fixed generous height so scrollHeight measurement errors can't cut content.
-    // The true bottom is found via pixel scan after capture.
-    const CAPTURE_H = 1800;
+    // Measure actual rendered height (always >= A4_H due to min-height above)
+    const contentH = Math.max(exportReport.scrollHeight, exportReport.offsetHeight, A4_H);
+
     let contentCanvas;
     try {
       contentCanvas = await window.html2canvas(exportReport, {
@@ -247,15 +249,15 @@ window.shareWeeklyPerformanceJpeg = async function () {
         scale: hdScale,
         useCORS: true,
         width: A4_W,
-        height: CAPTURE_H,
+        height: contentH,
         windowWidth: A4_W,
-        windowHeight: CAPTURE_H,
+        windowHeight: contentH,
         scrollX: 0,
         scrollY: 0,
         onclone: (_doc, clonedEl) => {
           clonedEl.style.overflow = "visible";
-          clonedEl.style.minHeight = "0";
-          clonedEl.style.height = CAPTURE_H + "px";
+          clonedEl.style.minHeight = A4_H + "px";
+          clonedEl.style.height = contentH + "px";
           const g = clonedEl.querySelector(".weekly-comp-charts");
           if (g) {
             g.style.display = "grid";
@@ -268,32 +270,12 @@ window.shareWeeklyPerformanceJpeg = async function () {
       exportHost.remove();
     }
 
-    // Pixel-scan 3 columns from bottom to find where content actually ends.
-    // This avoids scrollHeight measurement issues (abs-positioned footer, media queries, etc.)
-    const scanCtx = contentCanvas.getContext("2d");
-    const BG = [0xF7, 0xF4, 0xFC];
-    const sampleXs = [0.2, 0.5, 0.8].map(f => Math.round(contentCanvas.width * f));
-    let trueH = 0;
-    for (const sx of sampleXs) {
-      const col = scanCtx.getImageData(sx, 0, 1, contentCanvas.height).data;
-      for (let y = contentCanvas.height - 1; y >= 0; y--) {
-        const i = y * 4;
-        if (Math.abs(col[i] - BG[0]) > 10 || Math.abs(col[i + 1] - BG[1]) > 10 || Math.abs(col[i + 2] - BG[2]) > 10) {
-          if (y + 1 > trueH) trueH = y + 1;
-          break;
-        }
-      }
-    }
-    // Add bottom padding (20 CSS px → 60 canvas px at scale 3) and clamp
-    trueH = Math.min(trueH + hdScale * 20, contentCanvas.height);
-    if (trueH < hdScale * 300) trueH = contentCanvas.height; // sanity: never over-crop
-
-    // Fit content onto A4 canvas (scale down only if taller than A4, never upscale)
+    // Fit onto A4 canvas: if content == A4 height → 1:1, if taller → scale down
     const a4PxW = A4_W * hdScale;
     const a4PxH = A4_H * hdScale;
-    const fitScale = Math.min(1, a4PxH / trueH);
+    const fitScale = Math.min(1, a4PxH / contentCanvas.height);
     const drawW = Math.round(contentCanvas.width * fitScale);
-    const drawH = Math.round(trueH * fitScale);
+    const drawH = Math.round(contentCanvas.height * fitScale);
 
     const a4Canvas = document.createElement("canvas");
     a4Canvas.width = a4PxW;
@@ -301,8 +283,7 @@ window.shareWeeklyPerformanceJpeg = async function () {
     const a4Ctx = a4Canvas.getContext("2d");
     a4Ctx.fillStyle = "#f7f4fc";
     a4Ctx.fillRect(0, 0, a4PxW, a4PxH);
-    // Draw only the true content slice (0..trueH) scaled onto A4
-    a4Ctx.drawImage(contentCanvas, 0, 0, contentCanvas.width, trueH, 0, 0, drawW, drawH);
+    a4Ctx.drawImage(contentCanvas, 0, 0, drawW, drawH);
     const canvas = a4Canvas;
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
