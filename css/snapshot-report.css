@@ -226,10 +226,10 @@
 }
 .weekly-comp-head span{
   display:block;
-  color:#6B5FBF;
-  font-size:10px;
+  color:#050A2F;
+  font-size:18px;
   font-weight:950;
-  letter-spacing:0.12em;
+  letter-spacing:0.06em;
   text-transform:uppercase;
 }
 .weekly-comp-head strong{
@@ -248,9 +248,9 @@
 }
 .weekly-chart-section-head h4{
   margin:4px 0 0;
-  font-size:18px;
-  font-weight:950;
-  color:#050A2F;
+  font-size:12px;
+  font-weight:900;
+  color:#6B5FBF;
   line-height:1;
 }
 .weekly-chart-kicker{
@@ -303,6 +303,7 @@
   min-width:0;
   width:100%;
   display:block;
+  overflow:hidden;
 }
 .weekly-sparkline-axis-svg{
   flex:1;
@@ -671,7 +672,7 @@
     gap:16px;
   }
   .weekly-chart-section-head h4{
-    font-size:15px;
+    font-size:11px;
   }
   .weekly-sparkline-meta{
     width:60px;
