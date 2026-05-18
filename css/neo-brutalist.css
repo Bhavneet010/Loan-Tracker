@@ -577,3 +577,383 @@ body.theme-neo-brutalist .content-leaving{
     padding-right:10px;
   }
 }
+
+/* =========================================================
+   PHASE 2 — COHESION OVERHAUL
+   Wipe out remaining purple/glass bleed so every surface
+   reads brutalist, not "old theme with new colors".
+   ========================================================= */
+
+/* ---------- Splash screen ---------- */
+body.theme-neo-brutalist #nirnay-splash{
+  background:#FFFEF2;
+  font-family:'Space Grotesk','Inter',sans-serif;
+}
+body.theme-neo-brutalist .splash-logo{
+  background:#00E47C;
+  border:3px solid #000;
+  border-radius:6px;
+  box-shadow:6px 6px 0 #000;
+}
+body.theme-neo-brutalist #nirnay-splash h1,
+body.theme-neo-brutalist #nirnay-splash strong,
+body.theme-neo-brutalist .splash-fallback strong{
+  color:#000;
+  font-family:'Space Grotesk','Inter',sans-serif;
+  font-weight:800;
+}
+body.theme-neo-brutalist #nirnay-splash h1 em{color:#000;font-style:normal;}
+body.theme-neo-brutalist #nirnay-splash p{color:#525252;font-weight:800;}
+body.theme-neo-brutalist .splash-fallback img{
+  border:3px solid #000;
+  border-radius:6px;
+  box-shadow:4px 4px 0 #000;
+  background:#FFFEF2;
+}
+body.theme-neo-brutalist .splash-loader{
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:3px;
+  box-shadow:2px 2px 0 #000;
+}
+body.theme-neo-brutalist .splash-shimmer{
+  background:linear-gradient(90deg,transparent,#00E47C,transparent);
+}
+
+/* ---------- Kill blur globally for this theme ---------- */
+body.theme-neo-brutalist .header,
+body.theme-neo-brutalist .panel,
+body.theme-neo-brutalist .sheet,
+body.theme-neo-brutalist .modal-box,
+body.theme-neo-brutalist .modal-card,
+body.theme-neo-brutalist .user-dropdown,
+body.theme-neo-brutalist .notif-card,
+body.theme-neo-brutalist .notif-overlay,
+body.theme-neo-brutalist .cal-day-detail,
+body.theme-neo-brutalist .cal-wrap,
+body.theme-neo-brutalist .task-performer-block,
+body.theme-neo-brutalist .task-performer,
+body.theme-neo-brutalist .task-targets,
+body.theme-neo-brutalist .task-care,
+body.theme-neo-brutalist .task-critical-tab,
+body.theme-neo-brutalist .task-critical-detail,
+body.theme-neo-brutalist .task-officer-chip,
+body.theme-neo-brutalist .perf-overlay,
+body.theme-neo-brutalist .perf-overlay-header,
+body.theme-neo-brutalist .fs-pop,
+body.theme-neo-brutalist .activity-bubble,
+body.theme-neo-brutalist .decision-activity-overlay,
+body.theme-neo-brutalist .overlay,
+body.theme-neo-brutalist #activityOverlay,
+body.theme-neo-brutalist .photo-modal-content{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+/* ---------- Body backdrop: kill purple radial-gradient halo ---------- */
+body.theme-neo-brutalist::before{
+  background:
+    linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px),
+    linear-gradient(0deg,rgba(0,0,0,0.045) 1px,transparent 1px),
+    #FFFEF2 !important;
+  background-size:18px 18px !important;
+}
+body.theme-neo-brutalist::after{background:transparent !important;}
+
+/* ---------- Solid header (no blur, no purple halo) ---------- */
+body.theme-neo-brutalist .header{
+  background:#FFFEF2 !important;
+}
+
+/* ---------- Headings on Space Grotesk ---------- */
+body.theme-neo-brutalist h1,
+body.theme-neo-brutalist h2,
+body.theme-neo-brutalist h3,
+body.theme-neo-brutalist h4,
+body.theme-neo-brutalist .perf-overlay-title,
+body.theme-neo-brutalist .modal-box h2,
+body.theme-neo-brutalist .sheet h2,
+body.theme-neo-brutalist .task-section-title,
+body.theme-neo-brutalist .task-performer-title,
+body.theme-neo-brutalist .task-critical-title,
+body.theme-neo-brutalist .rnw-officer-name,
+body.theme-neo-brutalist .lc-name,
+body.theme-neo-brutalist .lr-name{
+  font-family:'Space Grotesk','Inter',system-ui,sans-serif;
+  letter-spacing:-0.4px;
+  color:#000;
+  font-weight:800;
+}
+
+/* ---------- Flatten the loan-row category tint gradients ---------- */
+body.theme-neo-brutalist .loan-item.cat-agri > .loan-row,
+body.theme-neo-brutalist .loan-item.cat-sme  > .loan-row,
+body.theme-neo-brutalist .loan-item.cat-edu  > .loan-row,
+body.theme-neo-brutalist .loan-item.rnw-s-active   > .loan-row,
+body.theme-neo-brutalist .loan-item.rnw-s-due-soon > .loan-row,
+body.theme-neo-brutalist .loan-item.rnw-s-pending  > .loan-row,
+body.theme-neo-brutalist .loan-item.rnw-s-npa      > .loan-row,
+body.theme-neo-brutalist .loan-item.rnw-s-done     > .loan-row,
+body.theme-neo-brutalist .loan-item.rnw-s-dates-missing > .loan-row{
+  background:#FFFFFF !important;
+}
+
+/* ---------- Flatten every status-bar gradient ::before ---------- */
+body.theme-neo-brutalist .loan-card.overdue::before,
+body.theme-neo-brutalist .loan-item.overdue > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-pending  > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-npa      > .loan-row::before{
+  background:#FF3B30 !important;
+}
+body.theme-neo-brutalist .loan-card.returned::before,
+body.theme-neo-brutalist .loan-item.status-returned > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-due-soon > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-dates-missing > .loan-row::before{
+  background:#FFD600 !important;
+}
+body.theme-neo-brutalist .loan-card.sanctioned::before,
+body.theme-neo-brutalist .loan-item.status-sanctioned > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-active > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-done > .loan-row::before{
+  background:#00E47C !important;
+}
+
+/* ---------- Flatten all avatar gradients ---------- */
+body.theme-neo-brutalist .lr-av,
+body.theme-neo-brutalist .lc-av,
+body.theme-neo-brutalist .task-performer-av,
+body.theme-neo-brutalist .rnw-officer-av,
+body.theme-neo-brutalist .user-btn .av,
+body.theme-neo-brutalist .photo-modal-av,
+body.theme-neo-brutalist .officer-av-initials,
+body.theme-neo-brutalist .task-officer-mini,
+body.theme-neo-brutalist .task-performer--fresh .task-performer-av,
+body.theme-neo-brutalist .task-performer--renewal .task-performer-av{
+  background:#00E47C !important;
+  background-image:none !important;
+  color:#000 !important;
+  border-radius:5px !important;
+  border:2px solid #000 !important;
+  box-shadow:2px 2px 0 #000 !important;
+  font-family:'Space Grotesk','Inter',sans-serif;
+  font-weight:800;
+}
+body.theme-neo-brutalist .user-btn.admin .av{
+  background:#000 !important;
+  color:#00E47C !important;
+}
+
+/* ---------- Branch code chip: flat, not lime-on-white ---------- */
+body.theme-neo-brutalist .lr-bcode{
+  background:#000 !important;
+  color:#FFFEF2 !important;
+  border:2px solid #000;
+  border-radius:4px;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  padding:2px 6px;
+}
+body.theme-neo-brutalist .officer-count{
+  background:#FFF7BE !important;
+  color:#000 !important;
+  border:2px solid #000 !important;
+  border-radius:4px;
+  box-shadow:2px 2px 0 #000;
+  font-weight:800;
+}
+
+/* ---------- Tab.active / mode-btn.active / branch-chip.active: flat lime + brutalist shadow ---------- */
+body.theme-neo-brutalist .tab.active,
+body.theme-neo-brutalist .mode-btn.active,
+body.theme-neo-brutalist .branch-chip.active,
+body.theme-neo-brutalist .stab.active{
+  background:#00E47C !important;
+  background-image:none !important;
+  color:#000 !important;
+  border:2px solid #000 !important;
+  box-shadow:var(--brut-shadow-sm) !important;
+  text-shadow:none !important;
+}
+
+/* ---------- Skeleton shimmer: lime, not purple ---------- */
+body.theme-neo-brutalist .skeleton-row::after,
+body.theme-neo-brutalist .skel-bar::after{
+  background:linear-gradient(90deg,transparent 0%,rgba(0,228,124,0.30) 50%,transparent 100%) !important;
+}
+
+/* ---------- Decision sheet: flatten slider gradients & outcome blocks ---------- */
+body.theme-neo-brutalist .decision-slider,
+body.theme-neo-brutalist .decision-slider--renewal{
+  background:#FFFFFF !important;
+  border:2px solid #000 !important;
+  border-radius:5px !important;
+  box-shadow:var(--brut-shadow-sm) !important;
+}
+body.theme-neo-brutalist .decision-outcome-return,
+body.theme-neo-brutalist .decision-outcome-sanction,
+body.theme-neo-brutalist .decision-outcome-renew{
+  background:#FFFFFF !important;
+  background-image:none !important;
+  border:2px solid #000 !important;
+  color:#000 !important;
+}
+body.theme-neo-brutalist .decision-outcome-return{background:#FFE0DE !important;}
+body.theme-neo-brutalist .decision-outcome-sanction{background:#D5FFE9 !important;}
+body.theme-neo-brutalist .decision-outcome-renew{background:#FFF7BE !important;}
+
+/* ---------- Snapshot modal: flatten purple gradients ---------- */
+body.theme-neo-brutalist .snapshot-modal,
+body.theme-neo-brutalist .snapshot-modal-content,
+body.theme-neo-brutalist .weekly-snapshot-card{
+  background:#FFFEF2 !important;
+  background-image:none !important;
+  border:2px solid #000 !important;
+  border-radius:6px !important;
+  box-shadow:var(--brut-shadow) !important;
+  color:#000 !important;
+}
+body.theme-neo-brutalist .weekly-availability-btn{
+  background:#FFFFFF !important;
+  background-image:none !important;
+  border:2px solid #000 !important;
+  color:#000 !important;
+  box-shadow:var(--brut-shadow-sm) !important;
+  border-radius:5px !important;
+}
+body.theme-neo-brutalist .weekly-availability-btn.holiday{background:#FFF7BE !important;}
+body.theme-neo-brutalist .weekly-availability-btn.deputation{background:#FFE7B5 !important;}
+body.theme-neo-brutalist .weekly-availability-btn.leave{background:#FFE0DE !important;}
+body.theme-neo-brutalist .weekly-availability-btn.active{background:#00E47C !important;}
+
+/* ---------- Tasks: flatten remaining gradient/glass surfaces ---------- */
+body.theme-neo-brutalist .task-officer-chip.active{
+  background:#00E47C !important;
+  background-image:none !important;
+  color:#000 !important;
+  border:2px solid #000 !important;
+  box-shadow:var(--brut-shadow-sm) !important;
+}
+body.theme-neo-brutalist .task-performer-spark{color:#000 !important;}
+body.theme-neo-brutalist .task-care{
+  background:#FFF7BE !important;
+  background-image:none !important;
+}
+body.theme-neo-brutalist .task-care-icon{
+  background:#FF3B30 !important;
+  background-image:none !important;
+}
+body.theme-neo-brutalist .task-target-bar{
+  background:#FFFFFF !important;
+  border:1.5px solid #000 !important;
+  border-radius:3px !important;
+}
+body.theme-neo-brutalist .task-target-bar span{
+  background:#00E47C !important;
+  background-image:none !important;
+  border-radius:0 !important;
+}
+
+/* ---------- Renewals: flatten remaining gradient surfaces ---------- */
+body.theme-neo-brutalist .btn-edit-icon{
+  background:#FFFFFF !important;
+  background-image:none !important;
+  color:#000 !important;
+  border:2px solid #000 !important;
+  border-radius:5px !important;
+  box-shadow:var(--brut-shadow-sm) !important;
+}
+
+/* ---------- Calendar: keep crosshatch holiday, brutalist-color it ---------- */
+body.theme-neo-brutalist .cal-cell--holiday,
+body.theme-neo-brutalist .cal-cell--holiday-custom{
+  background:repeating-linear-gradient(45deg,#FFF7BE 0 6px,#FFE7B5 6px 12px) !important;
+  border:2px solid #000 !important;
+}
+body.theme-neo-brutalist .cal-dot--holiday{
+  background:repeating-linear-gradient(45deg,#000 0 2px,#FFD600 2px 4px) !important;
+}
+
+/* ---------- Loading spinner: lime border ---------- */
+body.theme-neo-brutalist .spinner,
+body.theme-neo-brutalist [class*="spinner"]{
+  border-color:#000 !important;
+  border-top-color:#00E47C !important;
+}
+
+/* ---------- Sync dot pulse: lime instead of purple ---------- */
+body.theme-neo-brutalist .sync-dot{
+  background:#00E47C !important;
+  box-shadow:0 0 0 2px #000 inset, 2px 2px 0 #000;
+  border:none;
+}
+
+/* ---------- Focus rings: solid lime block, not soft purple glow ---------- */
+body.theme-neo-brutalist *:focus-visible{
+  outline:3px solid #00E47C !important;
+  outline-offset:2px !important;
+  box-shadow:none;
+}
+body.theme-neo-brutalist .search-inp:focus,
+body.theme-neo-brutalist .form-group input:focus,
+body.theme-neo-brutalist .form-group select:focus,
+body.theme-neo-brutalist .form-group textarea:focus{
+  outline:none !important;
+}
+
+/* ---------- Signature interaction: press = shadow collapses ---------- */
+body.theme-neo-brutalist .btn:active,
+body.theme-neo-brutalist .mode-btn:active,
+body.theme-neo-brutalist .tab:active,
+body.theme-neo-brutalist .stab:active,
+body.theme-neo-brutalist .fab:active,
+body.theme-neo-brutalist .hbtn:active,
+body.theme-neo-brutalist .stat:active,
+body.theme-neo-brutalist .branch-chip:active,
+body.theme-neo-brutalist .category-chip:active,
+body.theme-neo-brutalist .fs-btn:active,
+body.theme-neo-brutalist .perf-export-btn:active,
+body.theme-neo-brutalist .back-btn:active,
+body.theme-neo-brutalist .task-back-btn:active{
+  transform:translate(2px,2px);
+  box-shadow:1px 1px 0 #000 !important;
+}
+body.theme-neo-brutalist .fab:active{
+  transform:translate(3px,3px);
+  box-shadow:3px 3px 0 #000 !important;
+}
+
+/* ---------- Toast: keep flat, ensure no inherited blur ---------- */
+body.theme-neo-brutalist .toast{
+  backdrop-filter:none !important;
+}
+
+/* ---------- Overlay backdrop: pure black, no blur ---------- */
+body.theme-neo-brutalist .overlay,
+body.theme-neo-brutalist #activityOverlay,
+body.theme-neo-brutalist .decision-activity-overlay,
+body.theme-neo-brutalist .notif-overlay{
+  background:rgba(0,0,0,0.55) !important;
+  background-image:none !important;
+}
+
+/* ---------- Action sheet shadow flip (sheets slide up from bottom) ---------- */
+body.theme-neo-brutalist .sheet{
+  border-radius:6px 6px 0 0 !important;
+  border:3px solid #000 !important;
+  border-bottom:none !important;
+  box-shadow:0 -6px 0 #000 !important;
+}
+
+/* ---------- FAB: ensure square-ish, lime, hard shadow ---------- */
+body.theme-neo-brutalist .fab{
+  font-size:32px;
+  line-height:1;
+  padding:0;
+}
+
+/* ---------- Brand-sub uppercase tracking for editorial bite ---------- */
+body.theme-neo-brutalist .brand-sub{
+  text-transform:uppercase;
+  letter-spacing:1px;
+  font-size:10px;
+}

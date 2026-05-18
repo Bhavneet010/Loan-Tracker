@@ -29,6 +29,17 @@
 <link rel="stylesheet" href="css/neo-brutalist.css">
 </head>
 <body>
+<script>
+(function(){
+  try{
+    if(localStorage.getItem('lpTheme')==='neo-brutalist'){
+      document.body.classList.add('theme-neo-brutalist');
+    } else if(localStorage.getItem('lpDark')==='1'){
+      document.body.classList.add('dark');
+    }
+  }catch(e){}
+})();
+</script>
 <div id="app">
 
   <!-- HEADER -->
