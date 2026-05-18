@@ -26,15 +26,35 @@ export function updateUserAvatar(officer) {
 }
 
 window.toggleDark = function () {
+  document.body.classList.remove('theme-neo-brutalist');
+  localStorage.setItem('lpTheme', 'default');
   S.dark = !S.dark;
   document.body.classList.toggle('dark', S.dark);
   localStorage.setItem('lpDark', S.dark ? '1' : '0');
   updateThemeColor();
 };
 
+window.toggleNeoBrutalistTheme = function () {
+  const next = !document.body.classList.contains('theme-neo-brutalist');
+  document.body.classList.toggle('theme-neo-brutalist', next);
+  if (next) {
+    S.dark = false;
+    document.body.classList.remove('dark');
+    localStorage.setItem('lpDark', '0');
+    localStorage.setItem('lpTheme', 'neo-brutalist');
+    toast('Neo-Brutalist theme active');
+  } else {
+    localStorage.setItem('lpTheme', 'default');
+    toast('Default theme active');
+  }
+  updateThemeColor();
+};
+
 function updateThemeColor() {
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', S.dark ? '#15142C' : '#7c3aed');
+  if (meta) meta.setAttribute('content',
+    document.body.classList.contains('theme-neo-brutalist') ? '#FFFEF2' : (S.dark ? '#15142C' : '#7c3aed')
+  );
 }
 
 window.toggleUserMenu = function () {
@@ -44,6 +64,7 @@ window.toggleUserMenu = function () {
       ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
       ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who's Online</button>` : ''}
       ${!S.isAdmin && S.user ? `<button class="udrop-item" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
+      <button class="udrop-item" onclick="closeUserMenu();toggleNeoBrutalistTheme()">${document.body.classList.contains('theme-neo-brutalist') ? '&#9632; Default theme' : '&#9632; Neo-Brutalist theme'}</button>
       <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark ? '&#9728; Light theme' : '&#127769; Dark theme'}</button>
       <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
     menu.style.display = 'block';

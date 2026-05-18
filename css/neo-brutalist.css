@@ -1,0 +1,579 @@
+/* Neo-Brutalist theme: cream paper, hard black structure, electric lime accents. */
+body.theme-neo-brutalist{
+  color-scheme:light;
+  --p1:#000000;
+  --p2:#00E47C;
+  --p3:#00B864;
+  --p-bg:#D5FFE9;
+  --p-bd:#000000;
+  --p-subtle:rgba(0,0,0,0.08);
+  --glass:#FFFFFF;
+  --glass-bd:#000000;
+  --text1:#000000;
+  --text2:#151515;
+  --text3:#525252;
+  --muted:#525252;
+  --surface:#FFFEF2;
+  --surface-alt:#FFF7BE;
+  --overlay:rgba(0,0,0,0.62);
+  --header-bg:#FFFEF2;
+  --dark-glass:#FFFFFF;
+  --green:#008E52;
+  --green-bg:#D5FFE9;
+  --green-bd:#000000;
+  --amber:#B85B00;
+  --amber-bg:#FFE7B5;
+  --amber-bd:#000000;
+  --red:#FF3B30;
+  --red-bg:#FFE0DE;
+  --red-bd:#000000;
+  --green-vivid:#00E47C;
+  --red-vivid:#FF3B30;
+  --radius-xs:4px;
+  --radius-sm:5px;
+  --radius-md:6px;
+  --radius-lg:8px;
+  --radius-xl:10px;
+  --radius-pill:7px;
+  --brut-shadow:4px 4px 0 #000;
+  --brut-shadow-sm:3px 3px 0 #000;
+  --brut-shadow-lg:6px 6px 0 #000;
+  background:#FFFEF2;
+  font-family:'Space Grotesk','Inter',system-ui,sans-serif;
+  color:#000;
+}
+
+body.theme-neo-brutalist::before,
+body.theme-neo-brutalist::after{
+  background:
+    linear-gradient(90deg,rgba(0,0,0,0.035) 1px,transparent 1px),
+    linear-gradient(0deg,rgba(0,0,0,0.035) 1px,transparent 1px),
+    #FFFEF2;
+  background-size:18px 18px;
+}
+
+body.theme-neo-brutalist #app{
+  max-width:720px;
+}
+
+body.theme-neo-brutalist .header{
+  background:#FFFEF2;
+  border-bottom:3px solid #000;
+  box-shadow:0 4px 0 #000;
+  backdrop-filter:none;
+}
+
+body.theme-neo-brutalist .brand-name{
+  font-family:'Space Grotesk','Noto Sans Devanagari',sans-serif;
+  font-size:18px;
+  font-weight:800;
+  color:#000;
+  letter-spacing:0;
+}
+
+body.theme-neo-brutalist .brand-sub,
+body.theme-neo-brutalist .page-sub,
+body.theme-neo-brutalist .stat-l,
+body.theme-neo-brutalist .stat-s{
+  color:#525252;
+  font-weight:800;
+}
+
+body.theme-neo-brutalist .brand-av,
+body.theme-neo-brutalist .hbtn,
+body.theme-neo-brutalist .user-pill,
+body.theme-neo-brutalist .uav,
+body.theme-neo-brutalist .mode-toggle-bar,
+body.theme-neo-brutalist .stat,
+body.theme-neo-brutalist .loan-row,
+body.theme-neo-brutalist .loan-card,
+body.theme-neo-brutalist .task-performer-block,
+body.theme-neo-brutalist .task-performer,
+body.theme-neo-brutalist .task-targets,
+body.theme-neo-brutalist .task-care,
+body.theme-neo-brutalist .task-critical-tab,
+body.theme-neo-brutalist .task-critical-detail,
+body.theme-neo-brutalist .task-item,
+body.theme-neo-brutalist .task-officer-chip,
+body.theme-neo-brutalist .rnw-officer-card,
+body.theme-neo-brutalist .rnw-expanded-card,
+body.theme-neo-brutalist .cal-wrap,
+body.theme-neo-brutalist .cal-day-detail,
+body.theme-neo-brutalist .sheet,
+body.theme-neo-brutalist .modal-box,
+body.theme-neo-brutalist .user-dropdown,
+body.theme-neo-brutalist .notif-card,
+body.theme-neo-brutalist .activity-bubble,
+body.theme-neo-brutalist .empty-state,
+body.theme-neo-brutalist .duplicate-card{
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:6px;
+  box-shadow:var(--brut-shadow);
+  backdrop-filter:none;
+  color:#000;
+}
+
+body.theme-neo-brutalist .brand-av{
+  background:#00E47C;
+  padding:0;
+}
+
+body.theme-neo-brutalist .brand--tasks-active .brand-av{
+  outline:3px solid #FFD600;
+  outline-offset:3px;
+}
+
+body.theme-neo-brutalist .hbtn,
+body.theme-neo-brutalist .user-pill{
+  background:#FFF7BE;
+}
+
+body.theme-neo-brutalist .hbtn-badge,
+body.theme-neo-brutalist .brand-tasks-badge,
+body.theme-neo-brutalist .mode-badge{
+  background:#FF3B30;
+  border:2px solid #000;
+  border-radius:4px;
+  color:#fff;
+}
+
+body.theme-neo-brutalist .sync-dot{
+  background:#00E47C;
+  border:1px solid #000;
+}
+
+body.theme-neo-brutalist .mode-toggle-bar,
+body.theme-neo-brutalist .rnw-view-toggle{
+  padding:5px;
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:7px;
+  box-shadow:var(--brut-shadow-sm);
+}
+
+body.theme-neo-brutalist .mode-btn,
+body.theme-neo-brutalist .tab,
+body.theme-neo-brutalist .stab,
+body.theme-neo-brutalist .fs-btn,
+body.theme-neo-brutalist .rnw-view-toggle button,
+body.theme-neo-brutalist .rnw-npa-toggle,
+body.theme-neo-brutalist .cal-nav-btn,
+body.theme-neo-brutalist .task-back-btn,
+body.theme-neo-brutalist .btn,
+body.theme-neo-brutalist .btn-sm-ghost,
+body.theme-neo-brutalist .btn-sm-danger,
+body.theme-neo-brutalist .category-chip,
+body.theme-neo-brutalist .branch-chip,
+body.theme-neo-brutalist .decision-mini-btn,
+body.theme-neo-brutalist .decision-icon-btn,
+body.theme-neo-brutalist .perf-export-btn,
+body.theme-neo-brutalist .back-btn{
+  background:#FFFFFF;
+  border:2px solid #000!important;
+  border-radius:5px;
+  color:#000;
+  box-shadow:var(--brut-shadow-sm);
+  font-family:'Space Grotesk','Inter',system-ui,sans-serif;
+  font-weight:800;
+}
+
+body.theme-neo-brutalist .mode-btn.active,
+body.theme-neo-brutalist .tab.active,
+body.theme-neo-brutalist .stab.active,
+body.theme-neo-brutalist .fs-btn.active,
+body.theme-neo-brutalist .rnw-view-toggle button.active,
+body.theme-neo-brutalist .category-chip.active,
+body.theme-neo-brutalist .branch-chip.active,
+body.theme-neo-brutalist .btn-primary-full,
+body.theme-neo-brutalist .btn-rnw-done,
+body.theme-neo-brutalist .perf-export-btn:not(.perf-export-btn-secondary){
+  background:#00E47C!important;
+  color:#000!important;
+  border-color:#000!important;
+  box-shadow:var(--brut-shadow-sm)!important;
+}
+
+body.theme-neo-brutalist .btn-return,
+body.theme-neo-brutalist .btn-cancel-full,
+body.theme-neo-brutalist .btn-outline,
+body.theme-neo-brutalist .perf-export-btn-secondary{
+  background:#FFF7BE!important;
+}
+
+body.theme-neo-brutalist .btn-sanction{
+  background:#00E47C!important;
+  color:#000!important;
+}
+
+body.theme-neo-brutalist .btn-sm-danger,
+body.theme-neo-brutalist .btn-del-icon{
+  background:#FFE0DE!important;
+  color:#000!important;
+}
+
+body.theme-neo-brutalist .stats-scroll{
+  padding:14px;
+  gap:10px;
+}
+
+body.theme-neo-brutalist .stat{
+  background:#FFFFFF;
+  border:2px solid #000;
+  min-width:146px;
+  box-shadow:var(--brut-shadow);
+}
+
+body.theme-neo-brutalist .stat-fresh-active,
+body.theme-neo-brutalist .stat-rnw-active{
+  background:#D5FFE9!important;
+  border-color:#000!important;
+  box-shadow:var(--brut-shadow-lg)!important;
+}
+
+body.theme-neo-brutalist .stat-v,
+body.theme-neo-brutalist .lr-amount,
+body.theme-neo-brutalist .lc-amount,
+body.theme-neo-brutalist .task-critical-count,
+body.theme-neo-brutalist .task-performer-amount,
+body.theme-neo-brutalist .targets-tile-num{
+  font-family:'JetBrains Mono','Space Grotesk',monospace;
+  color:#000!important;
+  letter-spacing:-0.5px;
+}
+
+body.theme-neo-brutalist .panel{
+  background:#FFFEF2;
+  border-top:3px solid #000;
+  border-radius:12px 12px 0 0;
+  box-shadow:0 -4px 0 #000;
+}
+
+body.theme-neo-brutalist .panel-handle,
+body.theme-neo-brutalist .sheet-handle{
+  background:#000;
+  height:5px;
+  opacity:1;
+  border-radius:3px;
+}
+
+body.theme-neo-brutalist .search-inp,
+body.theme-neo-brutalist .form-group input,
+body.theme-neo-brutalist .form-group select,
+body.theme-neo-brutalist .form-group textarea,
+body.theme-neo-brutalist .input-light,
+body.theme-neo-brutalist .pin-input,
+body.theme-neo-brutalist .decision-name--edit input,
+body.theme-neo-brutalist .decision-amount--edit input,
+body.theme-neo-brutalist .decision-account-line--edit input,
+body.theme-neo-brutalist .decision-account-line--edit select,
+body.theme-neo-brutalist .decision-account-line--edit textarea,
+body.theme-neo-brutalist .decision-edit-field input,
+body.theme-neo-brutalist .decision-edit-field select,
+body.theme-neo-brutalist .decision-edit-field textarea,
+body.theme-neo-brutalist .decision-return-note textarea{
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:5px;
+  box-shadow:var(--brut-shadow-sm);
+  color:#000;
+  font-family:'Space Grotesk','Inter',system-ui,sans-serif;
+}
+
+body.theme-neo-brutalist .search-inp:focus,
+body.theme-neo-brutalist .form-group input:focus,
+body.theme-neo-brutalist .form-group select:focus,
+body.theme-neo-brutalist .form-group textarea:focus,
+body.theme-neo-brutalist .input-light:focus,
+body.theme-neo-brutalist .pin-input:focus{
+  border-color:#000;
+  box-shadow:var(--brut-shadow-sm),0 0 0 4px #00E47C;
+}
+
+body.theme-neo-brutalist input::placeholder,
+body.theme-neo-brutalist textarea::placeholder{
+  color:#6b6b6b;
+}
+
+body.theme-neo-brutalist .loan-item{
+  margin-bottom:12px;
+}
+
+body.theme-neo-brutalist .loan-row{
+  background:#FFFFFF!important;
+  border:2px solid #000!important;
+  border-radius:6px;
+  box-shadow:var(--brut-shadow);
+  overflow:visible;
+}
+
+body.theme-neo-brutalist .loan-row::before{
+  width:8px;
+  background:#00E47C!important;
+  border-right:2px solid #000;
+}
+
+body.theme-neo-brutalist .status-returned .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-due-soon > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-dates-missing > .loan-row::before{
+  background:#FFD600!important;
+}
+
+body.theme-neo-brutalist .loan-item.rnw-s-pending > .loan-row::before,
+body.theme-neo-brutalist .loan-item.rnw-s-npa > .loan-row::before,
+body.theme-neo-brutalist .loan-item.overdue > .loan-row::before{
+  background:#FF3B30!important;
+}
+
+body.theme-neo-brutalist .loan-card,
+body.theme-neo-brutalist .rnw-expanded-card{
+  border:2px solid #000;
+  border-top:0;
+  border-radius:0 0 6px 6px;
+  background:#FFFFFF;
+  box-shadow:var(--brut-shadow);
+}
+
+body.theme-neo-brutalist .expanded .loan-row{
+  border-bottom-left-radius:0;
+  border-bottom-right-radius:0;
+  box-shadow:4px 0 0 #000;
+}
+
+body.theme-neo-brutalist .lr-av,
+body.theme-neo-brutalist .task-performer-av,
+body.theme-neo-brutalist .rnw-officer-av,
+body.theme-neo-brutalist .user-btn .av,
+body.theme-neo-brutalist .photo-modal-av,
+body.theme-neo-brutalist .officer-av-initials,
+body.theme-neo-brutalist .task-officer-mini{
+  border:2px solid #000;
+  border-radius:5px!important;
+  box-shadow:2px 2px 0 #000;
+}
+
+body.theme-neo-brutalist .tag,
+body.theme-neo-brutalist .officer-count,
+body.theme-neo-brutalist .task-section-pill,
+body.theme-neo-brutalist .task-branch-chip,
+body.theme-neo-brutalist .rnw-date-warning,
+body.theme-neo-brutalist .decision-status-pill{
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:4px;
+  color:#000;
+  box-shadow:2px 2px 0 #000;
+  font-weight:900;
+}
+
+body.theme-neo-brutalist .tag.sme,
+body.theme-neo-brutalist .category-chip.sme,
+body.theme-neo-brutalist .task-critical-tab--purple.active,
+body.theme-neo-brutalist .task-critical-detail--purple{
+  background:#D5FFE9!important;
+  color:#000;
+}
+
+body.theme-neo-brutalist .tag.agri,
+body.theme-neo-brutalist .category-chip.agri{
+  background:#E3F2FD!important;
+}
+
+body.theme-neo-brutalist .tag.edu,
+body.theme-neo-brutalist .category-chip.edu{
+  background:#FFF7BE!important;
+}
+
+body.theme-neo-brutalist .tag.overdue,
+body.theme-neo-brutalist .rnw-chip-pending,
+body.theme-neo-brutalist .rnw-chip-npa,
+body.theme-neo-brutalist .task-care-urgent,
+body.theme-neo-brutalist .task-critical-tab--red.active,
+body.theme-neo-brutalist .task-critical-detail--red{
+  background:#FFE0DE!important;
+  color:#000!important;
+}
+
+body.theme-neo-brutalist .rnw-chip-due-soon,
+body.theme-neo-brutalist .task-critical-tab--amber.active,
+body.theme-neo-brutalist .task-critical-detail--amber{
+  background:#FFF7BE!important;
+  color:#000!important;
+}
+
+body.theme-neo-brutalist .rnw-chip-active,
+body.theme-neo-brutalist .rnw-chip-npa-cd{
+  background:#D5FFE9!important;
+  color:#000!important;
+}
+
+body.theme-neo-brutalist .task-care{
+  background:#FFF7BE;
+  padding:12px;
+}
+
+body.theme-neo-brutalist .task-care-icon{
+  background:#FF3B30;
+  border:2px solid #000;
+  border-radius:5px;
+  box-shadow:var(--brut-shadow-sm);
+}
+
+body.theme-neo-brutalist .task-critical-tab::before,
+body.theme-neo-brutalist .task-performer::before,
+body.theme-neo-brutalist .rnw-stat-card::before{
+  height:6px;
+  border-bottom:2px solid #000;
+}
+
+body.theme-neo-brutalist .task-critical-tab--red::before,
+body.theme-neo-brutalist .rnw-grad-red::before,
+body.theme-neo-brutalist .rnw-grad-darkred::before{
+  background:#FF3B30;
+}
+
+body.theme-neo-brutalist .task-critical-tab--amber::before,
+body.theme-neo-brutalist .rnw-grad-amber::before,
+body.theme-neo-brutalist .task-performer--fresh::before{
+  background:#FFD600;
+}
+
+body.theme-neo-brutalist .task-critical-tab--purple::before,
+body.theme-neo-brutalist .rnw-grad-green::before,
+body.theme-neo-brutalist .task-performer--renewal::before{
+  background:#00E47C;
+}
+
+body.theme-neo-brutalist .task-critical-title,
+body.theme-neo-brutalist .task-kicker,
+body.theme-neo-brutalist .task-performer-title{
+  color:#000;
+}
+
+body.theme-neo-brutalist .targets-tile,
+body.theme-neo-brutalist .rnw-stat-card,
+body.theme-neo-brutalist .cal-cell,
+body.theme-neo-brutalist .report-card,
+body.theme-neo-brutalist .perf-kpi,
+body.theme-neo-brutalist .decision-account-card,
+body.theme-neo-brutalist .decision-edit-card,
+body.theme-neo-brutalist .decision-account-lines,
+body.theme-neo-brutalist .decision-edit-lines,
+body.theme-neo-brutalist .decision-outcome-block,
+body.theme-neo-brutalist .decision-return-note,
+body.theme-neo-brutalist .decision-activity-row{
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:6px;
+  box-shadow:var(--brut-shadow-sm);
+  color:#000;
+}
+
+body.theme-neo-brutalist .targets-tile--leader,
+body.theme-neo-brutalist .cal-cell--active-has{
+  background:#D5FFE9;
+}
+
+body.theme-neo-brutalist .cal-cell--overdue,
+body.theme-neo-brutalist .cal-cell--soon{
+  background:#FFE0DE;
+}
+
+body.theme-neo-brutalist .cal-cell--holiday{
+  background:#FFF7BE;
+}
+
+body.theme-neo-brutalist .fs-pop{
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:6px;
+  box-shadow:var(--brut-shadow-lg);
+}
+
+body.theme-neo-brutalist .fs-pop h4,
+body.theme-neo-brutalist .form-group label,
+body.theme-neo-brutalist .rnw-officer-head,
+body.theme-neo-brutalist .task-critical-table-head,
+body.theme-neo-brutalist .perf-kpi-label{
+  color:#525252;
+  font-weight:900;
+}
+
+body.theme-neo-brutalist .fs-pop hr,
+body.theme-neo-brutalist .lc-actions,
+body.theme-neo-brutalist .rnw-action-group,
+body.theme-neo-brutalist .cal-detail-item,
+body.theme-neo-brutalist .task-critical-table-head,
+body.theme-neo-brutalist .task-critical-row,
+body.theme-neo-brutalist .rnw-officer-row,
+body.theme-neo-brutalist .rnw-officer-summary,
+body.theme-neo-brutalist .audit-row{
+  border-color:#000;
+}
+
+body.theme-neo-brutalist .overlay,
+body.theme-neo-brutalist #activityOverlay{
+  background:rgba(0,0,0,0.62);
+}
+
+body.theme-neo-brutalist .sheet,
+body.theme-neo-brutalist .modal-box,
+body.theme-neo-brutalist .perf-overlay,
+body.theme-neo-brutalist .perf-overlay-header{
+  background:#FFFEF2;
+  border-color:#000;
+  color:#000;
+}
+
+body.theme-neo-brutalist .perf-overlay-header{
+  border-bottom:3px solid #000;
+  box-shadow:0 4px 0 #000;
+}
+
+body.theme-neo-brutalist .fab{
+  width:58px;
+  height:58px;
+  background:#00E47C;
+  color:#000;
+  border:3px solid #000;
+  border-radius:12px;
+  box-shadow:6px 6px 0 #000;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+}
+
+body.theme-neo-brutalist .toast{
+  background:#000;
+  color:#FFFEF2;
+  border:2px solid #00E47C;
+  border-radius:5px;
+  box-shadow:var(--brut-shadow);
+  font-family:'Space Grotesk','Inter',system-ui,sans-serif;
+  font-weight:800;
+}
+
+body.theme-neo-brutalist .skeleton-row,
+body.theme-neo-brutalist .skel-circle,
+body.theme-neo-brutalist .skel-bar{
+  background:#FFFFFF;
+  border:2px solid #000;
+  box-shadow:var(--brut-shadow-sm);
+}
+
+body.theme-neo-brutalist .content-enter,
+body.theme-neo-brutalist .content-leaving{
+  animation:none!important;
+}
+
+@media(max-width:480px){
+  body.theme-neo-brutalist{
+    --brut-shadow:3px 3px 0 #000;
+    --brut-shadow-sm:2px 2px 0 #000;
+    --brut-shadow-lg:4px 4px 0 #000;
+  }
+
+  body.theme-neo-brutalist .stats-scroll{
+    padding-left:10px;
+    padding-right:10px;
+  }
+}
