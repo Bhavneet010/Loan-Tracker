@@ -1,11 +1,11 @@
-import { S } from "./state.js";
+﻿import { S } from "./state.js";
 import { todayStr, esc, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo } from "./utils.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 import { matchBranchOption, assignedOfficerForBranch, normalizeName } from "./ui-forms.js";
 
 /* SHARED UI HELPERS */
 export function accountAmount(loan) {
-  return `&#8377;${fmtAmt(loan.amount)}<span> L</span>`;
+  return `<span class="rs">&#8377;</span>${fmtAmt(loan.amount)}<span> L</span>`;
 }
 
 export function cloneLoanDraft(loan) {

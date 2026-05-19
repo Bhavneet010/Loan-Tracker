@@ -18,7 +18,7 @@ function notificationCard(n) {
         <div class="notif-name">${esc(n.customerName)}</div>
         <div class="notif-time">${timeAgo(n.timestamp)}</div>
       </div>
-      <div class="notif-meta">${typeLabel[n.type] || n.type} · ₹${fmtAmt(n.amount)}L · by ${esc(byWhom)}</div>
+      <div class="notif-meta">${typeLabel[n.type] || n.type} · <span class="rs">₹</span>${fmtAmt(n.amount)}L · by ${esc(byWhom)}</div>
     </div>
   </div>`;
 }

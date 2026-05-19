@@ -1,4 +1,4 @@
-import { S } from "./state.js";
+﻿import { S } from "./state.js";
 import { getLoanMetrics } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { searchMatch } from "./ui-logic.js";
@@ -139,7 +139,7 @@ function dayDetailHtml(dateStr, entry) {
       <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
       <span class="cal-name">${esc(loan.customerName)}</span>
       <span class="cal-bcode">${esc(branchCode(loan.branch))}</span>
-      <span class="cal-amt">&#8377;${fmtAmt(loan.amount)}L</span>
+      <span class="cal-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
       <span class="tag ${statusCls}">${statusLabel}</span>
     </div>`;
   }).join('') : '';

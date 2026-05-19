@@ -279,6 +279,33 @@ body.theme-sketchnote .stats-scroll{
   gap:10px;
 }
 
+/* Renewals normally render a 3-col grid of compact cards. In this
+   theme, mirror the Fresh-loans layout — horizontal flex with full-
+   size cards — so both modes feel consistent. */
+body.theme-sketchnote .stats-scroll.rnw-grid{
+  display:flex !important;
+  grid-template-columns:none !important;
+  grid-auto-rows:auto !important;
+  overflow-x:auto;
+  padding:14px;
+  gap:10px;
+}
+body.theme-sketchnote .stats-scroll.rnw-grid .stat{
+  padding:10px 12px;
+}
+body.theme-sketchnote .stats-scroll.rnw-grid .stat-v{
+  font-size:34px !important;
+  line-height:0.9 !important;
+  margin-top:2px;
+}
+body.theme-sketchnote .stats-scroll.rnw-grid .stat-l{
+  font-size:var(--fs-xs);
+  letter-spacing:0.3px;
+}
+body.theme-sketchnote .stats-scroll.rnw-grid .stat-s{
+  font-size:var(--fs-sm);
+}
+
 body.theme-sketchnote .stat{
   background:#FBFAF3;
   border:2px solid #2A3142;
@@ -294,10 +321,29 @@ body.theme-sketchnote .stat-fresh-active{
   transform:rotate(-0.4deg);
 }
 body.theme-sketchnote .stat-rnw-active{
-  background:#D9F0E7 !important;
+  background:#FFF1C2 !important;
   border-color:#2A3142 !important;
   box-shadow:var(--sketch-shadow-lg) !important;
-  transform:rotate(0.4deg);
+  transform:rotate(-0.4deg);
+}
+
+/* Renewal stat cards have a colored top accent bar (::before).
+   In sketchnote, keep the marker color but use a hand-drawn divider. */
+body.theme-sketchnote .rnw-stat-card{
+  background:#FBFAF3 !important;
+  background-image:none !important;
+  color:#2A3142 !important;
+  box-shadow:var(--sketch-shadow) !important;
+}
+body.theme-sketchnote .rnw-stat-card .stat-l,
+body.theme-sketchnote .rnw-stat-card .stat-s{
+  color:#5B6577 !important;
+}
+body.theme-sketchnote .rnw-stat-card.stat-rnw-active .stat-v,
+body.theme-sketchnote .rnw-grad-green.stat-rnw-active .stat-v,
+body.theme-sketchnote .rnw-grad-amber.stat-rnw-active .stat-v,
+body.theme-sketchnote .rnw-grad-red.stat-rnw-active .stat-v{
+  color:#2A3142 !important;
 }
 
 body.theme-sketchnote .stat-v,
@@ -371,13 +417,19 @@ body.theme-sketchnote .loan-row{
   border:2px solid #2A3142 !important;
   border-radius:var(--sketch-radius-card);
   box-shadow:var(--sketch-shadow);
-  overflow:visible;
+  overflow:hidden;
 }
 
+/* Color-coded left bar — inset slightly + own radius so it sits
+   cleanly inside the wobbly card border instead of protruding. */
 body.theme-sketchnote .loan-row::before{
-  width:8px;
+  width:6px;
+  left:0;
+  top:0;
+  bottom:0;
   background:#6BA8D9 !important;
   border-right:2px solid #2A3142;
+  border-radius:0;
 }
 
 body.theme-sketchnote .status-returned .loan-row::before,
@@ -1148,38 +1200,24 @@ body.theme-sketchnote .content-leaving{
 }
 
 /* =========================================================
-   RUPEE GLYPH SPACING — Caveat's ₹ kerns tight against digits.
-   Apply ::first-letter margin so the symbol breathes.
+   RUPEE GLYPH SPACING — Caveat kerns ₹ tight against digits.
+   Amounts are rendered as <span class="rs">₹</span>…; this
+   span gets a generous right margin only in this theme.
    ========================================================= */
-body.theme-sketchnote .stat-v,
-body.theme-sketchnote .lr-amount,
-body.theme-sketchnote .lc-amount,
-body.theme-sketchnote .task-performer-amount,
-body.theme-sketchnote .task-critical-amt{
+body.theme-sketchnote .rs{
   display:inline-block;
-}
-body.theme-sketchnote .stat-v::first-letter,
-body.theme-sketchnote .lr-amount::first-letter,
-body.theme-sketchnote .lc-amount::first-letter,
-body.theme-sketchnote .task-performer-amount::first-letter,
-body.theme-sketchnote .task-critical-amt::first-letter{
-  margin-right:0.18em;
+  margin-right:0.22em;
+  font-family:'Architects Daughter','Inter',sans-serif;
+  font-feature-settings:"tnum";
 }
 
-/* Mixed-content rupee labels — bump letter-spacing slightly so
-   the ₹ doesn't hug the digit (Caveat is condensed). */
-body.theme-sketchnote .sec-count,
-body.theme-sketchnote .task-care-sub,
-body.theme-sketchnote .task-critical-sub,
-body.theme-sketchnote .task-meta,
-body.theme-sketchnote .task-drill-summary,
-body.theme-sketchnote .notif-meta{
-  letter-spacing:0.4px;
-}
-
-/* lc-amount wavy underline should not cover the rupee glyph margin */
+/* lc-amount has a wavy underline — keep it from running into the rupee */
 body.theme-sketchnote .lc-amount{
   text-decoration-skip-ink:auto;
+}
+body.theme-sketchnote .lc-amount .rs,
+body.theme-sketchnote .lr-amount .rs{
+  text-decoration:none;
 }
 
 /* =========================================================

@@ -1,4 +1,4 @@
-import { S } from "./state.js";
+﻿import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, daysPending } from "./utils.js";
 import { countWorkingDaysLeft } from "./bank-holidays.js";
@@ -63,7 +63,7 @@ function renderTaskOverview(c, metrics) {
         <span class="task-care-icon" aria-hidden="true">&#9888;</span>
         <div class="task-care-headline">
           <div class="task-care-title">Critical Care</div>
-          <div class="task-care-sub">${totalAccounts} account${totalAccounts === 1 ? '' : 's'} · &#8377;${fmtAmt(totalAtRisk)}L at risk</div>
+          <div class="task-care-sub">${totalAccounts} account${totalAccounts === 1 ? '' : 's'} · <span class="rs">&#8377;</span>${fmtAmt(totalAtRisk)}L at risk</div>
         </div>
         ${totalAccounts ? '<span class="task-care-urgent">URGENT</span>' : ''}
       </div>
@@ -100,7 +100,7 @@ function criticalTabHtml(key, items, active) {
       <span class="task-critical-title">${meta.short}</span>
       <span class="task-critical-stats">
         <span class="task-critical-count">${items.length}</span>
-        <span class="task-critical-sub">&#8377;${fmtAmt(total)}L</span>
+        <span class="task-critical-sub"><span class="rs">&#8377;</span>${fmtAmt(total)}L</span>
       </span>
     </button>`;
 }
@@ -191,7 +191,7 @@ function criticalLoanRowHtml(key, loan) {
     <span class="task-branch-chip">${esc(branchCode(loan.branch))}</span>
     <span class="task-critical-name">${esc(loan.customerName)}</span>
     ${isMissing ? '' : `<span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>`}
-    <span class="task-critical-amt">&#8377;${fmtAmt(loan.amount)}L</span>
+    <span class="task-critical-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
     <span class="task-officer-mini" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
   </div>`;
 }
@@ -238,7 +238,7 @@ function performerCardHtml(label, row, type) {
     <div class="task-performer-copy">
       <div class="task-performer-title">${label}</div>
       <div class="task-performer-name">${esc(name)}</div>
-      <div class="task-performer-amount">&#8377;${fmtAmt(row.amount)}L</div>
+      <div class="task-performer-amount"><span class="rs">&#8377;</span>${fmtAmt(row.amount)}L</div>
     </div>
   </div>`;
 }
@@ -345,7 +345,7 @@ function renderTaskOfficers(c, metrics) {
       <button class="task-back-btn" onclick="taskBack()">&larr; Back</button>
       <span class="task-drill-title">${meta.icon} ${meta.title}</span>
     </div>
-    <div class="task-drill-summary">&#8377;${fmtAmt(totalAmt)}L · ${allItems.length} item${allItems.length !== 1 ? 's' : ''} total</div>
+    <div class="task-drill-summary"><span class="rs">&#8377;</span>${fmtAmt(totalAmt)}L · ${allItems.length} item${allItems.length !== 1 ? 's' : ''} total</div>
     <div class="task-officer-grid">
       <div class="task-officer-chip task-officer-chip--all" onclick="setTaskOfficer('All')">
         <span class="task-oc-all-av">All</span>
@@ -385,7 +385,7 @@ function taskLoanItemHtml(loan) {
       <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
       <span class="task-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="task-name">${esc(loan.customerName)}</span>
-      <span class="task-meta">&#8377;${fmtAmt(loan.amount)}L · ${days}d</span>
+      <span class="task-meta"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L · ${days}d</span>
     </div>
     <div class="task-actions">
       <button class="btn btn-sanction btn-sm" onclick="sanctionLoan('${loan.id}')">&#10003; Sanction</button>

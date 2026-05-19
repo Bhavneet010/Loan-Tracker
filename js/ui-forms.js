@@ -1,4 +1,4 @@
-import { S } from "./state.js";
+﻿import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
 import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls } from "./utils.js";
@@ -67,7 +67,7 @@ function duplicateCardHtml(loan) {
         <div class="duplicate-name">${esc(loan.customerName || '')}</div>
         <div class="duplicate-meta">${esc(loan.branch || '')}</div>
       </div>
-      <div class="duplicate-amt">&#8377;${amount}L</div>
+      <div class="duplicate-amt"><span class="rs">&#8377;</span>${amount}L</div>
     </div>
     <div class="duplicate-tags">
       <span class="tag ${catCls(loan.category)}">${esc(loan.category || 'Loan')}</span>

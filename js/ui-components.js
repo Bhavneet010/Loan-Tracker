@@ -1,4 +1,4 @@
-import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing, timeAgo } from "./utils.js";
+﻿import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing, timeAgo } from "./utils.js";
 import { S } from "./state.js";
 
 export function loanCard(loan, actions, variant = '') {
@@ -16,7 +16,7 @@ export function loanCard(loan, actions, variant = '') {
           <div class="lc-name">${esc(loan.customerName)}</div>
           <div class="lc-branch">${esc(loan.branch || '')}</div>
         </div>
-        <div class="lc-amount">&#8377;${fmtAmt(loan.amount)}<span class="u"> L</span></div>
+        <div class="lc-amount"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}<span class="u"> L</span></div>
       </div>
       <div class="lc-tags">
         <span class="tag ${catCls(loan.category)}">${esc(loan.category)}</span>
@@ -42,7 +42,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
       </div>
       <div class="lr-meta">
         ${overdueTag}
-        <span class="lr-amount">&#8377;${fmtAmt(loan.amount)}L</span>
+        <span class="lr-amount"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">&rsaquo;</span>
       </div>
     </div>
@@ -93,7 +93,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
       <div class="lr-meta">
         ${loan.renewedDate ? '' : `<span class="tag ${sm.cls}">${sm.label}</span>`}
         ${oldDueChip}
-        <span class="lr-amount">&#8377;${fmtAmt(loan.amount)}L</span>
+        <span class="lr-amount"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">&rsaquo;</span>
       </div>
     </div>
@@ -104,7 +104,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
             <div class="lc-name">${esc(loan.customerName)}</div>
             <div class="lc-branch">${esc(loan.branch || '')} ${loan.acNumber ? ` • A/C: ${esc(loan.acNumber)}` : ''}</div>
           </div>
-          <div class="lc-amount">&#8377;${fmtAmt(loan.amount)}<span class="u"> L</span></div>
+          <div class="lc-amount"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}<span class="u"> L</span></div>
         </div>
         <div class="rnw-tags-group">
           <div class="tag-row">

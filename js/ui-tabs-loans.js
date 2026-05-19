@@ -1,4 +1,4 @@
-import { S } from "./state.js";
+﻿import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { fmtAmt, daysPending } from "./utils.js";
 import { emptyState, compactLoanItem } from "./ui-components.js";
@@ -27,7 +27,7 @@ export function renderPending(c) {
       return compactLoanItem(l, actions, days > 7 ? 'overdue' : '', '', loans.indexOf(l));
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }
 
 export function renderSanctioned(c) {
@@ -44,7 +44,7 @@ export function renderSanctioned(c) {
       return compactLoanItem(l, actions, '', 'sanctioned', loans.indexOf(l));
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }
 
 export function renderReturned(c) {
@@ -61,5 +61,5 @@ export function renderReturned(c) {
       return compactLoanItem(l, actions, '', 'returned', loans.indexOf(l));
     }).join('');
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }

@@ -1,4 +1,4 @@
-import { S } from "./state.js";
+﻿import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
@@ -79,7 +79,7 @@ export function renderRenewals(c) {
   const officerViewer = renewalOfficerViewerHtml(buildVisibleRenewalOfficerSummary(metrics));
   const searchBar = `<div class="rnw-search-wrap"><input type="text" class="search-inp rnw-search-inp" placeholder="Search account or branch" value="${esc(S.search)}" oninput="handleRenewalSearch(this.value)"></div>`;
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
-  const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
+  const listContent = `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
   const mainContent = S.renewalView === 'calendar' ? buildCalendarViewHtml(metrics) : listContent;
   c.innerHTML = `<div class="rnw-page-chrome">${officerViewer}${searchBar}${fsBar}</div><div class="rnw-content">${mainContent}</div>`;
 }
@@ -183,7 +183,7 @@ function buildRenewalListContent(metrics) {
   }
 
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
-  return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · &#8377;${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
+  return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
 }
 
 export function applyRenewalFilters(enriched) {

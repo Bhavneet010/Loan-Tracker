@@ -1,4 +1,4 @@
-import { S } from "./state.js";
+﻿import { S } from "./state.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { fmtAmt } from "./utils.js";
 import { getTaskCounts } from "./ui-tasks.js";
@@ -123,7 +123,7 @@ export function updateHero() {
       const active = S.renewalTab === tab;
       return `<div class="stat rnw-stat-card ${gradCls} ${active ? 'stat-rnw-active' : ''}" onclick="setRenewalTab('${tab}')" style="cursor:pointer;">
         <div class="stat-l">${label}</div>
-        <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
+        <div class="stat-v"><span class="rs">&#8377;</span>${fmtAmt(sumAmount(arr))}L</div>
         <div class="stat-s">${subtitle || `${arr.length} accounts`}</div>
       </div>`;
     };
@@ -145,7 +145,7 @@ export function updateHero() {
     const gradCls = gradMap[tab] || '';
     return `<button type="button" class="stat fresh-stat-card ${gradCls} ${active ? 'stat-fresh-active' : ''}" onclick="setFreshTab('${tab}')" aria-pressed="${active}">
       <div class="stat-l">${label}</div>
-      <div class="stat-v">&#8377;${fmtAmt(sumAmount(arr))}L</div>
+      <div class="stat-v"><span class="rs">&#8377;</span>${fmtAmt(sumAmount(arr))}L</div>
       <div class="stat-s">${subtitle}</div>
     </button>`;
   };
