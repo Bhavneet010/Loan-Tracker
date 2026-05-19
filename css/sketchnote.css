@@ -279,31 +279,13 @@ body.theme-sketchnote .stats-scroll{
   gap:10px;
 }
 
-/* Renewals normally render a 3-col grid of compact cards. In this
-   theme, mirror the Fresh-loans layout — horizontal flex with full-
-   size cards — so both modes feel consistent. */
-body.theme-sketchnote .stats-scroll.rnw-grid{
-  display:flex !important;
-  grid-template-columns:none !important;
-  grid-auto-rows:auto !important;
-  overflow-x:auto;
-  padding:14px;
-  gap:10px;
-}
-body.theme-sketchnote .stats-scroll.rnw-grid .stat{
-  padding:10px 12px;
-}
-body.theme-sketchnote .stats-scroll.rnw-grid .stat-v{
-  font-size:34px !important;
-  line-height:0.9 !important;
-  margin-top:2px;
-}
-body.theme-sketchnote .stats-scroll.rnw-grid .stat-l{
-  font-size:var(--fs-xs);
-  letter-spacing:0.3px;
-}
-body.theme-sketchnote .stats-scroll.rnw-grid .stat-s{
-  font-size:var(--fs-sm);
+/* Renewal cards normally use --radius-sm (subtle) inside .rnw-grid,
+   while Fresh cards keep the wobbly hand-drawn radius. Match Fresh
+   roundness on renewals so both modes feel like one design — but
+   leave their compact grid layout and font sizes alone. */
+body.theme-sketchnote .stats-scroll.rnw-grid .stat,
+body.theme-sketchnote .stats-scroll.rnw-grid .rnw-stat-card{
+  border-radius:var(--sketch-radius-card) !important;
 }
 
 body.theme-sketchnote .stat{
