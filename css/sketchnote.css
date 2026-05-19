@@ -1,0 +1,914 @@
+/* Hand-Drawn Sketchnote theme: cream paper, ink black, sticky-note yellow, wobbly hand-drawn shapes. */
+body.theme-sketchnote{
+  color-scheme:light;
+  --p1:#2C2C2C;
+  --p2:#FFD600;
+  --p3:#7A6500;
+  --p-bg:#FFF4B8;
+  --p-bd:#2C2C2C;
+  --p-subtle:rgba(44,44,44,0.08);
+  --glass:#FFFEF8;
+  --glass-bd:#2C2C2C;
+  --text1:#2C2C2C;
+  --text2:#4A4A4A;
+  --text3:#8A8A8A;
+  --muted:#8A8A8A;
+  --surface:#FBF8EF;
+  --surface-alt:#FFF4B8;
+  --overlay:rgba(44,44,44,0.55);
+  --header-bg:#FBF8EF;
+  --dark-glass:#FFFEF8;
+  --green:#3F8B45;
+  --green-bg:#DFF3E0;
+  --green-bd:#2C2C2C;
+  --amber:#B26500;
+  --amber-bg:#FFE7B5;
+  --amber-bd:#2C2C2C;
+  --red:#D63A30;
+  --red-bg:#FFE0E0;
+  --red-bd:#2C2C2C;
+  --green-vivid:#4CAF50;
+  --red-vivid:#E53935;
+  --radius-xs:6px;
+  --radius-sm:8px;
+  --radius-md:10px;
+  --radius-lg:14px;
+  --radius-xl:18px;
+  --radius-pill:14px;
+  --sketch-shadow:3px 3px 0 #2C2C2C;
+  --sketch-shadow-sm:2px 2px 0 #2C2C2C;
+  --sketch-shadow-lg:4px 4px 0 #2C2C2C;
+  /* Wobbly border-radius presets — different for square cards vs pill chips */
+  --sketch-radius-card:14px 18px 12px 20px / 18px 12px 20px 14px;
+  --sketch-radius-chip:30px 8px 25px 10px / 10px 25px 8px 30px;
+  --sketch-radius-blob:50% 30% 60% 40% / 40% 50% 30% 70%;
+  background:#FBF8EF;
+  font-family:'Architects Daughter','Caveat',cursive;
+  color:#2C2C2C;
+}
+
+/* ---------- Paper texture overlay on body ---------- */
+body.theme-sketchnote::before,
+body.theme-sketchnote::after{
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
+    #FBF8EF;
+}
+
+body.theme-sketchnote #app{max-width:720px;}
+
+/* ---------- Header ---------- */
+body.theme-sketchnote .header{
+  background:#FBF8EF;
+  border-bottom:2.5px dashed #2C2C2C;
+  box-shadow:0 3px 0 rgba(44,44,44,0.1);
+  backdrop-filter:none;
+}
+
+body.theme-sketchnote .brand-name{
+  font-family:'Caveat','Noto Sans Devanagari',cursive;
+  font-size:26px;
+  font-weight:700;
+  color:#2C2C2C;
+  letter-spacing:0;
+  transform:rotate(-1.5deg);
+  display:inline-block;
+}
+
+body.theme-sketchnote .brand-sub,
+body.theme-sketchnote .page-sub,
+body.theme-sketchnote .stat-l,
+body.theme-sketchnote .stat-s{
+  font-family:'Architects Daughter',cursive;
+  color:#4A4A4A;
+  font-weight:400;
+  text-transform:none;
+  letter-spacing:0.3px;
+}
+
+/* ---------- Cards & surfaces (wobbly border radius) ---------- */
+body.theme-sketchnote .brand-av,
+body.theme-sketchnote .hbtn,
+body.theme-sketchnote .user-pill,
+body.theme-sketchnote .uav,
+body.theme-sketchnote .mode-toggle-bar,
+body.theme-sketchnote .stat,
+body.theme-sketchnote .loan-row,
+body.theme-sketchnote .loan-card,
+body.theme-sketchnote .task-performer-block,
+body.theme-sketchnote .task-performer,
+body.theme-sketchnote .task-targets,
+body.theme-sketchnote .task-care,
+body.theme-sketchnote .task-critical-tab,
+body.theme-sketchnote .task-critical-detail,
+body.theme-sketchnote .task-item,
+body.theme-sketchnote .task-officer-chip,
+body.theme-sketchnote .rnw-officer-card,
+body.theme-sketchnote .rnw-expanded-card,
+body.theme-sketchnote .cal-wrap,
+body.theme-sketchnote .cal-day-detail,
+body.theme-sketchnote .sheet,
+body.theme-sketchnote .modal-box,
+body.theme-sketchnote .user-dropdown,
+body.theme-sketchnote .notif-card,
+body.theme-sketchnote .activity-bubble,
+body.theme-sketchnote .empty-state,
+body.theme-sketchnote .duplicate-card{
+  background:#FFFEF8;
+  border:2px solid #2C2C2C;
+  border-radius:var(--sketch-radius-card);
+  box-shadow:var(--sketch-shadow);
+  backdrop-filter:none;
+  color:#2C2C2C;
+}
+
+body.theme-sketchnote .brand-av{
+  background:#FFD600;
+  border-radius:var(--sketch-radius-blob);
+  font-family:'Caveat',cursive;
+  font-size:22px;
+  font-weight:700;
+  color:#2C2C2C;
+  padding:0;
+}
+
+body.theme-sketchnote .brand--tasks-active .brand-av{
+  outline:3px dashed #E53935;
+  outline-offset:3px;
+}
+
+body.theme-sketchnote .hbtn{
+  background:#FFFEF8;
+  border-radius:50% 40% 60% 30% / 30% 60% 40% 50%;
+}
+body.theme-sketchnote .user-pill{
+  background:#FFFEF8;
+  border-radius:40px;
+}
+
+body.theme-sketchnote .hbtn-badge,
+body.theme-sketchnote .brand-tasks-badge,
+body.theme-sketchnote .mode-badge{
+  background:#E53935;
+  border:2px solid #2C2C2C;
+  border-radius:50%;
+  color:#fff;
+  font-family:'Architects Daughter',cursive;
+  font-weight:700;
+}
+
+body.theme-sketchnote .sync-dot{
+  background:#4CAF50;
+  border:1.5px solid #2C2C2C;
+}
+
+/* ---------- Toggles / tab bars ---------- */
+body.theme-sketchnote .mode-toggle-bar,
+body.theme-sketchnote .rnw-view-toggle{
+  padding:5px;
+  background:#FFFEF8;
+  border:2px solid #2C2C2C;
+  border-radius:18px;
+  box-shadow:var(--sketch-shadow-sm);
+}
+
+body.theme-sketchnote .mode-btn,
+body.theme-sketchnote .tab,
+body.theme-sketchnote .stab,
+body.theme-sketchnote .fs-btn,
+body.theme-sketchnote .rnw-view-toggle button,
+body.theme-sketchnote .rnw-npa-toggle,
+body.theme-sketchnote .cal-nav-btn,
+body.theme-sketchnote .task-back-btn,
+body.theme-sketchnote .btn,
+body.theme-sketchnote .btn-sm-ghost,
+body.theme-sketchnote .btn-sm-danger,
+body.theme-sketchnote .category-chip,
+body.theme-sketchnote .branch-chip,
+body.theme-sketchnote .decision-mini-btn,
+body.theme-sketchnote .decision-icon-btn,
+body.theme-sketchnote .perf-export-btn,
+body.theme-sketchnote .back-btn{
+  background:#FFFEF8;
+  border:2px solid #2C2C2C !important;
+  border-radius:var(--sketch-radius-chip);
+  color:#2C2C2C;
+  box-shadow:var(--sketch-shadow-sm);
+  font-family:'Caveat','Architects Daughter',cursive;
+  font-size:16px;
+  font-weight:700;
+}
+
+body.theme-sketchnote .mode-btn.active,
+body.theme-sketchnote .tab.active,
+body.theme-sketchnote .stab.active,
+body.theme-sketchnote .fs-btn.active,
+body.theme-sketchnote .rnw-view-toggle button.active,
+body.theme-sketchnote .category-chip.active,
+body.theme-sketchnote .branch-chip.active,
+body.theme-sketchnote .btn-primary-full,
+body.theme-sketchnote .btn-rnw-done,
+body.theme-sketchnote .perf-export-btn:not(.perf-export-btn-secondary){
+  background:#FFD600 !important;
+  color:#2C2C2C !important;
+  border-color:#2C2C2C !important;
+  box-shadow:var(--sketch-shadow-sm) !important;
+}
+
+body.theme-sketchnote .btn-return,
+body.theme-sketchnote .btn-cancel-full,
+body.theme-sketchnote .btn-outline,
+body.theme-sketchnote .perf-export-btn-secondary{
+  background:#FFF4B8 !important;
+}
+
+body.theme-sketchnote .btn-sanction{
+  background:#4CAF50 !important;
+  color:#fff !important;
+}
+
+body.theme-sketchnote .btn-sm-danger,
+body.theme-sketchnote .btn-del-icon{
+  background:#FFE0E0 !important;
+  color:#2C2C2C !important;
+}
+
+/* ---------- Stats scroll ---------- */
+body.theme-sketchnote .stats-scroll{
+  padding:14px;
+  gap:10px;
+}
+
+body.theme-sketchnote .stat{
+  background:#FFFEF8;
+  border:2px solid #2C2C2C;
+  min-width:0;
+  box-shadow:var(--sketch-shadow);
+  border-radius:var(--sketch-radius-card);
+}
+
+body.theme-sketchnote .stat-fresh-active,
+body.theme-sketchnote .stat-rnw-active{
+  background:#FFF4B8 !important;
+  border-color:#2C2C2C !important;
+  box-shadow:var(--sketch-shadow-lg) !important;
+  transform:rotate(-0.4deg);
+}
+
+body.theme-sketchnote .stat-v,
+body.theme-sketchnote .lr-amount,
+body.theme-sketchnote .lc-amount,
+body.theme-sketchnote .task-critical-count,
+body.theme-sketchnote .task-performer-amount,
+body.theme-sketchnote .targets-tile-num{
+  font-family:'Caveat',cursive;
+  color:#2C2C2C !important;
+  font-weight:700;
+  letter-spacing:0;
+}
+
+body.theme-sketchnote .stat-v{font-size:34px;line-height:0.9;}
+
+/* ---------- Bottom panel ---------- */
+body.theme-sketchnote .panel{
+  background:#FBF8EF;
+  border-top:2.5px dashed #2C2C2C;
+  border-radius:18px 22px 0 0 / 22px 18px 0 0;
+  box-shadow:0 -3px 0 rgba(44,44,44,0.08);
+}
+
+body.theme-sketchnote .panel-handle,
+body.theme-sketchnote .sheet-handle{
+  background:#2C2C2C;
+  height:4px;
+  opacity:0.7;
+  border-radius:3px;
+}
+
+/* ---------- Inputs ---------- */
+body.theme-sketchnote .search-inp,
+body.theme-sketchnote .form-group input,
+body.theme-sketchnote .form-group select,
+body.theme-sketchnote .form-group textarea,
+body.theme-sketchnote .input-light,
+body.theme-sketchnote .pin-input,
+body.theme-sketchnote .decision-name--edit input,
+body.theme-sketchnote .decision-amount--edit input,
+body.theme-sketchnote .decision-account-line--edit input,
+body.theme-sketchnote .decision-account-line--edit select,
+body.theme-sketchnote .decision-account-line--edit textarea,
+body.theme-sketchnote .decision-edit-field input,
+body.theme-sketchnote .decision-edit-field select,
+body.theme-sketchnote .decision-edit-field textarea,
+body.theme-sketchnote .decision-return-note textarea{
+  background:#FFFEF8;
+  border:2px solid #2C2C2C;
+  border-radius:14px;
+  box-shadow:var(--sketch-shadow-sm);
+  color:#2C2C2C;
+  font-family:'Architects Daughter','Inter',cursive;
+  font-size:14px;
+}
+
+body.theme-sketchnote input::placeholder,
+body.theme-sketchnote textarea::placeholder{
+  color:#8A8A8A;
+  font-style:italic;
+}
+
+/* ---------- Loan row & card ---------- */
+body.theme-sketchnote .loan-item{
+  margin-bottom:12px;
+}
+
+body.theme-sketchnote .loan-row{
+  background:#FFFEF8 !important;
+  border:2px solid #2C2C2C !important;
+  border-radius:var(--sketch-radius-card);
+  box-shadow:var(--sketch-shadow);
+  overflow:visible;
+}
+
+body.theme-sketchnote .loan-row::before{
+  width:8px;
+  background:#FFD600 !important;
+  border-right:2px solid #2C2C2C;
+}
+
+body.theme-sketchnote .status-returned .loan-row::before,
+body.theme-sketchnote .loan-item.rnw-s-due-soon > .loan-row::before,
+body.theme-sketchnote .loan-item.rnw-s-dates-missing > .loan-row::before{
+  background:#FFD600 !important;
+}
+
+body.theme-sketchnote .loan-item.rnw-s-pending > .loan-row::before,
+body.theme-sketchnote .loan-item.rnw-s-npa > .loan-row::before,
+body.theme-sketchnote .loan-item.overdue > .loan-row::before{
+  background:#E53935 !important;
+}
+
+body.theme-sketchnote .loan-item.status-sanctioned > .loan-row::before,
+body.theme-sketchnote .loan-item.rnw-s-active > .loan-row::before,
+body.theme-sketchnote .loan-item.rnw-s-done > .loan-row::before{
+  background:#4CAF50 !important;
+}
+
+body.theme-sketchnote .loan-card,
+body.theme-sketchnote .rnw-expanded-card{
+  border:2px solid #2C2C2C;
+  border-top:0;
+  border-radius:0 0 var(--sketch-radius-card);
+  background:#FFFEF8;
+  box-shadow:var(--sketch-shadow);
+}
+
+body.theme-sketchnote .expanded .loan-row{
+  border-bottom-left-radius:0;
+  border-bottom-right-radius:0;
+  box-shadow:3px 0 0 #2C2C2C;
+}
+
+body.theme-sketchnote .lr-av,
+body.theme-sketchnote .lc-av,
+body.theme-sketchnote .task-performer-av,
+body.theme-sketchnote .rnw-officer-av,
+body.theme-sketchnote .user-btn .av,
+body.theme-sketchnote .photo-modal-av,
+body.theme-sketchnote .officer-av-initials,
+body.theme-sketchnote .task-officer-mini{
+  border:2px solid #2C2C2C !important;
+  border-radius:var(--sketch-radius-blob) !important;
+  box-shadow:2px 2px 0 #2C2C2C !important;
+  background:#FFD600 !important;
+  background-image:none !important;
+  color:#2C2C2C !important;
+  font-family:'Caveat',cursive !important;
+  font-weight:700;
+}
+
+body.theme-sketchnote .user-btn.admin .av{
+  background:#2C2C2C !important;
+  color:#FFD600 !important;
+}
+
+/* ---------- Branch code chip & officer count ---------- */
+body.theme-sketchnote .lr-bcode{
+  background:#FFFEF8 !important;
+  color:#2C2C2C !important;
+  border:1.5px solid #2C2C2C;
+  border-radius:6px;
+  font-family:'Architects Daughter',cursive;
+  font-weight:700;
+  padding:2px 6px;
+}
+
+body.theme-sketchnote .officer-count{
+  background:#FFF4B8 !important;
+  color:#2C2C2C !important;
+  border:2px solid #2C2C2C !important;
+  border-radius:14px;
+  box-shadow:2px 2px 0 #2C2C2C;
+  font-family:'Architects Daughter',cursive;
+  font-weight:700;
+}
+
+/* ---------- Tags ---------- */
+body.theme-sketchnote .tag,
+body.theme-sketchnote .task-section-pill,
+body.theme-sketchnote .task-branch-chip,
+body.theme-sketchnote .rnw-date-warning,
+body.theme-sketchnote .decision-status-pill{
+  background:#FFFEF8;
+  border:1.5px solid #2C2C2C;
+  border-radius:14px;
+  color:#2C2C2C;
+  font-family:'Architects Daughter',cursive;
+  font-weight:700;
+  text-transform:none;
+  letter-spacing:0;
+}
+
+body.theme-sketchnote .tag.sme,
+body.theme-sketchnote .category-chip.sme,
+body.theme-sketchnote .task-critical-tab--purple.active,
+body.theme-sketchnote .task-critical-detail--purple{
+  background:#FFF4B8 !important;
+  color:#2C2C2C !important;
+  border-color:#7A6500 !important;
+}
+
+body.theme-sketchnote .tag.agri,
+body.theme-sketchnote .category-chip.agri{
+  background:#DFF3E0 !important;
+  color:#1F5C26 !important;
+  border-color:#1F5C26 !important;
+}
+
+body.theme-sketchnote .tag.edu,
+body.theme-sketchnote .category-chip.edu{
+  background:#E3F2FD !important;
+  color:#0D47A1 !important;
+  border-color:#0D47A1 !important;
+}
+
+body.theme-sketchnote .tag.overdue,
+body.theme-sketchnote .rnw-chip-pending,
+body.theme-sketchnote .rnw-chip-npa,
+body.theme-sketchnote .task-care-urgent,
+body.theme-sketchnote .task-critical-tab--red.active,
+body.theme-sketchnote .task-critical-detail--red{
+  background:#FFE0E0 !important;
+  color:#D63A30 !important;
+  border-color:#D63A30 !important;
+}
+
+body.theme-sketchnote .rnw-chip-due-soon,
+body.theme-sketchnote .task-critical-tab--amber.active,
+body.theme-sketchnote .task-critical-detail--amber{
+  background:#FFE7B5 !important;
+  color:#B26500 !important;
+  border-color:#B26500 !important;
+}
+
+body.theme-sketchnote .rnw-chip-active,
+body.theme-sketchnote .rnw-chip-npa-cd{
+  background:#DFF3E0 !important;
+  color:#3F8B45 !important;
+  border-color:#3F8B45 !important;
+}
+
+/* ---------- Tasks ---------- */
+body.theme-sketchnote .task-care{
+  background:#FFF4B8;
+  padding:12px;
+}
+
+body.theme-sketchnote .task-care-icon{
+  background:#E53935;
+  border:2px solid #2C2C2C;
+  border-radius:var(--sketch-radius-blob);
+  box-shadow:var(--sketch-shadow-sm);
+}
+
+body.theme-sketchnote .task-critical-tab::before,
+body.theme-sketchnote .task-performer::before,
+body.theme-sketchnote .rnw-stat-card::before{
+  height:6px;
+  border-bottom:2px solid #2C2C2C;
+}
+
+body.theme-sketchnote .task-critical-tab--red::before,
+body.theme-sketchnote .rnw-grad-red::before,
+body.theme-sketchnote .rnw-grad-darkred::before{
+  background:#E53935;
+}
+
+body.theme-sketchnote .task-critical-tab--amber::before,
+body.theme-sketchnote .rnw-grad-amber::before,
+body.theme-sketchnote .task-performer--fresh::before{
+  background:#FFD600;
+}
+
+body.theme-sketchnote .task-critical-tab--purple::before,
+body.theme-sketchnote .rnw-grad-green::before,
+body.theme-sketchnote .task-performer--renewal::before{
+  background:#4CAF50;
+}
+
+body.theme-sketchnote .task-critical-title,
+body.theme-sketchnote .task-kicker,
+body.theme-sketchnote .task-performer-title{
+  font-family:'Caveat',cursive;
+  color:#2C2C2C;
+  text-transform:none;
+  letter-spacing:0;
+}
+
+/* ---------- Targets / calendar / report / KPI cards ---------- */
+body.theme-sketchnote .targets-tile,
+body.theme-sketchnote .rnw-stat-card,
+body.theme-sketchnote .cal-cell,
+body.theme-sketchnote .report-card,
+body.theme-sketchnote .perf-kpi,
+body.theme-sketchnote .decision-account-card,
+body.theme-sketchnote .decision-edit-card,
+body.theme-sketchnote .decision-account-lines,
+body.theme-sketchnote .decision-edit-lines,
+body.theme-sketchnote .decision-outcome-block,
+body.theme-sketchnote .decision-return-note,
+body.theme-sketchnote .decision-activity-row{
+  background:#FFFEF8;
+  border:2px solid #2C2C2C;
+  border-radius:var(--sketch-radius-card);
+  box-shadow:var(--sketch-shadow-sm);
+  color:#2C2C2C;
+}
+
+body.theme-sketchnote .targets-tile--leader,
+body.theme-sketchnote .cal-cell--active-has{
+  background:#DFF3E0;
+}
+
+body.theme-sketchnote .cal-cell--overdue,
+body.theme-sketchnote .cal-cell--soon{
+  background:#FFE0E0;
+}
+
+body.theme-sketchnote .cal-cell--holiday,
+body.theme-sketchnote .cal-cell--holiday-custom{
+  background:repeating-linear-gradient(45deg,#FFF4B8 0 6px,#FFE7B5 6px 12px) !important;
+  border:2px dashed #2C2C2C !important;
+}
+body.theme-sketchnote .cal-dot--holiday{
+  background:repeating-linear-gradient(45deg,#2C2C2C 0 2px,#FFD600 2px 4px) !important;
+}
+
+/* ---------- Filter popover ---------- */
+body.theme-sketchnote .fs-pop{
+  background:#FFFEF8;
+  border:2px solid #2C2C2C;
+  border-radius:var(--sketch-radius-card);
+  box-shadow:var(--sketch-shadow-lg);
+}
+
+body.theme-sketchnote .fs-pop h4,
+body.theme-sketchnote .form-group label,
+body.theme-sketchnote .rnw-officer-head,
+body.theme-sketchnote .task-critical-table-head,
+body.theme-sketchnote .perf-kpi-label{
+  font-family:'Architects Daughter',cursive;
+  color:#4A4A4A;
+  font-weight:700;
+}
+
+body.theme-sketchnote .fs-pop hr,
+body.theme-sketchnote .lc-actions,
+body.theme-sketchnote .rnw-action-group,
+body.theme-sketchnote .cal-detail-item,
+body.theme-sketchnote .task-critical-table-head,
+body.theme-sketchnote .task-critical-row,
+body.theme-sketchnote .rnw-officer-row,
+body.theme-sketchnote .rnw-officer-summary,
+body.theme-sketchnote .audit-row{
+  border-color:#2C2C2C;
+}
+
+/* ---------- Overlays / sheets / modals ---------- */
+body.theme-sketchnote .overlay,
+body.theme-sketchnote #activityOverlay{
+  background:rgba(44,44,44,0.55);
+}
+
+body.theme-sketchnote .sheet,
+body.theme-sketchnote .modal-box,
+body.theme-sketchnote .perf-overlay,
+body.theme-sketchnote .perf-overlay-header{
+  background:#FBF8EF;
+  border-color:#2C2C2C;
+  color:#2C2C2C;
+}
+
+body.theme-sketchnote .perf-overlay-header{
+  border-bottom:2.5px dashed #2C2C2C;
+  box-shadow:0 3px 0 rgba(44,44,44,0.08);
+}
+
+body.theme-sketchnote .sheet{
+  border-radius:18px 22px 0 0 / 22px 18px 0 0 !important;
+  border:2.5px solid #2C2C2C !important;
+  border-bottom:none !important;
+  box-shadow:0 -4px 0 rgba(44,44,44,0.15) !important;
+}
+
+/* ---------- FAB ---------- */
+body.theme-sketchnote .fab{
+  width:60px;
+  height:60px;
+  background:#FFD600;
+  color:#2C2C2C;
+  border:3px solid #2C2C2C;
+  border-radius:50% 40% 55% 45% / 50% 55% 45% 50%;
+  box-shadow:5px 5px 0 #2C2C2C;
+  font-family:'Caveat',cursive;
+  font-weight:700;
+  font-size:32px;
+  line-height:1;
+  padding:0;
+}
+
+/* ---------- Toast ---------- */
+body.theme-sketchnote .toast{
+  background:#FFFEF8;
+  color:#2C2C2C;
+  border:2px solid #2C2C2C;
+  border-radius:14px;
+  box-shadow:var(--sketch-shadow);
+  font-family:'Caveat',cursive;
+  font-weight:700;
+  font-size:16px;
+  backdrop-filter:none !important;
+}
+
+/* ---------- Skeletons ---------- */
+body.theme-sketchnote .skeleton-row,
+body.theme-sketchnote .skel-circle,
+body.theme-sketchnote .skel-bar{
+  background:#FFFEF8;
+  border:1.5px dashed #2C2C2C;
+  box-shadow:var(--sketch-shadow-sm);
+}
+
+body.theme-sketchnote .skeleton-row::after,
+body.theme-sketchnote .skel-bar::after{
+  background:linear-gradient(90deg,transparent 0%,rgba(255,214,0,0.45) 50%,transparent 100%) !important;
+}
+
+/* ---------- Splash screen ---------- */
+body.theme-sketchnote #nirnay-splash{
+  background:#FBF8EF;
+  font-family:'Architects Daughter','Caveat',cursive;
+}
+body.theme-sketchnote .splash-logo{
+  background:#FFD600;
+  border:3px solid #2C2C2C;
+  border-radius:var(--sketch-radius-blob);
+  box-shadow:5px 5px 0 #2C2C2C;
+}
+body.theme-sketchnote #nirnay-splash h1,
+body.theme-sketchnote #nirnay-splash strong,
+body.theme-sketchnote .splash-fallback strong{
+  color:#2C2C2C;
+  font-family:'Caveat','Architects Daughter',cursive;
+  font-weight:700;
+}
+body.theme-sketchnote #nirnay-splash h1 em{color:#2C2C2C;font-style:normal;}
+body.theme-sketchnote #nirnay-splash p{color:#4A4A4A;font-family:'Architects Daughter',cursive;}
+body.theme-sketchnote .splash-fallback img{
+  border:3px solid #2C2C2C;
+  border-radius:var(--sketch-radius-blob);
+  box-shadow:4px 4px 0 #2C2C2C;
+  background:#FFFEF8;
+}
+body.theme-sketchnote .splash-loader{
+  background:#FFFEF8;
+  border:1.5px dashed #2C2C2C;
+  border-radius:3px;
+}
+body.theme-sketchnote .splash-shimmer{
+  background:linear-gradient(90deg,transparent,#FFD600,transparent);
+}
+
+/* =========================================================
+   COHESION OVERHAUL — kill bleed-through from base styles
+   ========================================================= */
+
+/* Kill blur globally for this theme */
+body.theme-sketchnote .header,
+body.theme-sketchnote .panel,
+body.theme-sketchnote .sheet,
+body.theme-sketchnote .modal-box,
+body.theme-sketchnote .modal-card,
+body.theme-sketchnote .user-dropdown,
+body.theme-sketchnote .notif-card,
+body.theme-sketchnote .notif-overlay,
+body.theme-sketchnote .cal-day-detail,
+body.theme-sketchnote .cal-wrap,
+body.theme-sketchnote .task-performer-block,
+body.theme-sketchnote .task-performer,
+body.theme-sketchnote .task-targets,
+body.theme-sketchnote .task-care,
+body.theme-sketchnote .task-critical-tab,
+body.theme-sketchnote .task-critical-detail,
+body.theme-sketchnote .task-officer-chip,
+body.theme-sketchnote .perf-overlay,
+body.theme-sketchnote .perf-overlay-header,
+body.theme-sketchnote .fs-pop,
+body.theme-sketchnote .activity-bubble,
+body.theme-sketchnote .decision-activity-overlay,
+body.theme-sketchnote .overlay,
+body.theme-sketchnote #activityOverlay,
+body.theme-sketchnote .photo-modal-content{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+/* Flatten loan-row category tint gradients */
+body.theme-sketchnote .loan-item.cat-agri > .loan-row,
+body.theme-sketchnote .loan-item.cat-sme  > .loan-row,
+body.theme-sketchnote .loan-item.cat-edu  > .loan-row,
+body.theme-sketchnote .loan-item.rnw-s-active   > .loan-row,
+body.theme-sketchnote .loan-item.rnw-s-due-soon > .loan-row,
+body.theme-sketchnote .loan-item.rnw-s-pending  > .loan-row,
+body.theme-sketchnote .loan-item.rnw-s-npa      > .loan-row,
+body.theme-sketchnote .loan-item.rnw-s-done     > .loan-row,
+body.theme-sketchnote .loan-item.rnw-s-dates-missing > .loan-row{
+  background:#FFFEF8 !important;
+}
+
+/* Loan card status bars — flat */
+body.theme-sketchnote .loan-card.overdue::before{background:#E53935 !important;}
+body.theme-sketchnote .loan-card.returned::before{background:#FFD600 !important;}
+body.theme-sketchnote .loan-card.sanctioned::before{background:#4CAF50 !important;}
+
+/* Decision sheet sliders — flat with hand-drawn bg */
+body.theme-sketchnote .decision-slider,
+body.theme-sketchnote .decision-slider--renewal{
+  background:#FFFEF8 !important;
+  border:2px solid #2C2C2C !important;
+  border-radius:14px !important;
+  box-shadow:var(--sketch-shadow-sm) !important;
+}
+body.theme-sketchnote .decision-outcome-return{background:#FFE0E0 !important;background-image:none !important;border:2px solid #2C2C2C !important;color:#2C2C2C !important;}
+body.theme-sketchnote .decision-outcome-sanction{background:#DFF3E0 !important;background-image:none !important;border:2px solid #2C2C2C !important;color:#2C2C2C !important;}
+body.theme-sketchnote .decision-outcome-renew{background:#FFE7B5 !important;background-image:none !important;border:2px solid #2C2C2C !important;color:#2C2C2C !important;}
+
+/* Snapshot modal */
+body.theme-sketchnote .snapshot-modal,
+body.theme-sketchnote .snapshot-modal-content,
+body.theme-sketchnote .weekly-snapshot-card{
+  background:#FBF8EF !important;
+  background-image:none !important;
+  border:2px solid #2C2C2C !important;
+  border-radius:var(--sketch-radius-card) !important;
+  box-shadow:var(--sketch-shadow) !important;
+  color:#2C2C2C !important;
+}
+body.theme-sketchnote .weekly-availability-btn{
+  background:#FFFEF8 !important;
+  background-image:none !important;
+  border:2px solid #2C2C2C !important;
+  color:#2C2C2C !important;
+  box-shadow:var(--sketch-shadow-sm) !important;
+  border-radius:var(--sketch-radius-chip) !important;
+  font-family:'Caveat',cursive !important;
+  font-weight:700;
+}
+body.theme-sketchnote .weekly-availability-btn.holiday{background:#FFF4B8 !important;}
+body.theme-sketchnote .weekly-availability-btn.deputation{background:#FFE7B5 !important;}
+body.theme-sketchnote .weekly-availability-btn.leave{background:#FFE0E0 !important;}
+body.theme-sketchnote .weekly-availability-btn.active{background:#FFD600 !important;}
+
+/* Tasks polish */
+body.theme-sketchnote .task-officer-chip.active{
+  background:#FFD600 !important;
+  background-image:none !important;
+  color:#2C2C2C !important;
+  border:2px solid #2C2C2C !important;
+  box-shadow:var(--sketch-shadow-sm) !important;
+}
+body.theme-sketchnote .task-performer-spark{color:#2C2C2C !important;}
+body.theme-sketchnote .task-target-bar{
+  background:#FFFEF8 !important;
+  border:1.5px solid #2C2C2C !important;
+  border-radius:3px !important;
+}
+body.theme-sketchnote .task-target-bar span{
+  background:#FFD600 !important;
+  background-image:none !important;
+}
+
+/* Renewals polish */
+body.theme-sketchnote .btn-edit-icon{
+  background:#FFFEF8 !important;
+  background-image:none !important;
+  color:#2C2C2C !important;
+  border:2px solid #2C2C2C !important;
+  border-radius:14px !important;
+  box-shadow:var(--sketch-shadow-sm) !important;
+}
+
+/* Headings → Caveat for personality */
+body.theme-sketchnote h1,
+body.theme-sketchnote h2,
+body.theme-sketchnote h3,
+body.theme-sketchnote h4,
+body.theme-sketchnote .perf-overlay-title,
+body.theme-sketchnote .modal-box h2,
+body.theme-sketchnote .sheet h2,
+body.theme-sketchnote .task-section-title,
+body.theme-sketchnote .task-performer-title,
+body.theme-sketchnote .task-critical-title,
+body.theme-sketchnote .rnw-officer-name,
+body.theme-sketchnote .lc-name,
+body.theme-sketchnote .lr-name{
+  font-family:'Caveat','Architects Daughter',cursive;
+  color:#2C2C2C;
+  font-weight:700;
+  letter-spacing:0;
+}
+
+/* Spinner */
+body.theme-sketchnote .spinner,
+body.theme-sketchnote [class*="spinner"]{
+  border-color:#2C2C2C !important;
+  border-top-color:#FFD600 !important;
+}
+
+/* Focus rings: dashed yellow */
+body.theme-sketchnote *:focus-visible{
+  outline:3px dashed #FFD600 !important;
+  outline-offset:2px !important;
+  box-shadow:none;
+}
+body.theme-sketchnote .search-inp:focus,
+body.theme-sketchnote .form-group input:focus,
+body.theme-sketchnote .form-group select:focus,
+body.theme-sketchnote .form-group textarea:focus{
+  outline:none !important;
+  border-color:#FFD600 !important;
+}
+
+/* Press-down interaction — shadow collapses like brutalist */
+body.theme-sketchnote .btn:active,
+body.theme-sketchnote .mode-btn:active,
+body.theme-sketchnote .tab:active,
+body.theme-sketchnote .stab:active,
+body.theme-sketchnote .fab:active,
+body.theme-sketchnote .hbtn:active,
+body.theme-sketchnote .stat:active,
+body.theme-sketchnote .branch-chip:active,
+body.theme-sketchnote .category-chip:active,
+body.theme-sketchnote .fs-btn:active,
+body.theme-sketchnote .perf-export-btn:active,
+body.theme-sketchnote .back-btn:active,
+body.theme-sketchnote .task-back-btn:active{
+  transform:translate(2px,2px);
+  box-shadow:1px 1px 0 #2C2C2C !important;
+}
+body.theme-sketchnote .fab:active{
+  transform:translate(3px,3px);
+  box-shadow:2px 2px 0 #2C2C2C !important;
+}
+
+/* Brand-sub kept casual, no uppercase */
+body.theme-sketchnote .brand-sub{
+  text-transform:none;
+  letter-spacing:0.3px;
+  font-size:12px;
+}
+
+/* Wavy underline on big amounts — signature sketch touch */
+body.theme-sketchnote .lc-amount{
+  text-decoration:underline wavy #FFD600 2px;
+  text-underline-offset:4px;
+}
+
+/* Disable content fade animation that uses purple */
+body.theme-sketchnote .content-enter,
+body.theme-sketchnote .content-leaving{
+  animation:none !important;
+}
+
+/* Mobile shadow downsizing */
+@media(max-width:480px){
+  body.theme-sketchnote{
+    --sketch-shadow:2px 2px 0 #2C2C2C;
+    --sketch-shadow-sm:1.5px 1.5px 0 #2C2C2C;
+    --sketch-shadow-lg:3px 3px 0 #2C2C2C;
+  }
+
+  body.theme-sketchnote .stats-scroll{
+    padding-left:10px;
+    padding-right:10px;
+  }
+}

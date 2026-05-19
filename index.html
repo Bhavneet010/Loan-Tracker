@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Nirnay">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@500;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@500;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;600;700;800&family=Caveat:wght@500;600;700&family=Architects+Daughter&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/core.css">
 <link rel="stylesheet" href="css/forms.css">
 <link rel="stylesheet" href="css/decision-sheet.css">
@@ -27,13 +27,17 @@
 <link rel="stylesheet" href="css/renewals.css">
 <link rel="stylesheet" href="css/dark-mode.css">
 <link rel="stylesheet" href="css/neo-brutalist.css">
+<link rel="stylesheet" href="css/sketchnote.css">
 </head>
 <body>
 <script>
 (function(){
   try{
-    if(localStorage.getItem('lpTheme')==='neo-brutalist'){
+    var t=localStorage.getItem('lpTheme');
+    if(t==='neo-brutalist'){
       document.body.classList.add('theme-neo-brutalist');
+    } else if(t==='sketchnote'){
+      document.body.classList.add('theme-sketchnote');
     } else if(localStorage.getItem('lpDark')==='1'){
       document.body.classList.add('dark');
     }

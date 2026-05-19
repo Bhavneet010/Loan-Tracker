@@ -46,14 +46,25 @@ async function init() {
     document.body.classList.add('theme-neo-brutalist');
     document.body.classList.remove('dark');
     localStorage.setItem('lpDark', '0');
+  } else if (savedTheme === 'sketchnote') {
+    S.dark = false;
+    document.body.classList.add('theme-sketchnote');
+    document.body.classList.remove('dark');
+    localStorage.setItem('lpDark', '0');
   } else if (darkPref === '1') {
     S.dark = true;
     document.body.classList.add('dark');
   }
   const themeMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeMeta) themeMeta.setAttribute('content',
-    document.body.classList.contains('theme-neo-brutalist') ? '#FFFEF2' : (S.dark ? '#15142C' : '#7c3aed')
-  );
+  if (themeMeta) {
+    if (document.body.classList.contains('theme-neo-brutalist')) {
+      themeMeta.setAttribute('content', '#FFFEF2');
+    } else if (document.body.classList.contains('theme-sketchnote')) {
+      themeMeta.setAttribute('content', '#FBF8EF');
+    } else {
+      themeMeta.setAttribute('content', S.dark ? '#15142C' : '#7c3aed');
+    }
+  }
   
   S.appMode = 'tasks';
   S.taskView = 'overview';

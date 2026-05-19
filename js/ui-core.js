@@ -27,13 +27,15 @@ export function updateUserAvatar(officer) {
 
 function _getTheme() {
   if (document.body.classList.contains('theme-neo-brutalist')) return 'neo-brutalist';
+  if (document.body.classList.contains('theme-sketchnote')) return 'sketchnote';
   if (document.body.classList.contains('dark')) return 'dark';
   return 'default';
 }
 
 function _themeLabel() {
   const t = _getTheme();
-  if (t === 'neo-brutalist') return '◼ Neo-Brutalist  →  Light';
+  if (t === 'neo-brutalist') return '◼ Neo-Brutalist  →  Sketchnote';
+  if (t === 'sketchnote')    return '✎ Sketchnote  →  Light';
   if (t === 'dark')          return '🌙 Dark  →  Neo-Brutalist';
   return '☀️ Light  →  Dark';
 }
@@ -43,6 +45,7 @@ window.cycleTheme = function () {
   if (current === 'default') {
     S.dark = true;
     document.body.classList.remove('theme-neo-brutalist');
+    document.body.classList.remove('theme-sketchnote');
     document.body.classList.add('dark');
     localStorage.setItem('lpDark', '1');
     localStorage.setItem('lpTheme', 'default');
@@ -50,13 +53,23 @@ window.cycleTheme = function () {
   } else if (current === 'dark') {
     S.dark = false;
     document.body.classList.remove('dark');
+    document.body.classList.remove('theme-sketchnote');
     document.body.classList.add('theme-neo-brutalist');
     localStorage.setItem('lpDark', '0');
     localStorage.setItem('lpTheme', 'neo-brutalist');
     toast('Neo-Brutalist theme active');
+  } else if (current === 'neo-brutalist') {
+    S.dark = false;
+    document.body.classList.remove('dark');
+    document.body.classList.remove('theme-neo-brutalist');
+    document.body.classList.add('theme-sketchnote');
+    localStorage.setItem('lpDark', '0');
+    localStorage.setItem('lpTheme', 'sketchnote');
+    toast('Sketchnote theme active');
   } else {
     S.dark = false;
     document.body.classList.remove('theme-neo-brutalist');
+    document.body.classList.remove('theme-sketchnote');
     document.body.classList.remove('dark');
     localStorage.setItem('lpTheme', 'default');
     localStorage.setItem('lpDark', '0');
@@ -72,6 +85,7 @@ window.cycleTheme = function () {
 
 window.toggleDark = function () {
   document.body.classList.remove('theme-neo-brutalist');
+  document.body.classList.remove('theme-sketchnote');
   localStorage.setItem('lpTheme', 'default');
   S.dark = !S.dark;
   document.body.classList.toggle('dark', S.dark);
@@ -81,9 +95,14 @@ window.toggleDark = function () {
 
 function updateThemeColor() {
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content',
-    document.body.classList.contains('theme-neo-brutalist') ? '#FFFEF2' : (S.dark ? '#15142C' : '#7c3aed')
-  );
+  if (!meta) return;
+  if (document.body.classList.contains('theme-neo-brutalist')) {
+    meta.setAttribute('content', '#FFFEF2');
+  } else if (document.body.classList.contains('theme-sketchnote')) {
+    meta.setAttribute('content', '#FBF8EF');
+  } else {
+    meta.setAttribute('content', S.dark ? '#15142C' : '#7c3aed');
+  }
 }
 
 window.toggleUserMenu = function () {
