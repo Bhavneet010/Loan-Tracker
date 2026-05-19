@@ -977,9 +977,15 @@ body.theme-neo-brutalist .task-donut circle:first-child{
   stroke:rgba(0,0,0,0.10) !important;
 }
 body.theme-neo-brutalist .task-donut circle:last-child{
-  stroke:#00E47C !important;
   stroke-linecap:square !important;
 }
+/* per-officer arc: bold flat colors, each distinct */
+body.theme-neo-brutalist .targets-tile-donut[data-idx="0"] .task-donut circle:last-child{stroke:#FF3B30 !important;}
+body.theme-neo-brutalist .targets-tile-donut[data-idx="1"] .task-donut circle:last-child{stroke:#00E47C !important;}
+body.theme-neo-brutalist .targets-tile-donut[data-idx="2"] .task-donut circle:last-child{stroke:#FFD600 !important;}
+body.theme-neo-brutalist .targets-tile-donut[data-idx="3"] .task-donut circle:last-child{stroke:#0066FF !important;}
+body.theme-neo-brutalist .targets-tile-donut[data-idx="4"] .task-donut circle:last-child{stroke:#FF6B2B !important;}
+body.theme-neo-brutalist .targets-tile-donut[data-idx="5"] .task-donut circle:last-child{stroke:#A855F7 !important;}
 
 /* ---------- Renewal Targets: daysleft pill (strip purple) ---------- */
 body.theme-neo-brutalist .task-target-daysleft{

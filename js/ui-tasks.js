@@ -269,7 +269,7 @@ function renewalTargetsHtml(metrics) {
     targetsCelebratedMonths.add(metrics.thisMonth);
   }
 
-  const tiles = officers.map(({ officer, done, target, pct, solid }) => {
+  const tiles = officers.map(({ officer, done, target, pct, solid }, idx) => {
     const isLeader = !!leader && officer === leader.officer;
     const cls = `targets-tile${isLeader ? ' targets-tile--leader' : ''}${isLeader && celebrate ? ' targets-tile--celebrate' : ''}`;
     const crown = isLeader ? '<span class="targets-tile-crown" aria-hidden="true">&#128081;</span>' : '';
@@ -283,7 +283,7 @@ function renewalTargetsHtml(metrics) {
       <div class="targets-tile-head">
         <span class="targets-tile-name">${esc(officer)}</span>
       </div>
-      <div class="targets-tile-donut">
+      <div class="targets-tile-donut" data-idx="${idx}">
         ${donutSvg(pct, solid, 48, 8)}
         <span class="targets-tile-num">${done}</span>
       </div>
