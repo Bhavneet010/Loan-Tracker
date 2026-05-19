@@ -220,7 +220,7 @@ body.theme-neo-brutalist .stats-scroll{
 body.theme-neo-brutalist .stat{
   background:#FFFFFF;
   border:2px solid #000;
-  min-width:146px;
+  min-width:0;
   box-shadow:var(--brut-shadow);
 }
 
