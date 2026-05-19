@@ -957,3 +957,46 @@ body.theme-neo-brutalist .brand-sub{
   letter-spacing:1px;
   font-size:10px;
 }
+
+/* ---------- Logo: replace photo icon with bold ₹ mark ---------- */
+body.theme-neo-brutalist .brand-av img{
+  display:none;
+}
+body.theme-neo-brutalist .brand-av::after{
+  content:'₹';
+  font-family:'JetBrains Mono','Space Grotesk',monospace;
+  font-size:21px;
+  font-weight:700;
+  color:#000;
+  line-height:1;
+  display:block;
+}
+
+/* ---------- Renewal Targets: donut chart brutalist colors ---------- */
+body.theme-neo-brutalist .task-donut circle:first-child{
+  stroke:rgba(0,0,0,0.10) !important;
+}
+body.theme-neo-brutalist .task-donut circle:last-child{
+  stroke:#00E47C !important;
+  stroke-linecap:square !important;
+}
+
+/* ---------- Renewal Targets: daysleft pill (strip purple) ---------- */
+body.theme-neo-brutalist .task-target-daysleft{
+  background:#FFFFFF !important;
+  border:2px solid #000 !important;
+  border-radius:4px !important;
+  color:#000 !important;
+  box-shadow:2px 2px 0 #000 !important;
+}
+
+/* ---------- Renewal Targets: celebration animation (lime+black, not purple glow) ---------- */
+@keyframes tileCelebrateBrut{
+  0%,100%{transform:scale(1);box-shadow:3px 3px 0 #000;}
+  20%{transform:scale(1.10) rotate(-1.5deg);box-shadow:0 0 0 5px rgba(0,228,124,0.40),6px 6px 0 #000;}
+  45%{transform:scale(1.06) rotate(1deg);box-shadow:0 0 0 3px rgba(0,228,124,0.25),5px 5px 0 #000;}
+  65%{transform:scale(1.04) rotate(0);box-shadow:0 0 0 2px rgba(0,228,124,0.15),4px 4px 0 #000;}
+}
+body.theme-neo-brutalist .targets-tile--celebrate{
+  animation-name:tileCelebrateBrut;
+}
