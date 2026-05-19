@@ -25,28 +25,57 @@ export function updateUserAvatar(officer) {
   }
 }
 
+function _getTheme() {
+  if (document.body.classList.contains('theme-neo-brutalist')) return 'neo-brutalist';
+  if (document.body.classList.contains('dark')) return 'dark';
+  return 'default';
+}
+
+function _themeLabel() {
+  const t = _getTheme();
+  if (t === 'neo-brutalist') return '◼ Neo-Brutalist  →  Light';
+  if (t === 'dark')          return '🌙 Dark  →  Neo-Brutalist';
+  return '☀️ Light  →  Dark';
+}
+
+window.cycleTheme = function () {
+  const current = _getTheme();
+  if (current === 'default') {
+    S.dark = true;
+    document.body.classList.remove('theme-neo-brutalist');
+    document.body.classList.add('dark');
+    localStorage.setItem('lpDark', '1');
+    localStorage.setItem('lpTheme', 'default');
+    toast('Dark theme active');
+  } else if (current === 'dark') {
+    S.dark = false;
+    document.body.classList.remove('dark');
+    document.body.classList.add('theme-neo-brutalist');
+    localStorage.setItem('lpDark', '0');
+    localStorage.setItem('lpTheme', 'neo-brutalist');
+    toast('Neo-Brutalist theme active');
+  } else {
+    S.dark = false;
+    document.body.classList.remove('theme-neo-brutalist');
+    document.body.classList.remove('dark');
+    localStorage.setItem('lpTheme', 'default');
+    localStorage.setItem('lpDark', '0');
+    toast('Light theme active');
+  }
+  updateThemeColor();
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) btn.textContent = _themeLabel();
+  // re-arm outside-click dismissal (the once:true listener was consumed by this click)
+  document.removeEventListener('click', _closeMenuOutside);
+  setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
+};
+
 window.toggleDark = function () {
   document.body.classList.remove('theme-neo-brutalist');
   localStorage.setItem('lpTheme', 'default');
   S.dark = !S.dark;
   document.body.classList.toggle('dark', S.dark);
   localStorage.setItem('lpDark', S.dark ? '1' : '0');
-  updateThemeColor();
-};
-
-window.toggleNeoBrutalistTheme = function () {
-  const next = !document.body.classList.contains('theme-neo-brutalist');
-  document.body.classList.toggle('theme-neo-brutalist', next);
-  if (next) {
-    S.dark = false;
-    document.body.classList.remove('dark');
-    localStorage.setItem('lpDark', '0');
-    localStorage.setItem('lpTheme', 'neo-brutalist');
-    toast('Neo-Brutalist theme active');
-  } else {
-    localStorage.setItem('lpTheme', 'default');
-    toast('Default theme active');
-  }
   updateThemeColor();
 };
 
@@ -62,10 +91,9 @@ window.toggleUserMenu = function () {
   if (menu.style.display === 'none') {
     menu.innerHTML = `
       ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
-      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who's Online</button>` : ''}
+      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who\'s Online</button>` : ''}
       ${!S.isAdmin && S.user ? `<button class="udrop-item" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
-      <button class="udrop-item" onclick="closeUserMenu();toggleNeoBrutalistTheme()">${document.body.classList.contains('theme-neo-brutalist') ? '&#9632; Default theme' : '&#9632; Neo-Brutalist theme'}</button>
-      <button class="udrop-item" onclick="closeUserMenu();toggleDark()">${S.dark ? '&#9728; Light theme' : '&#127769; Dark theme'}</button>
+      <button class="udrop-item" id="themeToggleBtn" onclick="cycleTheme()">${_themeLabel()}</button>
       <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
     menu.style.display = 'block';
     setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
