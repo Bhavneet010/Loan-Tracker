@@ -369,8 +369,8 @@
   if(!s) return;
   /* Sketchnote theme gets a longer hold so the hand-drawn splash is readable. */
   var isSketch=document.body.classList.contains('theme-sketchnote');
-  var fadeStart=isSketch?2000:1400;
-  var remove=isSketch?2800:2200;
+  var fadeStart=isSketch?3500:1400;
+  var remove=isSketch?4400:2200;
   setTimeout(function(){s.style.opacity='0';},fadeStart);
   setTimeout(function(){if(s && s.parentNode) s.remove();},remove);
 })();
