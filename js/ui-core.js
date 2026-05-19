@@ -78,6 +78,12 @@ window.cycleTheme = function () {
   updateThemeColor();
   const btn = document.getElementById('themeToggleBtn');
   if (btn) btn.textContent = _themeLabel();
+  /* officerColor() returns theme-specific palettes (flat markers in
+     sketchnote, gradients otherwise). Re-render so per-officer
+     avatars in the list pick up the new palette, and refresh the
+     header avatar whose background was set inline. */
+  if (S.user && S.user !== 'Admin') updateUserAvatar(S.user);
+  if (typeof window.render === 'function') window.render();
   // re-arm outside-click dismissal (the once:true listener was consumed by this click)
   document.removeEventListener('click', _closeMenuOutside);
   setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);

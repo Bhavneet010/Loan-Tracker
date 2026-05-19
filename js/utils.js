@@ -35,11 +35,26 @@ export const OFFICER_PALETTE = [
   { bg: 'linear-gradient(135deg,#8B5CF6,#5B21B6)' }
 ];
 
+/* Flat marker-style palette used while the sketchnote theme is active.
+   Gradients would clash with the hand-drawn flat aesthetic. */
+export const OFFICER_PALETTE_SKETCH = [
+  { bg: '#E85D5D' }, /* coral */
+  { bg: '#5BC2A8' }, /* mint */
+  { bg: '#FFD55C' }, /* sunshine yellow */
+  { bg: '#6BA8D9' }, /* sky blue */
+  { bg: '#F08FB0' }, /* dusty pink */
+  { bg: '#9D87C7' }  /* lilac */
+];
+
 export const officerColor = n => {
-  const s = String(n || ''); 
+  const s = String(n || '');
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return OFFICER_PALETTE[h % OFFICER_PALETTE.length];
+  const isSketch = typeof document !== 'undefined'
+    && document.body
+    && document.body.classList.contains('theme-sketchnote');
+  const palette = isSketch ? OFFICER_PALETTE_SKETCH : OFFICER_PALETTE;
+  return palette[h % palette.length];
 };
 
 export function toast(msg) {

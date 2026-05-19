@@ -458,16 +458,18 @@ body.theme-sketchnote .task-officer-mini{
   border:2px solid #2A3142 !important;
   border-radius:var(--sketch-radius-blob) !important;
   box-shadow:2px 2px 0 #2A3142 !important;
-  background:#FFD55C !important;
-  background-image:none !important;
-  color:#2A3142 !important;
+  color:#FFFFFF;
   font-family:'Caveat',cursive !important;
   font-weight:700;
+  text-shadow:1px 1px 0 rgba(42,49,66,0.35);
 }
 
+/* Admin avatar — solid ink with sunshine glyph */
 body.theme-sketchnote .user-btn.admin .av{
   background:#2A3142 !important;
+  background-image:none !important;
   color:#FFD55C !important;
+  text-shadow:none;
 }
 
 /* ---------- Branch code chip & officer count ---------- */
