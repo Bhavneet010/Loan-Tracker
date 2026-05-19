@@ -34,12 +34,19 @@
 (function(){
   try{
     var t=localStorage.getItem('lpTheme');
+    var d=localStorage.getItem('lpDark');
     if(t==='neo-brutalist'){
       document.body.classList.add('theme-neo-brutalist');
     } else if(t==='sketchnote'){
       document.body.classList.add('theme-sketchnote');
-    } else if(localStorage.getItem('lpDark')==='1'){
+    } else if(t==='default'){
+      /* user explicitly picked Light — do nothing */
+    } else if(d==='1'){
       document.body.classList.add('dark');
+    } else {
+      /* No explicit theme choice — sketchnote is the default. */
+      document.body.classList.add('theme-sketchnote');
+      localStorage.setItem('lpTheme','sketchnote');
     }
   }catch(e){}
 })();

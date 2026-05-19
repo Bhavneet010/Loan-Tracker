@@ -51,9 +51,18 @@ async function init() {
     document.body.classList.add('theme-sketchnote');
     document.body.classList.remove('dark');
     localStorage.setItem('lpDark', '0');
+  } else if (savedTheme === 'default') {
+    /* user explicitly picked Light — leave as base */
+    S.dark = false;
   } else if (darkPref === '1') {
     S.dark = true;
     document.body.classList.add('dark');
+  } else {
+    /* No explicit theme choice — sketchnote is the default. */
+    S.dark = false;
+    document.body.classList.add('theme-sketchnote');
+    localStorage.setItem('lpTheme', 'sketchnote');
+    localStorage.setItem('lpDark', '0');
   }
   const themeMeta = document.querySelector('meta[name="theme-color"]');
   if (themeMeta) {
