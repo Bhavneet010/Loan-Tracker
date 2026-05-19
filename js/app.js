@@ -60,7 +60,7 @@ async function init() {
     if (document.body.classList.contains('theme-neo-brutalist')) {
       themeMeta.setAttribute('content', '#FFFEF2');
     } else if (document.body.classList.contains('theme-sketchnote')) {
-      themeMeta.setAttribute('content', '#FBF8EF');
+      themeMeta.setAttribute('content', '#E8EFE5');
     } else {
       themeMeta.setAttribute('content', S.dark ? '#15142C' : '#7c3aed');
     }

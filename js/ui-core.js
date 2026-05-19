@@ -99,7 +99,7 @@ function updateThemeColor() {
   if (document.body.classList.contains('theme-neo-brutalist')) {
     meta.setAttribute('content', '#FFFEF2');
   } else if (document.body.classList.contains('theme-sketchnote')) {
-    meta.setAttribute('content', '#FBF8EF');
+    meta.setAttribute('content', '#E8EFE5');
   } else {
     meta.setAttribute('content', S.dark ? '#15142C' : '#7c3aed');
   }
