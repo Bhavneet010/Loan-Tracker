@@ -1,23 +1,23 @@
-/* Hand-Drawn Sketchnote theme: cream paper, ink black, sticky-note yellow, wobbly hand-drawn shapes. */
+/* Hand-Drawn Sketchnote theme: golden-amber paper, ink black, coral-orange marker, wobbly hand-drawn shapes. */
 body.theme-sketchnote{
   color-scheme:light;
   --p1:#2C2C2C;
-  --p2:#FFD600;
-  --p3:#7A6500;
-  --p-bg:#FFF4B8;
+  --p2:#FF6B35;
+  --p3:#B83708;
+  --p-bg:#FFE4C4;
   --p-bd:#2C2C2C;
   --p-subtle:rgba(44,44,44,0.08);
-  --glass:#FFFEF8;
+  --glass:#FFFBF0;
   --glass-bd:#2C2C2C;
   --text1:#2C2C2C;
   --text2:#4A4A4A;
   --text3:#8A8A8A;
   --muted:#8A8A8A;
-  --surface:#FBF8EF;
-  --surface-alt:#FFF4B8;
+  --surface:#FAF1DB;
+  --surface-alt:#FFE4C4;
   --overlay:rgba(44,44,44,0.55);
-  --header-bg:#FBF8EF;
-  --dark-glass:#FFFEF8;
+  --header-bg:#FAF1DB;
+  --dark-glass:#FFFBF0;
   --green:#3F8B45;
   --green-bg:#DFF3E0;
   --green-bd:#2C2C2C;
@@ -42,7 +42,7 @@ body.theme-sketchnote{
   --sketch-radius-card:14px 18px 12px 20px / 18px 12px 20px 14px;
   --sketch-radius-chip:30px 8px 25px 10px / 10px 25px 8px 30px;
   --sketch-radius-blob:50% 30% 60% 40% / 40% 50% 30% 70%;
-  background:#FBF8EF;
+  background:#FAF1DB;
   font-family:'Architects Daughter','Caveat',cursive;
   color:#2C2C2C;
 }
@@ -52,14 +52,14 @@ body.theme-sketchnote::before,
 body.theme-sketchnote::after{
   background:
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
-    #FBF8EF;
+    #FAF1DB;
 }
 
 body.theme-sketchnote #app{max-width:720px;}
 
 /* ---------- Header ---------- */
 body.theme-sketchnote .header{
-  background:#FBF8EF;
+  background:#FAF1DB;
   border-bottom:2.5px dashed #2C2C2C;
   box-shadow:0 3px 0 rgba(44,44,44,0.1);
   backdrop-filter:none;
@@ -114,7 +114,7 @@ body.theme-sketchnote .notif-card,
 body.theme-sketchnote .activity-bubble,
 body.theme-sketchnote .empty-state,
 body.theme-sketchnote .duplicate-card{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:2px solid #2C2C2C;
   border-radius:var(--sketch-radius-card);
   box-shadow:var(--sketch-shadow);
@@ -123,7 +123,7 @@ body.theme-sketchnote .duplicate-card{
 }
 
 body.theme-sketchnote .brand-av{
-  background:#FFD600;
+  background:#FF6B35;
   border-radius:var(--sketch-radius-blob);
   font-family:'Caveat',cursive;
   font-size:22px;
@@ -138,11 +138,11 @@ body.theme-sketchnote .brand--tasks-active .brand-av{
 }
 
 body.theme-sketchnote .hbtn{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border-radius:50% 40% 60% 30% / 30% 60% 40% 50%;
 }
 body.theme-sketchnote .user-pill{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border-radius:40px;
 }
 
@@ -166,7 +166,7 @@ body.theme-sketchnote .sync-dot{
 body.theme-sketchnote .mode-toggle-bar,
 body.theme-sketchnote .rnw-view-toggle{
   padding:5px;
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:2px solid #2C2C2C;
   border-radius:18px;
   box-shadow:var(--sketch-shadow-sm);
@@ -189,7 +189,7 @@ body.theme-sketchnote .decision-mini-btn,
 body.theme-sketchnote .decision-icon-btn,
 body.theme-sketchnote .perf-export-btn,
 body.theme-sketchnote .back-btn{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:2px solid #2C2C2C !important;
   border-radius:var(--sketch-radius-chip);
   color:#2C2C2C;
@@ -209,7 +209,7 @@ body.theme-sketchnote .branch-chip.active,
 body.theme-sketchnote .btn-primary-full,
 body.theme-sketchnote .btn-rnw-done,
 body.theme-sketchnote .perf-export-btn:not(.perf-export-btn-secondary){
-  background:#FFD600 !important;
+  background:#FF6B35 !important;
   color:#2C2C2C !important;
   border-color:#2C2C2C !important;
   box-shadow:var(--sketch-shadow-sm) !important;
@@ -219,7 +219,7 @@ body.theme-sketchnote .btn-return,
 body.theme-sketchnote .btn-cancel-full,
 body.theme-sketchnote .btn-outline,
 body.theme-sketchnote .perf-export-btn-secondary{
-  background:#FFF4B8 !important;
+  background:#FFE4C4 !important;
 }
 
 body.theme-sketchnote .btn-sanction{
@@ -240,7 +240,7 @@ body.theme-sketchnote .stats-scroll{
 }
 
 body.theme-sketchnote .stat{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:2px solid #2C2C2C;
   min-width:0;
   box-shadow:var(--sketch-shadow);
@@ -249,7 +249,7 @@ body.theme-sketchnote .stat{
 
 body.theme-sketchnote .stat-fresh-active,
 body.theme-sketchnote .stat-rnw-active{
-  background:#FFF4B8 !important;
+  background:#FFE4C4 !important;
   border-color:#2C2C2C !important;
   box-shadow:var(--sketch-shadow-lg) !important;
   transform:rotate(-0.4deg);
@@ -271,7 +271,7 @@ body.theme-sketchnote .stat-v{font-size:34px;line-height:0.9;}
 
 /* ---------- Bottom panel ---------- */
 body.theme-sketchnote .panel{
-  background:#FBF8EF;
+  background:#FAF1DB;
   border-top:2.5px dashed #2C2C2C;
   border-radius:18px 22px 0 0 / 22px 18px 0 0;
   box-shadow:0 -3px 0 rgba(44,44,44,0.08);
@@ -301,7 +301,7 @@ body.theme-sketchnote .decision-edit-field input,
 body.theme-sketchnote .decision-edit-field select,
 body.theme-sketchnote .decision-edit-field textarea,
 body.theme-sketchnote .decision-return-note textarea{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:2px solid #2C2C2C;
   border-radius:14px;
   box-shadow:var(--sketch-shadow-sm);
@@ -322,7 +322,7 @@ body.theme-sketchnote .loan-item{
 }
 
 body.theme-sketchnote .loan-row{
-  background:#FFFEF8 !important;
+  background:#FFFBF0 !important;
   border:2px solid #2C2C2C !important;
   border-radius:var(--sketch-radius-card);
   box-shadow:var(--sketch-shadow);
@@ -331,14 +331,14 @@ body.theme-sketchnote .loan-row{
 
 body.theme-sketchnote .loan-row::before{
   width:8px;
-  background:#FFD600 !important;
+  background:#FF6B35 !important;
   border-right:2px solid #2C2C2C;
 }
 
 body.theme-sketchnote .status-returned .loan-row::before,
 body.theme-sketchnote .loan-item.rnw-s-due-soon > .loan-row::before,
 body.theme-sketchnote .loan-item.rnw-s-dates-missing > .loan-row::before{
-  background:#FFD600 !important;
+  background:#FF6B35 !important;
 }
 
 body.theme-sketchnote .loan-item.rnw-s-pending > .loan-row::before,
@@ -358,7 +358,7 @@ body.theme-sketchnote .rnw-expanded-card{
   border:2px solid #2C2C2C;
   border-top:0;
   border-radius:0 0 var(--sketch-radius-card);
-  background:#FFFEF8;
+  background:#FFFBF0;
   box-shadow:var(--sketch-shadow);
 }
 
@@ -379,7 +379,7 @@ body.theme-sketchnote .task-officer-mini{
   border:2px solid #2C2C2C !important;
   border-radius:var(--sketch-radius-blob) !important;
   box-shadow:2px 2px 0 #2C2C2C !important;
-  background:#FFD600 !important;
+  background:#FF6B35 !important;
   background-image:none !important;
   color:#2C2C2C !important;
   font-family:'Caveat',cursive !important;
@@ -388,12 +388,12 @@ body.theme-sketchnote .task-officer-mini{
 
 body.theme-sketchnote .user-btn.admin .av{
   background:#2C2C2C !important;
-  color:#FFD600 !important;
+  color:#FF6B35 !important;
 }
 
 /* ---------- Branch code chip & officer count ---------- */
 body.theme-sketchnote .lr-bcode{
-  background:#FFFEF8 !important;
+  background:#FFFBF0 !important;
   color:#2C2C2C !important;
   border:1.5px solid #2C2C2C;
   border-radius:6px;
@@ -403,7 +403,7 @@ body.theme-sketchnote .lr-bcode{
 }
 
 body.theme-sketchnote .officer-count{
-  background:#FFF4B8 !important;
+  background:#FFE4C4 !important;
   color:#2C2C2C !important;
   border:2px solid #2C2C2C !important;
   border-radius:14px;
@@ -418,7 +418,7 @@ body.theme-sketchnote .task-section-pill,
 body.theme-sketchnote .task-branch-chip,
 body.theme-sketchnote .rnw-date-warning,
 body.theme-sketchnote .decision-status-pill{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:1.5px solid #2C2C2C;
   border-radius:14px;
   color:#2C2C2C;
@@ -432,9 +432,9 @@ body.theme-sketchnote .tag.sme,
 body.theme-sketchnote .category-chip.sme,
 body.theme-sketchnote .task-critical-tab--purple.active,
 body.theme-sketchnote .task-critical-detail--purple{
-  background:#FFF4B8 !important;
+  background:#FFE4C4 !important;
   color:#2C2C2C !important;
-  border-color:#7A6500 !important;
+  border-color:#B83708 !important;
 }
 
 body.theme-sketchnote .tag.agri,
@@ -479,7 +479,7 @@ body.theme-sketchnote .rnw-chip-npa-cd{
 
 /* ---------- Tasks ---------- */
 body.theme-sketchnote .task-care{
-  background:#FFF4B8;
+  background:#FFE4C4;
   padding:12px;
 }
 
@@ -506,7 +506,7 @@ body.theme-sketchnote .rnw-grad-darkred::before{
 body.theme-sketchnote .task-critical-tab--amber::before,
 body.theme-sketchnote .rnw-grad-amber::before,
 body.theme-sketchnote .task-performer--fresh::before{
-  background:#FFD600;
+  background:#FF6B35;
 }
 
 body.theme-sketchnote .task-critical-tab--purple::before,
@@ -537,7 +537,7 @@ body.theme-sketchnote .decision-edit-lines,
 body.theme-sketchnote .decision-outcome-block,
 body.theme-sketchnote .decision-return-note,
 body.theme-sketchnote .decision-activity-row{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:2px solid #2C2C2C;
   border-radius:var(--sketch-radius-card);
   box-shadow:var(--sketch-shadow-sm);
@@ -556,16 +556,16 @@ body.theme-sketchnote .cal-cell--soon{
 
 body.theme-sketchnote .cal-cell--holiday,
 body.theme-sketchnote .cal-cell--holiday-custom{
-  background:repeating-linear-gradient(45deg,#FFF4B8 0 6px,#FFE7B5 6px 12px) !important;
+  background:repeating-linear-gradient(45deg,#FFE4C4 0 6px,#FFE7B5 6px 12px) !important;
   border:2px dashed #2C2C2C !important;
 }
 body.theme-sketchnote .cal-dot--holiday{
-  background:repeating-linear-gradient(45deg,#2C2C2C 0 2px,#FFD600 2px 4px) !important;
+  background:repeating-linear-gradient(45deg,#2C2C2C 0 2px,#FF6B35 2px 4px) !important;
 }
 
 /* ---------- Filter popover ---------- */
 body.theme-sketchnote .fs-pop{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:2px solid #2C2C2C;
   border-radius:var(--sketch-radius-card);
   box-shadow:var(--sketch-shadow-lg);
@@ -603,7 +603,7 @@ body.theme-sketchnote .sheet,
 body.theme-sketchnote .modal-box,
 body.theme-sketchnote .perf-overlay,
 body.theme-sketchnote .perf-overlay-header{
-  background:#FBF8EF;
+  background:#FAF1DB;
   border-color:#2C2C2C;
   color:#2C2C2C;
 }
@@ -624,7 +624,7 @@ body.theme-sketchnote .sheet{
 body.theme-sketchnote .fab{
   width:60px;
   height:60px;
-  background:#FFD600;
+  background:#FF6B35;
   color:#2C2C2C;
   border:3px solid #2C2C2C;
   border-radius:50% 40% 55% 45% / 50% 55% 45% 50%;
@@ -638,7 +638,7 @@ body.theme-sketchnote .fab{
 
 /* ---------- Toast ---------- */
 body.theme-sketchnote .toast{
-  background:#FFFEF8;
+  background:#FFFBF0;
   color:#2C2C2C;
   border:2px solid #2C2C2C;
   border-radius:14px;
@@ -653,23 +653,23 @@ body.theme-sketchnote .toast{
 body.theme-sketchnote .skeleton-row,
 body.theme-sketchnote .skel-circle,
 body.theme-sketchnote .skel-bar{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:1.5px dashed #2C2C2C;
   box-shadow:var(--sketch-shadow-sm);
 }
 
 body.theme-sketchnote .skeleton-row::after,
 body.theme-sketchnote .skel-bar::after{
-  background:linear-gradient(90deg,transparent 0%,rgba(255,214,0,0.45) 50%,transparent 100%) !important;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,107,53,0.45) 50%,transparent 100%) !important;
 }
 
 /* ---------- Splash screen ---------- */
 body.theme-sketchnote #nirnay-splash{
-  background:#FBF8EF;
+  background:#FAF1DB;
   font-family:'Architects Daughter','Caveat',cursive;
 }
 body.theme-sketchnote .splash-logo{
-  background:#FFD600;
+  background:#FF6B35;
   border:3px solid #2C2C2C;
   border-radius:var(--sketch-radius-blob);
   box-shadow:5px 5px 0 #2C2C2C;
@@ -687,15 +687,15 @@ body.theme-sketchnote .splash-fallback img{
   border:3px solid #2C2C2C;
   border-radius:var(--sketch-radius-blob);
   box-shadow:4px 4px 0 #2C2C2C;
-  background:#FFFEF8;
+  background:#FFFBF0;
 }
 body.theme-sketchnote .splash-loader{
-  background:#FFFEF8;
+  background:#FFFBF0;
   border:1.5px dashed #2C2C2C;
   border-radius:3px;
 }
 body.theme-sketchnote .splash-shimmer{
-  background:linear-gradient(90deg,transparent,#FFD600,transparent);
+  background:linear-gradient(90deg,transparent,#FF6B35,transparent);
 }
 
 /* =========================================================
@@ -742,18 +742,18 @@ body.theme-sketchnote .loan-item.rnw-s-pending  > .loan-row,
 body.theme-sketchnote .loan-item.rnw-s-npa      > .loan-row,
 body.theme-sketchnote .loan-item.rnw-s-done     > .loan-row,
 body.theme-sketchnote .loan-item.rnw-s-dates-missing > .loan-row{
-  background:#FFFEF8 !important;
+  background:#FFFBF0 !important;
 }
 
 /* Loan card status bars — flat */
 body.theme-sketchnote .loan-card.overdue::before{background:#E53935 !important;}
-body.theme-sketchnote .loan-card.returned::before{background:#FFD600 !important;}
+body.theme-sketchnote .loan-card.returned::before{background:#FF6B35 !important;}
 body.theme-sketchnote .loan-card.sanctioned::before{background:#4CAF50 !important;}
 
 /* Decision sheet sliders — flat with hand-drawn bg */
 body.theme-sketchnote .decision-slider,
 body.theme-sketchnote .decision-slider--renewal{
-  background:#FFFEF8 !important;
+  background:#FFFBF0 !important;
   border:2px solid #2C2C2C !important;
   border-radius:14px !important;
   box-shadow:var(--sketch-shadow-sm) !important;
@@ -766,7 +766,7 @@ body.theme-sketchnote .decision-outcome-renew{background:#FFE7B5 !important;back
 body.theme-sketchnote .snapshot-modal,
 body.theme-sketchnote .snapshot-modal-content,
 body.theme-sketchnote .weekly-snapshot-card{
-  background:#FBF8EF !important;
+  background:#FAF1DB !important;
   background-image:none !important;
   border:2px solid #2C2C2C !important;
   border-radius:var(--sketch-radius-card) !important;
@@ -774,7 +774,7 @@ body.theme-sketchnote .weekly-snapshot-card{
   color:#2C2C2C !important;
 }
 body.theme-sketchnote .weekly-availability-btn{
-  background:#FFFEF8 !important;
+  background:#FFFBF0 !important;
   background-image:none !important;
   border:2px solid #2C2C2C !important;
   color:#2C2C2C !important;
@@ -783,14 +783,14 @@ body.theme-sketchnote .weekly-availability-btn{
   font-family:'Caveat',cursive !important;
   font-weight:700;
 }
-body.theme-sketchnote .weekly-availability-btn.holiday{background:#FFF4B8 !important;}
+body.theme-sketchnote .weekly-availability-btn.holiday{background:#FFE4C4 !important;}
 body.theme-sketchnote .weekly-availability-btn.deputation{background:#FFE7B5 !important;}
 body.theme-sketchnote .weekly-availability-btn.leave{background:#FFE0E0 !important;}
-body.theme-sketchnote .weekly-availability-btn.active{background:#FFD600 !important;}
+body.theme-sketchnote .weekly-availability-btn.active{background:#FF6B35 !important;}
 
 /* Tasks polish */
 body.theme-sketchnote .task-officer-chip.active{
-  background:#FFD600 !important;
+  background:#FF6B35 !important;
   background-image:none !important;
   color:#2C2C2C !important;
   border:2px solid #2C2C2C !important;
@@ -798,18 +798,18 @@ body.theme-sketchnote .task-officer-chip.active{
 }
 body.theme-sketchnote .task-performer-spark{color:#2C2C2C !important;}
 body.theme-sketchnote .task-target-bar{
-  background:#FFFEF8 !important;
+  background:#FFFBF0 !important;
   border:1.5px solid #2C2C2C !important;
   border-radius:3px !important;
 }
 body.theme-sketchnote .task-target-bar span{
-  background:#FFD600 !important;
+  background:#FF6B35 !important;
   background-image:none !important;
 }
 
 /* Renewals polish */
 body.theme-sketchnote .btn-edit-icon{
-  background:#FFFEF8 !important;
+  background:#FFFBF0 !important;
   background-image:none !important;
   color:#2C2C2C !important;
   border:2px solid #2C2C2C !important;
@@ -841,12 +841,12 @@ body.theme-sketchnote .lr-name{
 body.theme-sketchnote .spinner,
 body.theme-sketchnote [class*="spinner"]{
   border-color:#2C2C2C !important;
-  border-top-color:#FFD600 !important;
+  border-top-color:#FF6B35 !important;
 }
 
 /* Focus rings: dashed yellow */
 body.theme-sketchnote *:focus-visible{
-  outline:3px dashed #FFD600 !important;
+  outline:3px dashed #FF6B35 !important;
   outline-offset:2px !important;
   box-shadow:none;
 }
@@ -855,7 +855,7 @@ body.theme-sketchnote .form-group input:focus,
 body.theme-sketchnote .form-group select:focus,
 body.theme-sketchnote .form-group textarea:focus{
   outline:none !important;
-  border-color:#FFD600 !important;
+  border-color:#FF6B35 !important;
 }
 
 /* Press-down interaction — shadow collapses like brutalist */
@@ -889,7 +889,7 @@ body.theme-sketchnote .brand-sub{
 
 /* Wavy underline on big amounts — signature sketch touch */
 body.theme-sketchnote .lc-amount{
-  text-decoration:underline wavy #FFD600 2px;
+  text-decoration:underline wavy #FF6B35 2px;
   text-underline-offset:4px;
 }
 
