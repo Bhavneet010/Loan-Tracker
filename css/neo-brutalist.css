@@ -963,10 +963,10 @@ body.theme-neo-brutalist .brand-av img{
   display:none;
 }
 body.theme-neo-brutalist .brand-av::after{
-  content:'₹';
-  font-family:'JetBrains Mono','Space Grotesk',monospace;
-  font-size:21px;
-  font-weight:700;
+  content:'न';
+  font-family:'Noto Sans Devanagari','Space Grotesk',sans-serif;
+  font-size:22px;
+  font-weight:800;
   color:#000;
   line-height:1;
   display:block;
