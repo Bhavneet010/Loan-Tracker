@@ -111,7 +111,7 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   }
 
   if (renewalState === 'renewed') {
-    const completionDate = draft.renewedDate || draft.sanctionDate || todayStr();
+    const completionDate = draft.sanctionDate || draft.renewedDate || todayStr();
     const nextRenewalDue = draft.nextRenewalDueDate || '';
     const nextLimitExpiry = draft.nextLimitExpiryDate || '';
     data.sanctionDate = completionDate;
