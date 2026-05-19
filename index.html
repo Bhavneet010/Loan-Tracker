@@ -33,6 +33,15 @@
 <script>
 (function(){
   try{
+    /* One-time migration: on each user's next login, force sketchnote
+       as their active theme regardless of past selection. After this
+       flag is set, the user's manual choices are respected normally. */
+    var migrated = localStorage.getItem('lpSketchDefaultV1');
+    if(!migrated){
+      localStorage.setItem('lpTheme','sketchnote');
+      localStorage.setItem('lpDark','0');
+      localStorage.setItem('lpSketchDefaultV1','1');
+    }
     var t=localStorage.getItem('lpTheme');
     var d=localStorage.getItem('lpDark');
     if(t==='neo-brutalist'){
@@ -358,8 +367,12 @@
 (function(){
   var s=document.getElementById('nirnay-splash');
   if(!s) return;
-  setTimeout(function(){s.style.opacity='0';},1400);
-  setTimeout(function(){if(s && s.parentNode) s.remove();},2200);
+  /* Sketchnote theme gets a longer hold so the hand-drawn splash is readable. */
+  var isSketch=document.body.classList.contains('theme-sketchnote');
+  var fadeStart=isSketch?2000:1400;
+  var remove=isSketch?2800:2200;
+  setTimeout(function(){s.style.opacity='0';},fadeStart);
+  setTimeout(function(){if(s && s.parentNode) s.remove();},remove);
 })();
 </script>
 </body>
