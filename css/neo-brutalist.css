@@ -958,6 +958,24 @@ body.theme-neo-brutalist .brand-sub{
   font-size:10px;
 }
 
+/* ---------- Tasks: overview cards (glass + blur + purple shadow) ---------- */
+body.theme-neo-brutalist .task-ov-card{
+  background:#FFFFFF;
+  border:2px solid #000;
+  border-radius:6px;
+  box-shadow:var(--brut-shadow);
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+body.theme-neo-brutalist .task-ov-card--empty{
+  border-left:4px solid rgba(0,0,0,0.18);
+}
+
+/* ---------- Tasks: back button hover (strip purple) ---------- */
+body.theme-neo-brutalist .task-back-btn:hover{
+  background:#D5FFE9 !important;
+}
+
 /* ---------- Logo: replace photo icon with bold ₹ mark ---------- */
 body.theme-neo-brutalist .brand-av img{
   display:none;
