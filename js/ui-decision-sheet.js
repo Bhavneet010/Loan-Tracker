@@ -160,7 +160,7 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
         ${inlineAccountEditLine('A/C No.', `<input aria-label="Account Number" data-draft="acNumber" type="text" inputmode="numeric" value="${esc(draft.acNumber)}" placeholder="Account number">`)}
         ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="nextRenewalDueDate" type="date" value="${esc(draft.nextRenewalDueDate)}">`, !draft.nextRenewalDueDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="nextLimitExpiryDate" type="date" value="${esc(draft.nextLimitExpiryDate)}">`, !draft.nextLimitExpiryDate && stagedRenewal === 'renewed' ? 'warn' : '')}
-        ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Sanction Date', `<input aria-label="Sanction Date" data-draft="sanctionDate" type="date" value="${esc(draft.renewedDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
+        ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Sanction Date', `<input aria-label="Sanction Date" data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
       </div>
     </div>
   </div>`;
@@ -534,8 +534,9 @@ window.openRenewalDecisionSheet = function(id) {
   const pill = overlay.querySelector('.decision-status-pill');
   const renderCard = () => {
     const preview = loanFromDraft(loan, draft, loan.status || 'pending');
-    preview.renewedDate = stagedRenewal === 'renewed' ? (draft.renewedDate || todayStr()) : '';
-    if (stagedRenewal === 'renewed') preview.sanctionDate = draft.renewedDate || todayStr();
+    const renewalDate = draft.sanctionDate || draft.renewedDate || todayStr();
+    preview.renewedDate = stagedRenewal === 'renewed' ? renewalDate : '';
+    if (stagedRenewal === 'renewed') preview.sanctionDate = renewalDate;
     const previewRs = computeRenewalStatus(preview);
     if (editMode) {
       card.innerHTML = inlineRenewalEditHtml(draft, stagedRenewal, previewRs);
@@ -555,8 +556,8 @@ window.openRenewalDecisionSheet = function(id) {
   overlay.addEventListener('decisionchange', e => {
     const newStaged = e.detail?.value || stagedRenewal;
     if (newStaged === 'renewed' && stagedRenewal !== 'renewed') {
-      draft.sanctionDate = todayStr();
-      draft.renewedDate = todayStr();
+      if (!draft.sanctionDate) draft.sanctionDate = todayStr();
+      if (!draft.renewedDate) draft.renewedDate = todayStr();
     }
     stagedRenewal = newStaged;
     if (overlay.querySelector('.decision-slider.dragging')) {
