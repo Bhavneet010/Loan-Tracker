@@ -500,6 +500,7 @@ window.openRenewalDecisionSheet = function(id) {
   const current = loan.renewedDate ? 'renewed' : 'pending';
   let stagedRenewal = current;
   let editMode = false;
+  let renewalDateInitialized = current === 'renewed';
   const draft = cloneLoanDraft(loan);
   const options = [
     { value: 'pending', label: 'Pending' },
@@ -556,8 +557,11 @@ window.openRenewalDecisionSheet = function(id) {
   overlay.addEventListener('decisionchange', e => {
     const newStaged = e.detail?.value || stagedRenewal;
     if (newStaged === 'renewed' && stagedRenewal !== 'renewed') {
-      if (!draft.sanctionDate) draft.sanctionDate = todayStr();
-      if (!draft.renewedDate) draft.renewedDate = todayStr();
+      if (!renewalDateInitialized) {
+        draft.sanctionDate = todayStr();
+        draft.renewedDate = todayStr();
+        renewalDateInitialized = true;
+      }
     }
     stagedRenewal = newStaged;
     if (overlay.querySelector('.decision-slider.dragging')) {
