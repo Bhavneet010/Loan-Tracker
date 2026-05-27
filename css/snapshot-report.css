@@ -316,6 +316,40 @@
   width:100%;
   display:block;
 }
+.weekly-comp-right{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+}
+.weekly-sparkline-legend{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.wsl-item{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:9px;
+  font-weight:900;
+  color:#8A84A4;
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+}
+.wsl-solid{
+  display:block;
+  width:20px;
+  height:2.5px;
+  border-radius:2px;
+  background:#6B5FBF;
+}
+.wsl-dashed{
+  display:block;
+  width:20px;
+  height:0;
+  border-top:2px dashed rgba(107,95,191,0.45);
+}
 .weekly-card-head{
   align-items:flex-start;
   margin-bottom:10px;
@@ -631,7 +665,8 @@
   .weekly-card-head h3{
     font-size:16px;
   }
-  .weekly-legend{
+  .weekly-legend,
+  .weekly-sparkline-legend{
     display:none;
   }
   .weekly-heatmap-grid{

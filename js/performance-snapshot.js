@@ -941,7 +941,13 @@ function renderWeeklyComparativeCharts(thisData, prevData) {
   return `<section class="weekly-comparative-section">
     <div class="weekly-comp-head">
       <span>Week-on-Week Trend</span>
-      <strong>Daily count comparison</strong>
+      <div class="weekly-comp-right">
+        <div class="weekly-sparkline-legend">
+          <span class="wsl-item"><i class="wsl-solid"></i>This Week</span>
+          <span class="wsl-item"><i class="wsl-dashed"></i>Prev Week</span>
+        </div>
+        <strong>Daily count comparison</strong>
+      </div>
     </div>
     <div class="weekly-comp-charts">
       ${renderSection("Fresh Sanctions", thisData.fresh.rows, prevData.fresh.rows, 0)}
