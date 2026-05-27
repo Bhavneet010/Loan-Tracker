@@ -867,6 +867,12 @@ function renderSparklineSvg(thisVals, prevVals, color, gradId, maxVal) {
     const cx = xOf(i).toFixed(1), cy = yOf(v).toFixed(1);
     return `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#fff" stroke="${color}" stroke-width="1.5" opacity="0.45"><title>${esc(WEEK_DAYS[i] + ": " + v + " (prev)")}</title></circle>`;
   }).join("");
+  const thisLabels = thisVals.map((v, i) => {
+    const cx = xOf(i).toFixed(1);
+    const cy = yOf(v);
+    const labelY = cy < padT + 12 ? (cy + 13).toFixed(1) : (cy - 6).toFixed(1);
+    return `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="${color}" font-size="7.5" font-weight="800" opacity="0.9">${v}</text>`;
+  }).join("");
   const clipId = `clip-${gradId}`;
   return `<svg class="weekly-sparkline-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -884,6 +890,7 @@ function renderSparklineSvg(thisVals, prevVals, color, gradId, maxVal) {
       <path d="${thisCurve}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       ${prevDots}
       ${thisDots}
+      ${thisLabels}
     </g>
   </svg>`;
 }
