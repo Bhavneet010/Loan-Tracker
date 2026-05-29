@@ -11,6 +11,7 @@ import "./ui-decision-sheet.js";
 import "./importers.js";
 import "./loan-actions.js";
 import "./ui-settings.js";
+import "./month-end.js";
 
 /* ── TABS CLICK LISTENER ── */
 const mainTabs = document.getElementById('mainTabs');
