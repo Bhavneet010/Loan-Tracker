@@ -665,3 +665,5 @@ export async function renderMonthEndSettings() {
     target.innerHTML = `<div class="setting-item"><span>Unable to load monthly summaries.</span></div>`;
   }
 }
+
+window.renderMonthEndSettings = renderMonthEndSettings;

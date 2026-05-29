@@ -1040,11 +1040,17 @@ function buildWeeklyPerformancePageHtml(targetDates) {
 }
 
 function buildMonthlyPerformancePageHtml() {
-  const report = buildReportMockupData();
-  return `<div class="perf-period-placeholder monthly">
-    <div class="perf-period-placeholder-kicker">Monthly View</div>
-    <h2>Monthly Performance</h2>
-    <p>Detailed snapshot for ${esc(report.metrics.thisMonth)}.</p>
+  const d = new Date();
+  const label = new Date(d.getFullYear(), d.getMonth() - 1, 1)
+    .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  return `<div class="perf-period-placeholder monthly" style="text-align:left;">
+    <div class="perf-period-placeholder-kicker" style="text-align:center;">Monthly Performance</div>
+    <h2 style="text-align:center;margin-bottom:16px;">Month End</h2>
+    <div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;line-height:1.45;">Generate the previous month PDF first. After admin reviews it, use the cleanup button separately.</div>
+    <button type="button" id="monthEndSnapshotBtn" class="btn-primary-full" style="width:100%;margin-bottom:14px;background:linear-gradient(135deg,#13234C,#2563EB);" onclick="runMonthEndSnapshot()">Generate ${esc(label)} Snapshot</button>
+    <button type="button" id="monthEndCleanupBtn" class="btn-primary-full" style="width:100%;margin-bottom:14px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="runMonthEndCleanup()">Clean ${esc(label)} Data</button>
+    <div style="font-size:12px;font-weight:800;color:#4A4467;text-transform:uppercase;letter-spacing:.06em;margin:8px 0;">Previous Month Dashboards</div>
+    <div id="monthEndHistory"></div>
   </div>`;
 }
 
@@ -1071,6 +1077,7 @@ window.selectWeekForPerformance = function (mondayISO) {
 function renderMonthlyPerformanceView(target) {
   if (!target) return;
   target.innerHTML = buildMonthlyPerformancePageHtml();
+  window.renderMonthEndSettings?.();
 }
 
 function renderPerformanceView(target) {
