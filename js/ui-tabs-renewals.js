@@ -1,5 +1,5 @@
 ﻿import { S } from "./state.js";
-import { getLoanMetrics, sumAmount } from "./derived.js";
+import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
@@ -22,7 +22,7 @@ export function renderRenewals(c) {
     let av, bv;
     if (S.renewalSort.field === 'daysFromSanction') { av = a._rs.daysSinceSanction; bv = b._rs.daysSinceSanction; }
     else if (S.renewalSort.field === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
-    else if (S.renewalSort.field === 'officer') { av = (a.allocatedTo || '').toLowerCase(); bv = (b.allocatedTo || '').toLowerCase(); }
+    else if (S.renewalSort.field === 'officer') { av = effectiveOfficer(a).toLowerCase(); bv = effectiveOfficer(b).toLowerCase(); }
     else if (S.renewalSort.field === 'branch') { av = (a.branch || '').toLowerCase(); bv = (b.branch || '').toLowerCase(); }
     if (av < bv) return -1 * dir;
     if (av > bv) return 1 * dir;
@@ -163,7 +163,7 @@ function buildRenewalListContent(metrics) {
     let av, bv;
     if (S.renewalSort.field === 'daysFromSanction') { av = a._rs.daysSinceSanction; bv = b._rs.daysSinceSanction; }
     else if (S.renewalSort.field === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
-    else if (S.renewalSort.field === 'officer') { av = (a.allocatedTo || '').toLowerCase(); bv = (b.allocatedTo || '').toLowerCase(); }
+    else if (S.renewalSort.field === 'officer') { av = effectiveOfficer(a).toLowerCase(); bv = effectiveOfficer(b).toLowerCase(); }
     else if (S.renewalSort.field === 'branch') { av = (a.branch || '').toLowerCase(); bv = (b.branch || '').toLowerCase(); }
     if (av < bv) return -1 * dir;
     if (av > bv) return 1 * dir;
@@ -189,8 +189,8 @@ function buildRenewalListContent(metrics) {
 export function applyRenewalFilters(enriched) {
   let out = enriched;
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon' && !l.renewedDate);
-  if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => l.allocatedTo === S.user);
-  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
+  if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => effectiveOfficer(l) === S.user);
+  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') {
     const filterCode = branchCode(S.renewalFilter.branch);
     out = out.filter(l => branchCode(l.branch) === filterCode);
@@ -206,7 +206,7 @@ function hasMissingRenewalDates(loan) {
 
 function buildVisibleRenewalOfficerSummary(metrics) {
   const includeLoan = loan => S.renewalShowNpa || loan._rs?.status !== 'npa';
-  const includeRoleLoan = loan => S.isAdmin || loan.allocatedTo === S.user;
+  const includeRoleLoan = loan => S.isAdmin || effectiveOfficer(loan) === S.user;
   const renewals = metrics.renewals.filter(includeLoan).filter(includeRoleLoan);
   const dueSoon = metrics.renewalDueSoon.filter(includeLoan).filter(includeRoleLoan);
   const overdue = metrics.renewalOverdue.filter(includeLoan).filter(includeRoleLoan);
@@ -223,9 +223,9 @@ function buildVisibleRenewalOfficerSummary(metrics) {
     return rowsByOfficer.get(key);
   };
 
-  renewals.forEach(loan => ensure(loan.allocatedTo).total++);
-  dueSoon.forEach(loan => ensure(loan.allocatedTo).due++);
-  overdue.forEach(loan => ensure(loan.allocatedTo).od++);
+  renewals.forEach(loan => ensure(effectiveOfficer(loan)).total++);
+  dueSoon.forEach(loan => ensure(effectiveOfficer(loan)).due++);
+  overdue.forEach(loan => ensure(effectiveOfficer(loan)).od++);
 
   const rows = Array.from(rowsByOfficer.values()).sort((a, b) =>
     (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.officer.localeCompare(b.officer)

@@ -1,5 +1,19 @@
 import { S } from "./state.js";
-import { computeRenewalStatus, isFreshCC, isRenewalDatesMissing, todayStr } from "./utils.js";
+import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, todayStr } from "./utils.js";
+
+function currentMonthKey() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 7);
+}
+
+export function effectiveOfficer(loan) {
+  if (loan.manualOfficer && loan.manualOfficerMonth === currentMonthKey()) {
+    return loan.manualOfficer;
+  }
+  const code = branchCode(loan.branch || '').trim();
+  return (code && S.branchOfficers?.[code]) || loan.allocatedTo || 'Unassigned';
+}
 
 let cache = null;
 let cacheLoans = null;
@@ -91,9 +105,9 @@ function buildRenewalOfficerRows(renewals, dueSoon, overdue) {
     return byOfficer.get(key);
   };
 
-  renewals.forEach(loan => ensure(loan.allocatedTo).total++);
-  dueSoon.forEach(loan => ensure(loan.allocatedTo).due++);
-  overdue.forEach(loan => ensure(loan.allocatedTo).od++);
+  renewals.forEach(loan => ensure(effectiveOfficer(loan)).total++);
+  dueSoon.forEach(loan => ensure(effectiveOfficer(loan)).due++);
+  overdue.forEach(loan => ensure(effectiveOfficer(loan)).od++);
 
   return Array.from(byOfficer.values()).sort((a, b) =>
     (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.officer.localeCompare(b.officer)

@@ -1,5 +1,6 @@
 ﻿import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing, timeAgo } from "./utils.js";
 import { S } from "./state.js";
+import { effectiveOfficer } from "./derived.js";
 
 export function loanCard(loan, actions, variant = '') {
   const remarks = loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : '';
@@ -20,7 +21,7 @@ export function loanCard(loan, actions, variant = '') {
       </div>
       <div class="lc-tags">
         <span class="tag ${catCls(loan.category)}">${esc(loan.category)}</span>
-        <span class="tag officer">${esc(loan.allocatedTo)}</span>
+        <span class="tag officer">${esc(effectiveOfficer(loan))}</span>
         <span class="tag date">Recd ${fmtDate(loan.receiveDate)}</span>
         ${overdueTag}${sanctTag}${retTag}
       </div>
@@ -36,7 +37,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
   return `<div class="loan-item ${cls}" id="li-${loan.id}" style="--i:${idx}">
     <div class="loan-row" onclick="openLoanDecisionSheet('${loan.id}')">
       <div class="lr-info">
-        <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
+        <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
         <span class="lr-name">${esc(loan.customerName || '')}</span>
       </div>
@@ -86,7 +87,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
   return `<div class="loan-item ${statusCls}" id="li-${itemId}" style="--i:${idx}">
     <div class="loan-row" onclick="openRenewalDecisionSheet('${loan.id}')">
       <div class="lr-info">
-        <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
+        <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
         <span class="lr-bcode">${esc(branchCode(loan.branch))}</span>
         <span class="lr-name">${esc(loan.customerName || '')} ${loan.acNumber ? `<span class="ac-sub">A/C: ${esc(loan.acNumber)}</span>` : ''}</span>
       </div>
@@ -109,7 +110,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
         <div class="rnw-tags-group">
           <div class="tag-row">
             <span class="tag sme">SME CC</span>
-            <span class="tag officer">${esc(loan.allocatedTo)}</span>
+            <span class="tag officer">${esc(effectiveOfficer(loan))}</span>
           </div>
           <div class="tag-row status-row">
             <span class="tag date">Due ${fmtDate(loan.renewalDueDate || rs.dueDateStr)}</span>

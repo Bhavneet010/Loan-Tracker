@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { getLoanMetrics, sumAmount } from "./derived.js";
+import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
 
 let html2canvasLoadPromise = null;
@@ -64,7 +64,7 @@ function buildOfficerTotals(loans) {
   const byOfficer = new Map();
   S.officers.forEach(officer => byOfficer.set(officer, { name: officer, total: 0 }));
   loans.forEach(loan => {
-    const name = loan.allocatedTo || "Unassigned";
+    const name = effectiveOfficer(loan);
     if (!byOfficer.has(name)) byOfficer.set(name, { name, total: 0 });
     byOfficer.get(name).total += amountOf(loan);
   });
@@ -109,7 +109,7 @@ function buildTrendDatasets(metrics, buckets, mode = "all") {
     labels: buckets.labels,
     datasets: buildOfficerTotals(source).slice(0, 3).map((row, index) => ({
       label: row.name,
-      data: groupAmountByBucket(source.filter(loan => (loan.allocatedTo || "Unassigned") === row.name), dateKey, buckets),
+      data: groupAmountByBucket(source.filter(loan => effectiveOfficer(loan) === row.name), dateKey, buckets),
       borderColor: palette[index % palette.length],
       backgroundColor: palette[index % palette.length],
       labelMode: "end",
@@ -143,7 +143,7 @@ function buildLeaderboardRows(loans, kind) {
   };
 
   loans.forEach(loan => {
-    const row = ensure(loan.allocatedTo);
+    const row = ensure(effectiveOfficer(loan));
     const amount = amountOf(loan);
     row.total += amount;
     row.count++;
@@ -182,7 +182,7 @@ function summaryRows(loans) {
   };
 
   loans.forEach(loan => {
-    const row = ensure(loan.allocatedTo);
+    const row = ensure(effectiveOfficer(loan));
     const amount = amountOf(loan);
     row.total += amount;
     row.count++;
@@ -255,7 +255,7 @@ const PDF_PAGE_WIDTH = 794;
 const PDF_PAGE_HEIGHT = 1123;
 
 function loanOfficer(loan) {
-  return loan.allocatedTo || "Unassigned";
+  return effectiveOfficer(loan);
 }
 
 function loansForOfficer(loans, officer) {

@@ -527,6 +527,8 @@ async function commitCleanup(data) {
       data: {
         renewedDate: "",
         renewalDatesPending: false,
+        manualOfficer: "",
+        manualOfficerMonth: "",
         monthEndClearedMonth: data.month,
         monthEndClearedAt: new Date().toISOString(),
         ...ts(),

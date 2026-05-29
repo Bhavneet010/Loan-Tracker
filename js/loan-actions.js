@@ -224,8 +224,12 @@ window.saveLoan = async function(e) {
     termLoan = termLoanCheckbox ? termLoanCheckbox.checked : false;
   }
 
+  const isManualOverride = assignedOfficer && selectedOfficer !== assignedOfficer;
+  const monthKey = (() => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 7); })();
   const data = {
     allocatedTo: selectedOfficer,
+    manualOfficer: isManualOverride ? selectedOfficer : "",
+    manualOfficerMonth: isManualOverride ? monthKey : "",
     category: cat,
     branch,
     customerName,
