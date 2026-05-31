@@ -144,8 +144,7 @@ function applyCalMbarKey(bar, key) {
   if (S.calendarState?.year === y && S.calendarState?.month === m - 1) return;
   if (!slideCalMbar(bar, key)) return;
   S.calendarState = { year: y, month: m - 1 };
-  clearTimeout(_calNavTimer);
-  _calNavTimer = setTimeout(render, 310);
+  // No render here — DOM must stay intact while dragging so activeBar stays valid
 }
 
 window.toggleCalMbarExpand = function() {
@@ -192,7 +191,6 @@ window.calendarNavToMonth = function(year, month) {
   document.addEventListener('pointerup', e => {
     if (dragging && activeBar) {
       applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
-      clearTimeout(_calNavTimer);
       render();
     }
     dragStartX = null;
