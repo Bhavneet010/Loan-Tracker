@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   setDoc,
@@ -685,6 +686,7 @@ export async function renderMonthEndSettings() {
             <span class="me-hist-card-month">${esc(row.label || row.month)}</span>
             ${cleanupBadge}
             <span class="me-hist-chevron">▾</span>
+            ${S.isAdmin ? `<button class="me-hist-delete-btn" onclick="event.stopPropagation();deleteMonthSnapshot('${esc(row.month)}','${esc(cardId)}')" title="Delete">✕</button>` : ''}
           </div>
           <div class="me-hist-summary">
             <div class="me-hist-metric">
@@ -723,4 +725,16 @@ window.renderMonthEndSettings = renderMonthEndSettings;
 window.toggleMeHistCard = function(cardId) {
   const card = document.getElementById(cardId);
   if (card) card.classList.toggle("expanded");
+};
+
+window.deleteMonthSnapshot = async function(month, cardId) {
+  if (!confirm(`Delete the ${monthLabel(month)} snapshot? This cannot be undone.`)) return;
+  try {
+    await deleteDoc(doc(db, SNAPSHOT_COLLECTION, month));
+    document.getElementById(cardId)?.remove();
+    toast(`${monthLabel(month)} snapshot deleted.`);
+  } catch (err) {
+    console.error("[MonthEnd] Delete failed:", err);
+    toast("Failed to delete snapshot.");
+  }
 };

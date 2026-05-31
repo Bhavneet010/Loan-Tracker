@@ -614,6 +614,12 @@ body.dark .weekly-availability-note input{
 .me-hist-badge--pending{background:rgba(180,83,9,0.10);color:#B45309;}
 .me-hist-chevron{font-size:13px;color:var(--text3);transition:transform 0.22s ease;flex-shrink:0;line-height:1;}
 .me-hist-card.expanded .me-hist-chevron{transform:rotate(180deg);}
+.me-hist-delete-btn{
+  flex-shrink:0;background:none;border:none;padding:0 2px;
+  font-size:11px;color:var(--text3);cursor:pointer;line-height:1;
+  opacity:0.5;transition:opacity 0.15s,color 0.15s;
+}
+.me-hist-delete-btn:hover{opacity:1;color:#EF4444;}
 .me-hist-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
 .me-hist-metric{
   display:flex;flex-direction:column;align-items:center;
