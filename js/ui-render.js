@@ -153,8 +153,9 @@ window.toggleCalMbarExpand = function() {
   render();
 };
 
-window.calendarNavToMonth = function(year, month) {
+window.calendarNavToMonth = function(year, month, officer) {
   S.calendarState = { year, month };
+  if (officer != null) S.renewalFilter.officer = officer;
   render();
 };
 
@@ -191,6 +192,8 @@ window.calendarNavToMonth = function(year, month) {
   document.addEventListener('pointerup', e => {
     if (dragging && activeBar) {
       applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
+      const officer = activeBar.dataset.officer;
+      if (officer) S.renewalFilter.officer = officer;
       render();
     }
     dragStartX = null;

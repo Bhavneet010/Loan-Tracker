@@ -36,6 +36,18 @@ function getFilteredRenewals(metrics) {
   return out;
 }
 
+// Like getFilteredRenewals but skips the officer filter — used for officer pills in expanded view
+function getAllOfficerRenewals(metrics) {
+  let out = metrics.renewals.filter(l => !l.renewedDate);
+  if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
+  if (S.renewalFilter.branch !== 'All') {
+    const filterCode = branchCode(S.renewalFilter.branch);
+    out = out.filter(l => branchCode(l.branch) === filterCode);
+  }
+  if (!S.renewalShowNpa) out = out.filter(l => l._rs?.status !== 'npa');
+  return out;
+}
+
 function findFirstRenewalMonth(renewals) {
   const now = new Date();
   const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -64,7 +76,10 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
 
   if (S.isAdmin && S.calendarBarExpanded) {
     const currentKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-    return `<div class="cal-mbar-wrap">${buildOfficerPillsHtml(renewals, currentKey)}</div>`;
+    const currentOfficer = S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine' ? S.renewalFilter.officer : null;
+    const pillRenewals = getAllOfficerRenewals(getLoanMetrics());
+    const inner = buildOfficerPillsHtml(pillRenewals, currentKey, currentOfficer);
+    return inner ? `<div class="cal-mbar-wrap">${inner}</div>` : '';
   }
 
   const currentKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -91,7 +106,7 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   return `<div class="cal-mbar-wrap">${pill}</div>`;
 }
 
-function buildOfficerPillsHtml(renewals, currentKey) {
+function buildOfficerPillsHtml(renewals, currentKey, currentOfficer) {
   const officerMap = new Map();
   renewals.forEach(loan => {
     const rs = loan._rs;
@@ -101,23 +116,24 @@ function buildOfficerPillsHtml(renewals, currentKey) {
     if (!officerMap.has(officer)) officerMap.set(officer, new Map());
     officerMap.get(officer).set(key, (officerMap.get(officer).get(key) || 0) + 1);
   });
-  if (!officerMap.size) return '<div class="cal-mbar-officers"></div>';
+  if (!officerMap.size) return '';
 
   const rows = Array.from(officerMap.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([officer, mMap]) => {
+      const isSelected = officer === currentOfficer;
       const sorted = Array.from(mMap.entries()).sort(([a], [b]) => a.localeCompare(b));
-      const activeIdx = sorted.findIndex(([k]) => k === currentKey);
+      const activeIdx = isSelected ? sorted.findIndex(([k]) => k === currentKey) : -1;
       const items = sorted.map(([key, count]) => {
         const [y, m] = key.split('-').map(Number);
-        const isActive = key === currentKey;
-        return `<button class="cal-mbar-item${isActive ? ' cal-mbar-item--active' : ''}" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1})">${MONTHS[m - 1].slice(0, 3)} <span class="cal-mbar-ct">${count}</span></button>`;
+        const isActive = isSelected && key === currentKey;
+        return `<button class="cal-mbar-item${isActive ? ' cal-mbar-item--active' : ''}" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1},'${officer}')">${MONTHS[m - 1].slice(0, 3)} <span class="cal-mbar-ct">${count}</span></button>`;
       }).join('');
       const noActiveCls = activeIdx < 0 ? ' cal-mbar--no-active' : '';
       const col = officerColor(officer);
       return `<div class="cal-mbar-officer-row">
         <span class="cal-mbar-av" style="background:${col.bg};color:${col.text};">${initials(officer)}</span>
-        <div class="cal-mbar cal-mbar--officer${noActiveCls}" data-cal-mbar style="--active-idx:${Math.max(0, activeIdx)};--item-count:${sorted.length}"><div class="cal-mbar-thumb"></div>${items}</div>
+        <div class="cal-mbar cal-mbar--officer${noActiveCls}" data-cal-mbar data-officer="${officer}" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${sorted.length}"><div class="cal-mbar-thumb"></div>${items}</div>
       </div>`;
     }).join('');
 
