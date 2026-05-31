@@ -63,7 +63,8 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   if (!monthMap.size) return '';
 
   if (S.isAdmin && S.calendarBarExpanded) {
-    return `<div class="cal-mbar-wrap">${buildOfficerPillsHtml(renewals)}</div>`;
+    const currentKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+    return `<div class="cal-mbar-wrap">${buildOfficerPillsHtml(renewals, currentKey)}</div>`;
   }
 
   const currentKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -90,7 +91,7 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   return `<div class="cal-mbar-wrap">${pill}</div>`;
 }
 
-function buildOfficerPillsHtml(renewals) {
+function buildOfficerPillsHtml(renewals, currentKey) {
   const officerMap = new Map();
   renewals.forEach(loan => {
     const rs = loan._rs;
@@ -106,14 +107,17 @@ function buildOfficerPillsHtml(renewals) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([officer, mMap]) => {
       const sorted = Array.from(mMap.entries()).sort(([a], [b]) => a.localeCompare(b));
+      const activeIdx = sorted.findIndex(([k]) => k === currentKey);
       const items = sorted.map(([key, count]) => {
         const [y, m] = key.split('-').map(Number);
-        return `<button class="cal-mbar-item" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1})">${MONTHS[m - 1].slice(0, 3)} <span class="cal-mbar-ct">${count}</span></button>`;
+        const isActive = key === currentKey;
+        return `<button class="cal-mbar-item${isActive ? ' cal-mbar-item--active' : ''}" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1})">${MONTHS[m - 1].slice(0, 3)} <span class="cal-mbar-ct">${count}</span></button>`;
       }).join('');
+      const noActiveCls = activeIdx < 0 ? ' cal-mbar--no-active' : '';
       const col = officerColor(officer);
       return `<div class="cal-mbar-officer-row">
         <span class="cal-mbar-av" style="background:${col.bg};color:${col.text};">${initials(officer)}</span>
-        <div class="cal-mbar cal-mbar--officer" style="--item-count:${sorted.length}">${items}</div>
+        <div class="cal-mbar cal-mbar--officer${noActiveCls}" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${sorted.length}"><div class="cal-mbar-thumb"></div>${items}</div>
       </div>`;
     }).join('');
 

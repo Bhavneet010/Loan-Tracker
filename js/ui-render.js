@@ -156,13 +156,6 @@ window.toggleCalMbarExpand = function() {
 
 window.calendarNavToMonth = function(year, month) {
   S.calendarState = { year, month };
-  const bar = document.getElementById('cal-mbar');
-  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-  if (bar && slideCalMbar(bar, key)) {
-    clearTimeout(_calNavTimer);
-    _calNavTimer = setTimeout(refreshCalendarOnly, 310);
-    return;
-  }
   render();
 };
 
