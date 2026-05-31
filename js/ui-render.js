@@ -118,6 +118,10 @@ window.calendarNavMonth = function(delta) {
   S.calendarState = { year, month };
   render();
 };
+window.calendarNavToMonth = function(year, month) {
+  S.calendarState = { year, month };
+  render();
+};
 window.toggleCalendarDay = function(dateStr) {
   S.calendarOpenDay = S.calendarOpenDay === dateStr ? null : dateStr;
   render();

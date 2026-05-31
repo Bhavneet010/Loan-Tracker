@@ -8,14 +8,14 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const DAYS = ['M','T','W','T','F','S','S'];
 
 export function buildCalendarViewHtml(metrics = getLoanMetrics()) {
+  const renewals = getFilteredRenewals(metrics);
   if (!S.calendarState) {
     const now = new Date();
-    S.calendarState = { year: now.getFullYear(), month: now.getMonth() };
+    S.calendarState = findFirstRenewalMonth(renewals) || { year: now.getFullYear(), month: now.getMonth() };
   }
-  const renewals = getFilteredRenewals(metrics);
   const { year, month } = S.calendarState;
   const calData = buildCalendarData(renewals, year, month);
-  return calendarHtml(calData, year, month);
+  return calendarHtml(calData, year, month, renewals);
 }
 
 export function renderCalendar(c) {
@@ -36,6 +36,53 @@ function getFilteredRenewals(metrics) {
   return out;
 }
 
+function findFirstRenewalMonth(renewals) {
+  const now = new Date();
+  const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const months = new Set();
+  renewals.forEach(loan => {
+    const rs = loan._rs;
+    if (rs?.npaDateStr && rs.status !== 'active') months.add(rs.npaDateStr.slice(0, 7));
+  });
+  if (!months.size) return null;
+  const sorted = Array.from(months).sort();
+  const fromNow = sorted.filter(m => m >= currentKey);
+  if (!fromNow.length) return null;
+  const [y, m] = fromNow[0].split('-').map(Number);
+  return { year: y, month: m - 1 };
+}
+
+function buildMonthBarHtml(renewals, currentYear, currentMonth) {
+  const monthMap = new Map();
+  renewals.forEach(loan => {
+    const rs = loan._rs;
+    if (!rs?.npaDateStr || rs.status === 'active') return;
+    const key = rs.npaDateStr.slice(0, 7);
+    monthMap.set(key, (monthMap.get(key) || 0) + 1);
+  });
+  if (!monthMap.size) return '';
+
+  const currentKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+  const sorted = Array.from(monthMap.entries()).sort(([a], [b]) => a.localeCompare(b));
+
+  let displayed = sorted;
+  if (sorted.length > 7) {
+    const idx = sorted.findIndex(([k]) => k === currentKey);
+    const center = idx >= 0 ? idx : Math.max(0, sorted.findIndex(([k]) => k >= currentKey));
+    const start = Math.max(0, Math.min(center - 3, sorted.length - 7));
+    displayed = sorted.slice(start, start + 7);
+  }
+
+  const chips = displayed.map(([key, count]) => {
+    const [y, m] = key.split('-').map(Number);
+    const name = MONTHS[m - 1].slice(0, 3);
+    const isActive = key === currentKey;
+    return `<button class="cal-mbar-chip${isActive ? ' cal-mbar-chip--active' : ''}" onclick="calendarNavToMonth(${y},${m - 1})">${name} <span class="cal-mbar-count">${count}</span></button>`;
+  }).join('');
+
+  return `<div class="cal-mbar">${chips}</div>`;
+}
+
 function buildCalendarData(renewals, year, month) {
   const map = new Map();
   const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -52,7 +99,7 @@ function buildCalendarData(renewals, year, month) {
   return map;
 }
 
-function calendarHtml(calData, year, month) {
+function calendarHtml(calData, year, month, renewals) {
   const today = new Date().toISOString().slice(0, 10);
   const firstDay = new Date(year, month, 1).getDay();
   // Convert Sunday=0 to Monday=0 offset
@@ -97,8 +144,11 @@ function calendarHtml(calData, year, month) {
   const monthTotal = [...calData.values()].reduce((s, e) => s + e.loans.length, 0);
   const workingDays = countWorkingDaysLeft(year, month);
 
+  const monthBar = buildMonthBarHtml(renewals, year, month);
+
   return `
     <div class="cal-wrap">
+      ${monthBar}
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="calendarNavMonth(-1)">&lsaquo;</button>
         <span class="cal-month-label">${MONTHS[month]} ${year}</span>
