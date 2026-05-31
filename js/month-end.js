@@ -649,17 +649,61 @@ export async function renderMonthEndSettings() {
       return;
     }
 
-    target.innerHTML = rows.slice(0, 12).map(row => {
-      const cleanup = row.cleanup
-        ? `<small style="display:block;color:#047857;margin-top:3px;">Cleaned by ${esc(row.cleanup.cleanedBy || "Admin")}</small>`
-        : `<small style="display:block;color:#B45309;margin-top:3px;">Cleanup not recorded</small>`;
-      return `<div class="setting-item" style="align-items:flex-start;">
-        <span>
-          <b>${esc(row.label || row.month)}</b>
-          <small style="display:block;color:#7B7A9A;margin-top:3px;">${esc(totalsLine(row.totals || {}))}</small>
-          ${cleanup}
-        </span>
-        <span style="font-weight:800;color:#4A4467;">Rs ${esc(fmtAmt(row.totals?.sanctioned?.amount || 0))}L</span>
+    target.innerHTML = rows.slice(0, 12).map((row, i) => {
+      const t = row.totals || {};
+      const officers = (row.officers || []).filter(o =>
+        (o.sanctioned?.count || 0) + (o.returned?.count || 0) + (o.renewalsDone?.count || 0) > 0
+      );
+      const cleanupBadge = row.cleanup
+        ? `<span class="me-hist-badge me-hist-badge--clean">Cleaned</span>`
+        : `<span class="me-hist-badge me-hist-badge--pending">Pending</span>`;
+
+      const officerRows = officers.length ? officers.map(o => {
+        const idx = S.officers.indexOf(o.name);
+        const color = OFFICER_PALETTE[idx !== -1 ? idx : 0] || '#8B5CF6';
+        return `<div class="me-hist-officer">
+          <div class="me-hist-officer-name" style="border-left:3px solid ${esc(color)}">${esc(o.name)}</div>
+          <div class="me-hist-officer-metrics">
+            <div class="me-hist-om"><span>Sanctioned</span><b>${o.sanctioned?.count || 0}</b><small>Rs ${fmtAmt(o.sanctioned?.amount || 0)}L</small></div>
+            <div class="me-hist-om"><span>Returned</span><b>${o.returned?.count || 0}</b><small>Rs ${fmtAmt(o.returned?.amount || 0)}L</small></div>
+            <div class="me-hist-om"><span>Renewals</span><b>${o.renewalsDone?.count || 0}</b><small>Rs ${fmtAmt(o.renewalsDone?.amount || 0)}L</small></div>
+          </div>
+        </div>`;
+      }).join("") : `<div style="color:#7B7A9A;font-size:13px;padding:6px 0;">No officer breakdown available.</div>`;
+
+      const cardId = `me-hist-card-${i}`;
+      return `<div class="me-hist-card" id="${esc(cardId)}">
+        <div class="me-hist-card-header" onclick="toggleMeHistCard('${esc(cardId)}')">
+          <div class="me-hist-card-title">
+            <span class="me-hist-card-month">${esc(row.label || row.month)}</span>
+            ${cleanupBadge}
+            <span class="me-hist-chevron">▾</span>
+          </div>
+          <div class="me-hist-summary">
+            <div class="me-hist-metric">
+              <span class="me-hist-metric-label">Sanctioned</span>
+              <span class="me-hist-metric-count">${t.sanctioned?.count || 0}</span>
+              <span class="me-hist-metric-amount">Rs ${fmtAmt(t.sanctioned?.amount || 0)}L</span>
+            </div>
+            <div class="me-hist-metric">
+              <span class="me-hist-metric-label">Returned</span>
+              <span class="me-hist-metric-count">${t.returned?.count || 0}</span>
+              <span class="me-hist-metric-amount">Rs ${fmtAmt(t.returned?.amount || 0)}L</span>
+            </div>
+            <div class="me-hist-metric">
+              <span class="me-hist-metric-label">Renewals</span>
+              <span class="me-hist-metric-count">${t.renewalsDone?.count || 0}</span>
+              <span class="me-hist-metric-amount">Rs ${fmtAmt(t.renewalsDone?.amount || 0)}L</span>
+            </div>
+          </div>
+        </div>
+        <div class="me-hist-card-body">
+          <div class="me-hist-card-body-inner">
+            <div class="me-hist-officers-label">Officer Breakdown</div>
+            ${officerRows}
+            ${row.cleanup ? `<div class="me-hist-cleaned-by">Cleaned by ${esc(row.cleanup.cleanedBy || "Admin")}</div>` : ''}
+          </div>
+        </div>
       </div>`;
     }).join("");
   } catch (err) {
@@ -669,3 +713,8 @@ export async function renderMonthEndSettings() {
 }
 
 window.renderMonthEndSettings = renderMonthEndSettings;
+
+window.toggleMeHistCard = function(cardId) {
+  const card = document.getElementById(cardId);
+  if (card) card.classList.toggle("expanded");
+};
