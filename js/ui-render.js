@@ -184,13 +184,17 @@ window.calendarNavToMonth = function(year, month, officer) {
 
   document.addEventListener('pointermove', e => {
     if (dragStartX === null || !activeBar) return;
-    if (!dragging && Math.abs(e.clientX - dragStartX) > THRESHOLD) dragging = true;
+    if (!dragging && Math.abs(e.clientX - dragStartX) > THRESHOLD) {
+      dragging = true;
+      activeBar.classList.add('cal-mbar--dragging');
+    }
     if (!dragging) return;
     applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
   });
 
   document.addEventListener('pointerup', e => {
     if (dragging && activeBar) {
+      activeBar.classList.remove('cal-mbar--dragging');
       applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
       const officer = activeBar.dataset.officer;
       if (officer) S.renewalFilter.officer = officer;
@@ -201,7 +205,10 @@ window.calendarNavToMonth = function(year, month, officer) {
     activeBar = null;
   });
 
-  document.addEventListener('pointercancel', () => { dragStartX = null; dragging = false; activeBar = null; });
+  document.addEventListener('pointercancel', () => {
+    if (activeBar) activeBar.classList.remove('cal-mbar--dragging');
+    dragStartX = null; dragging = false; activeBar = null;
+  });
 })();
 window.toggleCalendarDay = function(dateStr) {
   S.calendarOpenDay = S.calendarOpenDay === dateStr ? null : dateStr;
