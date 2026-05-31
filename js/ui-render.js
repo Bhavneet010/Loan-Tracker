@@ -151,6 +151,8 @@ function applyCalMbarKey(bar, key) {
 window.toggleCalMbarExpand = function() {
   if (!S.isAdmin) return;
   S.calendarBarExpanded = !S.calendarBarExpanded;
+  const btn = document.querySelector('.rnw-expand-officers-btn');
+  if (btn) btn.classList.toggle('active', S.calendarBarExpanded);
   refreshCalendarOnly();
 };
 

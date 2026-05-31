@@ -62,12 +62,8 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   });
   if (!monthMap.size) return '';
 
-  const expandBtn = S.isAdmin
-    ? `<button class="cal-mbar-expand-btn${S.calendarBarExpanded ? ' cal-mbar-expand-btn--on' : ''}" onclick="toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>`
-    : '';
-
   if (S.isAdmin && S.calendarBarExpanded) {
-    return `<div class="cal-mbar-wrap">${expandBtn}${buildOfficerPillsHtml(renewals)}</div>`;
+    return `<div class="cal-mbar-wrap">${buildOfficerPillsHtml(renewals)}</div>`;
   }
 
   const currentKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -91,7 +87,7 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
 
   const noActiveCls = activeIdx < 0 ? ' cal-mbar--no-active' : '';
   const pill = `<div class="cal-mbar${noActiveCls}" id="cal-mbar" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-thumb"></div>${items}</div>`;
-  return `<div class="cal-mbar-wrap">${expandBtn}${pill}</div>`;
+  return `<div class="cal-mbar-wrap">${pill}</div>`;
 }
 
 function buildOfficerPillsHtml(renewals) {

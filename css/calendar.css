@@ -93,11 +93,8 @@ body.dark .cal-holiday-row--custom{background:rgba(220,160,70,0.16);color:#f0c98
 body.dark .cal-holiday-row--auto{background:rgba(160,160,180,0.12);}
 
 /* Month bar wrap + expand button */
-.cal-mbar-wrap{position:relative;margin-bottom:6px;padding-top:8px;}
+.cal-mbar-wrap{margin-bottom:6px;}
 .cal-mbar-wrap .cal-mbar{margin-bottom:0;}
-.cal-mbar-expand-btn{position:absolute;top:8px;left:6px;transform:translateY(-50%);z-index:10;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.45);color:#fff;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:background 0.18s,border-color 0.18s;}
-.cal-mbar-expand-btn:hover{background:rgba(0,0,0,0.45);}
-.cal-mbar-expand-btn--on{background:rgba(255,255,255,0.30);border-color:rgba(255,255,255,0.75);}
 .cal-mbar-officers{display:flex;flex-direction:column;gap:4px;}
 .cal-mbar-officer-row{display:flex;align-items:center;gap:6px;}
 .cal-mbar-av{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;letter-spacing:-0.3px;}

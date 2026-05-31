@@ -61,8 +61,9 @@ export function renderRenewals(c) {
     <button class="fs-btn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">Sort <span class="fs-label">${sortLabel}</span></button>
     ${canToggleNpa ? `<label class="rnw-npa-toggle" title="Show NPA accounts">
       <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
-      <span>Show NPA</span>
+      <span>NPA</span>
     </label>` : ''}
+    ${S.isAdmin && S.renewalView === 'calendar' ? `<button class="fs-btn rnw-expand-officers-btn${S.calendarBarExpanded ? ' active' : ''}" onclick="event.stopPropagation();toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>` : ''}
     <div class="fs-pop" style="${filterStyle}">
       <h4>Status</h4>${radio('status', [{ v: 'All', label: 'All statuses' }, { v: 'DueSoon', label: 'Due soon accounts' }], S.renewalFilter.status || 'All')}
       <hr>
