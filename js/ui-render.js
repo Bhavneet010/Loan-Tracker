@@ -182,6 +182,24 @@ window.calendarNavToMonth = function(year, month, officer) {
     dragging = false;
   });
 
+  // Sets thumb to fractional position so it tracks the finger smoothly
+  function dragThumb(bar, x) {
+    const rect = bar.getBoundingClientRect();
+    const n = parseInt(bar.style.getPropertyValue('--item-count')) || 0;
+    if (!n) return;
+    const ratio = Math.max(0, Math.min(0.9999, (x - rect.left) / rect.width));
+    const fracIdx = ratio * n;
+    const intIdx = Math.floor(fracIdx);
+    bar.style.setProperty('--active-idx', fracIdx);
+    const items = bar.querySelectorAll('.cal-mbar-item');
+    items.forEach((el, i) => el.classList.toggle('cal-mbar-item--active', i === intIdx));
+    const key = items[intIdx]?.dataset?.key;
+    if (key) {
+      const [y, m] = key.split('-').map(Number);
+      S.calendarState = { year: y, month: m - 1 };
+    }
+  }
+
   document.addEventListener('pointermove', e => {
     if (dragStartX === null || !activeBar) return;
     if (!dragging && Math.abs(e.clientX - dragStartX) > THRESHOLD) {
@@ -189,13 +207,13 @@ window.calendarNavToMonth = function(year, month, officer) {
       activeBar.classList.add('cal-mbar--dragging');
     }
     if (!dragging) return;
-    applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
+    dragThumb(activeBar, e.clientX);
   });
 
   document.addEventListener('pointerup', e => {
     if (dragging && activeBar) {
+      dragThumb(activeBar, e.clientX);
       activeBar.classList.remove('cal-mbar--dragging');
-      applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
       const officer = activeBar.dataset.officer;
       if (officer) S.renewalFilter.officer = officer;
       requestAnimationFrame(refreshCalendarOnly);
