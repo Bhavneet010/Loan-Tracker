@@ -87,7 +87,7 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   }).join('');
 
   const noActiveCls = activeIdx < 0 ? ' cal-mbar--no-active' : '';
-  const pill = `<div class="cal-mbar${noActiveCls}" id="cal-mbar" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-thumb"></div>${items}</div>`;
+  const pill = `<div class="cal-mbar${noActiveCls}" id="cal-mbar" data-cal-mbar style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-thumb"></div>${items}</div>`;
   return `<div class="cal-mbar-wrap">${pill}</div>`;
 }
 
@@ -117,7 +117,7 @@ function buildOfficerPillsHtml(renewals, currentKey) {
       const col = officerColor(officer);
       return `<div class="cal-mbar-officer-row">
         <span class="cal-mbar-av" style="background:${col.bg};color:${col.text};">${initials(officer)}</span>
-        <div class="cal-mbar cal-mbar--officer${noActiveCls}" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${sorted.length}"><div class="cal-mbar-thumb"></div>${items}</div>
+        <div class="cal-mbar cal-mbar--officer${noActiveCls}" data-cal-mbar style="--active-idx:${Math.max(0, activeIdx)};--item-count:${sorted.length}"><div class="cal-mbar-thumb"></div>${items}</div>
       </div>`;
     }).join('');
 

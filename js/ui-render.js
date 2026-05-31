@@ -163,6 +163,7 @@ window.calendarNavToMonth = function(year, month) {
 (function attachCalendarSliderDrag() {
   let dragStartX = null;
   let dragging = false;
+  let activeBar = null;
   const THRESHOLD = 6;
 
   function getKeyAtX(bar, x) {
@@ -174,33 +175,32 @@ window.calendarNavToMonth = function(year, month) {
   }
 
   document.addEventListener('pointerdown', e => {
-    if (!e.target.closest('#cal-mbar')) return;
+    const bar = e.target.closest('[data-cal-mbar]');
+    if (!bar) return;
+    activeBar = bar;
     dragStartX = e.clientX;
     dragging = false;
   });
 
   document.addEventListener('pointermove', e => {
-    if (dragStartX === null) return;
+    if (dragStartX === null || !activeBar) return;
     if (!dragging && Math.abs(e.clientX - dragStartX) > THRESHOLD) dragging = true;
     if (!dragging) return;
-    const bar = document.getElementById('cal-mbar');
-    if (bar) applyCalMbarKey(bar, getKeyAtX(bar, e.clientX));
+    applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
   });
 
   document.addEventListener('pointerup', e => {
-    if (dragging) {
-      const bar = document.getElementById('cal-mbar');
-      if (bar) {
-        applyCalMbarKey(bar, getKeyAtX(bar, e.clientX));
-        clearTimeout(_calNavTimer);
-        render();
-      }
+    if (dragging && activeBar) {
+      applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
+      clearTimeout(_calNavTimer);
+      render();
     }
     dragStartX = null;
     dragging = false;
+    activeBar = null;
   });
 
-  document.addEventListener('pointercancel', () => { dragStartX = null; dragging = false; });
+  document.addEventListener('pointercancel', () => { dragStartX = null; dragging = false; activeBar = null; });
 })();
 window.toggleCalendarDay = function(dateStr) {
   S.calendarOpenDay = S.calendarOpenDay === dateStr ? null : dateStr;
