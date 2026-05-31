@@ -145,7 +145,7 @@ function applyCalMbarKey(bar, key) {
   if (!slideCalMbar(bar, key)) return;
   S.calendarState = { year: y, month: m - 1 };
   clearTimeout(_calNavTimer);
-  _calNavTimer = setTimeout(refreshCalendarOnly, 310);
+  _calNavTimer = setTimeout(render, 310);
 }
 
 window.toggleCalMbarExpand = function() {
@@ -193,7 +193,7 @@ window.calendarNavToMonth = function(year, month) {
       if (bar) {
         applyCalMbarKey(bar, getKeyAtX(bar, e.clientX));
         clearTimeout(_calNavTimer);
-        refreshCalendarOnly();
+        render();
       }
     }
     dragStartX = null;
