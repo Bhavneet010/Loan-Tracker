@@ -22,6 +22,7 @@ export const S = {
   renewalView: 'calendar',
   calendarState: null,
   calendarOpenDay: null,
+  calendarBarExpanded: false,
   taskView: 'overview',
   taskCategory: null,
   taskOfficer: null,

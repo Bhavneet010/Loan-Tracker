@@ -4,7 +4,6 @@ import { S, saveSettings } from "./state.js";
 import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
 import { renderRenewals, updateRenewalMainContent } from "./ui-tabs-renewals.js";
-import { buildCalendarViewHtml } from "./ui-calendar.js";
 import { renderTasks } from "./ui-tasks.js";
 import { animateContent } from "./animate.js";
 import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
@@ -148,6 +147,12 @@ function applyCalMbarKey(bar, key) {
   clearTimeout(_calNavTimer);
   _calNavTimer = setTimeout(refreshCalendarOnly, 310);
 }
+
+window.toggleCalMbarExpand = function() {
+  if (!S.isAdmin) return;
+  S.calendarBarExpanded = !S.calendarBarExpanded;
+  refreshCalendarOnly();
+};
 
 window.calendarNavToMonth = function(year, month) {
   S.calendarState = { year, month };

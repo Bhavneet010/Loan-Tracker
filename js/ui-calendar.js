@@ -1,5 +1,5 @@
 ﻿import { S } from "./state.js";
-import { getLoanMetrics } from "./derived.js";
+import { getLoanMetrics, effectiveOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
 import { searchMatch } from "./ui-logic.js";
 import { holidayReason, findCustomHoliday, countWorkingDaysLeft } from "./bank-holidays.js";
@@ -62,6 +62,14 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   });
   if (!monthMap.size) return '';
 
+  const expandBtn = S.isAdmin
+    ? `<button class="cal-mbar-expand-btn${S.calendarBarExpanded ? ' cal-mbar-expand-btn--on' : ''}" onclick="toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>`
+    : '';
+
+  if (S.isAdmin && S.calendarBarExpanded) {
+    return `<div class="cal-mbar-wrap">${expandBtn}${buildOfficerPillsHtml(renewals)}</div>`;
+  }
+
   const currentKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
   const sorted = Array.from(monthMap.entries()).sort(([a], [b]) => a.localeCompare(b));
 
@@ -82,7 +90,38 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   }).join('');
 
   const noActiveCls = activeIdx < 0 ? ' cal-mbar--no-active' : '';
-  return `<div class="cal-mbar${noActiveCls}" id="cal-mbar" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-thumb"></div>${items}</div>`;
+  const pill = `<div class="cal-mbar${noActiveCls}" id="cal-mbar" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-thumb"></div>${items}</div>`;
+  return `<div class="cal-mbar-wrap">${expandBtn}${pill}</div>`;
+}
+
+function buildOfficerPillsHtml(renewals) {
+  const officerMap = new Map();
+  renewals.forEach(loan => {
+    const rs = loan._rs;
+    if (!rs?.npaDateStr || rs.status === 'active') return;
+    const officer = effectiveOfficer(loan);
+    const key = rs.npaDateStr.slice(0, 7);
+    if (!officerMap.has(officer)) officerMap.set(officer, new Map());
+    officerMap.get(officer).set(key, (officerMap.get(officer).get(key) || 0) + 1);
+  });
+  if (!officerMap.size) return '<div class="cal-mbar-officers"></div>';
+
+  const rows = Array.from(officerMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([officer, mMap]) => {
+      const sorted = Array.from(mMap.entries()).sort(([a], [b]) => a.localeCompare(b));
+      const items = sorted.map(([key, count]) => {
+        const [y, m] = key.split('-').map(Number);
+        return `<button class="cal-mbar-item" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1})">${MONTHS[m - 1].slice(0, 3)} <span class="cal-mbar-ct">${count}</span></button>`;
+      }).join('');
+      const col = officerColor(officer);
+      return `<div class="cal-mbar-officer-row">
+        <span class="cal-mbar-av" style="background:${col.bg};color:${col.text};">${initials(officer)}</span>
+        <div class="cal-mbar cal-mbar--officer" style="--item-count:${sorted.length}">${items}</div>
+      </div>`;
+    }).join('');
+
+  return `<div class="cal-mbar-officers">${rows}</div>`;
 }
 
 function buildCalendarData(renewals, year, month) {
