@@ -661,11 +661,9 @@ export async function renderMonthEndSettings() {
       const officerTable = officers.length ? `
         <div class="me-hist-officer-table">
           <div class="me-hist-officer me-hist-officer--head">
-            <span></span>
-            <span></span>
-            <span class="me-hist-om-head">Sanc</span>
-            <span class="me-hist-om-head">Ret</span>
-            <span class="me-hist-om-head">Ren</span>
+            <span class="me-hist-om-head">Sanction</span>
+            <span class="me-hist-om-head">Returns</span>
+            <span class="me-hist-om-head">Renewals</span>
           </div>
           ${officers.map(o => {
             const idx = S.officers.indexOf(o.name);

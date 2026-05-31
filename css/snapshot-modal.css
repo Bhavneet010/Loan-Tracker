@@ -631,22 +631,23 @@ body.dark .weekly-availability-note input{
   background:rgba(107,95,191,0.04);
   border-top:1px solid rgba(107,95,191,0.10);
 }
-/* Officer table — shared grid: dot | name | sanc | ret | ren */
+/* Officer table */
 .me-hist-officer-table{display:flex;flex-direction:column;}
 .me-hist-officer{
-  display:grid;
-  grid-template-columns:10px 1fr 42px 42px 42px;
-  align-items:center;
-  gap:0 6px;
-  padding:4px 2px;
+  display:flex;align-items:center;
+  padding:4px 0;
   border-bottom:1px solid rgba(107,95,191,0.08);
 }
 .me-hist-officer:last-child{border-bottom:none;}
-.me-hist-officer--head{padding-bottom:3px;border-bottom:1px solid rgba(107,95,191,0.14);}
-.me-hist-officer-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.me-hist-officer-name{font-size:11px;font-weight:700;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.me-hist-om-head{font-size:9px;font-weight:700;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:0.04em;}
-.me-hist-om{display:flex;flex-direction:column;align-items:center;}
+.me-hist-officer--head{
+  justify-content:flex-end;
+  padding-bottom:4px;
+  border-bottom:1px solid rgba(107,95,191,0.16);
+}
+.me-hist-officer-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:6px;}
+.me-hist-officer-name{flex:1;font-size:11px;font-weight:700;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.me-hist-om-head{width:58px;flex-shrink:0;font-size:9px;font-weight:700;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:0.03em;}
+.me-hist-om{width:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;}
 .me-hist-om b{font-size:13px;font-weight:900;color:var(--text1);line-height:1.15;}
 .me-hist-om small{font-size:9px;color:var(--p1);font-weight:600;line-height:1.2;}
 .me-hist-cleaned-by{
