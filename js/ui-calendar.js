@@ -58,7 +58,10 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
     const rs = loan._rs;
     if (!rs?.npaDateStr || rs.status === 'active') return;
     const key = rs.npaDateStr.slice(0, 7);
-    monthMap.set(key, (monthMap.get(key) || 0) + 1);
+    if (!monthMap.has(key)) monthMap.set(key, { count: 0, hasOverdue: false });
+    const entry = monthMap.get(key);
+    entry.count++;
+    if (rs.status === 'npa') entry.hasOverdue = true;
   });
   if (!monthMap.size) return '';
 
@@ -73,14 +76,18 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
     displayed = sorted.slice(start, start + 7);
   }
 
-  const chips = displayed.map(([key, count]) => {
+  const items = displayed.map(([key, { count, hasOverdue }]) => {
     const [y, m] = key.split('-').map(Number);
     const name = MONTHS[m - 1].slice(0, 3);
     const isActive = key === currentKey;
-    return `<button class="cal-mbar-chip${isActive ? ' cal-mbar-chip--active' : ''}" onclick="calendarNavToMonth(${y},${m - 1})">${name} <span class="cal-mbar-count">${count}</span></button>`;
+    let cls = 'cal-mbar-item';
+    if (isActive) cls += ' cal-mbar-item--active';
+    else if (hasOverdue) cls += ' cal-mbar-item--overdue';
+    else cls += ' cal-mbar-item--soon';
+    return `<button class="${cls}" onclick="calendarNavToMonth(${y},${m - 1})">${name} <span class="cal-mbar-ct">${count}</span></button>`;
   }).join('');
 
-  return `<div class="cal-mbar">${chips}</div>`;
+  return `<div class="cal-mbar">${items}</div>`;
 }
 
 function buildCalendarData(renewals, year, month) {
