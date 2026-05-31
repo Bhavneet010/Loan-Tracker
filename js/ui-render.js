@@ -7,6 +7,7 @@ import { renderRenewals, updateRenewalMainContent } from "./ui-tabs-renewals.js"
 import { renderTasks } from "./ui-tasks.js";
 import { animateContent } from "./animate.js";
 import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
+import { buildCalendarViewHtml } from "./ui-calendar.js";
 
 let renderQueued = false;
 
@@ -118,8 +119,6 @@ window.calendarNavMonth = function(delta) {
   S.calendarState = { year, month };
   requestAnimationFrame(refreshCalendarOnly);
 };
-let _calNavTimer = null;
-
 // Replaces only the calendar content pane — avoids full-page re-render
 function refreshCalendarOnly() {
   const pane = document.querySelector('.rnw-content');
