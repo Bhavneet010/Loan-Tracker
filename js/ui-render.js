@@ -150,6 +150,7 @@ function applyCalMbarKey(bar, key) {
 window.toggleCalMbarExpand = function() {
   if (!S.isAdmin) return;
   S.calendarBarExpanded = !S.calendarBarExpanded;
+  if (!S.calendarBarExpanded) S.renewalFilter.officer = 'All';
   render();
 };
 
