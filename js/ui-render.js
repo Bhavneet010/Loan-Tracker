@@ -4,6 +4,7 @@ import { S, saveSettings } from "./state.js";
 import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
 import { renderRenewals, updateRenewalMainContent } from "./ui-tabs-renewals.js";
+import { buildCalendarViewHtml } from "./ui-calendar.js";
 import { renderTasks } from "./ui-tasks.js";
 import { animateContent } from "./animate.js";
 import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
@@ -120,6 +121,13 @@ window.calendarNavMonth = function(delta) {
 };
 let _calNavTimer = null;
 
+// Replaces only the calendar content pane — avoids full-page re-render
+function refreshCalendarOnly() {
+  const pane = document.querySelector('.rnw-content');
+  if (!pane) { render(); return; }
+  pane.innerHTML = buildCalendarViewHtml();
+}
+
 function slideCalMbar(bar, key) {
   if (!key || !bar) return false;
   const items = bar.querySelectorAll('.cal-mbar-item');
@@ -138,7 +146,7 @@ function applyCalMbarKey(bar, key) {
   if (!slideCalMbar(bar, key)) return;
   S.calendarState = { year: y, month: m - 1 };
   clearTimeout(_calNavTimer);
-  _calNavTimer = setTimeout(render, 300);
+  _calNavTimer = setTimeout(refreshCalendarOnly, 310);
 }
 
 window.calendarNavToMonth = function(year, month) {
@@ -147,7 +155,7 @@ window.calendarNavToMonth = function(year, month) {
   const key = `${year}-${String(month + 1).padStart(2, '0')}`;
   if (bar && slideCalMbar(bar, key)) {
     clearTimeout(_calNavTimer);
-    _calNavTimer = setTimeout(render, 290);
+    _calNavTimer = setTimeout(refreshCalendarOnly, 310);
     return;
   }
   render();
@@ -187,7 +195,7 @@ window.calendarNavToMonth = function(year, month) {
       if (bar) {
         applyCalMbarKey(bar, getKeyAtX(bar, e.clientX));
         clearTimeout(_calNavTimer);
-        render();
+        refreshCalendarOnly();
       }
     }
     dragStartX = null;
