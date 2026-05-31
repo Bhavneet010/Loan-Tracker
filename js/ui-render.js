@@ -116,7 +116,7 @@ window.calendarNavMonth = function(delta) {
   if (month > 11) { month = 0; year++; }
   if (month < 0)  { month = 11; year--; }
   S.calendarState = { year, month };
-  render();
+  refreshCalendarOnly();
 };
 let _calNavTimer = null;
 
@@ -157,7 +157,7 @@ window.toggleCalMbarExpand = function() {
 window.calendarNavToMonth = function(year, month, officer) {
   S.calendarState = { year, month };
   if (officer != null) S.renewalFilter.officer = officer;
-  render();
+  refreshCalendarOnly();
 };
 
 /* ── CALENDAR BAR DRAG-TO-SLIDE ── */
@@ -195,7 +195,7 @@ window.calendarNavToMonth = function(year, month, officer) {
       applyCalMbarKey(activeBar, getKeyAtX(activeBar, e.clientX));
       const officer = activeBar.dataset.officer;
       if (officer) S.renewalFilter.officer = officer;
-      render();
+      refreshCalendarOnly();
     }
     dragStartX = null;
     dragging = false;
