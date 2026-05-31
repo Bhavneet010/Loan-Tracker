@@ -92,17 +92,14 @@ body.dark .cal-cell--holiday-custom .cal-holiday-mark{color:#e9b56a;}
 body.dark .cal-holiday-row--custom{background:rgba(220,160,70,0.16);color:#f0c98a;}
 body.dark .cal-holiday-row--auto{background:rgba(160,160,180,0.12);}
 
-/* Month bar — pill slider */
-.cal-mbar{position:relative;display:flex;border-radius:var(--radius-pill);background:rgba(107,95,191,0.07);border:1px solid rgba(107,95,191,0.14);padding:3px;gap:0;margin-bottom:6px;overflow:hidden;}
-.cal-mbar-indicator{position:absolute;top:3px;bottom:3px;left:calc(3px + var(--active-idx,0)*(100% - 6px)/var(--item-count,1));width:calc((100% - 6px)/var(--item-count,1));background:#fff;border-radius:calc(var(--radius-pill) - 3px);box-shadow:0 1px 6px rgba(0,0,0,0.13),0 1px 2px rgba(0,0,0,0.07);transition:left 0.28s cubic-bezier(0.4,0,0.2,1);pointer-events:none;z-index:1;}
-.cal-mbar--no-active .cal-mbar-indicator{display:none;}
-.cal-mbar-item{flex:1;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:2px;padding:5px 2px;font-size:var(--fs-xs);font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--text3);white-space:nowrap;min-width:0;}
-.cal-mbar-item--overdue{background:linear-gradient(135deg,rgba(254,202,202,0.65),rgba(248,113,113,0.38));color:#991B1B;}
-.cal-mbar-item--soon{background:linear-gradient(135deg,rgba(167,243,208,0.65),rgba(52,211,153,0.38));color:#065F46;}
-.cal-mbar-item--active{background:transparent;color:var(--text1);}
+/* Month bar — full-gradient pill with sliding thumb */
+.cal-mbar{position:relative;display:flex;border-radius:var(--radius-pill);background:linear-gradient(90deg,#4F46E5 0%,#7C3AED 28%,#EC4899 62%,#F97316 100%);padding:2px;gap:0;margin-bottom:6px;user-select:none;touch-action:pan-y;}
+.cal-mbar-item{flex:1;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 2px;font-size:var(--fs-xs);font-weight:600;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.55);white-space:nowrap;min-width:0;}
+.cal-mbar-item--active{color:#fff;font-weight:800;}
 .cal-mbar-ct{font-weight:900;}
-body.dark .cal-mbar{background:rgba(107,95,191,0.12);border-color:rgba(139,124,246,0.18);}
-body.dark .cal-mbar-indicator{background:rgba(38,33,68,0.96);box-shadow:0 1px 6px rgba(0,0,0,0.38);}
+.cal-mbar-thumb{position:absolute;top:2px;bottom:2px;left:calc(2px + var(--active-idx,0)*(100% - 4px)/var(--item-count,1));width:calc((100% - 4px)/var(--item-count,1));background:rgba(255,255,255,0.20);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.65);border-radius:calc(var(--radius-pill) - 2px);transition:left 0.28s cubic-bezier(0.4,0,0.2,1);pointer-events:none;z-index:2;}
+.cal-mbar--no-active .cal-mbar-thumb{opacity:0;}
+body.dark .cal-mbar{background:linear-gradient(90deg,#3730A3 0%,#6D28D9 28%,#BE185D 62%,#C2410C 100%);}
+body.dark .cal-mbar-item{color:rgba(255,255,255,0.45);}
 body.dark .cal-mbar-item--active{color:#fff;}
-body.dark .cal-mbar-item--overdue{background:linear-gradient(135deg,rgba(127,29,29,0.55),rgba(185,28,28,0.40));color:#FCA5A5;}
-body.dark .cal-mbar-item--soon{background:linear-gradient(135deg,rgba(6,78,59,0.55),rgba(16,185,129,0.40));color:#6EE7B7;}
+body.dark .cal-mbar-thumb{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.50);}

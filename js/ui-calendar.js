@@ -58,10 +58,7 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
     const rs = loan._rs;
     if (!rs?.npaDateStr || rs.status === 'active') return;
     const key = rs.npaDateStr.slice(0, 7);
-    if (!monthMap.has(key)) monthMap.set(key, { count: 0, hasOverdue: false });
-    const entry = monthMap.get(key);
-    entry.count++;
-    if (rs.status === 'npa') entry.hasOverdue = true;
+    monthMap.set(key, (monthMap.get(key) || 0) + 1);
   });
   if (!monthMap.size) return '';
 
@@ -77,21 +74,15 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   }
 
   const activeIdx = displayed.findIndex(([k]) => k === currentKey);
-  const hasActive = activeIdx >= 0;
 
-  const items = displayed.map(([key, { count, hasOverdue }]) => {
+  const items = displayed.map(([key, count]) => {
     const [y, m] = key.split('-').map(Number);
-    const name = MONTHS[m - 1].slice(0, 3);
     const isActive = key === currentKey;
-    let cls = 'cal-mbar-item';
-    if (isActive) cls += ' cal-mbar-item--active';
-    else if (hasOverdue) cls += ' cal-mbar-item--overdue';
-    else cls += ' cal-mbar-item--soon';
-    return `<button class="${cls}" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1})">${name} <span class="cal-mbar-ct">${count}</span></button>`;
+    return `<button class="cal-mbar-item${isActive ? ' cal-mbar-item--active' : ''}" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1})">${MONTHS[m - 1].slice(0, 3)} <span class="cal-mbar-ct">${count}</span></button>`;
   }).join('');
 
-  const noActiveCls = hasActive ? '' : ' cal-mbar--no-active';
-  return `<div class="cal-mbar${noActiveCls}" id="cal-mbar" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-indicator"></div>${items}</div>`;
+  const noActiveCls = activeIdx < 0 ? ' cal-mbar--no-active' : '';
+  return `<div class="cal-mbar${noActiveCls}" id="cal-mbar" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-thumb"></div>${items}</div>`;
 }
 
 function buildCalendarData(renewals, year, month) {

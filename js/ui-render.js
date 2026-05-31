@@ -119,24 +119,83 @@ window.calendarNavMonth = function(delta) {
   render();
 };
 let _calNavTimer = null;
+
+function slideCalMbar(bar, key) {
+  if (!key || !bar) return false;
+  const items = bar.querySelectorAll('.cal-mbar-item');
+  let idx = -1;
+  items.forEach((el, i) => { if (el.dataset.key === key) idx = i; });
+  if (idx < 0) return false;
+  bar.style.setProperty('--active-idx', idx);
+  items.forEach((el, i) => el.classList.toggle('cal-mbar-item--active', i === idx));
+  return true;
+}
+
+function applyCalMbarKey(bar, key) {
+  if (!key) return;
+  const [y, m] = key.split('-').map(Number);
+  if (S.calendarState?.year === y && S.calendarState?.month === m - 1) return;
+  if (!slideCalMbar(bar, key)) return;
+  S.calendarState = { year: y, month: m - 1 };
+  clearTimeout(_calNavTimer);
+  _calNavTimer = setTimeout(render, 300);
+}
+
 window.calendarNavToMonth = function(year, month) {
   S.calendarState = { year, month };
   const bar = document.getElementById('cal-mbar');
-  if (bar) {
-    const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-    let newIdx = -1;
-    bar.querySelectorAll('.cal-mbar-item').forEach((el, i) => {
-      if (el.dataset.key === key) newIdx = i;
-    });
-    if (newIdx >= 0) {
-      bar.style.setProperty('--active-idx', newIdx);
-      clearTimeout(_calNavTimer);
-      _calNavTimer = setTimeout(render, 290);
-      return;
-    }
+  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+  if (bar && slideCalMbar(bar, key)) {
+    clearTimeout(_calNavTimer);
+    _calNavTimer = setTimeout(render, 290);
+    return;
   }
   render();
 };
+
+/* ── CALENDAR BAR DRAG-TO-SLIDE ── */
+(function attachCalendarSliderDrag() {
+  let dragStartX = null;
+  let dragging = false;
+  const THRESHOLD = 6;
+
+  function getKeyAtX(bar, x) {
+    const rect = bar.getBoundingClientRect();
+    const n = parseInt(bar.style.getPropertyValue('--item-count')) || 0;
+    if (!n) return null;
+    const ratio = Math.max(0, Math.min(0.9999, (x - rect.left) / rect.width));
+    return bar.querySelectorAll('.cal-mbar-item')[Math.floor(ratio * n)]?.dataset?.key || null;
+  }
+
+  document.addEventListener('pointerdown', e => {
+    if (!e.target.closest('#cal-mbar')) return;
+    dragStartX = e.clientX;
+    dragging = false;
+  });
+
+  document.addEventListener('pointermove', e => {
+    if (dragStartX === null) return;
+    if (!dragging && Math.abs(e.clientX - dragStartX) > THRESHOLD) dragging = true;
+    if (!dragging) return;
+    const bar = document.getElementById('cal-mbar');
+    if (bar) applyCalMbarKey(bar, getKeyAtX(bar, e.clientX));
+  });
+
+  document.addEventListener('pointerup', e => {
+    if (dragging) {
+      const bar = document.getElementById('cal-mbar');
+      if (bar) {
+        applyCalMbarKey(bar, getKeyAtX(bar, e.clientX));
+        clearTimeout(_calNavTimer);
+        render();
+      }
+    }
+    dragStartX = null;
+    dragging = false;
+  });
+
+  document.addEventListener('pointercancel', () => { dragStartX = null; dragging = false; });
+})();
 window.toggleCalendarDay = function(dateStr) {
   S.calendarOpenDay = S.calendarOpenDay === dateStr ? null : dateStr;
   render();
