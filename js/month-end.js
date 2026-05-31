@@ -658,18 +658,22 @@ export async function renderMonthEndSettings() {
         ? `<span class="me-hist-badge me-hist-badge--clean">Cleaned</span>`
         : `<span class="me-hist-badge me-hist-badge--pending">Pending</span>`;
 
-      const officerRows = officers.length ? officers.map(o => {
+      const officerRows = officers.length ? `
+        <div class="me-hist-om-header">
+          <div class="me-hist-om-header-cell">Sanc</div>
+          <div class="me-hist-om-header-cell">Ret</div>
+          <div class="me-hist-om-header-cell">Ren</div>
+        </div>` + officers.map(o => {
         const idx = S.officers.indexOf(o.name);
         const color = OFFICER_PALETTE[idx !== -1 ? idx : 0] || '#8B5CF6';
         return `<div class="me-hist-officer">
-          <div class="me-hist-officer-name" style="border-left:3px solid ${esc(color)}">${esc(o.name)}</div>
-          <div class="me-hist-officer-metrics">
-            <div class="me-hist-om"><span>Sanctioned</span><b>${o.sanctioned?.count || 0}</b><small>Rs ${fmtAmt(o.sanctioned?.amount || 0)}L</small></div>
-            <div class="me-hist-om"><span>Returned</span><b>${o.returned?.count || 0}</b><small>Rs ${fmtAmt(o.returned?.amount || 0)}L</small></div>
-            <div class="me-hist-om"><span>Renewals</span><b>${o.renewalsDone?.count || 0}</b><small>Rs ${fmtAmt(o.renewalsDone?.amount || 0)}L</small></div>
-          </div>
+          <span class="me-hist-officer-dot" style="background:${esc(color)}"></span>
+          <span class="me-hist-officer-name">${esc(o.name)}</span>
+          <div class="me-hist-om"><b>${o.sanctioned?.count || 0}</b><small>Rs ${fmtAmt(o.sanctioned?.amount || 0)}L</small></div>
+          <div class="me-hist-om"><b>${o.returned?.count || 0}</b><small>Rs ${fmtAmt(o.returned?.amount || 0)}L</small></div>
+          <div class="me-hist-om"><b>${o.renewalsDone?.count || 0}</b><small>Rs ${fmtAmt(o.renewalsDone?.amount || 0)}L</small></div>
         </div>`;
-      }).join("") : `<div style="color:#7B7A9A;font-size:13px;padding:6px 0;">No officer breakdown available.</div>`;
+      }).join("") : `<div style="color:#7B7A9A;font-size:11px;padding:4px 0;">No officer breakdown available.</div>`;
 
       const cardId = `me-hist-card-${i}`;
       return `<div class="me-hist-card" id="${esc(cardId)}">
