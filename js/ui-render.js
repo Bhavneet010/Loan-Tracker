@@ -118,8 +118,23 @@ window.calendarNavMonth = function(delta) {
   S.calendarState = { year, month };
   render();
 };
+let _calNavTimer = null;
 window.calendarNavToMonth = function(year, month) {
   S.calendarState = { year, month };
+  const bar = document.getElementById('cal-mbar');
+  if (bar) {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+    let newIdx = -1;
+    bar.querySelectorAll('.cal-mbar-item').forEach((el, i) => {
+      if (el.dataset.key === key) newIdx = i;
+    });
+    if (newIdx >= 0) {
+      bar.style.setProperty('--active-idx', newIdx);
+      clearTimeout(_calNavTimer);
+      _calNavTimer = setTimeout(render, 290);
+      return;
+    }
+  }
   render();
 };
 window.toggleCalendarDay = function(dateStr) {

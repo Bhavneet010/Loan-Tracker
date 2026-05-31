@@ -76,6 +76,9 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
     displayed = sorted.slice(start, start + 7);
   }
 
+  const activeIdx = displayed.findIndex(([k]) => k === currentKey);
+  const hasActive = activeIdx >= 0;
+
   const items = displayed.map(([key, { count, hasOverdue }]) => {
     const [y, m] = key.split('-').map(Number);
     const name = MONTHS[m - 1].slice(0, 3);
@@ -84,10 +87,11 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
     if (isActive) cls += ' cal-mbar-item--active';
     else if (hasOverdue) cls += ' cal-mbar-item--overdue';
     else cls += ' cal-mbar-item--soon';
-    return `<button class="${cls}" onclick="calendarNavToMonth(${y},${m - 1})">${name} <span class="cal-mbar-ct">${count}</span></button>`;
+    return `<button class="${cls}" data-key="${key}" onclick="calendarNavToMonth(${y},${m - 1})">${name} <span class="cal-mbar-ct">${count}</span></button>`;
   }).join('');
 
-  return `<div class="cal-mbar">${items}</div>`;
+  const noActiveCls = hasActive ? '' : ' cal-mbar--no-active';
+  return `<div class="cal-mbar${noActiveCls}" id="cal-mbar" style="--active-idx:${Math.max(0, activeIdx)};--item-count:${displayed.length}"><div class="cal-mbar-indicator"></div>${items}</div>`;
 }
 
 function buildCalendarData(renewals, year, month) {
