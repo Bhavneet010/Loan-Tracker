@@ -1049,6 +1049,7 @@ function buildMonthlyPerformancePageHtml() {
       <button type="button" id="monthEndSnapshotBtn" class="btn-primary-full" style="flex:1;" onclick="runMonthEndSnapshot()">Generate Snapshot</button>
       ${S.isAdmin ? `<button type="button" id="monthEndCleanupBtn" class="btn-primary-full" style="flex:1;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)!important;box-shadow:none;" onclick="runMonthEndCleanup()">Cleanup Data</button>` : ''}
     </div>
+    <div id="integrationRecovery"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0;">
       <div style="font-size:12px;font-weight:800;color:#4A4467;text-transform:uppercase;letter-spacing:.06em;">Previous Month Dashboards</div>
       ${S.isAdmin ? `<button class="me-hist-edit-toggle" onclick="toggleMeHistEdit(this)">Edit</button>` : ''}
@@ -1081,6 +1082,7 @@ function renderMonthlyPerformanceView(target) {
   if (!target) return;
   target.innerHTML = buildMonthlyPerformancePageHtml();
   window.renderMonthEndSettings?.();
+  window.renderIntegrationRecovery?.();
 }
 
 function renderPerformanceView(target) {

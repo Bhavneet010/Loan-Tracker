@@ -8,7 +8,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S } from "./state.js";
-import { ts } from "./db.js";
+import { ts, updateLoan } from "./db.js";
 import { getLoanMetricsForMonth, sumAmount } from "./derived.js";
 import { esc, fmtAmt, fmtDate, isFreshCC, toast } from "./utils.js";
 import {
@@ -744,5 +744,92 @@ window.deleteMonthSnapshot = async function(month, cardId) {
   } catch (err) {
     console.error("[MonthEnd] Delete failed:", err);
     toast("Failed to delete snapshot.");
+  }
+};
+
+function getRecoverableLoans() {
+  return (S.loans || []).filter(loan =>
+    loan.monthEndClearedMonth && (!loan.renewalDueDate || !loan.limitExpiryDate)
+  );
+}
+
+export function renderIntegrationRecovery() {
+  const target = document.getElementById("integrationRecovery");
+  if (!target) return;
+  const loans = getRecoverableLoans();
+  if (!loans.length) {
+    target.innerHTML = "";
+    return;
+  }
+
+  const rows = loans.map(loan => {
+    const id = esc(loan.id);
+    const name = esc(loan.customerName || "—");
+    const branch = esc(loan.branch || "—");
+    const officer = esc(loan.allocatedTo || "—");
+    const clearedMonth = esc(monthLabel(loan.monthEndClearedMonth));
+    const existingDue = loan.renewalDueDate || "";
+    const existingExpiry = loan.limitExpiryDate || "";
+    return `<div class="ir-row" id="ir-row-${id}">
+      <div class="ir-row-info">
+        <span class="ir-name">${name}</span>
+        <span class="ir-meta">${branch} &middot; ${officer} &middot; Cleared ${clearedMonth}</span>
+      </div>
+      <div class="ir-row-inputs">
+        <div class="ir-field">
+          <label class="ir-label">Renewal Due</label>
+          <input type="date" class="ir-date-input" id="ir-due-${id}" value="${esc(existingDue)}" placeholder="Renewal due date">
+        </div>
+        <div class="ir-field">
+          <label class="ir-label">Limit Expiry</label>
+          <input type="date" class="ir-date-input" id="ir-exp-${id}" value="${esc(existingExpiry)}" placeholder="Limit expiry date">
+        </div>
+        <button class="ir-save-btn" onclick="saveIntegrationRecovery('${id}')">Save</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  target.innerHTML = `<div class="ir-section">
+    <div class="ir-header">
+      <span class="ir-title">Integration Recovery</span>
+      <span class="ir-badge">${loans.length} pending</span>
+    </div>
+    <div class="ir-desc">These renewals were cleared during month-end but are still missing renewal or limit expiry dates. Enter the dates below to complete integration.</div>
+    <div class="ir-list">${rows}</div>
+  </div>`;
+}
+
+window.renderIntegrationRecovery = renderIntegrationRecovery;
+
+window.saveIntegrationRecovery = async function(id) {
+  const dueInput = document.getElementById(`ir-due-${id}`);
+  const expInput = document.getElementById(`ir-exp-${id}`);
+  if (!dueInput || !expInput) return;
+  const renewalDueDate = dueInput.value;
+  const limitExpiryDate = expInput.value;
+  if (!renewalDueDate || !limitExpiryDate) {
+    toast("Enter both dates to complete integration");
+    return;
+  }
+  try {
+    await updateLoan(id, {
+      renewalDueDate,
+      limitExpiryDate,
+      renewalDatesPending: false,
+      renewalDueDatePending: false,
+      limitExpiryDatePending: false,
+      renewalDueDateEntered: true,
+      limitExpiryDateEntered: true,
+    });
+    toast("Integration dates saved");
+    const row = document.getElementById(`ir-row-${id}`);
+    if (row) row.remove();
+    if (!getRecoverableLoans().length) {
+      const section = document.querySelector(".ir-section");
+      if (section) section.remove();
+    }
+  } catch (err) {
+    console.error("[IntegrationRecovery] Save failed:", err);
+    toast("Error saving dates");
   }
 };
