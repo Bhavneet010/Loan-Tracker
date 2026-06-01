@@ -727,6 +727,14 @@ window.toggleMeHistCard = function(cardId) {
   if (card) card.classList.toggle("expanded");
 };
 
+window.toggleMeHistEdit = function(btn) {
+  const history = document.getElementById("monthEndHistory");
+  if (!history) return;
+  const editing = history.classList.toggle("editing");
+  btn.textContent = editing ? "Done" : "Edit";
+  btn.classList.toggle("active", editing);
+};
+
 window.deleteMonthSnapshot = async function(month, cardId) {
   if (!confirm(`Delete the ${monthLabel(month)} snapshot? This cannot be undone.`)) return;
   try {
