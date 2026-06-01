@@ -748,9 +748,15 @@ window.deleteMonthSnapshot = async function(month, cardId) {
 };
 
 function getRecoverableLoans() {
-  return (S.loans || []).filter(loan =>
-    loan.monthEndClearedMonth && (!loan.renewalDueDate || !loan.limitExpiryDate)
-  );
+  return (S.loans || []).filter(loan => {
+    if (loan.category !== 'SME' || loan.isTermLoan) return false;
+    const hasMissingDates = !loan.renewalDueDate || !loan.limitExpiryDate;
+    // Cleared by month-end cleanup but integration dates never entered
+    if (loan.monthEndClearedMonth && hasMissingDates) return true;
+    // Still in normal Integration Pending state (renewedDate not yet cleared)
+    if (loan.renewedDate && (loan.renewalDatesPending === true || hasMissingDates)) return true;
+    return false;
+  });
 }
 
 export function renderIntegrationRecovery() {
