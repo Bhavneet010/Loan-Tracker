@@ -1046,8 +1046,8 @@ function buildMonthlyPerformancePageHtml() {
   return `<div class="perf-period-placeholder monthly" style="text-align:left;">
     <div class="perf-period-placeholder-kicker" style="text-align:center;font-size:16px;letter-spacing:0.1em;white-space:nowrap;">Monthly Performance</div>
     <div style="display:flex;gap:8px;margin:14px 0 10px;">
-      <button type="button" id="monthEndSnapshotBtn" class="btn-primary-full" style="flex:1;background:linear-gradient(135deg,#13234C,#2563EB);" onclick="runMonthEndSnapshot()">Generate Snapshot</button>
-      ${S.isAdmin ? `<button type="button" id="monthEndCleanupBtn" class="btn-primary-full" style="flex:1;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="runMonthEndCleanup()">Cleanup Data</button>` : ''}
+      <button type="button" id="monthEndSnapshotBtn" class="btn-primary-full" style="flex:1;" onclick="runMonthEndSnapshot()">Generate Snapshot</button>
+      ${S.isAdmin ? `<button type="button" id="monthEndCleanupBtn" class="btn-primary-full" style="flex:1;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)!important;box-shadow:none;" onclick="runMonthEndCleanup()">Cleanup Data</button>` : ''}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0;">
       <div style="font-size:12px;font-weight:800;color:#4A4467;text-transform:uppercase;letter-spacing:.06em;">Previous Month Dashboards</div>
