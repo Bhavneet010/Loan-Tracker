@@ -261,18 +261,11 @@ window.shareDailySnapshotJpeg = async function () {
 
     const finalCanvas = document.createElement("canvas");
     finalCanvas.width = exportWidth * hdScale;
-    finalCanvas.height = exportHeight * hdScale;
+    finalCanvas.height = Math.round(canvas.height * (finalCanvas.width / canvas.width));
     const finalCtx = finalCanvas.getContext("2d");
     finalCtx.fillStyle = "#f1eff8";
     finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-    // Lock the output to a fixed 9:16 (900x1600) frame so the aspect ratio is
-    // stable regardless of how tall the rendered content is. Fit the HD render
-    // to the frame width without distortion; never upscale beyond native.
-    const fitScale = Math.min(finalCanvas.width / canvas.width, finalCanvas.height / canvas.height);
-    const drawW = canvas.width * fitScale;
-    const drawH = canvas.height * fitScale;
-    const drawX = (finalCanvas.width - drawW) / 2;
-    finalCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, drawX, 0, drawW, drawH);
+    finalCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, finalCanvas.width, finalCanvas.height);
 
     const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
