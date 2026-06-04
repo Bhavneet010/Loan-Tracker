@@ -233,8 +233,8 @@ window.shareDailySnapshotJpeg = async function () {
     exportCard.classList.add("snapshot-export", "daily-jpeg-export");
     exportCard.style.width = `${exportWidth}px`;
     exportCard.style.maxWidth = "none";
-    exportHost.appendChild(exportStyle);
     exportHost.appendChild(exportCard);
+    document.head.appendChild(exportStyle);
     document.body.appendChild(exportHost);
 
     let canvas;
@@ -248,6 +248,7 @@ window.shareDailySnapshotJpeg = async function () {
       });
     } finally {
       exportHost.remove();
+      exportStyle.remove();
     }
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
