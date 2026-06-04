@@ -149,7 +149,8 @@ window.shareDailySnapshotJpeg = async function () {
     await Promise.all(SNAPSHOT_BG_ASSETS.map(ensureImageLoaded));
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const exportWidth = 900;
-    const hdScale = 3;
+    const exportHeight = 1600;
+    const hdScale = 2;
     const exportHost = document.createElement("div");
     const exportCard = card.cloneNode(true);
     const exportCss = `
@@ -258,7 +259,17 @@ window.shareDailySnapshotJpeg = async function () {
       exportHost.remove();
     }
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
+    const finalCanvas = document.createElement("canvas");
+    finalCanvas.width = exportWidth;
+    finalCanvas.height = exportHeight;
+    const finalCtx = finalCanvas.getContext("2d");
+    finalCtx.fillStyle = "#f1eff8";
+    finalCtx.fillRect(0, 0, exportWidth, exportHeight);
+    const fitScale = exportWidth / canvas.width;
+    const drawHeight = canvas.height * fitScale;
+    finalCtx.drawImage(canvas, 0, 0, exportWidth, drawHeight);
+
+    const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
 
     const fileName = `daily-snapshot-clear-hd-${todayFileName()}.jpg`;
