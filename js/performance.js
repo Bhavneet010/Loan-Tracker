@@ -152,8 +152,7 @@ window.shareDailySnapshotJpeg = async function () {
     const hdScale = 4;
     const exportHost = document.createElement("div");
     const exportCard = card.cloneNode(true);
-    const exportStyle = document.createElement("style");
-    exportStyle.textContent = `
+    const exportCss = `
       .editorial-phone-report.snapshot-export.daily-jpeg-export{
         width:760px !important;
         max-width:none !important;
@@ -234,7 +233,6 @@ window.shareDailySnapshotJpeg = async function () {
     exportCard.style.width = `${exportWidth}px`;
     exportCard.style.maxWidth = "none";
     exportHost.appendChild(exportCard);
-    document.head.appendChild(exportStyle);
     document.body.appendChild(exportHost);
 
     let canvas;
@@ -245,16 +243,25 @@ window.shareDailySnapshotJpeg = async function () {
         useCORS: true,
         width: exportWidth,
         windowWidth: exportWidth,
+        onclone: clonedDoc => {
+          const style = clonedDoc.createElement("style");
+          style.textContent = exportCss;
+          clonedDoc.head.appendChild(style);
+          const clonedCard = clonedDoc.querySelector(".editorial-phone-report.daily-jpeg-export");
+          if (clonedCard) {
+            clonedCard.style.width = `${exportWidth}px`;
+            clonedCard.style.maxWidth = "none";
+          }
+        },
       });
     } finally {
       exportHost.remove();
-      exportStyle.remove();
     }
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
 
-    const fileName = `daily-snapshot-hd-${todayFileName()}.jpg`;
+    const fileName = `daily-snapshot-clear-hd-${todayFileName()}.jpg`;
     const file = new File([blob], fileName, { type: "image/jpeg" });
 
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
