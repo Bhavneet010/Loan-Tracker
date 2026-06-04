@@ -209,20 +209,20 @@ window.shareDailySnapshotJpeg = async function () {
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-pills-grid,
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-status-strip{gap:6px;}
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-pill,
-      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-status-card{padding:6px 9px;border-radius:9px;}
+      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-status-card{padding:8px 10px;border-radius:9px;}
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-pill span,
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-status-card label,
-      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metrics label{font-size:10px;}
+      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metrics label{font-size:13px;}
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-pill strong,
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-status-card strong,
-      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metrics strong{font-size:24px;font-weight:800;color:#120f28;}
+      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metrics strong{font-size:30px;font-weight:800;color:#120f28;}
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-pill small,
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-status-card span,
-      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metrics span{font-size:12px;}
-      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-row{margin-top:7px;padding:8px 11px;gap:7px;border-radius:11px;}
-      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-bookmark span{font-size:12px;}
+      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metrics span{font-size:15px;}
+      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-row{margin-top:7px;padding:9px 12px;gap:7px;border-radius:11px;}
+      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-bookmark span{font-size:14px;}
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metrics{gap:7px;}
-      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metric.today-highlight{padding:5px 7px;border-radius:7px;}
+      .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-renewal-metric.today-highlight{padding:6px 8px;border-radius:7px;}
       .editorial-phone-report.snapshot-export.daily-jpeg-export .editorial-footer{padding:8px 26px 12px;font-size:12px;}
     `;
     exportHost.style.position = "fixed";
