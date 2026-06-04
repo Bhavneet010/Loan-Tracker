@@ -221,7 +221,7 @@ function bestOfficer(loans) {
     row.count++;
     row.amount += parseFloat(loan.amount) || 0;
   });
-  return Array.from(rows.values()).sort((a, b) => (b.count - a.count) || (b.amount - a.amount) || a.officer.localeCompare(b.officer))[0] || { officer: 'No data', count: 0, amount: 0 };
+  return Array.from(rows.values()).sort((a, b) => (b.amount - a.amount) || (b.count - a.count) || a.officer.localeCompare(b.officer))[0] || { officer: 'No data', count: 0, amount: 0 };
 }
 
 function performerCardHtml(label, row, type) {
