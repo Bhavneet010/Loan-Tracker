@@ -260,14 +260,12 @@ window.shareDailySnapshotJpeg = async function () {
     }
 
     const finalCanvas = document.createElement("canvas");
-    finalCanvas.width = exportWidth;
-    finalCanvas.height = exportHeight;
+    finalCanvas.width = canvas.width;
+    finalCanvas.height = canvas.height;
     const finalCtx = finalCanvas.getContext("2d");
     finalCtx.fillStyle = "#f1eff8";
-    finalCtx.fillRect(0, 0, exportWidth, exportHeight);
-    const fitScale = exportWidth / canvas.width;
-    const drawHeight = canvas.height * fitScale;
-    finalCtx.drawImage(canvas, 0, 0, exportWidth, drawHeight);
+    finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+    finalCtx.drawImage(canvas, 0, 0);
 
     const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, "image/jpeg", 0.99));
     if (!blob) throw new Error("JPEG export failed");
