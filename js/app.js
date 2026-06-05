@@ -12,6 +12,7 @@ import "./importers.js";
 import "./loan-actions.js";
 import "./ui-settings.js";
 import "./month-end.js";
+import "./export-excel.js";
 
 /* ── TABS CLICK LISTENER ── */
 const mainTabs = document.getElementById('mainTabs');
