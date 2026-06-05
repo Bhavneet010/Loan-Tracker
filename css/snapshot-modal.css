@@ -23,7 +23,7 @@
 }
 .perf-overlay-header.snapshot-mode .back-btn,
 .perf-overlay-header.snapshot-mode .perf-overlay-title,
-.perf-overlay-header.snapshot-mode .perf-overlay-actions{
+.perf-overlay-header.snapshot-mode .perf-header-right{
   position:relative;
   z-index:1;
 }
@@ -34,17 +34,18 @@
   font-size:1.05rem;
   font-weight:800;
 }
-.perf-overlay-actions{
+.perf-header-right{
   margin-left:auto;
   display:flex;
   align-items:center;
   gap:var(--space-sm);
 }
+.perf-overlay-actions{
+  display:flex;
+  align-items:center;
+  gap:var(--space-sm);
+}
 .perf-excel-icon-btn{
-  position:absolute;
-  right:12px;
-  top:50%;
-  transform:translateY(-50%);
   background:none;
   border:none;
   cursor:pointer;
