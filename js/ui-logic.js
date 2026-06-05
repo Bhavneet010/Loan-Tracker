@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { esc } from "./utils.js";
+import { esc, todayStr } from "./utils.js";
 
 /* ── SHARED UI UTILITIES ── */
 export function searchMatch(l) {
@@ -14,6 +14,11 @@ export function applyFilters(loans) {
   if (S.filter.category !== 'All') out = out.filter(l => l.category === S.filter.category);
   if (S.filter.officer === 'Mine' && S.user) out = out.filter(l => l.allocatedTo === S.user);
   else if (S.filter.officer !== 'All' && S.filter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.filter.officer);
+  if (S.filter.today) {
+    const today = todayStr();
+    const dateKey = S.tab === 'sanctioned' ? 'sanctionDate' : S.tab === 'returned' ? 'returnedDate' : 'receiveDate';
+    out = out.filter(l => l[dateKey] === today);
+  }
   return out;
 }
 
@@ -35,7 +40,7 @@ export function applySort(loans) {
 const SORT_LABELS = { date: 'Date', amount: 'Amount', officer: 'Officer', category: 'Category' };
 
 export function filterSortBarHtml() {
-  const fc = (S.filter.category !== 'All' ? 1 : 0) + (S.filter.officer !== 'All' ? 1 : 0);
+  const fc = (S.filter.category !== 'All' ? 1 : 0) + (S.filter.officer !== 'All' ? 1 : 0) + (S.filter.today ? 1 : 0);
   const sortLabel = `${SORT_LABELS[S.sort.field] || 'Date'} ${S.sort.dir === 'asc' ? '&#8593;' : '&#8595;'}`;
   const officerOpts = [
     { v: 'All', label: 'All officers' },
@@ -65,6 +70,7 @@ export function filterSortBarHtml() {
   return `<div class="fs-bar" onclick="event.stopPropagation();">
     <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'filter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('filter')">&#9906; Filter<span class="fs-badge">${fc || ''}</span></button>
     <button class="fs-btn ${S.openPop === 'sort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('sort')">&#8597; Sort <span class="fs-label">${sortLabel}</span></button>
+    <button class="fs-btn fs-today-btn${S.filter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleFreshToday()">Today</button>
     <div class="fs-pop" id="fsFilterPop" style="${filterStyle}">
       <h4>Category</h4>${radio('category', catOpts, S.filter.category)}
       <hr>

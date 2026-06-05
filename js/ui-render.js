@@ -104,6 +104,13 @@ window.toggleRenewalNpa = function(show) {
   render();
 };
 
+window.toggleFreshToday = function() { S.filter.today = !S.filter.today; render(); };
+window.toggleRenewalToday = function() {
+  S.renewalFilter.today = !S.renewalFilter.today;
+  if (S.renewalFilter.today) { S.renewalView = 'list'; S.renewalTab = 'done'; S.calendarOpenDay = null; }
+  render();
+};
+
 window.setRenewalView = function(v) {
   S.renewalView = v;
   S.openPop = null;

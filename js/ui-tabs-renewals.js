@@ -1,6 +1,6 @@
 ﻿import { S } from "./state.js";
 import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
-import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
+import { esc, fmtAmt, initials, officerColor, branchCode, todayStr } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
 import { buildCalendarViewHtml } from "./ui-calendar.js";
@@ -44,7 +44,8 @@ export function renderRenewals(c) {
   const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) +
     (S.renewalFilter.branch !== 'All' ? 1 : 0) +
     (S.renewalFilter.completion !== 'All' ? 1 : 0) +
-    (S.renewalFilter.status && S.renewalFilter.status !== 'All' ? 1 : 0);
+    (S.renewalFilter.status && S.renewalFilter.status !== 'All' ? 1 : 0) +
+    (S.renewalFilter.today ? 1 : 0);
   const sortLabel = `${sl[S.renewalSort.field] || 'Days'} ${S.renewalSort.dir === 'asc' ? '&#8593;' : '&#8595;'}`;
   const radio = (name, opts, cur) => opts.map(o => `<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur === o.v ? 'checked' : ''} onchange="${name === 'sortField' ? `setRenewalSort('${esc(o.v)}',null)` : name === 'sortDir' ? `setRenewalSort(null,'${esc(o.v)}')` : `setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
 
@@ -59,6 +60,7 @@ export function renderRenewals(c) {
     ${viewToggle}
     <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">Filter<span class="fs-badge">${fc || ''}</span></button>
     <button class="fs-btn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">Sort <span class="fs-label">${sortLabel}</span></button>
+    <button class="fs-btn fs-today-btn${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()">Today</button>
     ${canToggleNpa ? `<label class="rnw-npa-toggle" title="Show NPA accounts">
       <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
       <span>NPA</span>
@@ -198,6 +200,7 @@ export function applyRenewalFilters(enriched) {
   }
   if (S.renewalFilter.completion === 'DatesMissing') out = out.filter(hasMissingRenewalDates);
   else if (S.renewalFilter.completion === 'Complete') out = out.filter(l => !l.renewedDate || !hasMissingRenewalDates(l));
+  if (S.renewalFilter.today) out = out.filter(l => l.renewedDate === todayStr());
   return out;
 }
 
