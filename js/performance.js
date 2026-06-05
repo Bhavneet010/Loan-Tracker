@@ -13,19 +13,19 @@ const PERFORMANCE_PERIODS = {
     label: "Daily",
     title: "Daily Snapshot",
     render: renderDailyPerformanceView,
-    actions: '<button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button><button class="perf-export-btn" type="button" onclick="shareDailySnapshotJpeg()">Share</button>',
+    actions: '<button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button><button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportLoansExcel()">Export Excel</button><button class="perf-export-btn" type="button" onclick="shareDailySnapshotJpeg()">Share</button>',
   },
   weekly: {
     label: "Weekly",
     title: "Weekly Performance",
     render: renderWeeklyPerformanceView,
-    actions: '<button class="perf-export-btn" type="button" onclick="shareWeeklyPerformanceJpeg()">Share</button>',
+    actions: '<button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportLoansExcel()">Export Excel</button><button class="perf-export-btn" type="button" onclick="shareWeeklyPerformanceJpeg()">Share</button>',
   },
   monthly: {
     label: "Monthly",
     title: "Monthly Performance",
     render: renderMonthlyPerformanceView,
-    actions: '<button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button>',
+    actions: '<button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button><button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportLoansExcel()">Export Excel</button>',
   },
 };
 
