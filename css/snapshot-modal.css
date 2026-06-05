@@ -40,6 +40,23 @@
   align-items:center;
   gap:var(--space-sm);
 }
+.perf-excel-icon-btn{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:6px;
+  border-radius:8px;
+  color:var(--p1);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.perf-excel-icon-btn:hover{background:rgba(107,95,191,0.1);}
 .perf-period-toggle{
   display:flex;
   align-items:center;
