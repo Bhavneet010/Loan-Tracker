@@ -26,19 +26,6 @@ function fmt(s) {
   return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : s;
 }
 
-function baseRow(loan) {
-  return {
-    "Customer Name": loan.customerName || "",
-    "Amount (₹ Lakhs)": parseFloat(loan.amount) || 0,
-    "Category": loan.category || "",
-    "Officer": effectiveOfficer(loan),
-    "Branch": loan.branch || "",
-    "Receive Date": fmt(loan.receiveDate),
-    "Sanction Date": fmt(loan.sanctionDate),
-    "Remarks": loan.remarks || "",
-  };
-}
-
 function pendingRows(loans) {
   return loans
     .filter(l => isFreshCC(l) && l.status === "pending")
@@ -46,21 +33,47 @@ function pendingRows(loans) {
       const cd = (CAT_ORDER[a.category] ?? 99) - (CAT_ORDER[b.category] ?? 99);
       return cd !== 0 ? cd : (a.receiveDate || "").localeCompare(b.receiveDate || "");
     })
-    .map(baseRow);
+    .map(l => ({
+      "Category": l.category || "",
+      "Officer": effectiveOfficer(l),
+      "Branch": l.branch || "",
+      "Customer Name": l.customerName || "",
+      "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
+      "Receive Date": fmt(l.receiveDate),
+      "Remarks": l.remarks || "",
+    }));
 }
 
 function sanctionedRows(loans) {
   return loans
     .filter(l => isFreshCC(l) && l.status === "sanctioned")
     .sort((a, b) => (b.sanctionDate || "").localeCompare(a.sanctionDate || ""))
-    .map(baseRow);
+    .map(l => ({
+      "Officer": effectiveOfficer(l),
+      "Branch": l.branch || "",
+      "Customer Name": l.customerName || "",
+      "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
+      "Category": l.category || "",
+      "Receive Date": fmt(l.receiveDate),
+      "Sanction Date": fmt(l.sanctionDate),
+      "Remarks": l.remarks || "",
+    }));
 }
 
 function returnedRows(loans) {
   return loans
     .filter(l => isFreshCC(l) && l.status === "returned")
     .sort((a, b) => (b.returnedDate || "").localeCompare(a.returnedDate || ""))
-    .map(l => ({ ...baseRow(l), "Returned Date": fmt(l.returnedDate) }));
+    .map(l => ({
+      "Officer": effectiveOfficer(l),
+      "Branch": l.branch || "",
+      "Customer Name": l.customerName || "",
+      "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
+      "Category": l.category || "",
+      "Receive Date": fmt(l.receiveDate),
+      "Returned Date": fmt(l.returnedDate),
+      "Remarks": l.remarks || "",
+    }));
 }
 
 function renewalsDoneRows(loans) {
@@ -68,15 +81,13 @@ function renewalsDoneRows(loans) {
     .filter(l => l.category === "SME" && !l.isTermLoan && l.renewedDate)
     .sort((a, b) => (b.renewedDate || "").localeCompare(a.renewedDate || ""))
     .map(l => ({
-      "Customer Name": l.customerName || "",
-      "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
       "Officer": effectiveOfficer(l),
       "Branch": l.branch || "",
-      "Sanction Date": fmt(l.sanctionDate),
-      "Renewed Date": fmt(l.renewedDate),
-      "Renewal Due Date": fmt(l.renewalDueDate),
+      "": "",
+      "Customer Name": l.customerName || "",
+      "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
       "Limit Expiry Date": fmt(l.limitExpiryDate),
-      "Remarks": l.remarks || "",
+      "Renewal Due Date": fmt(l.renewalDueDate),
     }));
 }
 
@@ -105,22 +116,22 @@ window.exportLoansExcel = async function () {
 
     XLSX.utils.book_append_sheet(
       wb,
-      makeSheet(pendingRows(loans), ["Customer Name", "Amount (₹ Lakhs)", "Category", "Officer", "Branch", "Receive Date", "Sanction Date", "Remarks"]),
+      makeSheet(pendingRows(loans), ["Category", "Officer", "Branch", "Customer Name", "Amount (₹ Lakhs)", "Receive Date", "Remarks"]),
       "Pending Loans"
     );
     XLSX.utils.book_append_sheet(
       wb,
-      makeSheet(sanctionedRows(loans), ["Customer Name", "Amount (₹ Lakhs)", "Category", "Officer", "Branch", "Receive Date", "Sanction Date", "Remarks"]),
+      makeSheet(sanctionedRows(loans), ["Officer", "Branch", "Customer Name", "Amount (₹ Lakhs)", "Category", "Receive Date", "Sanction Date", "Remarks"]),
       "Sanctioned Loans"
     );
     XLSX.utils.book_append_sheet(
       wb,
-      makeSheet(returnedRows(loans), ["Customer Name", "Amount (₹ Lakhs)", "Category", "Officer", "Branch", "Receive Date", "Sanction Date", "Returned Date", "Remarks"]),
+      makeSheet(returnedRows(loans), ["Officer", "Branch", "Customer Name", "Amount (₹ Lakhs)", "Category", "Receive Date", "Returned Date", "Remarks"]),
       "Returned Loans"
     );
     XLSX.utils.book_append_sheet(
       wb,
-      makeSheet(renewalsDoneRows(loans), ["Customer Name", "Amount (₹ Lakhs)", "Officer", "Branch", "Sanction Date", "Renewed Date", "Renewal Due Date", "Limit Expiry Date", "Remarks"]),
+      makeSheet(renewalsDoneRows(loans), ["Officer", "Branch", "", "Customer Name", "Limit (₹ Lakhs)", "Limit Expiry Date", "Renewal Due Date"]),
       "Renewals Done"
     );
 
