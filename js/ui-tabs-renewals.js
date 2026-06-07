@@ -50,7 +50,6 @@ export function renderRenewals(c) {
 
   const filterStyle = S.openPop === 'rnwFilter' ? '' : 'display:none;';
   const sortStyle = S.openPop === 'rnwSort' ? '' : 'display:none;';
-  const todayNum = parseInt(todayStr().slice(8, 10), 10);
   const sortDirGlyph = S.renewalSort.dir === 'asc' ? '&#8593;' : '&#8595;';
   const sortTitle = `Sort by ${(sl[S.renewalSort.field] || 'Days').toLowerCase()}, ${S.renewalSort.dir === 'asc' ? 'ascending' : 'descending'}`;
 
@@ -68,9 +67,7 @@ export function renderRenewals(c) {
       <span class="rnw-tb-sep"></span>
       <button class="rnw-tbtn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')" title="${sortTitle}">${sortIcon}<span class="rnw-tbtn-dir">${sortDirGlyph}</span></button>
       <span class="rnw-tb-sep"></span>
-      <button class="rnw-tbtn${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()" title="Jump to today">
-        <span class="cal-mini"><span class="cal-mini-num">${todayNum}</span></span>
-      </button>
+      <button class="rnw-tbtn rnw-tbtn--text${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()">Today</button>
       ${canToggleNpa ? `<span class="rnw-tb-sep"></span>
       <button class="rnw-tbtn${S.renewalShowNpa ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalNpa(${!S.renewalShowNpa})" title="Show NPA accounts">NPA</button>` : ''}
       ${S.isAdmin && S.renewalView === 'calendar' ? `<span class="rnw-tb-sep"></span>
