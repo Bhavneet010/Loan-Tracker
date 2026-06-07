@@ -39,9 +39,13 @@ export function applySort(loans) {
 
 const SORT_LABELS = { date: 'Date', amount: 'Amount', officer: 'Officer', category: 'Category' };
 
+const flFilterIcon = `<svg class="fl-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h11l-4.25 5.1v4.4l-2.5 1.25V8.1z"/></svg>`;
+const flSortIcon = `<svg class="fl-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13V3M5 3 2.5 5.5M5 3l2.5 2.5"/><path d="M11 3v10m0 0 2.5-2.5M11 13l-2.5-2.5"/></svg>`;
+
 export function filterSortBarHtml() {
   const fc = (S.filter.category !== 'All' ? 1 : 0) + (S.filter.officer !== 'All' ? 1 : 0) + (S.filter.today ? 1 : 0);
-  const sortLabel = `${SORT_LABELS[S.sort.field] || 'Date'} ${S.sort.dir === 'asc' ? '&#8593;' : '&#8595;'}`;
+  const sortDirGlyph = S.sort.dir === 'asc' ? '&#8593;' : '&#8595;';
+  const sortTitle = `Sort by ${(SORT_LABELS[S.sort.field] || 'Date').toLowerCase()}, ${S.sort.dir === 'asc' ? 'ascending' : 'descending'}`;
   const officerOpts = [
     { v: 'All', label: 'All officers' },
     ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []),
@@ -67,16 +71,20 @@ export function filterSortBarHtml() {
   const filterStyle = S.openPop === 'filter' ? '' : 'display:none;';
   const sortStyle = S.openPop === 'sort' ? '' : 'display:none;';
   
-  return `<div class="fs-bar" onclick="event.stopPropagation();">
-    <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'filter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('filter')">&#9906; Filter<span class="fs-badge">${fc || ''}</span></button>
-    <button class="fs-btn ${S.openPop === 'sort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('sort')">&#8597; Sort <span class="fs-label">${sortLabel}</span></button>
-    <button class="fs-btn fs-today-btn${S.filter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleFreshToday()">Today</button>
+  return `<div class="fs-bar fl-toolbar" onclick="event.stopPropagation();">
+    <div class="fl-tb-scroll">
+      <button class="fl-tbtn ${fc ? 'active' : ''} ${S.openPop === 'filter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('filter')" title="Filter">${flFilterIcon}${fc ? `<span class="fl-tbtn-badge">${fc}</span>` : ''}</button>
+      <span class="fl-tb-sep"></span>
+      <button class="fl-tbtn ${S.openPop === 'sort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('sort')" title="${sortTitle}">${flSortIcon}<span class="fl-tbtn-dir">${sortDirGlyph}</span></button>
+      <span class="fl-tb-sep"></span>
+      <button class="fl-tbtn fl-tbtn--text${S.filter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleFreshToday()">Today</button>
+    </div>
     <div class="fs-pop" id="fsFilterPop" style="${filterStyle}">
       <h4>Category</h4>${radio('category', catOpts, S.filter.category)}
       <hr>
       <h4>Officer</h4>${radio('officer', officerOpts, S.filter.officer)}
     </div>
-    <div class="fs-pop fs-pop-right" id="fsSortPop" style="${sortStyle}">
+    <div class="fs-pop" id="fsSortPop" style="${sortStyle}">
       <h4>Sort by</h4>${radio('sortField', sortFields, S.sort.field)}
       <hr>
       <h4>Direction</h4>${radio('sortDir', [{ v: 'desc', label: 'Descending' }, { v: 'asc', label: 'Ascending' }], S.sort.dir)}
