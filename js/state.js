@@ -14,6 +14,8 @@ export const S = {
   appMode: 'tasks',
   filter: { category: 'All', officer: 'All', today: false },
   sort: { field: 'date', dir: 'desc' },
+  freshGroupMode: 'officer',
+  freshGroupCollapsed: {},
   renewalTab: 'done',
   renewalFilter: { officer: 'All', branch: 'All', completion: 'All', status: 'All', today: false },
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },

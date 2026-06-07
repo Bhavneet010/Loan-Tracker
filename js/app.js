@@ -41,6 +41,9 @@ async function init() {
   console.log('[INIT] Loading configuration...');
   await loadSettings();
   
+  const savedGroupMode = localStorage.getItem('lpFreshGroupMode');
+  S.freshGroupMode = savedGroupMode === 'category' ? 'category' : 'officer';
+
   const savedTheme = localStorage.getItem('lpTheme');
   const darkPref = localStorage.getItem('lpDark');
   if (savedTheme === 'neo-brutalist') {

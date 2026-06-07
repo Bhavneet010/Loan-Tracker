@@ -105,6 +105,15 @@ window.toggleRenewalNpa = function(show) {
 };
 
 window.toggleFreshToday = function() { S.filter.today = !S.filter.today; render(); };
+window.setFreshGroupMode = function(mode) {
+  S.freshGroupMode = mode === 'category' ? 'category' : 'officer';
+  localStorage.setItem('lpFreshGroupMode', S.freshGroupMode);
+  render();
+};
+window.toggleFreshGroup = function(key) {
+  S.freshGroupCollapsed = { ...(S.freshGroupCollapsed || {}), [key]: !S.freshGroupCollapsed?.[key] };
+  render();
+};
 window.toggleRenewalToday = function() {
   S.renewalFilter.today = !S.renewalFilter.today;
   if (S.renewalFilter.today) { S.renewalView = 'list'; S.renewalTab = 'done'; S.calendarOpenDay = null; }
