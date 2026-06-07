@@ -64,10 +64,9 @@ export function renderRenewals(c) {
         <button type="button" data-renewal-view="list" class="rnw-tbtn rnw-tbtn--text ${S.renewalView === 'list' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('list')">List</button>
       </div>
       <span class="rnw-tb-sep"></span>
-      <div class="rnw-tb-group">
-        <button class="rnw-tbtn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')" title="Filter">${filterIcon}${fc ? `<span class="rnw-tbtn-badge">${fc}</span>` : ''}</button>
-        <button class="rnw-tbtn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')" title="${sortTitle}">${sortIcon}<span class="rnw-tbtn-dir">${sortDirGlyph}</span></button>
-      </div>
+      <button class="rnw-tbtn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')" title="Filter">${filterIcon}${fc ? `<span class="rnw-tbtn-badge">${fc}</span>` : ''}</button>
+      <span class="rnw-tb-sep"></span>
+      <button class="rnw-tbtn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')" title="${sortTitle}">${sortIcon}<span class="rnw-tbtn-dir">${sortDirGlyph}</span></button>
       <span class="rnw-tb-sep"></span>
       <button class="rnw-tbtn${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()" title="Jump to today">
         <span class="cal-mini"><span class="cal-mini-num">${todayNum}</span></span>

@@ -367,16 +367,16 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
 .rnw-tb-scroll{
   display:flex;
   align-items:center;
-  gap:3px;
+  gap:1px;
   overflow-x:auto;
   scrollbar-width:none;
 }
 .rnw-tb-scroll::-webkit-scrollbar{display:none;}
-.rnw-tb-group{display:inline-flex;align-items:center;gap:2px;flex-shrink:0;}
+.rnw-tb-group{display:inline-flex;align-items:center;gap:1px;flex-shrink:0;}
 .rnw-tb-sep{
   width:1px;
   align-self:stretch;
-  margin:5px 2px;
+  margin:5px 1px;
   background:rgba(107,95,191,0.18);
   flex-shrink:0;
 }
@@ -387,7 +387,7 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
   gap:3px;
   height:29px;
   min-width:29px;
-  padding:0 9px;
+  padding:0 7px;
   border:0;
   border-radius:var(--radius-pill);
   background:transparent;
@@ -400,7 +400,7 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
   white-space:nowrap;
   flex-shrink:0;
 }
-.rnw-tbtn--text{font-weight:900;padding:0 11px;}
+.rnw-tbtn--text{font-weight:900;padding:0 9px;}
 .rnw-tbtn.active,
 .rnw-tbtn.open{
   background:var(--p2);
