@@ -20,8 +20,8 @@ function freshGroupToggleHtml() {
   if (!S.isAdmin) return '';
   const m = S.freshGroupMode;
   return `<div class="fresh-group-toggle" role="group" aria-label="Group loans by" onclick="event.stopPropagation();">
-    <button type="button" class="${m === 'officer' ? 'active' : ''}" onclick="setFreshGroupMode('officer')">By Officer</button>
-    <button type="button" class="${m === 'category' ? 'active' : ''}" onclick="setFreshGroupMode('category')">By Category</button>
+    <button type="button" class="${m === 'officer' ? 'active' : ''}" onclick="setFreshGroupMode('officer')">Officer</button>
+    <button type="button" class="${m === 'category' ? 'active' : ''}" onclick="setFreshGroupMode('category')">Category</button>
   </div>`;
 }
 
