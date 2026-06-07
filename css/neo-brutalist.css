@@ -470,8 +470,20 @@ body.theme-neo-brutalist .decision-activity-row{
 }
 
 body.theme-neo-brutalist .targets-tile--leader{
-  background:linear-gradient(135deg,#FFF176 0%,#D5FFE9 52%,#BDE7FF 100%);
+  background:
+    radial-gradient(circle at 14% 18%,rgba(255,45,149,0.24) 0 13%,transparent 28%),
+    radial-gradient(circle at 88% 20%,rgba(255,214,0,0.26) 0 12%,transparent 27%),
+    radial-gradient(circle at 22% 86%,rgba(0,228,124,0.20) 0 13%,transparent 29%),
+    radial-gradient(circle at 86% 86%,rgba(0,183,255,0.18) 0 12%,transparent 28%),
+    #FFFFFF;
   border-color:#000;
+  box-shadow:var(--brut-shadow-sm);
+}
+body.theme-neo-brutalist .targets-tile--leader .targets-tile-name,
+body.theme-neo-brutalist .targets-tile--leader .targets-tile-num,
+body.theme-neo-brutalist .targets-tile--leader .targets-tile-target{
+  color:#000;
+  text-shadow:none;
 }
 
 body.theme-neo-brutalist .cal-cell--active-has{

@@ -341,13 +341,17 @@ body.dark .targets-tile{
 }
 body.dark .targets-tile--leader{
   background:
-    radial-gradient(circle at 18% 16%,rgba(251,191,36,0.28),transparent 34%),
-    radial-gradient(circle at 88% 20%,rgba(244,114,182,0.18),transparent 30%),
-    linear-gradient(135deg,rgba(84,56,11,0.88),rgba(20,82,61,0.72) 52%,rgba(42,35,98,0.86));
-  border-color:rgba(251,191,36,0.44);
-  box-shadow:0 8px 22px rgba(0,0,0,0.20),0 0 0 1px rgba(251,191,36,0.12),0 0 18px rgba(52,211,153,0.12);
+    radial-gradient(circle at 14% 18%,rgba(244,114,182,0.24) 0 13%,transparent 28%),
+    radial-gradient(circle at 88% 20%,rgba(251,191,36,0.22) 0 12%,transparent 27%),
+    radial-gradient(circle at 22% 86%,rgba(52,211,153,0.18) 0 13%,transparent 29%),
+    radial-gradient(circle at 86% 86%,rgba(96,165,250,0.18) 0 12%,transparent 28%),
+    rgba(23,21,47,0.88);
+  border-color:rgba(251,191,36,0.28);
+  box-shadow:0 8px 22px rgba(0,0,0,0.18);
 }
-body.dark .targets-tile--leader .targets-tile-name{color:#fde68a;}
+body.dark .targets-tile--leader .targets-tile-name{color:var(--text1);}
+body.dark .targets-tile--leader .targets-tile-num{color:var(--text1);}
+body.dark .targets-tile--leader .targets-tile-target{color:var(--text3);}
 body.dark .task-care{
   background:linear-gradient(135deg,rgba(127,29,29,0.28),rgba(88,28,135,0.12));
   border-color:rgba(252,165,165,0.22);

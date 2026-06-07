@@ -629,10 +629,17 @@ body.theme-sketchnote .decision-activity-row{
 
 body.theme-sketchnote .targets-tile--leader{
   background:
-    radial-gradient(circle at 16% 18%,rgba(255,213,92,0.54),transparent 34%),
-    radial-gradient(circle at 86% 22%,rgba(240,143,176,0.34),transparent 32%),
-    linear-gradient(135deg,#FFF2B8 0%,#D9F0E7 54%,#D9ECFA 100%);
+    radial-gradient(circle at 14% 18%,rgba(232,93,93,0.22) 0 13%,transparent 28%),
+    radial-gradient(circle at 88% 20%,rgba(255,213,92,0.24) 0 12%,transparent 27%),
+    radial-gradient(circle at 22% 86%,rgba(91,194,168,0.18) 0 13%,transparent 29%),
+    radial-gradient(circle at 86% 86%,rgba(107,168,217,0.17) 0 12%,transparent 28%),
+    #FBFAF3;
 }
+body.theme-sketchnote .targets-tile--leader .targets-tile-name,
+body.theme-sketchnote .targets-tile--leader .targets-tile-num{
+  color:#2A3142 !important;
+}
+body.theme-sketchnote .targets-tile--leader .targets-tile-target{color:#5B6577;}
 
 body.theme-sketchnote .cal-cell--active-has{
   background:#D9F0E7;

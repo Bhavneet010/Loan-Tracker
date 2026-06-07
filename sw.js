@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v154';
+const CACHE = 'nirnay-v156';
 const ASSETS = [
   './',
   './index.html',
@@ -43,12 +43,12 @@ const ASSETS = [
   './css/decision-sheet.css',
   './css/notifications.css',
   './css/renewals.css',
-  './css/dark-mode.css?v=154',
-  './css/neo-brutalist.css?v=154',
-  './css/sketchnote.css?v=154',
+  './css/dark-mode.css?v=156',
+  './css/neo-brutalist.css?v=156',
+  './css/sketchnote.css?v=156',
   './css/snapshot-modal.css',
   './css/snapshot-report.css',
-  './css/tasks.css?v=154',
+  './css/tasks.css?v=156',
   './js/animate.js',
   './js/app.js',
   './js/config.js',

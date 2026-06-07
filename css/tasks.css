@@ -380,13 +380,17 @@ body.dark .task-target-daysleft{background:rgba(139,124,246,0.16);border-color:r
 .targets-tile--leader{
   position:relative;overflow:visible;cursor:pointer;
   background:
-    radial-gradient(circle at 18% 16%,rgba(251,191,36,0.34),transparent 34%),
-    radial-gradient(circle at 88% 20%,rgba(244,114,182,0.24),transparent 30%),
-    linear-gradient(135deg,#fff7d6 0%,#f4fff1 48%,#eef7ff 100%);
-  border-color:rgba(251,191,36,0.54);
-  box-shadow:0 3px 10px rgba(251,191,36,0.16),0 1px 5px rgba(52,211,153,0.12);
+    radial-gradient(circle at 14% 18%,rgba(244,114,182,0.24) 0 13%,transparent 28%),
+    radial-gradient(circle at 88% 20%,rgba(251,191,36,0.25) 0 12%,transparent 27%),
+    radial-gradient(circle at 22% 86%,rgba(52,211,153,0.20) 0 13%,transparent 29%),
+    radial-gradient(circle at 86% 86%,rgba(96,165,250,0.18) 0 12%,transparent 28%),
+    #fff;
+  border-color:rgba(251,191,36,0.30);
+  box-shadow:0 2px 8px rgba(107,95,191,0.07);
 }
-.targets-tile--leader .targets-tile-name{color:#5b3b00;}
+.targets-tile--leader .targets-tile-name{color:var(--text1);}
+.targets-tile--leader .targets-tile-num{color:var(--text1);}
+.targets-tile--leader .targets-tile-target{color:var(--text3);}
 .targets-tile-crown{
   position:absolute;top:-9px;right:-3px;font-size:13px;line-height:1;z-index:3;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,0.18));pointer-events:none;
