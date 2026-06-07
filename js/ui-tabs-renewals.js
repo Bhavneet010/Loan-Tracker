@@ -54,6 +54,9 @@ export function renderRenewals(c) {
   const sortDirGlyph = S.renewalSort.dir === 'asc' ? '&#8593;' : '&#8595;';
   const sortTitle = `Sort by ${(sl[S.renewalSort.field] || 'Days').toLowerCase()}, ${S.renewalSort.dir === 'asc' ? 'ascending' : 'descending'}`;
 
+  const filterIcon = `<svg class="rnw-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h11l-4.25 5.1v4.4l-2.5 1.25V8.1z"/></svg>`;
+  const sortIcon = `<svg class="rnw-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13V3M5 3 2.5 5.5M5 3l2.5 2.5"/><path d="M11 3v10m0 0 2.5-2.5M11 13l-2.5-2.5"/></svg>`;
+
   const fsBar = `<div class="fs-bar rnw-toolbar" onclick="event.stopPropagation();">
     <div class="rnw-tb-scroll">
       <div class="rnw-tb-group">
@@ -62,18 +65,17 @@ export function renderRenewals(c) {
       </div>
       <span class="rnw-tb-sep"></span>
       <div class="rnw-tb-group">
-        <button class="rnw-tbtn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')" title="Filter">&#9906;${fc ? `<span class="rnw-tbtn-badge">${fc}</span>` : ''}</button>
-        <button class="rnw-tbtn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')" title="${sortTitle}">&#8597;<span class="rnw-tbtn-dir">${sortDirGlyph}</span></button>
-        <button class="rnw-tbtn${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()" title="Jump to today">
-          <span class="cal-mini"><span class="cal-mini-num">${todayNum}</span></span>
-        </button>
+        <button class="rnw-tbtn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')" title="Filter">${filterIcon}${fc ? `<span class="rnw-tbtn-badge">${fc}</span>` : ''}</button>
+        <button class="rnw-tbtn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')" title="${sortTitle}">${sortIcon}<span class="rnw-tbtn-dir">${sortDirGlyph}</span></button>
       </div>
-      ${canToggleNpa || (S.isAdmin && S.renewalView === 'calendar') ? '<span class="rnw-tb-sep"></span>' : ''}
-      ${canToggleNpa ? `<label class="rnw-tbtn rnw-tbtn--npa${S.renewalShowNpa ? ' active' : ''}" title="Show NPA accounts">
-        <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
-        <span>NPA</span>
-      </label>` : ''}
-      ${S.isAdmin && S.renewalView === 'calendar' ? `<button class="rnw-tbtn${S.calendarBarExpanded ? ' active' : ''}" onclick="event.stopPropagation();toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>` : ''}
+      <span class="rnw-tb-sep"></span>
+      <button class="rnw-tbtn${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()" title="Jump to today">
+        <span class="cal-mini"><span class="cal-mini-num">${todayNum}</span></span>
+      </button>
+      ${canToggleNpa ? `<span class="rnw-tb-sep"></span>
+      <button class="rnw-tbtn${S.renewalShowNpa ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalNpa(${!S.renewalShowNpa})" title="Show NPA accounts">NPA</button>` : ''}
+      ${S.isAdmin && S.renewalView === 'calendar' ? `<span class="rnw-tb-sep"></span>
+      <button class="rnw-tbtn${S.calendarBarExpanded ? ' active' : ''}" onclick="event.stopPropagation();toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>` : ''}
     </div>
     <div class="fs-pop" style="${filterStyle}">
       <h4>Status</h4>${radio('status', [{ v: 'All', label: 'All statuses' }, { v: 'DueSoon', label: 'Due soon accounts' }], S.renewalFilter.status || 'All')}

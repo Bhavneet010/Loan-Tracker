@@ -419,8 +419,7 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
   text-align:center;
   padding:0 1px;
 }
-.rnw-tbtn--npa{gap:5px;font-weight:700;}
-.rnw-tbtn--npa input{accent-color:var(--p1);margin:0;}
+.rnw-tbicon{display:block;flex-shrink:0;}
 .cal-mini{
   display:inline-flex;
   align-items:flex-end;
