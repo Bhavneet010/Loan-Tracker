@@ -13,7 +13,7 @@ export function renderRenewals(c) {
   else if (S.renewalTab === 'dates-missing') tabFiltered = metrics.renewalDatesMissing;
   else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
-  const canToggleNpa = ['due-soon', 'overdue', 'all'].includes(S.renewalTab) || S.renewalView === 'calendar';
+  const canToggleNpa = ['due-soon', 'overdue', 'all', 'done'].includes(S.renewalTab) || S.renewalView === 'calendar';
   if (canToggleNpa && !S.renewalShowNpa) tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
 
   const sl = { daysFromSanction: 'Days', amount: 'Amount', officer: 'Officer', branch: 'Branch' };
@@ -165,7 +165,7 @@ function buildRenewalListContent(metrics) {
   else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
 
-  const canToggleNpa = ['due-soon', 'overdue', 'all'].includes(S.renewalTab) || S.renewalView === 'calendar';
+  const canToggleNpa = ['due-soon', 'overdue', 'all', 'done'].includes(S.renewalTab) || S.renewalView === 'calendar';
   if (canToggleNpa && !S.renewalShowNpa) tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
 
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
