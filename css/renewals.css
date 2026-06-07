@@ -384,6 +384,7 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
   flex-shrink:0;
 }
 .rnw-tbtn{
+  position:relative;
   display:inline-flex;
   align-items:center;
   justify-content:center;
