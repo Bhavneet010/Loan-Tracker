@@ -262,6 +262,9 @@ function renewalTargetsHtml(metrics) {
   const leader = [...officers]
     .filter(o => o.done > 0 && o.target > 0)
     .sort((a, b) => (b.pct - a.pct) || (b.done - a.done) || a.officer.localeCompare(b.officer))[0];
+  const leastRenewal = [...officers]
+    .filter(o => o.target > 0)
+    .sort((a, b) => (a.pct - b.pct) || (a.done - b.done) || a.officer.localeCompare(b.officer))[0];
 
   let celebrate = false;
   if (leader && !targetsCelebratedMonths.has(metrics.thisMonth)) {
@@ -271,7 +274,8 @@ function renewalTargetsHtml(metrics) {
 
   const tiles = officers.map(({ officer, done, target, pct, solid }, idx) => {
     const isLeader = !!leader && officer === leader.officer;
-    const cls = `targets-tile${isLeader ? ' targets-tile--leader' : ''}${isLeader && celebrate ? ' targets-tile--celebrate' : ''}`;
+    const isLeastRenewal = !!leastRenewal && officer === leastRenewal.officer && !isLeader;
+    const cls = `targets-tile${isLeader ? ' targets-tile--leader' : ''}${isLeastRenewal ? ' targets-tile--least-renewal' : ''}${isLeader && celebrate ? ' targets-tile--celebrate' : ''}`;
     const crown = isLeader ? '<span class="targets-tile-crown" aria-hidden="true">&#128081;</span>' : '';
     const sparkles = isLeader
       ? '<span class="targets-tile-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>'

@@ -391,6 +391,9 @@ body.dark .task-target-daysleft{background:rgba(139,124,246,0.16);border-color:r
 .targets-tile--leader .targets-tile-name{color:var(--text1);}
 .targets-tile--leader .targets-tile-num{color:var(--text1);}
 .targets-tile--leader .targets-tile-target{color:var(--text3);}
+.targets-tile--least-renewal{
+  border-color:rgba(239,68,68,0.58);
+}
 .targets-tile-crown{
   position:absolute;top:-9px;right:-3px;font-size:13px;line-height:1;z-index:3;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,0.18));pointer-events:none;
