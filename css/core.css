@@ -987,6 +987,9 @@ body.fresh-mode #statsScroll .stat-s{line-height:1.15;}
   padding:5px 9px;border-radius:var(--radius-sm);font-size:var(--fs-sm);font-weight:900;gap:var(--space-xs);
 }
 .fs-badge{font-size:var(--fs-xs);padding:0 5px;border-radius:var(--radius-xs);}
+.rnw-toolbar{padding:2px;}
+.rnw-tbtn{height:27px;min-width:27px;padding:0 8px;font-size:var(--fs-xs);}
+.rnw-tbtn--text{padding:0 9px;}
 .fs-pop{padding:8px;min-width:190px;border-radius:var(--radius-sm);}
 .fs-pop h4{font-size:var(--fs-xs);margin-bottom:4px;}
 .fs-pop label{padding:5px 3px;font-size:var(--fs-sm);}

@@ -46,26 +46,35 @@ export function renderRenewals(c) {
     (S.renewalFilter.completion !== 'All' ? 1 : 0) +
     (S.renewalFilter.status && S.renewalFilter.status !== 'All' ? 1 : 0) +
     (S.renewalFilter.today ? 1 : 0);
-  const sortLabel = `${sl[S.renewalSort.field] || 'Days'} ${S.renewalSort.dir === 'asc' ? '&#8593;' : '&#8595;'}`;
   const radio = (name, opts, cur) => opts.map(o => `<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur === o.v ? 'checked' : ''} onchange="${name === 'sortField' ? `setRenewalSort('${esc(o.v)}',null)` : name === 'sortDir' ? `setRenewalSort(null,'${esc(o.v)}')` : `setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
 
   const filterStyle = S.openPop === 'rnwFilter' ? '' : 'display:none;';
   const sortStyle = S.openPop === 'rnwSort' ? '' : 'display:none;';
-  const viewToggle = `<div class="rnw-view-toggle" role="group" aria-label="Renewal view">
-    <button type="button" data-renewal-view="calendar" class="${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('calendar')">Calendar</button>
-    <button type="button" data-renewal-view="list" class="${S.renewalView === 'list' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('list')">List</button>
-  </div>`;
+  const todayNum = parseInt(todayStr().slice(8, 10), 10);
+  const sortDirGlyph = S.renewalSort.dir === 'asc' ? '&#8593;' : '&#8595;';
+  const sortTitle = `Sort by ${(sl[S.renewalSort.field] || 'Days').toLowerCase()}, ${S.renewalSort.dir === 'asc' ? 'ascending' : 'descending'}`;
 
-  const fsBar = `<div class="fs-bar rnw-control-row" onclick="event.stopPropagation();">
-    ${viewToggle}
-    <button class="fs-btn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')">Filter<span class="fs-badge">${fc || ''}</span></button>
-    <button class="fs-btn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')">Sort <span class="fs-label">${sortLabel}</span></button>
-    <button class="fs-btn fs-today-btn${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()">Today</button>
-    ${canToggleNpa ? `<label class="rnw-npa-toggle" title="Show NPA accounts">
-      <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
-      <span>NPA</span>
-    </label>` : ''}
-    ${S.isAdmin && S.renewalView === 'calendar' ? `<button class="fs-btn rnw-expand-officers-btn${S.calendarBarExpanded ? ' active' : ''}" onclick="event.stopPropagation();toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>` : ''}
+  const fsBar = `<div class="fs-bar rnw-toolbar" onclick="event.stopPropagation();">
+    <div class="rnw-tb-scroll">
+      <div class="rnw-tb-group">
+        <button type="button" data-renewal-view="calendar" class="rnw-tbtn rnw-tbtn--text ${S.renewalView === 'calendar' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('calendar')">Calendar</button>
+        <button type="button" data-renewal-view="list" class="rnw-tbtn rnw-tbtn--text ${S.renewalView === 'list' ? 'active' : ''}" onclick="event.stopPropagation();setRenewalView('list')">List</button>
+      </div>
+      <span class="rnw-tb-sep"></span>
+      <div class="rnw-tb-group">
+        <button class="rnw-tbtn ${fc ? 'active' : ''} ${S.openPop === 'rnwFilter' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwFilter')" title="Filter">&#9906;${fc ? `<span class="rnw-tbtn-badge">${fc}</span>` : ''}</button>
+        <button class="rnw-tbtn ${S.openPop === 'rnwSort' ? 'open' : ''}" onclick="event.stopPropagation();toggleFsMenu('rnwSort')" title="${sortTitle}">&#8597;<span class="rnw-tbtn-dir">${sortDirGlyph}</span></button>
+        <button class="rnw-tbtn${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()" title="Jump to today">
+          <span class="cal-mini"><span class="cal-mini-num">${todayNum}</span></span>
+        </button>
+      </div>
+      ${canToggleNpa || (S.isAdmin && S.renewalView === 'calendar') ? '<span class="rnw-tb-sep"></span>' : ''}
+      ${canToggleNpa ? `<label class="rnw-tbtn rnw-tbtn--npa${S.renewalShowNpa ? ' active' : ''}" title="Show NPA accounts">
+        <input type="checkbox" ${S.renewalShowNpa ? 'checked' : ''} onchange="toggleRenewalNpa(this.checked)">
+        <span>NPA</span>
+      </label>` : ''}
+      ${S.isAdmin && S.renewalView === 'calendar' ? `<button class="rnw-tbtn${S.calendarBarExpanded ? ' active' : ''}" onclick="event.stopPropagation();toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>` : ''}
+    </div>
     <div class="fs-pop" style="${filterStyle}">
       <h4>Status</h4>${radio('status', [{ v: 'All', label: 'All statuses' }, { v: 'DueSoon', label: 'Due soon accounts' }], S.renewalFilter.status || 'All')}
       <hr>
@@ -131,7 +140,7 @@ export function updateRenewalMainContent({ transition = true } = {}) {
 }
 
 function syncRenewalChromeState() {
-  document.querySelectorAll('.rnw-view-toggle [data-renewal-view]').forEach(btn => {
+  document.querySelectorAll('.rnw-toolbar [data-renewal-view]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.renewalView === S.renewalView);
   });
 }
