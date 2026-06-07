@@ -367,6 +367,9 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
 .rnw-tb-scroll{
   display:flex;
   align-items:center;
+  justify-content:space-between;
+  flex:1;
+  min-width:0;
   gap:1px;
   overflow-x:auto;
   scrollbar-width:none;
