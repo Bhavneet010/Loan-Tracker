@@ -106,6 +106,7 @@ window.toggleRenewalNpa = function(show) {
 
 window.toggleFreshToday = function() { S.filter.today = !S.filter.today; render(); };
 window.setFreshGroupMode = function(mode) {
+  if (!S.isAdmin) return;
   S.freshGroupMode = mode === 'category' ? 'category' : 'officer';
   localStorage.setItem('lpFreshGroupMode', S.freshGroupMode);
   render();

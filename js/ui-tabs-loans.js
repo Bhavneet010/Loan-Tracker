@@ -12,7 +12,12 @@ function statusAction(id) {
   return `<button class="btn btn-sanction" onclick="openLoanDecisionSheet('${id}')">Status</button>`;
 }
 
+function freshGroupMode() {
+  return S.isAdmin ? S.freshGroupMode : 'category';
+}
+
 function freshGroupToggleHtml() {
+  if (!S.isAdmin) return '';
   const m = S.freshGroupMode;
   return `<div class="fresh-group-toggle" role="group" aria-label="Group loans by" onclick="event.stopPropagation();">
     <button type="button" class="${m === 'officer' ? 'active' : ''}" onclick="setFreshGroupMode('officer')">By Officer</button>
@@ -21,10 +26,11 @@ function freshGroupToggleHtml() {
 }
 
 function buildFreshGroups(loans) {
-  const order = S.freshGroupMode === 'category'
+  const mode = freshGroupMode();
+  const order = mode === 'category'
     ? ['SME', 'Agriculture', 'Education']
     : [...S.officers, 'Unassigned'];
-  const keyOf = S.freshGroupMode === 'category'
+  const keyOf = mode === 'category'
     ? l => (order.includes(l.category) ? l.category : 'Other')
     : l => effectiveOfficer(l);
 
@@ -35,15 +41,23 @@ function buildFreshGroups(loans) {
     map.get(key).push(l);
   });
   const keys = [...order.filter(k => map.has(k)), ...[...map.keys()].filter(k => !order.includes(k))];
-  return keys.map(key => ({ key, loans: map.get(key) }));
+  return keys.map(key => {
+    let groupLoans = map.get(key);
+    if (mode === 'category') {
+      groupLoans = [...groupLoans].sort((a, b) => effectiveOfficer(a).localeCompare(effectiveOfficer(b)));
+    }
+    return { key, loans: groupLoans };
+  });
 }
 
 function freshGroupsHtml(loans, itemHtml) {
+  const mode = freshGroupMode();
   let idx = 0;
   return buildFreshGroups(loans).map(({ key, loans: groupLoans }) => {
-    const collapsed = !!S.freshGroupCollapsed?.[key];
+    const stored = S.freshGroupCollapsed?.[key];
+    const collapsed = stored !== undefined ? !!stored : S.isAdmin;
     const total = sumAmount(groupLoans);
-    const marker = S.freshGroupMode === 'category'
+    const marker = mode === 'category'
       ? `<span class="grp-dot ${catCls(key) || 'none'}"></span>`
       : `<span class="grp-av" style="background:${officerColor(key).bg};">${initials(key)}</span>`;
     const items = groupLoans.map(l => itemHtml(l, idx++)).join('');
