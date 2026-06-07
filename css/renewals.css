@@ -360,7 +360,7 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
   position:relative;
   margin:0;
   padding:3px;
-  border:1px solid rgba(107,95,191,0.15);
+  border:2px solid rgba(123,111,212,0.5);
   border-radius:var(--radius-pill);
   background:rgba(255,255,255,0.66);
 }
@@ -427,7 +427,7 @@ body.dark .rnw-officer-row.active{background:rgba(107,95,191,0.18);}
 .rnw-list-head{margin-top:4px;}
 body.dark .rnw-toolbar{
   background:var(--dark-glass);
-  border-color:rgba(107,95,191,0.25);
+  border-color:rgba(155,143,228,0.55);
 }
 body.dark .rnw-tb-sep{background:rgba(155,143,228,0.22);}
 @media(max-width:340px){
