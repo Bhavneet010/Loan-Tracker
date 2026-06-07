@@ -469,7 +469,11 @@ body.theme-neo-brutalist .decision-activity-row{
   color:#000;
 }
 
-body.theme-neo-brutalist .targets-tile--leader,
+body.theme-neo-brutalist .targets-tile--leader{
+  background:linear-gradient(135deg,#FFF176 0%,#D5FFE9 52%,#BDE7FF 100%);
+  border-color:#000;
+}
+
 body.theme-neo-brutalist .cal-cell--active-has{
   background:#D5FFE9;
 }
