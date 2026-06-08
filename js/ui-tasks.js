@@ -262,9 +262,12 @@ function renewalTargetsHtml(metrics) {
   const leader = [...officers]
     .filter(o => o.done > 0 && o.target > 0)
     .sort((a, b) => (b.pct - a.pct) || (b.done - a.done) || a.officer.localeCompare(b.officer))[0];
-  const leastRenewal = [...officers]
+  // Wait for real renewal-progress data before picking a "least renewal" tile —
+  // otherwise every officer reads as 0/0 on first paint (loans stream in async)
+  // and the outline lands on an arbitrary alphabetical pick instead of the real one.
+  const leastRenewal = S.loans.length ? [...officers]
     .filter(o => o.target > 0)
-    .sort((a, b) => (a.pct - b.pct) || (a.done - b.done) || a.officer.localeCompare(b.officer))[0];
+    .sort((a, b) => (a.pct - b.pct) || (a.done - b.done) || a.officer.localeCompare(b.officer))[0] : null;
 
   let celebrate = false;
   if (leader && !targetsCelebratedMonths.has(metrics.thisMonth)) {
