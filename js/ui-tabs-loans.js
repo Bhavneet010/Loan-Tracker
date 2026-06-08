@@ -16,15 +16,6 @@ function freshGroupMode() {
   return S.isAdmin ? S.freshGroupMode : 'category';
 }
 
-function freshGroupToggleHtml() {
-  if (!S.isAdmin) return '';
-  const m = S.freshGroupMode;
-  return `<div class="fresh-group-toggle" role="group" aria-label="Group loans by" onclick="event.stopPropagation();">
-    <button type="button" class="${m === 'officer' ? 'active' : ''}" onclick="setFreshGroupMode('officer')">Officer</button>
-    <button type="button" class="${m === 'category' ? 'active' : ''}" onclick="setFreshGroupMode('category')">Category</button>
-  </div>`;
-}
-
 function buildFreshGroups(loans) {
   const mode = freshGroupMode();
   const order = mode === 'category'
@@ -87,7 +78,7 @@ export function renderPending(c) {
       return compactLoanItem(l, actions, days > 7 ? 'overdue' : '', '', idx);
     });
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right">${freshGroupToggleHtml()}<div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Pending Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }
 
 export function renderSanctioned(c) {
@@ -104,7 +95,7 @@ export function renderSanctioned(c) {
       return compactLoanItem(l, actions, '', 'sanctioned', idx);
     });
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right">${freshGroupToggleHtml()}<div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Sanctioned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }
 
 export function renderReturned(c) {
@@ -121,5 +112,5 @@ export function renderReturned(c) {
       return compactLoanItem(l, actions, '', 'returned', idx);
     });
 
-  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right">${freshGroupToggleHtml()}<div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
+  c.innerHTML = `${filterSortBarHtml()}<div class="sec-head"><div class="sec-title">Returned Loans</div><div class="sec-right"><div class="sec-count">${loans.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${cards}`;
 }

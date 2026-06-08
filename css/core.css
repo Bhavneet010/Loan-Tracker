@@ -328,20 +328,6 @@ body.dark .fl-tb-sep{background:rgba(155,143,228,0.22);}
   padding:3px 10px;border-radius:var(--radius-sm);
 }
 
-.fresh-group-toggle{
-  display:inline-flex;align-items:center;gap:2px;flex-shrink:0;
-  height:24px;padding:2px;
-  border:1px solid rgba(107,95,191,0.15);border-radius:var(--radius-xs);
-  background:rgba(255,255,255,0.66);
-}
-.fresh-group-toggle button{
-  height:20px;padding:0 6px;border:0;border-radius:var(--radius-xs);
-  background:transparent;color:var(--text2);font:inherit;
-  font-size:var(--fs-xs);font-weight:900;cursor:pointer;white-space:nowrap;
-}
-.fresh-group-toggle button.active{background:var(--p2);color:white;}
-body.dark .fresh-group-toggle{background:var(--dark-glass);border-color:rgba(107,95,191,0.25);}
-
 .loan-group{margin-bottom:14px;}
 .loan-group-head{
   display:flex;align-items:center;gap:8px;width:100%;
