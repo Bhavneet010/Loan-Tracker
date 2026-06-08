@@ -245,7 +245,7 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 .fs-pop label:hover{background:rgba(107,95,191,0.06);}
 .fs-pop input[type=radio]{accent-color:var(--p1);}
 
-.fl-toolbar{
+.fs-bar.fl-toolbar{
   position:relative;
   margin:0;
   padding:3px;
