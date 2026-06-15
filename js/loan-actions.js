@@ -78,8 +78,13 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   if (!customerName) return { error: 'Customer name is required' };
   if (!(parseFloat(draft.amount) > 0)) return { error: 'Enter a valid amount' };
 
+  const isManualOverride = assignedOfficer && selectedOfficer !== assignedOfficer;
+  const monthKey = (() => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 7); })();
+
   const data = {
     allocatedTo: selectedOfficer,
+    manualOfficer: isManualOverride ? selectedOfficer : "",
+    manualOfficerMonth: isManualOverride ? monthKey : "",
     category: draft.category,
     branch,
     customerName,
