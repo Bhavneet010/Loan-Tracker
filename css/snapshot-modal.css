@@ -58,6 +58,85 @@
   flex-shrink:0;
 }
 .perf-excel-icon-btn:hover{background:rgba(107,95,191,0.1);}
+/* Share dropdown */
+.perf-share-dropdown{
+  position:relative;
+  flex-shrink:0;
+}
+.perf-share-trigger{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(135deg,var(--p2),var(--p3));
+  color:#fff;
+  padding:8px 14px;
+  font-size:var(--fs-md);
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(107,95,191,0.28);
+  white-space:nowrap;
+  transition:box-shadow 0.15s,transform 0.12s;
+}
+.perf-share-trigger:active{transform:scale(0.97);}
+.perf-share-chevron{
+  transition:transform 0.18s;
+}
+.perf-share-menu.open ~ * .perf-share-chevron,
+.perf-share-dropdown:has(.perf-share-menu.open) .perf-share-chevron{
+  transform:rotate(180deg);
+}
+.perf-share-menu{
+  display:none;
+  position:absolute;
+  right:0;
+  top:calc(100% + 7px);
+  background:#fff;
+  border:1px solid rgba(107,95,191,0.14);
+  border-radius:16px;
+  box-shadow:0 10px 32px rgba(107,95,191,0.18),0 2px 8px rgba(107,95,191,0.10);
+  min-width:220px;
+  z-index:300;
+  padding:6px;
+}
+.perf-share-menu.open{display:block;}
+.perf-share-section-label{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--p1);
+  opacity:0.55;
+  padding:6px 10px 3px;
+}
+.perf-share-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  border:none;
+  background:none;
+  color:var(--text1);
+  padding:10px 11px;
+  font-size:var(--fs-md);
+  font-weight:600;
+  cursor:pointer;
+  border-radius:10px;
+  text-align:left;
+  transition:background 0.12s,color 0.12s;
+}
+.perf-share-item:hover{
+  background:rgba(107,95,191,0.08);
+  color:var(--p1);
+}
+.perf-share-item svg{flex-shrink:0;opacity:0.7;}
+.perf-share-item:hover svg{opacity:1;}
+.perf-share-divider{
+  height:1px;
+  background:rgba(107,95,191,0.1);
+  margin:5px 8px;
+}
 .perf-period-toggle{
   display:flex;
   align-items:center;
@@ -585,6 +664,14 @@
   }
   .perf-overlay-actions{
     margin-left:0;
+  }
+  .perf-share-menu{
+    right:0;
+    min-width:200px;
+  }
+  .perf-share-trigger{
+    padding:7px 11px;
+    font-size:var(--fs-sm);
   }
 }
 

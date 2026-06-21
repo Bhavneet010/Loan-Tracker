@@ -423,6 +423,21 @@ body.dark .decision-slider-labels .pending.active{
 body.dark .perf-overlay-header{
   border-bottom-color:rgba(155,143,228,0.20);
 }
+body.dark .perf-share-menu{
+  background:var(--surface);
+  border-color:rgba(155,143,228,0.22);
+  box-shadow:0 10px 32px rgba(0,0,0,0.38),0 2px 8px rgba(0,0,0,0.22);
+}
+body.dark .perf-share-item{
+  color:var(--text1);
+}
+body.dark .perf-share-item:hover{
+  background:rgba(155,143,228,0.14);
+  color:var(--p3);
+}
+body.dark .perf-share-divider{
+  background:rgba(155,143,228,0.16);
+}
 body.dark .perf-header-share-btn,
 body.dark .perf-export-btn-secondary,
 body.dark .share-snap-close,

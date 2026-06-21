@@ -13,19 +13,16 @@ const PERFORMANCE_PERIODS = {
     label: "Daily",
     title: "Daily Snapshot",
     render: renderDailyPerformanceView,
-    actions: '<button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button><button class="perf-export-btn" type="button" onclick="shareDailySnapshotJpeg()">Share</button>',
   },
   weekly: {
     label: "Weekly",
     title: "Weekly Performance",
     render: renderWeeklyPerformanceView,
-    actions: '<button class="perf-export-btn" type="button" onclick="shareWeeklyPerformanceJpeg()">Share</button>',
   },
   monthly: {
     label: "Monthly",
     title: "Monthly Performance",
     render: renderMonthlyPerformanceView,
-    actions: '<button class="perf-export-btn perf-export-btn-secondary" type="button" onclick="exportPerformanceSnapshot()">Detailed Snapshot</button>',
   },
 };
 
@@ -110,21 +107,34 @@ window.showPerformanceSnapshot = function (period = "daily") {
   const backBtn = document.querySelector("#perfOverlay .back-btn");
   const overlayHeader = document.querySelector("#perfOverlay .perf-overlay-header");
   const overlayTitle = document.querySelector("#perfOverlay .perf-overlay-title");
-  const overlayActions = document.querySelector("#perfOverlay .perf-overlay-actions");
   if (overlayHeader) overlayHeader.classList.add("snapshot-mode");
   if (backBtn) backBtn.setAttribute("onclick", "closePerfOverlay()");
   if (overlayTitle) overlayTitle.textContent = current.title;
   renderPerformancePeriodToggle(currentPeriod);
-  if (overlayActions) {
-    overlayActions.style.display = current.actions ? "" : "none";
-    overlayActions.innerHTML = current.actions;
-  }
   const content = document.getElementById("perfOverlayContent");
   if (content) {
     content.style.padding = "0";
     content.classList.toggle("weekly-performance-content", currentPeriod === "weekly");
     current.render(content);
   }
+};
+
+window.togglePerfShareDropdown = function (e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById("perfShareMenu");
+  if (!menu) return;
+  const isOpen = menu.classList.contains("open");
+  if (isOpen) {
+    menu.classList.remove("open");
+  } else {
+    menu.classList.add("open");
+    setTimeout(() => document.addEventListener("click", window.closePerfShareDropdown, { once: true }), 0);
+  }
+};
+
+window.closePerfShareDropdown = function () {
+  const menu = document.getElementById("perfShareMenu");
+  if (menu) menu.classList.remove("open");
 };
 
 window.showDailySnapshot = function () {
