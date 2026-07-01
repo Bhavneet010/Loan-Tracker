@@ -65,7 +65,8 @@ function collectMonthEndData(month = previousMonthKey()) {
   const metrics = getLoanMetricsForMonth(month);
   const sanctioned = metrics.sanctionedThisMonth.filter(isFreshCC);
   const returned = metrics.returnedThisMonth.filter(isFreshCC);
-  const renewalsDone = metrics.renewalDoneThisMonth.filter(loan => !isFreshCC(loan) && !isRenewalDatesMissing(loan));
+  const renewalsDone = metrics.renewalDoneThisMonth;
+  const renewalsCleanupReady = renewalsDone.filter(loan => !isRenewalDatesMissing(loan));
 
   return {
     month,
@@ -74,6 +75,7 @@ function collectMonthEndData(month = previousMonthKey()) {
     sanctioned,
     returned,
     renewalsDone,
+    renewalsCleanupReady,
   };
 }
 
@@ -515,16 +517,16 @@ async function saveMonthlySummary(month, summary) {
 }
 
 function cleanupSummaryText(data) {
-  const integrationPending = data.metrics.renewalDoneThisMonth.filter(loan => !isFreshCC(loan) && isRenewalDatesMissing(loan)).length;
+  const integrationPending = data.renewalsDone.length - data.renewalsCleanupReady.length;
   const skippedNote = integrationPending ? ` (${integrationPending} integration-pending account${integrationPending > 1 ? 's' : ''} will be skipped)` : '';
-  return `This will remove ${data.sanctioned.length} sanctions, ${data.returned.length} returns, and clear ${data.renewalsDone.length} renewal done flags for ${data.label}${skippedNote}. Continue?`;
+  return `This will remove ${data.sanctioned.length} sanctions, ${data.returned.length} returns, and clear ${data.renewalsCleanupReady.length} renewal done flags for ${data.label}${skippedNote}. Continue?`;
 }
 
 async function commitCleanup(data) {
   const operations = [
     ...data.sanctioned.map(loan => ({ type: "delete", id: loan.id })),
     ...data.returned.map(loan => ({ type: "delete", id: loan.id })),
-    ...data.renewalsDone.map(loan => ({
+    ...data.renewalsCleanupReady.map(loan => ({
       type: "update",
       id: loan.id,
       data: {
@@ -555,7 +557,7 @@ async function commitCleanup(data) {
       cleanedBy: S.user || "Admin",
       deletedSanctions: data.sanctioned.length,
       deletedReturns: data.returned.length,
-      clearedRenewals: data.renewalsDone.length,
+      clearedRenewals: data.renewalsCleanupReady.length,
     },
   }, { merge: true });
 }
