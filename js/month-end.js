@@ -21,18 +21,9 @@ import {
 } from "./performance-utils.js";
 
 const SNAPSHOT_COLLECTION = "monthlySnapshots";
-// Measured pixel heights of the rendered PDF page (see monthlyPdfCss): a detail
-// row is ~40px when its customer cell wraps a second note line (renewal rows
-// always have one; fresh/return rows only when `remarks` is set) and ~30px
-// otherwise. Group-header rows are ~21px. Body budget is the vertical space
-// between the table head and the footer, which is ~10px smaller on part 1
-// (it carries the officer-color legend under the title).
 const OFFICER_PALETTE = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
-const GROUP_ROW_HEIGHT = 21;
-const DATA_ROW_HEIGHT_TALL = 40;
-const DATA_ROW_HEIGHT_SHORT = 30;
-const PAGE_BODY_BUDGET_FIRST = 940;
-const PAGE_BODY_BUDGET_LATER = 950;
+// Kept clear of the footer when deciding how many rows fit on a detail page.
+const PAGE_BODY_SAFETY_MARGIN = 12;
 
 function buildOfficerColorMap() {
   const map = new Map();
@@ -359,38 +350,102 @@ function buildLegendHtml(loans, colorMap) {
   ).join('')}</div>`;
 }
 
-function detailRowHeight(loan, mode) {
-  const hasNote = mode === "renewal" ? true : !!loan.remarks;
-  return hasNote ? DATA_ROW_HEIGHT_TALL : DATA_ROW_HEIGHT_SHORT;
+// Renders the full (unpaginated) row set into a hidden probe using the exact
+// PDF markup/CSS, then reads back each row's real rendered height. Estimating
+// row heights by hand is fragile - it depends on which font actually loaded -
+// so pagination is driven off the live DOM instead, which is correct by
+// construction regardless of font metrics.
+async function measureDetailRowHeights(sorted, dateKey, mode, colorMap) {
+  const bodyRows = renderChunkRows(sorted, 0, dateKey, mode, colorMap);
+  const probe = document.createElement("div");
+  probe.style.position = "fixed";
+  probe.style.left = "-10000px";
+  probe.style.top = "0";
+  probe.style.width = `${PDF_PAGE_WIDTH}px`;
+  probe.style.pointerEvents = "none";
+  probe.innerHTML = `<div class="me-report">
+    <style>${monthlyPdfCss()}</style>
+    <section class="me-page" id="me-probe-legend" style="height:auto;overflow:visible">
+      <header class="me-section-head">
+        <div><span class="me-kicker">DETAIL LIST</span><h2>Probe</h2>
+          <div class="me-legend"><span><span class="me-legend-dot"></span>X</span></div>
+        </div>
+        <strong>0 records</strong>
+      </header>
+      <table class="me-table me-detail-table">
+        <thead><tr><th>#</th><th>Customer</th><th>Officer</th><th>Branch</th><th>Cat</th><th>Amount</th><th>Date</th></tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+      <footer class="me-footer" style="position:static;margin-top:20px"><span>X</span><span>X</span></footer>
+    </section>
+    <section class="me-page" id="me-probe-nolegend" style="height:auto;overflow:visible">
+      <header class="me-section-head">
+        <div><span class="me-kicker">DETAIL LIST</span><h2>Probe</h2></div>
+        <strong>0 records</strong>
+      </header>
+      <table class="me-table me-detail-table">
+        <thead><tr><th>#</th><th>Customer</th><th>Officer</th><th>Branch</th><th>Cat</th><th>Amount</th><th>Date</th></tr></thead>
+      </table>
+    </section>
+  </div>`;
+  document.body.appendChild(probe);
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+  const legendPage = probe.querySelector("#me-probe-legend");
+  const legendPageTop = legendPage.getBoundingClientRect().top;
+  const bodyStartFirst = legendPage.querySelector("thead").getBoundingClientRect().bottom - legendPageTop;
+  const footerHeight = legendPage.querySelector(".me-footer").getBoundingClientRect().height;
+  const footerTop = PDF_PAGE_HEIGHT - 16 - footerHeight;
+
+  const noLegendPage = probe.querySelector("#me-probe-nolegend");
+  const bodyStartLater = noLegendPage.querySelector("thead").getBoundingClientRect().bottom
+    - noLegendPage.getBoundingClientRect().top;
+
+  let groupRowHeight = 21;
+  const dataRowHeights = [];
+  legendPage.querySelectorAll("tbody tr").forEach(tr => {
+    const height = tr.getBoundingClientRect().height;
+    if (tr.classList.contains("me-officer-group")) groupRowHeight = height;
+    else dataRowHeights.push(height);
+  });
+
+  probe.remove();
+
+  return {
+    dataRowHeights,
+    groupRowHeight,
+    budgetFirst: footerTop - bodyStartFirst - PAGE_BODY_SAFETY_MARGIN,
+    budgetLater: footerTop - bodyStartLater - PAGE_BODY_SAFETY_MARGIN,
+  };
 }
 
-// Packs rows into pages by accumulated rendered height rather than a fixed
-// row count, since a page can silently clip its last rows otherwise (a
-// renewal row is taller than a plain sanction/return row - see the height
-// constants above). Each new page reprints the officer group header for
-// whichever officer it starts with, matching renderChunkRows' behavior.
-function paginateDetailRows(sorted, mode) {
+// Packs rows into pages by accumulated real rendered height rather than a
+// fixed row count, since a page can silently clip its last rows otherwise (a
+// renewal row is taller than a plain sanction/return row, and even those vary
+// once a remark note is present). Each new page reprints the officer group
+// header for whichever officer it starts with, matching renderChunkRows.
+function paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budgetFirst, budgetLater) {
   const pages = [];
   let current = [];
   let currentHeight = 0;
   let currentOfficer = null;
-  let budget = PAGE_BODY_BUDGET_FIRST;
+  let budget = budgetFirst;
 
-  const heightFor = (loan, officer) => {
-    const groupHeight = officer !== currentOfficer ? GROUP_ROW_HEIGHT : 0;
-    return groupHeight + detailRowHeight(loan, mode);
+  const heightFor = (index, officer) => {
+    const groupHeight = officer !== currentOfficer ? groupRowHeight : 0;
+    return groupHeight + dataRowHeights[index];
   };
 
-  sorted.forEach(loan => {
+  sorted.forEach((loan, index) => {
     const officer = loan.allocatedTo || "Unassigned";
-    let addHeight = heightFor(loan, officer);
+    let addHeight = heightFor(index, officer);
     if (current.length && currentHeight + addHeight > budget) {
       pages.push(current);
       current = [];
       currentHeight = 0;
       currentOfficer = null;
-      budget = PAGE_BODY_BUDGET_LATER;
-      addHeight = heightFor(loan, officer);
+      budget = budgetLater;
+      addHeight = heightFor(index, officer);
     }
     current.push(loan);
     currentHeight += addHeight;
@@ -400,7 +455,7 @@ function paginateDetailRows(sorted, mode) {
   return pages;
 }
 
-function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
+async function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
   const sorted = sortByOfficerThenDate(loans, dateKey);
   const colorMap = buildOfficerColorMap();
 
@@ -415,7 +470,8 @@ function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
   }
 
   const legend = buildLegendHtml(sorted, colorMap);
-  const chunks = paginateDetailRows(sorted, mode);
+  const { dataRowHeights, groupRowHeight, budgetFirst, budgetLater } = await measureDetailRowHeights(sorted, dateKey, mode, colorMap);
+  const chunks = paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budgetFirst, budgetLater);
   const totalParts = chunks.length;
   let start = 0;
   return chunks.map((chunk, index) => {
@@ -501,13 +557,16 @@ function monthlyPdfCss() {
   `;
 }
 
-function buildMonthlySnapshotPdfHtml(data, summary) {
+async function buildMonthlySnapshotPdfHtml(data, summary) {
+  const sanctionsPages = await buildDetailPages("Sanctions Done", data.sanctioned, "sanctionDate", "good");
+  const returnsPages = await buildDetailPages("Returns Done", data.returned, "returnedDate", "danger");
+  const renewalsPages = await buildDetailPages("Renewals Done", data.renewalsDone, "renewedDate", "blue", "renewal");
   return `<div class="me-report">
     <style>${monthlyPdfCss()}</style>
     ${buildCoverPage(data, summary)}
-    ${buildDetailPages("Sanctions Done", data.sanctioned, "sanctionDate", "good")}
-    ${buildDetailPages("Returns Done", data.returned, "returnedDate", "danger")}
-    ${buildDetailPages("Renewals Done", data.renewalsDone, "renewedDate", "blue", "renewal")}
+    ${sanctionsPages}
+    ${returnsPages}
+    ${renewalsPages}
   </div>`;
 }
 
@@ -525,7 +584,7 @@ async function downloadMonthlyPdf(data, summary) {
     exportHost.style.top = "0";
     exportHost.style.width = `${PDF_PAGE_WIDTH}px`;
     exportHost.style.pointerEvents = "none";
-    exportHost.innerHTML = buildMonthlySnapshotPdfHtml(data, summary);
+    exportHost.innerHTML = await buildMonthlySnapshotPdfHtml(data, summary);
     document.body.appendChild(exportHost);
 
     const pages = Array.from(exportHost.querySelectorAll(".me-page"));
