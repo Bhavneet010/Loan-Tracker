@@ -21,8 +21,18 @@ import {
 } from "./performance-utils.js";
 
 const SNAPSHOT_COLLECTION = "monthlySnapshots";
-const DETAIL_ROWS_PER_PAGE = 24;
+// Measured pixel heights of the rendered PDF page (see monthlyPdfCss): a detail
+// row is ~40px when its customer cell wraps a second note line (renewal rows
+// always have one; fresh/return rows only when `remarks` is set) and ~30px
+// otherwise. Group-header rows are ~21px. Body budget is the vertical space
+// between the table head and the footer, which is ~10px smaller on part 1
+// (it carries the officer-color legend under the title).
 const OFFICER_PALETTE = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
+const GROUP_ROW_HEIGHT = 21;
+const DATA_ROW_HEIGHT_TALL = 40;
+const DATA_ROW_HEIGHT_SHORT = 30;
+const PAGE_BODY_BUDGET_FIRST = 940;
+const PAGE_BODY_BUDGET_LATER = 950;
 
 function buildOfficerColorMap() {
   const map = new Map();
@@ -349,6 +359,47 @@ function buildLegendHtml(loans, colorMap) {
   ).join('')}</div>`;
 }
 
+function detailRowHeight(loan, mode) {
+  const hasNote = mode === "renewal" ? true : !!loan.remarks;
+  return hasNote ? DATA_ROW_HEIGHT_TALL : DATA_ROW_HEIGHT_SHORT;
+}
+
+// Packs rows into pages by accumulated rendered height rather than a fixed
+// row count, since a page can silently clip its last rows otherwise (a
+// renewal row is taller than a plain sanction/return row - see the height
+// constants above). Each new page reprints the officer group header for
+// whichever officer it starts with, matching renderChunkRows' behavior.
+function paginateDetailRows(sorted, mode) {
+  const pages = [];
+  let current = [];
+  let currentHeight = 0;
+  let currentOfficer = null;
+  let budget = PAGE_BODY_BUDGET_FIRST;
+
+  const heightFor = (loan, officer) => {
+    const groupHeight = officer !== currentOfficer ? GROUP_ROW_HEIGHT : 0;
+    return groupHeight + detailRowHeight(loan, mode);
+  };
+
+  sorted.forEach(loan => {
+    const officer = loan.allocatedTo || "Unassigned";
+    let addHeight = heightFor(loan, officer);
+    if (current.length && currentHeight + addHeight > budget) {
+      pages.push(current);
+      current = [];
+      currentHeight = 0;
+      currentOfficer = null;
+      budget = PAGE_BODY_BUDGET_LATER;
+      addHeight = heightFor(loan, officer);
+    }
+    current.push(loan);
+    currentHeight += addHeight;
+    currentOfficer = officer;
+  });
+  if (current.length) pages.push(current);
+  return pages;
+}
+
 function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
   const sorted = sortByOfficerThenDate(loans, dateKey);
   const colorMap = buildOfficerColorMap();
@@ -364,13 +415,14 @@ function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
   }
 
   const legend = buildLegendHtml(sorted, colorMap);
-  const pages = [];
-  for (let start = 0; start < sorted.length; start += DETAIL_ROWS_PER_PAGE) {
-    const chunk = sorted.slice(start, start + DETAIL_ROWS_PER_PAGE);
-    const part = Math.floor(start / DETAIL_ROWS_PER_PAGE) + 1;
-    const totalParts = Math.ceil(sorted.length / DETAIL_ROWS_PER_PAGE);
+  const chunks = paginateDetailRows(sorted, mode);
+  const totalParts = chunks.length;
+  let start = 0;
+  return chunks.map((chunk, index) => {
+    const part = index + 1;
     const bodyRows = renderChunkRows(chunk, start, dateKey, mode, colorMap);
-    pages.push(`<section class="me-page">
+    start += chunk.length;
+    return `<section class="me-page">
       <header class="me-section-head ${tone}">
         <div>
           <span class="me-kicker">DETAIL LIST${totalParts > 1 ? ` - PART ${part} OF ${totalParts}` : ""}</span>
@@ -386,9 +438,8 @@ function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
         <tbody>${bodyRows}</tbody>
       </table>
       <footer class="me-footer"><span>${esc(title)}</span><span>${esc(part)} of ${esc(totalParts)}</span></footer>
-    </section>`);
-  }
-  return pages.join("");
+    </section>`;
+  }).join("");
 }
 
 function monthlyPdfCss() {
