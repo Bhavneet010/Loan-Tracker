@@ -7,6 +7,7 @@ import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, build
 import { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSectionsWithHeights, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss } from "./performance-pdf.js";
 import { ensureHtml2Canvas, ensureJsPdf, ensureImageLoaded, officerNamesFromMetrics, emptyCatTotals, buildOfficerCategoryRows, buildOfficerRenewalRows, buildCategoryTotal, buildRenewalTotal, dualMetricCell, renderCategorySection, renderRenewalSection, buildReportMockupData, ordinal, renderLeaderChartCard, renderEditorialCategoryPills, renderEditorialOfficerCard, buildEditorialShareMockupHtml, renderMockupHeader, buildReportMockupHtml, buildDailySnapshotPageHtml, renderDailyPerformanceView, renderWeeklyPerformanceView, renderMonthlyPerformanceView, renderPerformanceView, DAILY_SNAPSHOT, SNAPSHOT_BG_ASSETS } from "./performance-snapshot.js";
 import { AVAILABILITY_TYPES, availabilityLabel, normalizeAvailability, officerAvailabilityForDate } from "./officer-availability.js";
+import { renderSmeDailyReportView } from "./sme-daily-report.js";
 
 const PERFORMANCE_PERIODS = {
   daily: {
@@ -26,7 +27,16 @@ const PERFORMANCE_PERIODS = {
   },
 };
 
+// Second view behind the Daily tab: tapping Daily while the snapshot is
+// showing switches to the SME reporting table, tapping again switches back.
+const SME_DAILY_VIEW = {
+  label: "Daily",
+  title: "SME Daily Report",
+  render: renderSmeDailyReportView,
+};
+
 let activePerformancePeriod = "daily";
+let activeDailyVariant = "snapshot"; // "snapshot" | "sme"
 
 window.exportPerformanceSnapshot = async function () {
   let exportHost;
@@ -103,7 +113,9 @@ window.exportPerformanceSnapshot = async function () {
 window.showPerformanceSnapshot = function (period = "daily") {
   const currentPeriod = PERFORMANCE_PERIODS[period] ? period : "daily";
   activePerformancePeriod = currentPeriod;
-  const current = PERFORMANCE_PERIODS[currentPeriod];
+  const current = currentPeriod === "daily" && activeDailyVariant === "sme"
+    ? SME_DAILY_VIEW
+    : PERFORMANCE_PERIODS[currentPeriod];
   const backBtn = document.querySelector("#perfOverlay .back-btn");
   const overlayHeader = document.querySelector("#perfOverlay .perf-overlay-header");
   const overlayTitle = document.querySelector("#perfOverlay .perf-overlay-title");
@@ -138,7 +150,15 @@ window.closePerfShareDropdown = function () {
 };
 
 window.showDailySnapshot = function () {
+  activeDailyVariant = "snapshot";
   window.showPerformanceSnapshot("daily");
+};
+
+window.handlePerformancePeriodTap = function (period) {
+  if (period === "daily") {
+    activeDailyVariant = activePerformancePeriod === "daily" && activeDailyVariant === "snapshot" ? "sme" : "snapshot";
+  }
+  window.showPerformanceSnapshot(period);
 };
 
 window.refreshWeeklyPerformanceIfVisible = function () {
@@ -511,7 +531,8 @@ function renderPerformancePeriodToggle(currentPeriod = activePerformancePeriod) 
   }
   toggle.innerHTML = Object.entries(PERFORMANCE_PERIODS).map(([key, item]) => {
     const active = key === currentPeriod;
-    return `<button class="perf-period-option${active ? " active" : ""}" type="button" role="tab" aria-selected="${active ? "true" : "false"}" onclick="showPerformanceSnapshot('${key}')">${item.label}</button>`;
+    const hint = key === "daily" ? ' title="Tap again for SME Daily Report"' : "";
+    return `<button class="perf-period-option${active ? " active" : ""}" type="button" role="tab" aria-selected="${active ? "true" : "false"}"${hint} onclick="handlePerformancePeriodTap('${key}')">${item.label}</button>`;
   }).join("");
 }
 

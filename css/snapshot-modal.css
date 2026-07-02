@@ -774,3 +774,79 @@ body.dark .me-hist-card-body-inner{background:rgba(107,95,191,0.08);border-color
 body.dark .me-hist-officer{border-color:rgba(107,95,191,0.12);}
 body.dark .me-hist-officer--head{border-color:rgba(107,95,191,0.20);}
 body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
+
+/* ---- SME Daily Reporting (second Daily view) ---- */
+.sme-daily-wrap{padding:14px;}
+.sme-daily-report{
+  background:#fff;
+  border:1px solid #d8d2ea;
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 6px 18px rgba(63,52,133,0.08);
+  color:#1c1b22;
+}
+.sme-daily-title{
+  text-align:center;
+  font-weight:800;
+  font-size:13px;
+  letter-spacing:0.02em;
+  background:#FBF3D8;
+  border:1px solid #8f8f8f;
+  border-bottom:none;
+  padding:8px 10px;
+  color:#1c1b22;
+}
+.sme-daily-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.sme-daily-table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:720px;
+  font-size:11px;
+}
+.sme-daily-table th,
+.sme-daily-table td{
+  border:1px solid #8f8f8f;
+  padding:6px 7px;
+  text-align:center;
+  white-space:nowrap;
+  color:#1c1b22;
+}
+.sme-daily-table th{font-weight:800;}
+.sme-head-green{background:#C9E5D2;}
+.sme-head-ftd{background:#FFE95C;}
+.sme-head-mtd{background:#EAF4EE;}
+.sme-daily-table td.sme-num{font-weight:700;font-size:12px;background:#fff;}
+.sme-disb-input{
+  width:74px;
+  border:1px dashed #b3a24a;
+  border-radius:6px;
+  background:#FFFDF0;
+  padding:5px 6px;
+  font-size:12px;
+  font-weight:700;
+  text-align:center;
+  color:#1c1b22;
+  outline:none;
+}
+.sme-disb-input:focus{border-style:solid;border-color:#8a7a2e;background:#fff;}
+.sme-disb-print{font-weight:700;font-size:12px;}
+.sme-daily-note{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:8px;
+  font-size:10px;
+  color:#6f6c85;
+}
+.sme-disb-status{font-weight:700;color:#2e7d4f;white-space:nowrap;}
+.sme-daily-export{border-radius:0;box-shadow:none;border:none;padding:20px;}
+.sme-daily-export .sme-daily-table{font-size:14px;min-width:0;}
+.sme-daily-export .sme-daily-title{font-size:17px;padding:10px;}
+.sme-daily-export .sme-daily-table th,
+.sme-daily-export .sme-daily-table td{padding:9px 10px;}
+.sme-daily-export .sme-daily-table td.sme-num{font-size:15px;}
+.sme-daily-export .sme-daily-note{font-size:12px;}
+/* The report mimics the bank's printed format, so it stays light in dark mode. */
+body.dark .sme-daily-report{border-color:rgba(107,95,191,0.35);}
