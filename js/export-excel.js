@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { effectiveOfficer } from "./derived.js";
+import { effectiveOfficer, getLoanMetrics } from "./derived.js";
 import { isFreshCC, toast } from "./utils.js";
 
 const XLSX_CDN = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
@@ -80,18 +80,17 @@ function returnedRows(loans) {
     }));
 }
 
-function renewalsDoneRows(loans) {
-  return loans
-    .filter(l => l.category === "SME" && !l.isTermLoan && l.renewedDate)
+function renewalsDoneRows() {
+  return getLoanMetrics().renewalDoneThisMonth
+    .slice()
     .sort((a, b) => (b.renewedDate || "").localeCompare(a.renewedDate || ""))
     .map(l => ({
       "Officer": up(effectiveOfficer(l)),
       "Branch": up(l.branch),
-      "": "",
       "Customer Name": up(l.customerName),
       "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
-      "Limit Expiry Date": fmt(l.limitExpiryDate),
-      "Renewal Due Date": fmt(l.renewalDueDate),
+      "Renewed Date": fmt(l.renewedDate),
+      "Next Renewal Due": fmt(l.renewalDueDate),
     }));
 }
 
@@ -135,7 +134,7 @@ window.exportLoansExcel = async function () {
     );
     XLSX.utils.book_append_sheet(
       wb,
-      makeSheet(renewalsDoneRows(loans), ["Officer", "Branch", "", "Customer Name", "Limit (₹ Lakhs)", "Limit Expiry Date", "Renewal Due Date"]),
+      makeSheet(renewalsDoneRows(), ["Officer", "Branch", "Customer Name", "Limit (₹ Lakhs)", "Renewed Date", "Next Renewal Due"]),
       "Renewals Done"
     );
 
