@@ -120,6 +120,7 @@ function setCategoryValue(category) {
   renderCategoryChips(category || '');
   updateCategoryHint(category || '');
   window.toggleTermLoan(category || '');
+  window.updateBreBadge();
 }
 
 function matchBranchOption(branch) {
@@ -295,6 +296,7 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
 
   document.getElementById('fName').value = loan.customerName || '';
   document.getElementById('fAmount').value = loan.amount || '';
+  window.updateBreBadge();
   document.getElementById('fReceive').value = isEdit ? (loan.receiveDate || '') : todayStr();
   document.getElementById('fSanction').value = isEdit
     ? (mode === 'renewal-done' ? todayStr() : (loan.sanctionDate || loan.renewedDate || ''))
@@ -501,6 +503,16 @@ window.editLoan = id => {
 window.duplicateLoan = id => {
   const l = S.loans.find(x => x.id === id);
   if (l) window.openQuickAdd(id);
+};
+
+// Same band the SME Daily Report uses: SME category, 10-50 lacs sanctioned amount.
+window.updateBreBadge = function() {
+  const badge = document.getElementById('breBadge');
+  if (!badge) return;
+  const category = getCategorySelect()?.value || '';
+  const amount = parseFloat(document.getElementById('fAmount')?.value);
+  const qualifies = category === 'SME' && amount >= 10 && amount <= 50;
+  badge.style.display = qualifies ? 'inline-flex' : 'none';
 };
 
 window.toggleTermLoan = function(cat) {

@@ -29,3 +29,29 @@ body.dark .form-intro{background:rgba(107,95,191,0.14);border-color:rgba(107,95,
 body.dark .category-chip{background:var(--dark-glass);border-color:rgba(107,95,191,0.2);color:var(--text1);}
 body.dark .category-chip.active{box-shadow:0 0 0 2px rgba(155,143,228,0.28);}
 body.dark .stab{background:var(--dark-glass);color:var(--p3);border-color:rgba(107,95,191,0.25);}
+
+/* BRE band identifier shown under the Amount field (SME 10-50 lacs) */
+.bre-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:7px;
+  padding:5px 10px 5px 5px;
+  border-radius:999px;
+  background:#FFF7DB;
+  border:1px solid #E8D48A;
+  font-size:11px;
+  font-weight:700;
+  color:#7A6414;
+}
+.bre-badge-pill{
+  background:#FFD75E;
+  color:#5C4A05;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:0.06em;
+}
+body.dark .bre-badge{background:rgba(255,215,94,0.12);border-color:rgba(255,215,94,0.3);color:#E8D48A;}
+body.dark .bre-badge-pill{background:rgba(255,215,94,0.85);color:#3d3103;}

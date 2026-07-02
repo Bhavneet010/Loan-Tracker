@@ -264,7 +264,8 @@
       </div>
       <div class="form-group">
         <label>Amount (in Lakhs) *</label>
-        <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35">
+        <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35" oninput="updateBreBadge()">
+        <div id="breBadge" class="bre-badge" style="display:none;"><span class="bre-badge-pill">BRE</span>Falls in BRE band (SME 10&ndash;50 lacs)</div>
       </div>
       <button type="button" id="toggleAdvancedBtn" class="btn btn-cancel-full form-toggle-btn" onclick="toggleAdvancedFields()">
         Add More Details
