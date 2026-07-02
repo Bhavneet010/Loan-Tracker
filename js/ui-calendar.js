@@ -25,8 +25,8 @@ export function renderCalendar(c) {
 function getFilteredRenewals(metrics) {
   let out = metrics.renewals.filter(l => !l.renewedDate);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
-  if (!S.isAdmin) out = out.filter(l => l.allocatedTo === S.user);
-  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.renewalFilter.officer);
+  if (!S.isAdmin) out = out.filter(l => effectiveOfficer(l) === S.user);
+  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') {
     const filterCode = branchCode(S.renewalFilter.branch);
     out = out.filter(l => branchCode(l.branch) === filterCode);
@@ -243,7 +243,7 @@ function dayDetailHtml(dateStr, entry) {
     const statusCls = rs.status === 'npa' ? 'rnw-chip-npa' : rs.status === 'pending-renewal' ? 'rnw-chip-pending' : rs.status === 'due-soon' ? 'rnw-chip-due-soon' : 'rnw-chip-active';
     const statusLabel = rs.status === 'npa' ? 'NPA' : `${rs.daysUntilNpa}d to NPA`;
     return `<div class="cal-detail-item">
-      <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
+      <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
       <span class="cal-name">${esc(loan.customerName)}</span>
       <span class="cal-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="cal-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
