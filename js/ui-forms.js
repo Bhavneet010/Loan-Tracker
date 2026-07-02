@@ -120,7 +120,7 @@ function setCategoryValue(category) {
   renderCategoryChips(category || '');
   updateCategoryHint(category || '');
   window.toggleTermLoan(category || '');
-  window.updateBreBadge();
+  window.updateBreCheckbox();
 }
 
 function matchBranchOption(branch) {
@@ -296,7 +296,9 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
 
   document.getElementById('fName').value = loan.customerName || '';
   document.getElementById('fAmount').value = loan.amount || '';
-  window.updateBreBadge();
+  const breCheckbox = document.getElementById('fBre');
+  if (breCheckbox) breCheckbox.checked = !!loan.isBre;
+  window.updateBreCheckbox();
   document.getElementById('fReceive').value = isEdit ? (loan.receiveDate || '') : todayStr();
   document.getElementById('fSanction').value = isEdit
     ? (mode === 'renewal-done' ? todayStr() : (loan.sanctionDate || loan.renewedDate || ''))
@@ -440,6 +442,8 @@ window.openForm = function(loan = null, mode = null, options = {}) {
       if (limitExpiryGroup) limitExpiryGroup.style.display = 'none';
     }
     if (termLoanCheckbox) termLoanCheckbox.checked = false;
+    const breCheckbox = document.getElementById('fBre');
+    if (breCheckbox) breCheckbox.checked = false;
     if (S.user && !S.isAdmin) document.getElementById('fOfficer').value = S.user;
     updateAssignedOfficerHint('');
   }
@@ -505,14 +509,17 @@ window.duplicateLoan = id => {
   if (l) window.openQuickAdd(id);
 };
 
-// Same band the SME Daily Report uses: SME category, 10-50 lacs sanctioned amount.
-window.updateBreBadge = function() {
-  const badge = document.getElementById('breBadge');
-  if (!badge) return;
+// The BRE checkbox is offered only for entries in the eligible band (SME,
+// 10-50 lacs); whether the loan actually went through BRE is the user's call.
+window.updateBreCheckbox = function() {
+  const group = document.getElementById('fBreGroup');
+  const checkbox = document.getElementById('fBre');
+  if (!group || !checkbox) return;
   const category = getCategorySelect()?.value || '';
   const amount = parseFloat(document.getElementById('fAmount')?.value);
-  const qualifies = category === 'SME' && amount >= 10 && amount <= 50;
-  badge.style.display = qualifies ? 'inline-flex' : 'none';
+  const eligible = category === 'SME' && amount >= 10 && amount <= 50;
+  group.style.display = eligible ? 'flex' : 'none';
+  if (!eligible) checkbox.checked = false;
 };
 
 window.toggleTermLoan = function(cat) {

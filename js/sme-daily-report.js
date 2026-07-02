@@ -7,17 +7,16 @@ import { ensureHtml2Canvas } from "./performance-snapshot.js";
 const SME_BRANCH_CODE = "63494";
 const SME_CENTRE_TYPE = "AMCC";
 
-/* Bands are in lacs, matching loan.amount units. The 10-50 (BRE) band is the
-   subset of the 1-50 band that travels through the BRE journey. */
+/* Band limits are in lacs, matching loan.amount units. */
 function inSmeBand(loan, min, max) {
   if (loan.category !== "SME") return false;
   const amt = parseFloat(loan.amount) || 0;
   return amt >= min && amt <= max;
 }
 
-function bandStats(metrics, min, max) {
-  const ftdLoans = metrics.sanctionedToday.filter(loan => inSmeBand(loan, min, max));
-  const mtdLoans = metrics.sanctionedThisMonth.filter(loan => inSmeBand(loan, min, max));
+function collectStats(metrics, predicate) {
+  const ftdLoans = metrics.sanctionedToday.filter(predicate);
+  const mtdLoans = metrics.sanctionedThisMonth.filter(predicate);
   return {
     ftdNo: ftdLoans.length,
     mtdNo: mtdLoans.length,
@@ -40,8 +39,10 @@ function cachedDisbursement(dateStr) {
 
 function buildSmeDailyReportHtml() {
   const metrics = getLoanMetrics();
-  const band1to50 = bandStats(metrics, 1, 50);
-  const band10to50 = bandStats(metrics, 10, 50);
+  const band1to50 = collectStats(metrics, loan => inSmeBand(loan, 1, 50));
+  // BRE is a manual flag set on the loan form — not every 10-50 lac sanction
+  // goes through the BRE journey.
+  const band10to50 = collectStats(metrics, loan => loan.category === "SME" && loan.isBre === true);
   const cached = cachedDisbursement(metrics.day) || {};
   const metricCells = stats => `
     <td class="sme-num">${stats.ftdNo}</td>
@@ -88,7 +89,7 @@ function buildSmeDailyReportHtml() {
         </table>
       </div>
       <div class="sme-daily-note">
-        <span>All amounts in lacs &middot; Sanctioned figures auto-computed from SME sanctions &middot; Disbursement entered manually</span>
+        <span>All amounts in lacs &middot; BRE columns count sanctions marked BRE on the loan form &middot; Disbursement entered manually</span>
         <span id="smeDisbStatus" class="sme-disb-status"></span>
       </div>
     </div>

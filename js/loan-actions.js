@@ -245,6 +245,8 @@ window.saveLoan = async function(e) {
 
   if (cat === 'SME') {
     data.isTermLoan = termLoan;
+    const breCheckbox = document.getElementById('fBre');
+    data.isBre = breCheckbox ? breCheckbox.checked : false;
     const existing = id ? S.loans.find(x => x.id === id) : null;
     const isImported = (existing && existing.isImported) || (id && id.startsWith('import_sme_csv_'));
     const isRenewalAddBack = mode === 'renewal-addback';
