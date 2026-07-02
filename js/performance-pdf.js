@@ -241,7 +241,7 @@ function coverOfficerRowV2(row) {
   </div>`;
 }
 
-function buildDetailedSnapshotPdfHtml() {
+async function buildDetailedSnapshotPdfHtml() {
   const metrics = getLoanMetrics();
   const rows = officerPdfData(metrics);
   const generatedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
@@ -252,7 +252,11 @@ function buildDetailedSnapshotPdfHtml() {
   });
   const totalNpaRisk = rows.reduce((sum, row) => sum + row.riskWatch.npaRiskCount, 0);
   const totalRiskWatch = rows.reduce((sum, row) => sum + row.riskWatch.loans.length, 0);
-  const officerPartCounts = rows.map(row => paginateOfficerPdfSections(row).length);
+  // Real DOM measurement (see measureOfficerPdfHeights) instead of a guessed
+  // "units" budget - each officer's rows are measured once and reused for
+  // both the page count below and the actual page build further down.
+  const officerHeights = await Promise.all(rows.map(row => measureOfficerPdfHeights(row, dateLabel)));
+  const officerPartCounts = rows.map((row, i) => paginateOfficerPdfSectionsWithHeights(row, officerHeights[i]).length);
   const totalGlobalPages = 1 + officerPartCounts.reduce((sum, n) => sum + n, 0);
   const ctx = { runningPage: 2, totalGlobalPages };
 
@@ -313,7 +317,7 @@ function buildDetailedSnapshotPdfHtml() {
         <span class="pdf-footer-page">Page 1 of ${esc(totalGlobalPages)}${totalGlobalPages > 1 ? `<small>Continued on next page</small>` : ""}</span>
       </footer>
     </section>
-    ${rows.map((row, index) => buildOfficerPdfPages(row, index + 1, rows.length, dateLabel, ctx)).join("")}
+    ${rows.map((row, index) => buildOfficerPdfPages(row, index + 1, rows.length, dateLabel, ctx, officerHeights[index])).join("")}
   </div>`;
 }
 
@@ -400,36 +404,161 @@ function buildOfficerPdfSections(row) {
   ];
 }
 
-function paginateOfficerPdfSections(row) {
-  const source = buildOfficerPdfSections(row).map(section => ({
+const OFFICER_PAGE_SAFETY_MARGIN = 10;
+
+// Renders every section for this officer, fully unpaginated, into a hidden
+// probe using the real PDF markup/CSS, then reads back the actual rendered
+// heights (section header band, one data/empty row, page header block with
+// and without the metrics strip, and the footer). Rows in this report are
+// always single-line, but hand-tuning a pixel budget still drifts out of
+// sync with whatever font actually loads - so pagination is driven off the
+// live DOM instead, same as the monthly snapshot fix.
+async function measureOfficerPdfHeights(row, dateLabel) {
+  const metricStrip = `
+    ${metricHtml("Risk Watch", row.riskWatch.loans, row.riskWatch.npaRiskCount ? "danger" : "warn")}
+    ${metricHtml("Pending", row.pending, "warn")}
+    ${metricHtml("Sanctioned", row.sanctioned, "good")}
+    ${metricHtml("Returned", row.returned, "soft-danger")}
+    ${metricHtml("Renewals Done", row.renewalsDone, "blue")}
+  `;
+
+  const fullSections = buildOfficerPdfSections(row).map(section => ({
+    ...section,
+    pageLoans: section.loans,
+    continuedBefore: false,
+    continuedAfter: false,
+    start: 0,
+    end: section.loans.length,
+  }));
+
+  const probe = document.createElement("div");
+  probe.style.position = "fixed";
+  probe.style.left = "-10000px";
+  probe.style.top = "0";
+  probe.style.width = `${PDF_PAGE_WIDTH}px`;
+  probe.style.pointerEvents = "none";
+  probe.innerHTML = `<div class="pdf-report">
+    <style>${detailedSnapshotPdfCss()}</style>
+    <section class="pdf-page pdf-officer-page" id="probe-first" style="height:auto;overflow:visible">
+      <header class="pdf-officer-head">
+        <div class="pdf-officer-brand"><span class="pdf-mini-logo">न</span><div><strong>Nirnay</strong><small>Loan Tracker</small></div></div>
+        <div class="pdf-officer-report-title"><strong>Officer Detailed Snapshot</strong><span>${esc(dateLabel)}</span></div>
+      </header>
+      <div class="pdf-officer-title-row">
+        <div><span class="pdf-kicker">Officer 1 of 1</span><h2>Officer: ${esc(row.name)}</h2></div>
+        <div class="pdf-officer-code">Officer Code: OFF-001</div>
+      </div>
+      <div class="pdf-officer-metrics">${metricStrip}</div>
+      <div class="pdf-detail-stack" id="probe-stack-first"></div>
+    </section>
+    <section class="pdf-page pdf-officer-page is-continuation" id="probe-later" style="height:auto;overflow:visible">
+      <header class="pdf-officer-head">
+        <div class="pdf-officer-brand"><span class="pdf-mini-logo">न</span><div><strong>Nirnay</strong><small>Loan Tracker</small></div></div>
+        <div class="pdf-officer-report-title"><strong>Officer Detailed Snapshot</strong><span>${esc(dateLabel)}</span></div>
+      </header>
+      <div class="pdf-officer-title-row">
+        <div><span class="pdf-kicker">Officer 1 of 1 - Part 2 of 2</span><h2>Officer: ${esc(row.name)}</h2></div>
+      </div>
+      <div class="pdf-detail-stack" id="probe-stack-later"></div>
+    </section>
+    <section class="pdf-page pdf-officer-page" id="probe-footer-page" style="height:auto;overflow:visible">
+      <footer class="pdf-footer" style="position:static;margin-top:20px">
+        <span class="pdf-footer-brand"><span class="pdf-footer-logo">न</span>Nirnay Loan Tracker</span>
+        <span class="pdf-footer-meta">All amounts in Rs Lakhs</span>
+        <span class="pdf-footer-page">Page 1 of 1</span>
+      </footer>
+    </section>
+    <section class="pdf-page pdf-officer-page" id="probe-sections-page" style="height:auto;overflow:visible">
+      <div class="pdf-detail-stack" id="probe-sections">
+        ${fullSections.map(compactPdfSectionV2).join("")}
+      </div>
+    </section>
+  </div>`;
+  document.body.appendChild(probe);
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+  const firstPageTop = probe.querySelector("#probe-first").getBoundingClientRect().top;
+  const headerHeightFirst = probe.querySelector("#probe-stack-first").getBoundingClientRect().top - firstPageTop;
+
+  const laterPageTop = probe.querySelector("#probe-later").getBoundingClientRect().top;
+  const headerHeightLater = probe.querySelector("#probe-stack-later").getBoundingClientRect().top - laterPageTop;
+
+  const footerHeight = probe.querySelector("#probe-footer-page .pdf-footer").getBoundingClientRect().height;
+  const footerTop = PDF_PAGE_HEIGHT - 14 - footerHeight;
+
+  const sectionEls = [...probe.querySelectorAll("#probe-sections > .pdf-section")];
+  const sectionMetrics = sectionEls.map((el, i) => {
+    const loanCount = fullSections[i].loans.length;
+    const visualRowCount = loanCount ? Math.ceil(loanCount / 2) : 1;
+    const fullHeight = el.getBoundingClientRect().height;
+    const trs = [...el.querySelectorAll("tbody tr")];
+    const rowHeight = trs.length ? Math.max(...trs.map(tr => tr.getBoundingClientRect().height)) : 26;
+    // Each section also renders a table <thead> and has its own body padding
+    // (see .pdf-section-body), on top of the .pdf-section-band title bar.
+    // Rather than hand-summing every CSS constant, back-solve the fixed
+    // per-section overhead from the section's real full height minus its
+    // real row cost - correct regardless of what the padding/thead actually
+    // measure to.
+    const fixedOverhead = fullHeight - visualRowCount * rowHeight;
+    return { fixedOverhead, rowHeight };
+  });
+
+  probe.remove();
+
+  return {
+    headerHeightFirst,
+    headerHeightLater,
+    footerTop,
+    sectionGap: 9,
+    sectionMetrics,
+  };
+}
+
+// Packs the 5 fixed sections (Risk Watch/Pending/Sanctioned/Returned/
+// Renewals Done) into pages by accumulated real rendered height rather than
+// a hand-tuned "units" budget, since a page can silently clip a section's
+// last rows otherwise. Splits a section across pages (with "continued"
+// labels) exactly as before - only the size estimate changed.
+function paginateOfficerPdfSectionsWithHeights(row, heights) {
+  const source = buildOfficerPdfSections(row).map((section, i) => ({
     ...section,
     cursor: 0,
     emittedEmpty: false,
+    fixedOverhead: heights.sectionMetrics[i].fixedOverhead,
+    rowHeight: heights.sectionMetrics[i].rowHeight,
   }));
   const pages = [];
-  const firstPageUnits = 40;
-  const continuationUnits = 48;
-  const sectionBaseUnits = 2;
+  const gap = heights.sectionGap;
 
   while (source.some(section => section.cursor < section.loans.length || (!section.loans.length && !section.emittedEmpty))) {
+    const headerHeight = pages.length ? heights.headerHeightLater : heights.headerHeightFirst;
+    let budget = heights.footerTop - headerHeight - OFFICER_PAGE_SAFETY_MARGIN;
     const chunks = [];
-    let unitsLeft = pages.length ? continuationUnits : firstPageUnits;
 
     for (const section of source) {
-      if (unitsLeft <= sectionBaseUnits) break;
+      const gapCost = chunks.length ? gap : 0;
+
       if (!section.loans.length) {
         if (section.emittedEmpty) continue;
+        const cost = gapCost + section.fixedOverhead + section.rowHeight;
+        if (cost > budget && chunks.length) break;
         chunks.push({ ...section, pageLoans: [], continuedBefore: false, continuedAfter: false });
         section.emittedEmpty = true;
-        unitsLeft -= sectionBaseUnits;
+        budget -= cost;
         continue;
       }
       if (section.cursor >= section.loans.length) continue;
 
+      const bandCost = gapCost + section.fixedOverhead;
+      if (bandCost + section.rowHeight > budget && chunks.length) break;
+
+      const remainingForRows = Math.max(0, budget - bandCost);
+      const maxVisualRows = Math.max(1, Math.floor(remainingForRows / section.rowHeight));
       const start = section.cursor;
-      const maxRows = Math.max(2, (unitsLeft - sectionBaseUnits) * 2);
-      const end = Math.min(section.loans.length, start + maxRows);
+      const end = Math.min(section.loans.length, start + maxVisualRows * 2);
       const rowsUsed = end - start;
+      const visualRowsUsed = Math.ceil(rowsUsed / 2);
+
       chunks.push({
         ...section,
         pageLoans: section.loans.slice(start, end),
@@ -439,7 +568,7 @@ function paginateOfficerPdfSections(row) {
         end,
       });
       section.cursor = end;
-      unitsLeft -= sectionBaseUnits + Math.ceil(rowsUsed / 2);
+      budget -= bandCost + visualRowsUsed * section.rowHeight;
     }
 
     if (!chunks.length) {
@@ -525,8 +654,8 @@ function compactPdfSectionV2(section) {
   </section>`;
 }
 
-function buildOfficerPdfPages(row, pageNo, totalPages, dateLabel, ctx) {
-  const pages = paginateOfficerPdfSections(row);
+function buildOfficerPdfPages(row, pageNo, totalPages, dateLabel, ctx, heights) {
+  const pages = paginateOfficerPdfSectionsWithHeights(row, heights);
   return pages.map((sections, index) => {
     const globalPageNo = ctx.runningPage++;
     const isLastOfficerPart = index === pages.length - 1;
@@ -837,4 +966,4 @@ function detailedSnapshotPdfCss() {
 }
 
 
-export { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSections, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss };
+export { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSectionsWithHeights, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss };
