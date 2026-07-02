@@ -249,6 +249,13 @@
           This is a Term Loan (Exclude from CC Renewals)
         </label>
       </div>
+      <div class="form-group" id="fBreGroup" style="display:none;align-items:center;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:0;">
+          <input type="checkbox" id="fBre" style="width:16px;height:16px;margin:0;">
+          <span class="bre-badge-pill">BRE</span>
+          Sanctioned through BRE journey
+        </label>
+      </div>
       <div class="form-group">
         <label>Branch *</label>
         <input type="text" id="fBranchSearch" list="branchOptions" required placeholder="Type branch code or name" autocomplete="off" oninput="handleBranchSearch(this.value)" onchange="handleBranchSearch(this.value)">
@@ -264,14 +271,7 @@
       </div>
       <div class="form-group">
         <label>Amount (in Lakhs) *</label>
-        <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35" oninput="updateBreCheckbox()">
-      </div>
-      <div class="form-group" id="fBreGroup" style="display:none;align-items:center;margin-top:4px;">
-        <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:0;">
-          <input type="checkbox" id="fBre" style="width:16px;height:16px;margin:0;">
-          <span class="bre-badge-pill">BRE</span>
-          Sanctioned through BRE journey
-        </label>
+        <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35">
       </div>
       <button type="button" id="toggleAdvancedBtn" class="btn btn-cancel-full form-toggle-btn" onclick="toggleAdvancedFields()">
         Add More Details

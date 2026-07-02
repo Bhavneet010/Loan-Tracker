@@ -120,7 +120,6 @@ function setCategoryValue(category) {
   renderCategoryChips(category || '');
   updateCategoryHint(category || '');
   window.toggleTermLoan(category || '');
-  window.updateBreCheckbox();
 }
 
 function matchBranchOption(branch) {
@@ -509,17 +508,15 @@ window.duplicateLoan = id => {
   if (l) window.openQuickAdd(id);
 };
 
-// The BRE checkbox is offered only for entries in the eligible band (SME,
-// 10-50 lacs); whether the loan actually went through BRE is the user's call.
+// BRE is a manual flag: the checkbox is available for every SME loan (whether
+// it went through the BRE journey is the user's call). Non-SME hides + clears it.
 window.updateBreCheckbox = function() {
   const group = document.getElementById('fBreGroup');
   const checkbox = document.getElementById('fBre');
   if (!group || !checkbox) return;
-  const category = getCategorySelect()?.value || '';
-  const amount = parseFloat(document.getElementById('fAmount')?.value);
-  const eligible = category === 'SME' && amount >= 10 && amount <= 50;
-  group.style.display = eligible ? 'flex' : 'none';
-  if (!eligible) checkbox.checked = false;
+  const isSme = (getCategorySelect()?.value || '') === 'SME';
+  group.style.display = isSme ? 'flex' : 'none';
+  if (!isSme) checkbox.checked = false;
 };
 
 window.toggleTermLoan = function(cat) {
@@ -529,6 +526,7 @@ window.toggleTermLoan = function(cat) {
   if (termLoanGroup) termLoanGroup.style.display = cat === 'SME' ? 'flex' : 'none';
   if (renewalGroup) renewalGroup.style.display = cat === 'SME' ? 'block' : 'none';
   if (limitExpiryGroup) limitExpiryGroup.style.display = cat === 'SME' ? 'block' : 'none';
+  window.updateBreCheckbox();
 };
 
 export { getBranchSearchInput, getBranchValueInput, getCategorySelect, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve };
