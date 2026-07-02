@@ -26,6 +26,10 @@ function fmt(s) {
   return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : s;
 }
 
+function up(s) {
+  return s ? String(s).toUpperCase() : "";
+}
+
 function pendingRows(loans) {
   return loans
     .filter(l => isFreshCC(l) && l.status === "pending")
@@ -34,13 +38,13 @@ function pendingRows(loans) {
       return cd !== 0 ? cd : (a.receiveDate || "").localeCompare(b.receiveDate || "");
     })
     .map(l => ({
-      "Category": l.category || "",
-      "Officer": effectiveOfficer(l),
-      "Branch": l.branch || "",
-      "Customer Name": l.customerName || "",
+      "Category": up(l.category),
+      "Officer": up(effectiveOfficer(l)),
+      "Branch": up(l.branch),
+      "Customer Name": up(l.customerName),
       "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
       "Receive Date": fmt(l.receiveDate),
-      "Remarks": l.remarks || "",
+      "Remarks": up(l.remarks),
     }));
 }
 
@@ -49,14 +53,14 @@ function sanctionedRows(loans) {
     .filter(l => isFreshCC(l) && l.status === "sanctioned")
     .sort((a, b) => (b.sanctionDate || "").localeCompare(a.sanctionDate || ""))
     .map(l => ({
-      "Officer": effectiveOfficer(l),
-      "Branch": l.branch || "",
-      "Customer Name": l.customerName || "",
+      "Officer": up(effectiveOfficer(l)),
+      "Branch": up(l.branch),
+      "Customer Name": up(l.customerName),
       "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
-      "Category": l.category || "",
+      "Category": up(l.category),
       "Receive Date": fmt(l.receiveDate),
       "Sanction Date": fmt(l.sanctionDate),
-      "Remarks": l.remarks || "",
+      "Remarks": up(l.remarks),
     }));
 }
 
@@ -65,14 +69,14 @@ function returnedRows(loans) {
     .filter(l => isFreshCC(l) && l.status === "returned")
     .sort((a, b) => (b.returnedDate || "").localeCompare(a.returnedDate || ""))
     .map(l => ({
-      "Officer": effectiveOfficer(l),
-      "Branch": l.branch || "",
-      "Customer Name": l.customerName || "",
+      "Officer": up(effectiveOfficer(l)),
+      "Branch": up(l.branch),
+      "Customer Name": up(l.customerName),
       "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
-      "Category": l.category || "",
+      "Category": up(l.category),
       "Receive Date": fmt(l.receiveDate),
       "Returned Date": fmt(l.returnedDate),
-      "Remarks": l.remarks || "",
+      "Remarks": up(l.remarks),
     }));
 }
 
@@ -81,10 +85,10 @@ function renewalsDoneRows(loans) {
     .filter(l => l.category === "SME" && !l.isTermLoan && l.renewedDate)
     .sort((a, b) => (b.renewedDate || "").localeCompare(a.renewedDate || ""))
     .map(l => ({
-      "Officer": effectiveOfficer(l),
-      "Branch": l.branch || "",
+      "Officer": up(effectiveOfficer(l)),
+      "Branch": up(l.branch),
       "": "",
-      "Customer Name": l.customerName || "",
+      "Customer Name": up(l.customerName),
       "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
       "Limit Expiry Date": fmt(l.limitExpiryDate),
       "Renewal Due Date": fmt(l.renewalDueDate),
