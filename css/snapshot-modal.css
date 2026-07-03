@@ -859,7 +859,8 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
 .sme-daily-export .sme-daily-title{font-size:17px;padding:10px;}
 .sme-daily-export .sme-daily-table th,
 .sme-daily-export .sme-daily-table td{padding:9px 10px;}
-.sme-daily-export .sme-daily-table td.sme-num{font-size:15px;}
-.sme-daily-export .sme-daily-note{font-size:12px;}
+.sme-daily-export .sme-daily-table td.sme-num{font-size:18px;font-weight:800;}
+.sme-daily-export .sme-disb-print{font-size:18px;font-weight:800;}
+.sme-daily-export .sme-daily-note{font-size:12px;color:#1c1b22;}
 /* The report mimics the bank's printed format, so it stays light in dark mode. */
 body.dark .sme-daily-report{border-color:rgba(107,95,191,0.35);}
