@@ -868,9 +868,10 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
    is scoped with :not(.sme-daily-export) so the exported JPEG always keeps
    the original table layout regardless of the device it's exported from. */
 @media (max-width:680px){
-  .sme-daily-wrap{padding:8px;}
-  .sme-daily-report:not(.sme-daily-export){padding:10px;}
+  .sme-daily-wrap{padding:6px;}
+  .sme-daily-report:not(.sme-daily-export){padding:8px;}
   .sme-daily-report:not(.sme-daily-export) .sme-daily-scroll{overflow:visible;}
+  .sme-daily-report:not(.sme-daily-export) .sme-daily-title{padding:6px 8px;font-size:12px;}
   .sme-daily-report:not(.sme-daily-export) .sme-daily-table{
     display:block;
     width:100%;
@@ -886,29 +887,29 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
     display:flex;
     justify-content:space-between;
     align-items:center;
-    gap:10px;
+    gap:8px;
     width:100%;
     border:none;
     border-bottom:1px solid #e4e1ee;
-    padding:10px 12px;
+    padding:5px 10px;
     white-space:normal;
     text-align:right;
-    font-size:15px;
+    font-size:13px;
     font-weight:800;
   }
   .sme-daily-report:not(.sme-daily-export) .sme-daily-table tr td:last-child{border-bottom:none;}
   .sme-daily-report:not(.sme-daily-export) .sme-daily-table td::before{
     content:attr(data-label);
     font-weight:700;
-    font-size:11px;
+    font-size:10px;
     color:#6f6c85;
     text-transform:uppercase;
-    letter-spacing:0.03em;
+    letter-spacing:0.02em;
     text-align:left;
   }
   .sme-daily-report:not(.sme-daily-export) .sme-daily-table td[data-group]{
-    margin-top:14px;
-    padding-top:36px;
+    margin-top:5px;
+    padding-top:22px;
     position:relative;
   }
   .sme-daily-report:not(.sme-daily-export) .sme-daily-table td[data-group]::after{
@@ -918,12 +919,13 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
     background:#C9E5D2;
     color:#1c1b22;
     font-weight:800;
-    font-size:11px;
+    font-size:10px;
     text-align:center;
-    padding:6px 0;
+    padding:3px 0;
     letter-spacing:0.02em;
   }
-  .sme-daily-report:not(.sme-daily-export) .sme-disb-input{width:110px;font-size:15px;}
+  .sme-daily-report:not(.sme-daily-export) .sme-daily-note{margin-top:4px;}
+  .sme-daily-report:not(.sme-daily-export) .sme-disb-input{width:90px;font-size:13px;padding:3px 5px;}
 }
 /* The report mimics the bank's printed format, so it stays light in dark mode. */
 body.dark .sme-daily-report{border-color:rgba(107,95,191,0.35);}
