@@ -843,17 +843,17 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
   color:#6f6c85;
 }
 .sme-disb-status{font-weight:700;color:#2e7d4f;white-space:nowrap;}
-.sme-daily-export{border-radius:0;box-shadow:none;border:none;padding:34px 20px 30px;}
+.sme-daily-export{border-radius:0;box-shadow:none;border:none;padding:48px 24px 44px;}
 .sme-daily-export .sme-daily-header{
   display:flex;
   align-items:center;
-  justify-content:center;
+  justify-content:flex-end;
   gap:10px;
-  padding-bottom:18px;
+  padding-bottom:22px;
 }
 .sme-daily-export .sme-daily-logo{width:38px;height:38px;flex-shrink:0;}
 .sme-daily-export .sme-daily-branch{font-weight:800;font-size:16px;letter-spacing:0.03em;color:#1c1b22;}
-.sme-daily-export .sme-daily-footer{display:block;height:22px;}
+.sme-daily-export .sme-daily-footer{display:block;height:32px;}
 .sme-daily-export .sme-daily-scroll{overflow:visible;}
 .sme-daily-export .sme-daily-table{font-size:14px;min-width:0;}
 .sme-daily-export .sme-daily-title{font-size:17px;padding:10px;}
