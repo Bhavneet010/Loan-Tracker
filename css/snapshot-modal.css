@@ -154,11 +154,19 @@
   min-height:28px;
   padding:7px 10px;
   white-space:nowrap;
+  transition:background 0.4s ease, box-shadow 0.4s ease;
 }
 .perf-period-option.active{
   background:linear-gradient(135deg,var(--p2),var(--p1));
   color:#fff;
   box-shadow:0 5px 12px rgba(107,95,191,0.18);
+}
+/* The Daily tab hides a second dashboard (SME Daily Report) behind the same
+   button. Shifting its gradient when that variant is active is the only cue
+   a user gets that tapping Daily again switches to a different view. */
+.perf-period-option.active[data-daily-variant="sme"]{
+  background:linear-gradient(135deg,#F2A93C,#C2660B);
+  box-shadow:0 5px 12px rgba(194,102,11,0.28);
 }
 .perf-header-share-btn{
   border:1px solid rgba(107,95,191,0.18);

@@ -532,7 +532,10 @@ function renderPerformancePeriodToggle(currentPeriod = activePerformancePeriod) 
   toggle.innerHTML = Object.entries(PERFORMANCE_PERIODS).map(([key, item]) => {
     const active = key === currentPeriod;
     const hint = key === "daily" ? ' title="Tap again for SME Daily Report"' : "";
-    return `<button class="perf-period-option${active ? " active" : ""}" type="button" role="tab" aria-selected="${active ? "true" : "false"}"${hint} onclick="handlePerformancePeriodTap('${key}')">${item.label}</button>`;
+    // The Daily button shows two different dashboards behind one tap target;
+    // tagging its variant lets CSS shift its color so the switch is visible.
+    const variantAttr = key === "daily" ? ` data-daily-variant="${activeDailyVariant}"` : "";
+    return `<button class="perf-period-option${active ? " active" : ""}" type="button" role="tab" aria-selected="${active ? "true" : "false"}"${hint}${variantAttr} onclick="handlePerformancePeriodTap('${key}')">${item.label}</button>`;
   }).join("");
 }
 
