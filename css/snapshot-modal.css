@@ -162,12 +162,40 @@
   box-shadow:0 5px 12px rgba(107,95,191,0.18);
 }
 /* The Daily tab hides a second dashboard (SME Daily Report) behind the same
-   button. Shifting its gradient when that variant is active is the only cue
-   a user gets that tapping Daily again switches to a different view. */
-.perf-period-option.active[data-daily-variant="sme"]{
-  background:linear-gradient(135deg,#F2A93C,#C2660B);
-  box-shadow:0 5px 12px rgba(194,102,11,0.28);
+   button. Both colors are always present as two stacked corner-bleed layers;
+   only their crossfaded opacity swaps which one dominates, so neither state
+   ever looks like a clean, unrelated color — it always reads as "the other
+   one is still in there." */
+.perf-period-option.active[data-daily-variant]{
+  position:relative;
+  isolation:isolate;
+  background:none;
 }
+.perf-period-option.active[data-daily-variant]::before,
+.perf-period-option.active[data-daily-variant]::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  border-radius:inherit;
+  transition:opacity 0.45s ease;
+}
+.perf-period-option.active[data-daily-variant]::before{
+  background:
+    radial-gradient(circle at 88% 14%, #F2A93C 0%, transparent 46%),
+    linear-gradient(135deg,var(--p2),var(--p1));
+  opacity:1;
+}
+.perf-period-option.active[data-daily-variant]::after{
+  background:
+    radial-gradient(circle at 12% 86%, var(--p2) 0%, transparent 46%),
+    linear-gradient(135deg,#F2A93C,#C2660B);
+  opacity:0;
+}
+.perf-period-option.active[data-daily-variant="sme"]::before{opacity:0;}
+.perf-period-option.active[data-daily-variant="sme"]::after{opacity:1;}
+.perf-period-option.active[data-daily-variant="snapshot"]{box-shadow:0 5px 12px rgba(107,95,191,0.18);}
+.perf-period-option.active[data-daily-variant="sme"]{box-shadow:0 5px 12px rgba(194,102,11,0.28);}
 .perf-header-share-btn{
   border:1px solid rgba(107,95,191,0.18);
   border-radius:999px;
