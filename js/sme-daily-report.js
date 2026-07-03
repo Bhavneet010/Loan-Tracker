@@ -170,7 +170,6 @@ window.shareSmeDailyReportJpeg = async function () {
   try {
     await ensureHtml2Canvas();
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const exportWidth = 1040;
     const exportHost = document.createElement("div");
     const exportCard = report.cloneNode(true);
     // Inputs render unreliably in html2canvas clones, so bake values into spans.
@@ -186,12 +185,16 @@ window.shareSmeDailyReportJpeg = async function () {
     exportHost.style.position = "fixed";
     exportHost.style.left = "-10000px";
     exportHost.style.top = "0";
-    exportHost.style.width = `${exportWidth}px`;
     exportHost.style.pointerEvents = "none";
-    exportCard.style.width = `${exportWidth}px`;
+    // Size to the table's natural (unwrapped) width instead of a fixed box,
+    // so the wide 12-column table never gets clipped by the scroll wrapper.
+    exportCard.style.display = "inline-block";
+    exportCard.style.width = "max-content";
     exportCard.style.maxWidth = "none";
     exportHost.appendChild(exportCard);
     document.body.appendChild(exportHost);
+
+    const exportWidth = Math.ceil(exportCard.getBoundingClientRect().width);
 
     let canvas;
     try {
