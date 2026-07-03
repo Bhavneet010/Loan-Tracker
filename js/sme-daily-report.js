@@ -2,10 +2,12 @@ import { db } from "./config.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, fmtDate, toast, todayStr } from "./utils.js";
-import { ensureHtml2Canvas } from "./performance-snapshot.js";
+import { ensureHtml2Canvas, ensureImageLoaded } from "./performance-snapshot.js";
 
 const SME_BRANCH_CODE = "63494";
 const SME_CENTRE_TYPE = "AMCC";
+const SME_LOGO_SRC = "assets/sme/sbi-logo.svg";
+const SME_BRANCH_LABEL = "SBI AMCC PAONTA SAHIB 63494";
 
 /* Band limits are in lacs, matching loan.amount units. */
 function inSmeBand(loan, min, max) {
@@ -52,6 +54,10 @@ function buildSmeDailyReportHtml() {
 
   return `<div class="sme-daily-wrap">
     <div class="sme-daily-report">
+      <div class="sme-daily-header">
+        <img src="${SME_LOGO_SRC}" alt="SBI" class="sme-daily-logo">
+        <span class="sme-daily-branch">${esc(SME_BRANCH_LABEL)}</span>
+      </div>
       <div class="sme-daily-title">SME DAILY REPORTING DATED&nbsp;-&nbsp;${esc(fmtDate(metrics.day))}</div>
       <div class="sme-daily-scroll">
         <table class="sme-daily-table">
@@ -92,6 +98,7 @@ function buildSmeDailyReportHtml() {
         <span>All amounts in lacs</span>
         <span id="smeDisbStatus" class="sme-disb-status"></span>
       </div>
+      <div class="sme-daily-footer"></div>
     </div>
   </div>`;
 }
@@ -169,6 +176,7 @@ window.shareSmeDailyReportJpeg = async function () {
 
   try {
     await ensureHtml2Canvas();
+    await ensureImageLoaded(SME_LOGO_SRC).catch(() => {});
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const exportHost = document.createElement("div");
     const exportCard = report.cloneNode(true);
