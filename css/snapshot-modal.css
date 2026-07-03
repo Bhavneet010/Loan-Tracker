@@ -871,7 +871,13 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
   .sme-daily-wrap{padding:6px;}
   .sme-daily-report:not(.sme-daily-export){padding:8px;}
   .sme-daily-report:not(.sme-daily-export) .sme-daily-scroll{overflow:visible;}
-  .sme-daily-report:not(.sme-daily-export) .sme-daily-title{padding:6px 8px;font-size:12px;}
+  .sme-daily-report:not(.sme-daily-export) .sme-daily-title{
+    padding:6px 8px;
+    font-size:12px;
+    border-radius:8px;
+    border-bottom:1px solid #8f8f8f;
+    margin-bottom:8px;
+  }
   .sme-daily-report:not(.sme-daily-export) .sme-daily-table{
     display:block;
     width:100%;
