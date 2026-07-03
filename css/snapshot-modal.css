@@ -876,6 +876,8 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
     display:block;
     width:100%;
     min-width:0;
+    border-collapse:separate;
+    border-spacing:0;
     border:1px solid #8f8f8f;
     border-radius:8px;
     overflow:hidden;
