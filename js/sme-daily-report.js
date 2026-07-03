@@ -89,7 +89,7 @@ function buildSmeDailyReportHtml() {
         </table>
       </div>
       <div class="sme-daily-note">
-        <span>All amounts in lacs &middot; BRE columns count sanctions marked BRE on the loan form &middot; Disbursement entered manually</span>
+        <span>All amounts in lacs</span>
         <span id="smeDisbStatus" class="sme-disb-status"></span>
       </div>
     </div>
