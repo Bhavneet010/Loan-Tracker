@@ -182,13 +182,13 @@
 }
 .perf-period-option.active[data-daily-variant]::before{
   background:
-    radial-gradient(circle at 88% 14%, #F2A93C 0%, transparent 46%),
+    radial-gradient(circle at 88% 14%, rgba(242,169,60,0.55) 0%, transparent 38%),
     linear-gradient(135deg,var(--p2),var(--p1));
   opacity:1;
 }
 .perf-period-option.active[data-daily-variant]::after{
   background:
-    radial-gradient(circle at 12% 86%, var(--p2) 0%, transparent 46%),
+    radial-gradient(circle at 12% 86%, color-mix(in srgb, var(--p2) 50%, transparent) 0%, transparent 38%),
     linear-gradient(135deg,#F2A93C,#C2660B);
   opacity:0;
 }
