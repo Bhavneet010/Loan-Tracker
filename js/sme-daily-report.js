@@ -39,6 +39,47 @@ function cachedDisbursement(dateStr) {
   }
 }
 
+function prevDayStr(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d, 12, 0, 0, 0);
+  date.setDate(date.getDate() - 1);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 10);
+}
+
+function sameMonth(a, b) {
+  return a.slice(0, 7) === b.slice(0, 7);
+}
+
+// MTD disbursement carries over day to day: today's MTD = yesterday's MTD +
+// today's FTD, unless the user has typed their own MTD figure for today.
+let mtdBaseline = 0;
+let mtdIsManual = false;
+
+async function computeMtdBaseline(dateStr) {
+  const prev = prevDayStr(dateStr);
+  if (!sameMonth(prev, dateStr)) return 0; // new month: MTD restarts at zero
+  try {
+    const snap = await getDoc(doc(db, "smeDisbursement", prev));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.mtdAmt !== undefined && data.mtdAmt !== "") return parseFloat(data.mtdAmt) || 0;
+    }
+  } catch (err) {
+    console.warn("[SME Daily] Could not load previous day disbursement:", err);
+  }
+  const cachedPrev = cachedDisbursement(prev);
+  return parseFloat(cachedPrev?.mtdAmt) || 0;
+}
+
+function applyAutoMtd() {
+  const mtdInput = document.getElementById("smeDisbMtd");
+  if (!mtdInput || document.activeElement === mtdInput) return;
+  const ftdRaw = document.getElementById("smeDisbFtd")?.value ?? "";
+  const total = mtdBaseline + (parseFloat(ftdRaw) || 0);
+  mtdInput.value = total ? String(Math.round(total * 100) / 100) : "0";
+}
+
 function buildSmeDailyReportHtml() {
   const metrics = getLoanMetrics();
   const band1to50 = collectStats(metrics, loan => inSmeBand(loan, 1, 50));
@@ -88,8 +129,8 @@ function buildSmeDailyReportHtml() {
               <td class="sme-num" data-label="AMCC/SMEC">${SME_CENTRE_TYPE}</td>
               ${metricCells(band1to50, "Sanctioned 1-50 lacs")}
               ${metricCells(band10to50, "Sanctioned 10-50 lacs (BRE)")}
-              <td class="sme-num" data-label="FTD (Amt.)" data-group="Disbursement"><input id="smeDisbFtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.ftdAmt ?? "")}" oninput="onSmeDisbursementInput()"></td>
-              <td class="sme-num" data-label="MTD (Amt.)"><input id="smeDisbMtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.mtdAmt ?? "")}" oninput="onSmeDisbursementInput()"></td>
+              <td class="sme-num" data-label="FTD (Amt.)" data-group="Disbursement"><input id="smeDisbFtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.ftdAmt ?? "")}" oninput="onSmeDisbFtdInput()"></td>
+              <td class="sme-num" data-label="MTD (Amt.)"><input id="smeDisbMtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.mtdAmt ?? "")}" oninput="onSmeDisbMtdInput()"></td>
             </tr>
           </tbody>
         </table>
@@ -121,14 +162,24 @@ function setDisbInputValue(id, value) {
 }
 
 async function hydrateDisbursement(dateStr) {
+  const cached = cachedDisbursement(dateStr);
+  mtdIsManual = !!cached?.mtdManual;
+  mtdBaseline = await computeMtdBaseline(dateStr);
+  if (!mtdIsManual) applyAutoMtd();
+
   try {
     const snap = await getDoc(doc(db, "smeDisbursement", dateStr));
     if (!snap.exists()) return;
     const data = snap.data();
+    mtdIsManual = !!data.mtdManual;
     setDisbInputValue("smeDisbFtd", data.ftdAmt);
-    setDisbInputValue("smeDisbMtd", data.mtdAmt);
+    if (mtdIsManual) {
+      setDisbInputValue("smeDisbMtd", data.mtdAmt);
+    } else {
+      applyAutoMtd();
+    }
     try {
-      localStorage.setItem(disbCacheKey(dateStr), JSON.stringify({ ftdAmt: data.ftdAmt ?? "", mtdAmt: data.mtdAmt ?? "" }));
+      localStorage.setItem(disbCacheKey(dateStr), JSON.stringify({ ftdAmt: data.ftdAmt ?? "", mtdAmt: data.mtdAmt ?? "", mtdManual: mtdIsManual }));
     } catch {}
   } catch (err) {
     console.warn("[SME Daily] Could not load disbursement:", err);
@@ -137,7 +188,15 @@ async function hydrateDisbursement(dateStr) {
 
 let disbSaveTimer = null;
 
-window.onSmeDisbursementInput = function () {
+window.onSmeDisbFtdInput = function () {
+  if (!mtdIsManual) applyAutoMtd();
+  setDisbStatus("Saving…");
+  clearTimeout(disbSaveTimer);
+  disbSaveTimer = setTimeout(saveSmeDisbursement, 800);
+};
+
+window.onSmeDisbMtdInput = function () {
+  mtdIsManual = true;
   setDisbStatus("Saving…");
   clearTimeout(disbSaveTimer);
   disbSaveTimer = setTimeout(saveSmeDisbursement, 800);
@@ -147,7 +206,7 @@ async function saveSmeDisbursement() {
   const dateStr = todayStr();
   const ftdRaw = document.getElementById("smeDisbFtd")?.value.trim() ?? "";
   const mtdRaw = document.getElementById("smeDisbMtd")?.value.trim() ?? "";
-  const payload = { ftdAmt: ftdRaw, mtdAmt: mtdRaw };
+  const payload = { ftdAmt: ftdRaw, mtdAmt: mtdRaw, mtdManual: mtdIsManual };
   try {
     localStorage.setItem(disbCacheKey(dateStr), JSON.stringify(payload));
   } catch {}
