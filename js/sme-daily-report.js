@@ -46,11 +46,11 @@ function buildSmeDailyReportHtml() {
   // goes through the BRE journey.
   const band10to50 = collectStats(metrics, loan => loan.category === "SME" && loan.isBre === true);
   const cached = cachedDisbursement(metrics.day) || {};
-  const metricCells = stats => `
-    <td class="sme-num">${stats.ftdNo}</td>
-    <td class="sme-num">${stats.mtdNo}</td>
-    <td class="sme-num">${esc(fmtAmt(stats.ftdAmt))}</td>
-    <td class="sme-num">${esc(fmtAmt(stats.mtdAmt))}</td>`;
+  const metricCells = (stats, groupLabel) => `
+    <td class="sme-num" data-label="FTD (No)" data-group="${esc(groupLabel)}">${stats.ftdNo}</td>
+    <td class="sme-num" data-label="MTD (No)">${stats.mtdNo}</td>
+    <td class="sme-num" data-label="FTD (Amt.)">${esc(fmtAmt(stats.ftdAmt))}</td>
+    <td class="sme-num" data-label="MTD (Amt.)">${esc(fmtAmt(stats.mtdAmt))}</td>`;
 
   return `<div class="sme-daily-wrap">
     <div class="sme-daily-report">
@@ -84,12 +84,12 @@ function buildSmeDailyReportHtml() {
           </thead>
           <tbody>
             <tr>
-              <td class="sme-num">${SME_BRANCH_CODE}</td>
-              <td class="sme-num">${SME_CENTRE_TYPE}</td>
-              ${metricCells(band1to50)}
-              ${metricCells(band10to50)}
-              <td class="sme-num"><input id="smeDisbFtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.ftdAmt ?? "")}" oninput="onSmeDisbursementInput()"></td>
-              <td class="sme-num"><input id="smeDisbMtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.mtdAmt ?? "")}" oninput="onSmeDisbursementInput()"></td>
+              <td class="sme-num" data-label="Br. Code">${SME_BRANCH_CODE}</td>
+              <td class="sme-num" data-label="AMCC/SMEC">${SME_CENTRE_TYPE}</td>
+              ${metricCells(band1to50, "Sanctioned 1-50 lacs")}
+              ${metricCells(band10to50, "Sanctioned 10-50 lacs (BRE)")}
+              <td class="sme-num" data-label="FTD (Amt.)" data-group="Disbursement"><input id="smeDisbFtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.ftdAmt ?? "")}" oninput="onSmeDisbursementInput()"></td>
+              <td class="sme-num" data-label="MTD (Amt.)"><input id="smeDisbMtd" class="sme-disb-input" type="text" inputmode="decimal" placeholder="0" value="${esc(cached.mtdAmt ?? "")}" oninput="onSmeDisbursementInput()"></td>
             </tr>
           </tbody>
         </table>
