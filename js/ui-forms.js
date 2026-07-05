@@ -21,6 +21,22 @@ function getCategorySelect() {
   return document.getElementById('fCategory');
 }
 
+function setLoanTypeValue(type) {
+  const value = type === 'TL' || type === 'CC_TL' ? type : 'CC';
+  const radio = document.querySelector(`input[name="fLoanType"][value="${value}"]`);
+  if (radio) radio.checked = true;
+}
+
+function getLoanTypeValue() {
+  const checked = document.querySelector('input[name="fLoanType"]:checked');
+  return checked ? checked.value : 'CC';
+}
+
+function loanTypeFromLoan(loan) {
+  if (loan.loanType) return loan.loanType;
+  return loan.isTermLoan ? 'TL' : 'CC';
+}
+
 function normalizeName(name) {
   return String(name || '').trim().replace(/\s+/g, ' ').toUpperCase();
 }
@@ -279,11 +295,10 @@ function setBranchValue(branch, { allowFallbackUser = true, rawText = '' } = {})
 
 function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
   setCategoryValue(loan.category || '');
-  const termLoanGroup = document.getElementById('fTermLoanGroup');
-  const termLoanCheckbox = document.getElementById('fTermLoan');
-  if (termLoanGroup && termLoanCheckbox) {
-    termLoanGroup.style.display = loan.category === 'SME' ? 'flex' : 'none';
-    termLoanCheckbox.checked = !!loan.isTermLoan;
+  const loanTypeGroup = document.getElementById('fLoanTypeGroup');
+  if (loanTypeGroup) {
+    loanTypeGroup.style.display = loan.category === 'SME' ? 'flex' : 'none';
+    setLoanTypeValue(loanTypeFromLoan(loan));
   }
 
   const branchValue = matchBranchOption(loan.branch || '');
@@ -425,22 +440,21 @@ window.openForm = function(loan = null, mode = null, options = {}) {
     } else {
       document.getElementById('formTitle').textContent = entryMode === 'quick' ? 'Quick Add Loan' : 'Add New Loan';
     }
-    const termLoanGroup = document.getElementById('fTermLoanGroup');
+    const loanTypeGroup = document.getElementById('fLoanTypeGroup');
     const renewalGroup = document.getElementById('fRenewalGroup');
     const limitExpiryGroup = document.getElementById('fLimitExpiryGroup');
-    const termLoanCheckbox = document.getElementById('fTermLoan');
     if (isRenewalAddBack) {
-      if (termLoanGroup) termLoanGroup.style.display = 'flex';
+      if (loanTypeGroup) loanTypeGroup.style.display = 'flex';
       if (renewalGroup) renewalGroup.style.display = 'block';
       if (limitExpiryGroup) limitExpiryGroup.style.display = 'block';
       if (sanctionLabel) sanctionLabel.textContent = 'Original Sanction Date *';
       setCategoryValue('SME');
     } else {
-      if (termLoanGroup) termLoanGroup.style.display = 'none';
+      if (loanTypeGroup) loanTypeGroup.style.display = 'none';
       if (renewalGroup) renewalGroup.style.display = 'none';
       if (limitExpiryGroup) limitExpiryGroup.style.display = 'none';
     }
-    if (termLoanCheckbox) termLoanCheckbox.checked = false;
+    setLoanTypeValue('CC');
     const breCheckbox = document.getElementById('fBre');
     if (breCheckbox) breCheckbox.checked = false;
     if (S.user && !S.isAdmin) document.getElementById('fOfficer').value = S.user;
@@ -508,25 +522,28 @@ window.duplicateLoan = id => {
   if (l) window.openQuickAdd(id);
 };
 
-// BRE is a manual flag: the checkbox is available for every SME loan (whether
-// it went through the BRE journey is the user's call). Non-SME hides + clears it.
+// BRE is a manual flag: it's only offered for SME loans above 10 lacs (the
+// BRE sanctioning journey doesn't apply to smaller tickets). Whether such a
+// loan actually went through BRE is still the user's call.
 window.updateBreCheckbox = function() {
   const group = document.getElementById('fBreGroup');
   const checkbox = document.getElementById('fBre');
   if (!group || !checkbox) return;
   const isSme = (getCategorySelect()?.value || '') === 'SME';
-  group.style.display = isSme ? 'flex' : 'none';
-  if (!isSme) checkbox.checked = false;
+  const amount = parseFloat(document.getElementById('fAmount')?.value);
+  const eligible = isSme && amount > 10;
+  group.style.display = eligible ? 'flex' : 'none';
+  if (!eligible) checkbox.checked = false;
 };
 
 window.toggleTermLoan = function(cat) {
-  const termLoanGroup = document.getElementById('fTermLoanGroup');
+  const loanTypeGroup = document.getElementById('fLoanTypeGroup');
   const renewalGroup = document.getElementById('fRenewalGroup');
   const limitExpiryGroup = document.getElementById('fLimitExpiryGroup');
-  if (termLoanGroup) termLoanGroup.style.display = cat === 'SME' ? 'flex' : 'none';
+  if (loanTypeGroup) loanTypeGroup.style.display = cat === 'SME' ? 'flex' : 'none';
   if (renewalGroup) renewalGroup.style.display = cat === 'SME' ? 'block' : 'none';
   if (limitExpiryGroup) limitExpiryGroup.style.display = cat === 'SME' ? 'block' : 'none';
   window.updateBreCheckbox();
 };
 
-export { getBranchSearchInput, getBranchValueInput, getCategorySelect, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve };
+export { getBranchSearchInput, getBranchValueInput, getCategorySelect, setLoanTypeValue, getLoanTypeValue, loanTypeFromLoan, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve };

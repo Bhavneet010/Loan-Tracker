@@ -6,7 +6,7 @@ import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 
-import { getBranchSearchInput, getBranchValueInput, getCategorySelect, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve } from "./ui-forms.js";
+import { getBranchSearchInput, getBranchValueInput, getCategorySelect, getLoanTypeValue, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve } from "./ui-forms.js";
 
 /* CORE LOAN ACTIONS */
 window.sanctionLoan = async function(id) {
@@ -223,10 +223,9 @@ window.saveLoan = async function(e) {
 
   if (!await confirmPotentialDuplicate({ id, customerName, branch })) return;
 
-  let termLoan = false;
+  let loanType = 'CC';
   if (cat === 'SME') {
-    const termLoanCheckbox = document.getElementById('fTermLoan');
-    termLoan = termLoanCheckbox ? termLoanCheckbox.checked : false;
+    loanType = getLoanTypeValue();
   }
 
   const isManualOverride = assignedOfficer && selectedOfficer !== assignedOfficer;
@@ -244,9 +243,11 @@ window.saveLoan = async function(e) {
   };
 
   if (cat === 'SME') {
-    data.isTermLoan = termLoan;
+    data.loanType = loanType;
+    data.isTermLoan = loanType === 'TL';
+    data.isCC = loanType === 'CC' || loanType === 'CC_TL';
     const breCheckbox = document.getElementById('fBre');
-    data.isBre = breCheckbox ? breCheckbox.checked : false;
+    data.isBre = data.amount > 10 && breCheckbox ? breCheckbox.checked : false;
     const existing = id ? S.loans.find(x => x.id === id) : null;
     const isImported = (existing && existing.isImported) || (id && id.startsWith('import_sme_csv_'));
     const isRenewalAddBack = mode === 'renewal-addback';

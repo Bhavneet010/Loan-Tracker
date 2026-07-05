@@ -243,11 +243,22 @@
         </select>
       </div>
       <div id="categoryHint" class="branch-match-hint warn" style="display:none;"></div>
-      <div class="form-group" id="fTermLoanGroup" style="display:none;align-items:center;margin-top:4px;">
-        <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:0;">
-          <input type="checkbox" id="fTermLoan" style="width:16px;height:16px;margin:0;">
-          This is a Term Loan (Exclude from CC Renewals)
-        </label>
+      <div class="form-group" id="fLoanTypeGroup" style="display:none;margin-top:4px;">
+        <label style="font-weight:600;margin:0 0 6px;">Loan Facility *</label>
+        <div class="loan-type-options" style="display:flex;gap:16px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;margin:0;">
+            <input type="radio" name="fLoanType" id="fLoanTypeCC" value="CC" checked style="width:16px;height:16px;margin:0;">
+            CC
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;margin:0;">
+            <input type="radio" name="fLoanType" id="fLoanTypeTL" value="TL" style="width:16px;height:16px;margin:0;">
+            Term Loan
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;margin:0;">
+            <input type="radio" name="fLoanType" id="fLoanTypeCCTL" value="CC_TL" style="width:16px;height:16px;margin:0;">
+            CC + TL
+          </label>
+        </div>
       </div>
       <div class="form-group" id="fBreGroup" style="display:none;align-items:center;margin-top:4px;">
         <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:0;">
@@ -271,7 +282,7 @@
       </div>
       <div class="form-group">
         <label>Amount (in Lakhs) *</label>
-        <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35">
+        <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35" oninput="window.updateBreCheckbox()">
       </div>
       <button type="button" id="toggleAdvancedBtn" class="btn btn-cancel-full form-toggle-btn" onclick="toggleAdvancedFields()">
         Add More Details
