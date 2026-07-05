@@ -28,7 +28,8 @@ export function cloneLoanDraft(loan) {
     nextRenewalDueDate: loan.renewedDate && loan.renewalDueDateEntered === true ? (loan.renewalDueDate || '') : '',
     nextLimitExpiryDate: loan.renewedDate && loan.limitExpiryDateEntered === true ? (loan.limitExpiryDate || '') : '',
     remarks: loan.remarks || '',
-    isTermLoan: !!loan.isTermLoan,
+    loanType: loan.loanType || (loan.isTermLoan ? 'TL' : 'CC'),
+    isBre: !!loan.isBre,
   };
 }
 
@@ -106,14 +107,27 @@ function inlineAccountEditLine(label, html, tone = '') {
   </div>`;
 }
 
-function categoryModeValue(loan) {
-  if (loan.category === 'SME' && loan.isTermLoan) return 'SME_TERM';
-  return loan.category || '';
+const CATEGORY_OPTIONS = [
+  { value: '', label: 'Category' },
+  { value: 'Agriculture', label: 'Agriculture' },
+  { value: 'SME', label: 'SME' },
+  { value: 'Education', label: 'Education' },
+];
+
+const LOAN_TYPE_OPTIONS = [
+  { value: 'CC', label: 'CC' },
+  { value: 'TL', label: 'Term Loan' },
+  { value: 'CC_TL', label: 'CC + TL' },
+];
+
+function loanTypeLabel(loan) {
+  const type = loan.loanType || (loan.isTermLoan ? 'TL' : 'CC');
+  return type === 'TL' ? 'TL' : type === 'CC_TL' ? 'CC+TL' : 'CC';
 }
 
 function categoryBadgeHtml(loan) {
-  const label = loan.category === 'SME' && loan.isTermLoan ? 'SME TL' : (loan.category || 'Loan');
-  return `<span class="tag decision-category-badge ${catCls(loan.category)}" title="${esc(label)}">${esc(label)}</span>`;
+  const label = loan.category === 'SME' ? `${loan.category} · ${loanTypeLabel(loan)}` : (loan.category || 'Loan');
+  return `<span class="tag decision-category-badge ${catCls(loan.category)}" title="${esc(label)}">${esc(label)}</span>${loan.category === 'SME' && loan.isBre ? '<span class="bre-badge-pill">BRE</span>' : ''}`;
 }
 
 function renewalStatusLineHtml(loan, rs) {
@@ -133,13 +147,8 @@ function renewalDateAccountLine(label, loan, key, fallback = '') {
 }
 
 function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
-  const categoryOptions = [
-    { value: '', label: 'Category' },
-    { value: 'Agriculture', label: 'Agriculture' },
-    { value: 'SME', label: 'SME' },
-    { value: 'SME_TERM', label: 'SME Term Loan' },
-    { value: 'Education', label: 'Education' },
-  ];
+  const isSme = draft.category === 'SME';
+  const breEligible = isSme && parseFloat(draft.amount) > 10;
   const officerOptions = [{ value: '', label: 'Select officer' }, ...S.officers.map(o => ({ value: o, label: o }))];
   const branchOptions = [{ value: '', label: 'Select branch' }, ...S.branches.map(b => ({ value: b, label: b }))];
   const preview = { ...draft, renewedDate: stagedRenewal === 'renewed' ? (draft.sanctionDate || draft.renewedDate || todayStr()) : '' };
@@ -149,7 +158,7 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
         <label class="decision-name decision-name--edit" title="Customer Name">
           <input data-draft="customerName" type="text" value="${esc(draft.customerName)}" autocomplete="off">
         </label>
-        <select class="decision-category-select ${catCls(draft.category)}" aria-label="Category" data-draft="categoryMode">${inlineSelect(categoryOptions, categoryModeValue(draft))}</select>
+        <select class="decision-category-select ${catCls(draft.category)}" aria-label="Category" data-draft="category">${inlineSelect(CATEGORY_OPTIONS, draft.category)}</select>
         <label class="decision-amount decision-amount--edit" title="Amount (L)">
           <input data-draft="amount" type="number" step="0.01" min="0" value="${esc(draft.amount)}">
         </label>
@@ -157,6 +166,8 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
       <div class="decision-account-lines decision-account-lines--edit">
         ${inlineAccountEditLine('Branch', `<select aria-label="Branch" data-draft="branch">${inlineSelect(branchOptions, matchBranchOption(draft.branch) || draft.branch)}</select>`)}
         ${inlineAccountEditLine('Officer', `<select aria-label="Officer" data-draft="allocatedTo">${inlineSelect(officerOptions, draft.allocatedTo)}</select>`)}
+        ${isSme ? inlineAccountEditLine('Loan Facility', `<select aria-label="Loan Facility" data-draft="loanType">${inlineSelect(LOAN_TYPE_OPTIONS, draft.loanType)}</select>`) : ''}
+        ${breEligible ? inlineAccountEditLine('BRE', `<input aria-label="Sanctioned through BRE" type="checkbox" data-draft="isBre" ${draft.isBre ? 'checked' : ''} style="width:18px;height:18px;">`) : ''}
         ${inlineAccountEditLine('A/C No.', `<input aria-label="Account Number" data-draft="acNumber" type="text" inputmode="numeric" value="${esc(draft.acNumber)}" placeholder="Account number">`)}
         ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="nextRenewalDueDate" type="date" value="${esc(draft.nextRenewalDueDate)}">`, !draft.nextRenewalDueDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="nextLimitExpiryDate" type="date" value="${esc(draft.nextLimitExpiryDate)}">`, !draft.nextLimitExpiryDate && stagedRenewal === 'renewed' ? 'warn' : '')}
@@ -170,13 +181,7 @@ function inlineEditHtml(draft, status) {
   const isSme = draft.category === 'SME';
   const showRenewalDue = isSme && !!draft.renewalDueDate;
   const showLimitExpiry = isSme && !!draft.limitExpiryDate;
-  const categoryOptions = [
-    { value: '', label: 'Category' },
-    { value: 'Agriculture', label: 'Agriculture' },
-    { value: 'SME', label: 'SME' },
-    { value: 'SME_TERM', label: 'SME Term Loan' },
-    { value: 'Education', label: 'Education' },
-  ];
+  const breEligible = isSme && parseFloat(draft.amount) > 10;
   const officerOptions = [{ value: '', label: 'Select officer' }, ...S.officers.map(o => ({ value: o, label: o }))];
   const branchOptions = [{ value: '', label: 'Select branch' }, ...S.branches.map(b => ({ value: b, label: b }))];
   return `<div class="decision-account-card decision-account-card--editing">
@@ -185,7 +190,7 @@ function inlineEditHtml(draft, status) {
         <label class="decision-name decision-name--edit" title="Customer Name">
           <input data-draft="customerName" type="text" value="${esc(draft.customerName)}" autocomplete="off">
         </label>
-        <select class="decision-category-select ${catCls(draft.category)}" aria-label="Category" data-draft="categoryMode">${inlineSelect(categoryOptions, categoryModeValue(draft))}</select>
+        <select class="decision-category-select ${catCls(draft.category)}" aria-label="Category" data-draft="category">${inlineSelect(CATEGORY_OPTIONS, draft.category)}</select>
         <label class="decision-amount decision-amount--edit" title="Amount (L)">
           <input data-draft="amount" type="number" step="0.01" min="0" value="${esc(draft.amount)}">
         </label>
@@ -193,6 +198,8 @@ function inlineEditHtml(draft, status) {
       <div class="decision-account-lines decision-account-lines--edit">
         ${inlineAccountEditLine('Branch', `<select aria-label="Branch" data-draft="branch">${inlineSelect(branchOptions, matchBranchOption(draft.branch) || draft.branch)}</select>`)}
         ${inlineAccountEditLine('Officer', `<select aria-label="Officer" data-draft="allocatedTo">${inlineSelect(officerOptions, draft.allocatedTo)}</select>`)}
+        ${isSme ? inlineAccountEditLine('Loan Facility', `<select aria-label="Loan Facility" data-draft="loanType">${inlineSelect(LOAN_TYPE_OPTIONS, draft.loanType)}</select>`) : ''}
+        ${breEligible ? inlineAccountEditLine('BRE', `<input aria-label="Sanctioned through BRE" type="checkbox" data-draft="isBre" ${draft.isBre ? 'checked' : ''} style="width:18px;height:18px;">`) : ''}
         ${inlineAccountEditLine('Received', `<input aria-label="Receive Date" data-draft="receiveDate" type="date" value="${esc(draft.receiveDate)}">`)}
         ${status === 'sanctioned' ? inlineAccountEditLine('Sanction Date', `<input data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || todayStr())}">`) : ''}
         ${status === 'returned' ? inlineAccountEditLine('Return Date', `<input aria-label="Return Date" data-draft="returnedDate" type="date" value="${esc(draft.returnedDate || todayStr())}">`, 'alert') : ''}
@@ -209,9 +216,12 @@ function updateDraftFromControl(draft, control) {
   const key = control.dataset.draft;
   if (!key) return;
   const value = control.type === 'checkbox' ? control.checked : control.value;
-  if (key === 'categoryMode') {
-    draft.category = value === 'SME_TERM' ? 'SME' : value;
-    draft.isTermLoan = value === 'SME_TERM';
+  if (key === 'category') {
+    draft.category = value;
+    if (value !== 'SME') {
+      draft.loanType = 'CC';
+      draft.isBre = false;
+    }
     return;
   }
   draft[key] = value;
@@ -225,7 +235,7 @@ function updateDraftFromControl(draft, control) {
 
 function bindInlineDraftControls(container, draft, onStructuralChange) {
   container.querySelectorAll('[data-draft]').forEach(control => {
-    const structural = ['branch', 'category', 'categoryMode'].includes(control.dataset.draft);
+    const structural = ['branch', 'category', 'amount'].includes(control.dataset.draft);
     const update = () => updateDraftFromControl(draft, control);
     control.addEventListener('input', () => {
       if (control.tagName !== 'SELECT' && control.type !== 'checkbox') update();

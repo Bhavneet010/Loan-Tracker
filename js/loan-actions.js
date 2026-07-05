@@ -100,7 +100,11 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   if (status === 'returned') data.returnedDate = draft.returnedDate || base.returnedDate || todayStr();
 
   if (draft.category === 'SME') {
-    data.isTermLoan = !!draft.isTermLoan;
+    const loanType = draft.loanType || 'CC';
+    data.loanType = loanType;
+    data.isTermLoan = loanType === 'TL';
+    data.isCC = loanType === 'CC' || loanType === 'CC_TL';
+    data.isBre = data.amount > 10 && !!draft.isBre;
     const isImported = (base && base.isImported) || (base?.id && base.id.startsWith('import_sme_csv_'));
     const isAddBack = !isImported && base?.isFreshCC === false;
     data.isFreshCC = !isImported && !isAddBack;
@@ -113,6 +117,9 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
     }
   } else {
     data.isTermLoan = false;
+    data.isCC = false;
+    data.loanType = '';
+    data.isBre = false;
   }
 
   if (renewalState === 'renewed') {
