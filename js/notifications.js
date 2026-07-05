@@ -4,9 +4,9 @@ import { S } from "./state.js";
 import { fmtAmt, esc, toast, timeAgo } from "./utils.js";
 
 const NOTIFICATION_LIMIT = 75;
-const typeIcon = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎' };
-const typeLabel = { added: 'New loan added', sanctioned: 'Loan sanctioned', returned: 'Loan returned', edited: 'Loan updated' };
-const typeCls = { added: 'notif-added', sanctioned: 'notif-sanctioned', returned: 'notif-returned', edited: 'notif-edited' };
+const typeIcon = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎', reminder: '✉' };
+const typeLabel = { added: 'New loan added', sanctioned: 'Loan sanctioned', returned: 'Loan returned', edited: 'Loan updated', reminder: 'Reminder mail sent' };
+const typeCls = { added: 'notif-added', sanctioned: 'notif-sanctioned', returned: 'notif-returned', edited: 'notif-edited', reminder: 'notif-reminder' };
 
 function notificationCard(n) {
   const unread = !(n.readBy || []).includes(S.user);

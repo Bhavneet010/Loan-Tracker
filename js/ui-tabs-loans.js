@@ -12,6 +12,10 @@ function statusAction(id) {
   return `<button class="btn btn-sanction" onclick="openLoanDecisionSheet('${id}')">Status</button>`;
 }
 
+function mailAction(id) {
+  return `<button class="btn btn-more btn-mail" onclick="openReminderMailSheet('${id}')" title="Log reminder mail">&#9993;</button>`;
+}
+
 function freshGroupMode() {
   return S.isAdmin ? S.freshGroupMode : 'category';
 }
@@ -73,6 +77,7 @@ export function renderPending(c) {
       const days = daysPending(l.receiveDate);
       const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
+        ${mailAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">&#9998;</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">&#128465;</button>` : ''}`;
       return compactLoanItem(l, actions, days > 7 ? 'overdue' : '', '', idx);
@@ -107,6 +112,7 @@ export function renderReturned(c) {
     : freshGroupsHtml(loans, (l, idx) => {
       const actions = `${statusAction(l.id)}
         ${copyAction(l.id)}
+        ${mailAction(l.id)}
         <button class="btn btn-more" onclick="editLoan('${l.id}')">&#9998;</button>
         ${S.isAdmin ? `<button class="btn btn-danger" onclick="deleteLoan('${l.id}')">&#128465;</button>` : ''}`;
       return compactLoanItem(l, actions, '', 'returned', idx);

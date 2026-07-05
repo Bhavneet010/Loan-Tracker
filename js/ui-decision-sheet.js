@@ -2,6 +2,7 @@
 import { todayStr, esc, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo } from "./utils.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 import { matchBranchOption, assignedOfficerForBranch, normalizeName } from "./ui-forms.js";
+import { reminderSummary, canTrackReminders } from "./ui-reminder-mail.js";
 
 /* SHARED UI HELPERS */
 export function accountAmount(loan) {
@@ -57,6 +58,18 @@ function accountLine(label, value, tone = '') {
   return `<div class="decision-account-line${cls}"><small>${esc(label)}</small><b>${esc(value)}</b>${mark}</div>`;
 }
 
+// One tappable line instead of extra form fields: the full reminder-mail log
+// (sent to, date & time, remarks, history) lives in its own sheet.
+function reminderMailLine(loan) {
+  if (!loan.id || !canTrackReminders(loan)) return '';
+  const summary = reminderSummary(loan);
+  return `<div class="decision-account-line decision-account-line--tap" onclick="openReminderMailSheet('${esc(loan.id)}')" title="Reminder mail log">
+    <small>Mail Sent</small>
+    <b class="${summary ? '' : 'decision-line-muted'}">${esc(summary || 'None yet — tap to log')}</b>
+    <span class="decision-line-chev">&rsaquo;</span>
+  </div>`;
+}
+
 function loanDecisionLines(loan) {
   const rows = [
     accountLine('Branch', loan.branch),
@@ -77,6 +90,7 @@ function loanDecisionLines(loan) {
     rows.push(accountLine('Return Date', fmtDate(loan.returnedDate), 'alert'));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added', 'alert'));
   }
+  rows.push(reminderMailLine(loan));
   return rows.join('');
 }
 
@@ -282,8 +296,8 @@ function activityRowsHtml(loanId) {
   if (!entries.length) {
     return `<div class="decision-activity-empty">No activity recorded yet.</div>`;
   }
-  const icons = { added: '+', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;' };
-  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated' };
+  const icons = { added: '+', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;', reminder: '&#9993;' };
+  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated', reminder: 'Reminder mail' };
   return entries.map(n => `<div class="decision-activity-row">
     <span class="decision-activity-icon decision-activity-${esc(n.type)}">${icons[n.type] || '•'}</span>
     <span class="decision-activity-main">
@@ -484,6 +498,11 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
     editMode = !editMode;
     renderCard();
   });
+  const onReminderChange = e => {
+    if (!overlay.isConnected) { document.removeEventListener('remindermailschange', onReminderChange); return; }
+    if (e.detail?.id === id) renderCard();
+  };
+  document.addEventListener('remindermailschange', onReminderChange);
   overlay.addEventListener('decisionchange', e => {
     stagedStatus = e.detail?.value || stagedStatus;
     if (overlay.querySelector('.decision-slider.dragging')) {

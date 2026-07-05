@@ -14,6 +14,7 @@
 .notif-sanctioned{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
 .notif-returned{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
 .notif-edited{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.notif-reminder{background:rgba(59,130,246,0.10);color:#2563EB;border:1px solid rgba(59,130,246,0.22);}
 .notif-body{flex:1;min-width:0;}
 .notif-label{font-size:var(--fs-sm);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text3);margin-bottom:2px;}
 .notif-name{font-size:var(--fs-md);font-weight:700;color:var(--text1);margin-bottom:3px;}

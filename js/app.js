@@ -8,6 +8,7 @@ import { initPresence } from "./presence.js";
 // Import modules to register window actions and side effects
 import { updateUserAvatar } from "./ui-core.js";
 import "./ui-decision-sheet.js";
+import "./ui-reminder-mail.js";
 import "./importers.js";
 import "./loan-actions.js";
 import "./ui-settings.js";

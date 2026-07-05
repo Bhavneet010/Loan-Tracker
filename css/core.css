@@ -379,6 +379,12 @@ body.dark .loan-group-head{background:var(--dark-glass);border-color:rgba(107,95
   background:var(--amber-bg);border:1px solid var(--amber-bd);
   border-radius:var(--radius-xs);font-size:var(--fs-md);color:var(--amber);
 }
+.lc-reminder{
+  margin-bottom:10px;padding:8px 10px;cursor:pointer;
+  background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.20);
+  border-radius:var(--radius-xs);font-size:var(--fs-md);color:#2563EB;
+}
+.tag.tag-mail{background:rgba(59,130,246,0.10);color:#2563EB;border:1px solid rgba(59,130,246,0.22);}
 .lc-actions{display:flex;gap:7px;}
 .btn{
   padding:10px;border-radius:var(--radius-sm);font-size:var(--fs-md);font-weight:700;
@@ -1120,6 +1126,8 @@ body.dark .stat-grad-returned.stat-fresh-active{border-color:var(--amber);}
 }
 body.dark .tag.tag-sanctioned{background:rgba(16,185,129,0.16);color:#6EE7B7;border-color:rgba(16,185,129,0.28);}
 body.dark .tag.tag-returned{background:rgba(245,158,11,0.16);color:#FBBF24;border-color:rgba(245,158,11,0.28);}
+body.dark .tag.tag-mail{background:rgba(59,130,246,0.16);color:#93C5FD;border-color:rgba(59,130,246,0.28);}
+body.dark .lc-reminder{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.26);color:#93C5FD;}
 
 /* ── AESTHETIC UPGRADE 5: MICRO-INTERACTIONS ── */
 .fresh-stat-card{transition:transform var(--dur-fast) ease,box-shadow var(--dur-fast) ease,border-color var(--dur-fast) ease,background var(--dur-base) ease;}

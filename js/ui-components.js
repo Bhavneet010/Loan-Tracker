@@ -1,6 +1,13 @@
 ﻿import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing, timeAgo } from "./utils.js";
 import { S } from "./state.js";
 import { effectiveOfficer } from "./derived.js";
+import { reminderMails, reminderSummary, canTrackReminders } from "./ui-reminder-mail.js";
+
+function reminderMailNote(loan) {
+  if (!canTrackReminders(loan) || !reminderMails(loan).length) return '';
+  const last = reminderMails(loan)[0];
+  return `<div class="lc-reminder" onclick="openReminderMailSheet('${loan.id}')" title="Reminder mail log">&#9993; Reminder mail: ${esc(reminderSummary(loan))}${last.remarks ? ` — ${esc(last.remarks)}` : ''}</div>`;
+}
 
 export function loanCard(loan, actions, variant = '') {
   const remarks = loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : '';
@@ -26,12 +33,15 @@ export function loanCard(loan, actions, variant = '') {
         ${overdueTag}${sanctTag}${retTag}
       </div>
       ${remarks}
+      ${reminderMailNote(loan)}
       <div class="lc-actions">${actions}</div>
     </div>`;
 }
 
 export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', idx = 0) {
   const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">&#9888; ${daysPending(loan.receiveDate)}d</span>` : '';
+  const mailCount = canTrackReminders(loan) ? reminderMails(loan).length : 0;
+  const mailTag = mailCount ? `<span class="tag tag-mail" title="${mailCount} reminder mail${mailCount > 1 ? 's' : ''} sent">&#9993;${mailCount > 1 ? ' ' + mailCount : ''}</span>` : '';
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
 
   return `<div class="loan-item ${cls}" id="li-${loan.id}" style="--i:${idx}">
@@ -42,6 +52,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
         <span class="lr-name">${esc(loan.customerName || '')}</span>
       </div>
       <div class="lr-meta">
+        ${mailTag}
         ${overdueTag}
         <span class="lr-amount"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
         <span class="lr-chev">&rsaquo;</span>
@@ -141,8 +152,8 @@ export function renewalItemHtml(loan, rs, idx = 0) {
 function auditTrailHtml(loanId) {
   const entries = S.notifications.filter(n => n.loanId === loanId).slice(0, 10);
   if (!entries.length) return '';
-  const icons = { added: '&#10133;', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;' };
-  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated' };
+  const icons = { added: '&#10133;', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;', reminder: '&#9993;' };
+  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated', reminder: 'Reminder mail' };
   const rows = entries.map(n => `
     <div class="audit-row">
       <span class="audit-icon audit-${esc(n.type)}">${icons[n.type] || '•'}</span>
