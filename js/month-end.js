@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   writeBatch,
@@ -21,6 +22,12 @@ import {
 } from "./performance-utils.js";
 
 const SNAPSHOT_COLLECTION = "monthlySnapshots";
+const SNAPSHOT_OVERRIDE_PASSWORD = "842024";
+// Once the previous month is cleaned, re-generating the snapshot would
+// overwrite the saved dashboard with post-cleanup (zeroed) data, so the
+// button stays locked until the month rolls over. The override lasts for
+// the current session and re-arms after each successful generation.
+let snapshotLockOverridden = false;
 const OFFICER_PALETTE = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
 // Kept clear of the footer when deciding how many rows fit on a detail page.
 const PAGE_BODY_SAFETY_MARGIN = 12;
@@ -672,6 +679,52 @@ async function commitCleanup(data) {
   }, { merge: true });
 }
 
+function applySnapshotLockUi(cleaned) {
+  const btn = document.getElementById("monthEndSnapshotBtn");
+  if (!btn) return;
+  const locked = cleaned && !snapshotLockOverridden;
+  btn.disabled = locked;
+  btn.style.opacity = locked ? ".55" : "";
+  btn.textContent = locked ? "Snapshot Locked" : "Generate Snapshot";
+  document.getElementById("monthEndLockRow")?.remove();
+  if (!cleaned) return;
+  const row = document.createElement("div");
+  row.id = "monthEndLockRow";
+  if (locked) {
+    row.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-2px 0 10px;padding:8px 10px;border:1px dashed var(--red-bd);border-radius:10px;background:var(--red-bg);color:var(--red);font-size:11.5px;font-weight:800;";
+    row.innerHTML = `<span>${esc(monthLabel(previousMonthKey()))} already cleaned - snapshot locked till next month.</span>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;">Override
+        <input type="checkbox" onchange="overrideSnapshotLock(this)">
+      </label>`;
+  } else {
+    row.style.cssText = "margin:-2px 0 10px;padding:8px 10px;border:1px dashed #FDBA74;border-radius:10px;background:#FFF7ED;color:#C2410C;font-size:11.5px;font-weight:800;";
+    row.textContent = "Cleanup lock overridden for this session - re-generating will overwrite the saved dashboard.";
+  }
+  btn.parentElement.insertAdjacentElement("afterend", row);
+}
+
+window.overrideSnapshotLock = function (input) {
+  const entered = prompt("Snapshot is locked because this month was already cleaned.\nEnter the override password to unlock:");
+  if (entered === SNAPSHOT_OVERRIDE_PASSWORD) {
+    snapshotLockOverridden = true;
+    applySnapshotLockUi(true);
+    toast("Snapshot generation unlocked for this session");
+  } else {
+    if (input) input.checked = false;
+    if (entered !== null) toast("Incorrect override password");
+  }
+};
+
+async function isMonthCleaned(month) {
+  try {
+    const snap = await getDoc(doc(db, SNAPSHOT_COLLECTION, month));
+    return snap.exists() && !!snap.data().cleanup;
+  } catch (err) {
+    console.warn("[MonthEnd] Could not check cleanup state:", err);
+    return false;
+  }
+}
+
 window.runMonthEndSnapshot = async function () {
   if (!S.isAdmin) {
     toast("Admin only");
@@ -680,6 +733,16 @@ window.runMonthEndSnapshot = async function () {
 
   const btn = document.getElementById("monthEndSnapshotBtn");
   const month = previousMonthKey();
+
+  if (!snapshotLockOverridden && await isMonthCleaned(month)) {
+    const entered = prompt(`${monthLabel(month)} has already been cleaned up. Re-generating would overwrite the saved dashboard with post-cleanup (zeroed) data.\n\nEnter the override password to continue:`);
+    if (entered !== SNAPSHOT_OVERRIDE_PASSWORD) {
+      if (entered !== null) toast("Incorrect override password");
+      return;
+    }
+    snapshotLockOverridden = true;
+  }
+
   const data = collectMonthEndData(month);
   const summary = buildLightweightSummary(data);
 
@@ -696,6 +759,7 @@ window.runMonthEndSnapshot = async function () {
     await downloadMonthlyPdf(data, summary);
     await saveMonthlySummary(month, summary);
     toast("Monthly snapshot saved. Review the PDF, then clean up separately.");
+    snapshotLockOverridden = false;
     renderMonthEndSettings();
   } catch (err) {
     console.error("[MonthEnd] Snapshot failed:", err);
@@ -758,6 +822,8 @@ export async function renderMonthEndSettings() {
       .map(docSnap => docSnap.data())
       .filter(item => item && item.month)
       .sort((a, b) => String(b.month).localeCompare(String(a.month)));
+
+    applySnapshotLockUi(rows.some(row => row.month === previousMonthKey() && row.cleanup));
 
     if (!rows.length) {
       target.innerHTML = `<div class="setting-item"><span>No monthly dashboard summaries yet.</span></div>`;
