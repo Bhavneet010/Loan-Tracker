@@ -899,6 +899,60 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
 .sme-daily-export .sme-disb-print{font-size:18px;font-weight:800;}
 .sme-daily-export .sme-daily-note{font-size:12px;color:#1c1b22;}
 
+/* ---- Format labels above each daily-reporting card ---- */
+.sme-format-label{
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:#5147a3;
+  margin:4px 2px 8px;
+}
+.sme-format-label + .sme-daily-report,
+.sme-format-label + .amcc-smec-report{margin-bottom:18px;}
+
+/* ---- AMCC/SMEC Reporting (Format 2, second Daily view) ---- */
+.amcc-smec-report{
+  background:#fff;
+  border:1px solid #d8d2ea;
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 6px 18px rgba(63,52,133,0.08);
+  color:#1c1b22;
+}
+.amcc-title{
+  text-align:center;
+  font-weight:800;
+  font-size:13px;
+  letter-spacing:0.02em;
+  background:#E5DDBC;
+  border:1px solid #8f8f8f;
+  border-bottom:none;
+  padding:8px 10px;
+  color:#1c1b22;
+}
+.amcc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.amcc-scroll--lower{margin-top:10px;}
+.amcc-table{min-width:880px;}
+.amcc-table th{white-space:normal;}
+.amcc-head-name{background:#DEC9B4;min-width:104px;}
+.amcc-name{background:#EFE3D7;font-weight:800;white-space:normal;min-width:104px;}
+.amcc-head-bre{background:#C9E5D2;}
+.amcc-head-nonbre{background:#E3D0E8;}
+.amcc-head-eclgs{background:#C6E2EF;}
+.amcc-head-controls{background:#F3EE54;min-width:92px;font-size:10px;}
+.amcc-input{width:64px;}
+.sme-daily-export .amcc-title{font-size:17px;padding:10px;}
+.sme-daily-export.amcc-export{border-radius:0;box-shadow:none;border:none;}
+.sme-daily-export .amcc-table{font-size:14px;min-width:0;}
+.sme-daily-export .amcc-scroll{overflow:visible;}
+.sme-daily-export .amcc-head-controls{font-size:12px;max-width:128px;}
+@media (max-width:680px){
+  .amcc-smec-report:not(.sme-daily-export){padding:8px;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-title{font-size:11px;padding:6px 8px;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table{font-size:10px;min-width:820px;}
+}
+
 /* On-screen only: stack the wide 12-column table into a scannable list on
    narrow viewports so it reads without horizontal scrolling. Every selector
    is scoped with :not(.sme-daily-export) so the exported JPEG always keeps
