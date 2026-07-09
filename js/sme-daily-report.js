@@ -196,7 +196,13 @@ function buildAmccSmecReportHtml() {
   const bre = collectStats(metrics, loan => loan.category === "SME" && loan.isBre === true);
   const nonBre = collectStats(metrics, loan => inSmeBand(loan, 1, 50) && loan.isBre !== true);
   const saved = cachedAmccReport(metrics.day) || {};
-  const inputCell = key => `<td class="sme-num"><input id="amcc_${key}" class="sme-disb-input amcc-input" type="text" inputmode="decimal" placeholder="0" value="${esc(saved[key] ?? "")}" oninput="onAmccFieldInput()"></td>`;
+  const prevEnd = fmtDotDate(prevMonthEndStr(metrics.day));
+  // data-label/data-group/tone drive the stacked phone layout (like Format 1);
+  // the exported JPEG ignores them and keeps the bank's table grid.
+  const autoCell = (value, label, group = "", tone = "") =>
+    `<td class="sme-num${group ? ` amcc-g-${tone}` : ""}" data-label="${esc(label)}"${group ? ` data-group="${esc(group)}"` : ""}>${value}</td>`;
+  const inputCell = (key, label, group = "", tone = "") =>
+    `<td class="sme-num${group ? ` amcc-g-${tone}` : ""}" data-label="${esc(label)}"${group ? ` data-group="${esc(group)}"` : ""}><input id="amcc_${key}" class="sme-disb-input amcc-input" type="text" inputmode="decimal" placeholder="0" value="${esc(saved[key] ?? "")}" oninput="onAmccFieldInput()"></td>`;
 
   return `<div class="amcc-smec-report">
       <div class="sme-daily-header">
@@ -225,16 +231,16 @@ function buildAmccSmecReportHtml() {
             <th class="amcc-head-nonbre">MTD (Amt.) IN CR</th>
           </tr>
           <tr>
-            <td class="sme-num">${bre.ftdNo}</td>
-            <td class="sme-num">${bre.mtdNo}</td>
-            <td class="sme-num">${esc(crAmt(bre.ftdAmt))}</td>
-            <td class="sme-num">${esc(crAmt(bre.mtdAmt))}</td>
-            ${inputCell("breDisbFtd")}
-            ${inputCell("breDisbMtd")}
-            <td class="sme-num">${nonBre.ftdNo}</td>
-            <td class="sme-num">${nonBre.mtdNo}</td>
-            <td class="sme-num">${esc(crAmt(nonBre.ftdAmt))}</td>
-            <td class="sme-num">${esc(crAmt(nonBre.mtdAmt))}</td>
+            ${autoCell(bre.ftdNo, "FTD (No)", "Sanctioned 10-50 lacs (BRE)", "bre")}
+            ${autoCell(bre.mtdNo, "MTD (No)")}
+            ${autoCell(esc(crAmt(bre.ftdAmt)), "FTD (Amt.)")}
+            ${autoCell(esc(crAmt(bre.mtdAmt)), "MTD (Amt.)")}
+            ${inputCell("breDisbFtd", "FTD (No.)", "BRE Disbursement", "bre")}
+            ${inputCell("breDisbMtd", "MTD (No.)")}
+            ${autoCell(nonBre.ftdNo, "FTD (No)", "Sanctioned 1-50 lacs (NON-BRE)", "nonbre")}
+            ${autoCell(nonBre.mtdNo, "MTD (No)")}
+            ${autoCell(esc(crAmt(nonBre.ftdAmt)), "FTD (Amt.)")}
+            ${autoCell(esc(crAmt(nonBre.mtdAmt)), "MTD (Amt.) IN CR")}
           </tr>
           <tr>
             <th colspan="6" class="amcc-head-eclgs">ECLGS 5.0</th>
@@ -257,16 +263,16 @@ function buildAmccSmecReportHtml() {
             <th class="amcc-head-eclgs">MTD (Amt.) IN CR</th>
           </tr>
           <tr>
-            ${inputCell("eclgsSanFtdNo")}
-            ${inputCell("eclgsSanMtdNo")}
-            ${inputCell("eclgsSanFtdAmt")}
-            ${inputCell("eclgsSanMtdAmt")}
-            ${inputCell("eclgsDisbFtd")}
-            ${inputCell("eclgsDisbMtd")}
-            ${inputCell("ctrlPending")}
-            ${inputCell("ctrlDoneDay")}
-            ${inputCell("ctrlMonthProgress")}
-            ${inputCell("ctrlPendingDate")}
+            ${inputCell("eclgsSanFtdNo", "FTD (No)", "ECLGS 5.0 · Sanction", "eclgs")}
+            ${inputCell("eclgsSanMtdNo", "MTD (No)")}
+            ${inputCell("eclgsSanFtdAmt", "FTD (Amt.)")}
+            ${inputCell("eclgsSanMtdAmt", "MTD (Amt.)")}
+            ${inputCell("eclgsDisbFtd", "FTD (Amt.) IN CR", "ECLGS 5.0 · Disbursement", "eclgs")}
+            ${inputCell("eclgsDisbMtd", "MTD (Amt.) IN CR")}
+            ${inputCell("ctrlPending", `Pending as on ${prevEnd}`, "Controls", "ctrl")}
+            ${inputCell("ctrlDoneDay", "Controls done during the day")}
+            ${inputCell("ctrlMonthProgress", "Progress during the month")}
+            ${inputCell("ctrlPendingDate", "Pending controls as on date")}
           </tr>
         </table>
       </div>

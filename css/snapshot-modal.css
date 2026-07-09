@@ -964,10 +964,79 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
 .sme-daily-export .amcc-table{font-size:14px;min-width:0;}
 .sme-daily-export .amcc-scroll{overflow:visible;}
 .sme-daily-export .amcc-head-controls{font-size:12px;max-width:128px;}
+/* On-screen only: stack the wide AMCC/SMEC grid into a scannable list on
+   narrow viewports (same treatment as the SME Daily table above). Every
+   selector is scoped with :not(.sme-daily-export) so the exported JPEG
+   always keeps the bank's table layout. */
 @media (max-width:680px){
   .amcc-smec-report:not(.sme-daily-export){padding:8px;}
-  .amcc-smec-report:not(.sme-daily-export) .amcc-title{font-size:11px;padding:6px 8px;}
-  .amcc-smec-report:not(.sme-daily-export) .amcc-table{font-size:10px;min-width:820px;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-scroll{overflow:visible;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-title{
+    padding:6px 8px;
+    font-size:12px;
+    border-radius:8px;
+    border-bottom:1px solid #8f8f8f;
+    margin-bottom:8px;
+  }
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table{
+    display:block;
+    width:100%;
+    min-width:0;
+    border-collapse:separate;
+    border-spacing:0;
+    border:1px solid #8f8f8f;
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table tbody,
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table tr{display:block;width:100%;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table th{display:none;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table td{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    width:100%;
+    border:none;
+    border-bottom:1px solid #e4e1ee;
+    padding:5px 10px;
+    white-space:normal;
+    text-align:right;
+    font-size:13px;
+    font-weight:800;
+  }
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table tr:last-child td:last-child{border-bottom:none;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table td::before{
+    content:attr(data-label);
+    font-weight:700;
+    font-size:10px;
+    color:#6f6c85;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    text-align:left;
+  }
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table td[data-group]{
+    margin-top:5px;
+    padding-top:22px;
+    position:relative;
+  }
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table td[data-group]::after{
+    content:attr(data-group);
+    position:absolute;
+    top:0;left:0;right:0;
+    background:#C9E5D2;
+    color:#1c1b22;
+    font-weight:800;
+    font-size:10px;
+    text-align:center;
+    padding:3px 0;
+    letter-spacing:0.02em;
+  }
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table td[data-group].amcc-g-nonbre::after{background:#E3D0E8;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table td[data-group].amcc-g-eclgs::after{background:#C6E2EF;}
+  .amcc-smec-report:not(.sme-daily-export) .amcc-table td[data-group].amcc-g-ctrl::after{background:#F3EE54;}
+  .amcc-smec-report:not(.sme-daily-export) .sme-daily-note{margin-top:4px;}
+  .amcc-smec-report:not(.sme-daily-export) .sme-disb-input{width:90px;font-size:13px;padding:3px 5px;}
 }
 
 /* On-screen only: stack the wide 12-column table into a scannable list on
