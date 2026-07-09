@@ -613,8 +613,8 @@ window.shareAmccSmecReportJpeg = async function () {
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
-        title: "AMCC/SMEC Reporting",
-        text: `AMCC/SMEC Reporting ${fmtDate(todayStr())}`,
+        title: "AMCC Paonta Sahib 63494 reporting",
+        text: `AMCC Paonta Sahib 63494 reporting ${fmtDate(todayStr())}`,
       });
       return;
     }
