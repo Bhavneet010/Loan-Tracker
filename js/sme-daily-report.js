@@ -206,83 +206,71 @@ function buildAmccSmecReportHtml() {
       <div class="amcc-title">AMCC/SMEC REPORTING FORMAT&nbsp;&nbsp;&mdash;&nbsp;&nbsp;DATE: ${esc(fmtDotDate(metrics.day))}</div>
       <div class="amcc-scroll">
         <table class="sme-daily-table amcc-table">
-          <thead>
-            <tr>
-              <th rowspan="2" class="amcc-head-name">AMCC/SMEC<br>(NAME &amp; CODE)</th>
-              <th colspan="4" class="amcc-head-bre">Sanctioned 10-50 lacs (BRE)</th>
-              <th colspan="2" class="amcc-head-bre">BRE Disbursement</th>
-              <th colspan="4" class="amcc-head-nonbre">Sanctioned 1-50 lacs (NON-BRE)</th>
-            </tr>
-            <tr>
-              <th class="amcc-head-bre">FTD (No)</th>
-              <th class="amcc-head-bre">MTD (No)</th>
-              <th class="amcc-head-bre">FTD (Amt.)</th>
-              <th class="amcc-head-bre">MTD (Amt.)</th>
-              <th class="amcc-head-bre">FTD (No.)</th>
-              <th class="amcc-head-bre">MTD (No.)</th>
-              <th class="amcc-head-nonbre">FTD (No)</th>
-              <th class="amcc-head-nonbre">MTD (No)</th>
-              <th class="amcc-head-nonbre">FTD (Amt.)</th>
-              <th class="amcc-head-nonbre">MTD (Amt.) IN CR</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="amcc-name">${esc(AMCC_CENTRE_LABEL)}</td>
-              <td class="sme-num">${bre.ftdNo}</td>
-              <td class="sme-num">${bre.mtdNo}</td>
-              <td class="sme-num">${esc(crAmt(bre.ftdAmt))}</td>
-              <td class="sme-num">${esc(crAmt(bre.mtdAmt))}</td>
-              ${inputCell("breDisbFtd")}
-              ${inputCell("breDisbMtd")}
-              <td class="sme-num">${nonBre.ftdNo}</td>
-              <td class="sme-num">${nonBre.mtdNo}</td>
-              <td class="sme-num">${esc(crAmt(nonBre.ftdAmt))}</td>
-              <td class="sme-num">${esc(crAmt(nonBre.mtdAmt))}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="amcc-scroll amcc-scroll--lower">
-        <table class="sme-daily-table amcc-table">
-          <thead>
-            <tr>
-              <th rowspan="3" class="amcc-head-name">AMCC/SMEC<br>(NAME &amp; CODE)</th>
-              <th colspan="6" class="amcc-head-eclgs">ECLGS 5.0</th>
-              <th colspan="4" class="amcc-head-controls">CONTROLS</th>
-            </tr>
-            <tr>
-              <th colspan="4" class="amcc-head-eclgs">SANCTION</th>
-              <th colspan="2" class="amcc-head-eclgs">DISBURSEMENT</th>
-              <th rowspan="2" class="amcc-head-controls">PENDING AS ON ${esc(fmtDotDate(prevMonthEndStr(metrics.day)))}</th>
-              <th rowspan="2" class="amcc-head-controls">CONTROLS DONE DURING THE DAY</th>
-              <th rowspan="2" class="amcc-head-controls">PROGRESS DURING THE MONTH</th>
-              <th rowspan="2" class="amcc-head-controls">PENDING CONTROLS AS ON DATE</th>
-            </tr>
-            <tr>
-              <th class="amcc-head-eclgs">FTD (No)</th>
-              <th class="amcc-head-eclgs">MTD (No)</th>
-              <th class="amcc-head-eclgs">FTD (Amt.)</th>
-              <th class="amcc-head-eclgs">MTD (Amt.)</th>
-              <th class="amcc-head-eclgs">FTD (Amt.) IN CR</th>
-              <th class="amcc-head-eclgs">MTD (Amt.) IN CR</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="amcc-name">${esc(AMCC_CENTRE_LABEL)}</td>
-              ${inputCell("eclgsSanFtdNo")}
-              ${inputCell("eclgsSanMtdNo")}
-              ${inputCell("eclgsSanFtdAmt")}
-              ${inputCell("eclgsSanMtdAmt")}
-              ${inputCell("eclgsDisbFtd")}
-              ${inputCell("eclgsDisbMtd")}
-              ${inputCell("ctrlPending")}
-              ${inputCell("ctrlDoneDay")}
-              ${inputCell("ctrlMonthProgress")}
-              ${inputCell("ctrlPendingDate")}
-            </tr>
-          </tbody>
+          <tr>
+            <th rowspan="7" class="amcc-head-name">
+              <span class="amcc-name-label">AMCC/SMEC<br>(NAME &amp; CODE)</span>
+              <span class="amcc-name-value">${esc(AMCC_CENTRE_LABEL)}</span>
+            </th>
+            <th colspan="4" class="amcc-head-bre">Sanctioned 10-50 lacs (BRE)</th>
+            <th colspan="2" class="amcc-head-bre">BRE Disbursement</th>
+            <th colspan="4" class="amcc-head-nonbre">Sanctioned 1-50 lacs (NON-BRE)</th>
+          </tr>
+          <tr>
+            <th class="amcc-head-bre">FTD (No)</th>
+            <th class="amcc-head-bre">MTD (No)</th>
+            <th class="amcc-head-bre">FTD (Amt.)</th>
+            <th class="amcc-head-bre">MTD (Amt.)</th>
+            <th class="amcc-head-bre">FTD (No.)</th>
+            <th class="amcc-head-bre">MTD (No.)</th>
+            <th class="amcc-head-nonbre">FTD (No)</th>
+            <th class="amcc-head-nonbre">MTD (No)</th>
+            <th class="amcc-head-nonbre">FTD (Amt.)</th>
+            <th class="amcc-head-nonbre">MTD (Amt.) IN CR</th>
+          </tr>
+          <tr>
+            <td class="sme-num">${bre.ftdNo}</td>
+            <td class="sme-num">${bre.mtdNo}</td>
+            <td class="sme-num">${esc(crAmt(bre.ftdAmt))}</td>
+            <td class="sme-num">${esc(crAmt(bre.mtdAmt))}</td>
+            ${inputCell("breDisbFtd")}
+            ${inputCell("breDisbMtd")}
+            <td class="sme-num">${nonBre.ftdNo}</td>
+            <td class="sme-num">${nonBre.mtdNo}</td>
+            <td class="sme-num">${esc(crAmt(nonBre.ftdAmt))}</td>
+            <td class="sme-num">${esc(crAmt(nonBre.mtdAmt))}</td>
+          </tr>
+          <tr>
+            <th colspan="6" class="amcc-head-eclgs">ECLGS 5.0</th>
+            <th colspan="4" class="amcc-head-controls">CONTROLS</th>
+          </tr>
+          <tr>
+            <th colspan="4" class="amcc-head-eclgs">SANCTION</th>
+            <th colspan="2" class="amcc-head-eclgs">DISBURSEMENT</th>
+            <th rowspan="2" class="amcc-head-controls">PENDING AS ON ${esc(fmtDotDate(prevMonthEndStr(metrics.day)))}</th>
+            <th rowspan="2" class="amcc-head-controls">CONTROLS DONE DURING THE DAY</th>
+            <th rowspan="2" class="amcc-head-controls">PROGRESS DURING THE MONTH</th>
+            <th rowspan="2" class="amcc-head-controls">PENDING CONTROLS AS ON DATE</th>
+          </tr>
+          <tr>
+            <th class="amcc-head-eclgs">FTD (No)</th>
+            <th class="amcc-head-eclgs">MTD (No)</th>
+            <th class="amcc-head-eclgs">FTD (Amt.)</th>
+            <th class="amcc-head-eclgs">MTD (Amt.)</th>
+            <th class="amcc-head-eclgs">FTD (Amt.) IN CR</th>
+            <th class="amcc-head-eclgs">MTD (Amt.) IN CR</th>
+          </tr>
+          <tr>
+            ${inputCell("eclgsSanFtdNo")}
+            ${inputCell("eclgsSanMtdNo")}
+            ${inputCell("eclgsSanFtdAmt")}
+            ${inputCell("eclgsSanMtdAmt")}
+            ${inputCell("eclgsDisbFtd")}
+            ${inputCell("eclgsDisbMtd")}
+            ${inputCell("ctrlPending")}
+            ${inputCell("ctrlDoneDay")}
+            ${inputCell("ctrlMonthProgress")}
+            ${inputCell("ctrlPendingDate")}
+          </tr>
         </table>
       </div>
       <div class="sme-daily-note">
