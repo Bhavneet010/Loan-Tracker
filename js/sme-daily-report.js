@@ -144,7 +144,7 @@ function buildSmeDailyReportHtml() {
 
 /* ── FORMAT 2: AMCC/SMEC REPORTING ── */
 
-const AMCC_CENTRE_LABEL = "AMCC PAONTA-63494";
+const AMCC_CENTRE_LABEL = "AMCC PAONTA SAHIB 63494";
 
 // Manual fields the app cannot derive from loan data. Each is persisted per
 // day in Firestore (amccSmecReport/{date}) with a localStorage fallback.
@@ -207,10 +207,7 @@ function buildAmccSmecReportHtml() {
       <div class="amcc-scroll">
         <table class="sme-daily-table amcc-table">
           <tr>
-            <th rowspan="7" class="amcc-head-name">
-              <span class="amcc-name-label">AMCC/SMEC<br>(NAME &amp; CODE)</span>
-              <span class="amcc-name-value">${esc(AMCC_CENTRE_LABEL)}</span>
-            </th>
+            <th rowspan="7" class="amcc-head-name">${esc(AMCC_CENTRE_LABEL)}</th>
             <th colspan="4" class="amcc-head-bre">Sanctioned 10-50 lacs (BRE)</th>
             <th colspan="2" class="amcc-head-bre">BRE Disbursement</th>
             <th colspan="4" class="amcc-head-nonbre">Sanctioned 1-50 lacs (NON-BRE)</th>

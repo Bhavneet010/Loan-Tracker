@@ -934,9 +934,7 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
 .amcc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .amcc-table{min-width:880px;}
 .amcc-table th{white-space:normal;}
-.amcc-head-name{background:#DEC9B4;min-width:104px;vertical-align:middle;}
-.amcc-name-label{display:block;font-weight:800;}
-.amcc-name-value{display:block;margin-top:10px;font-weight:800;background:#EFE3D7;border:1px solid #8f8f8f;border-radius:6px;padding:6px 4px;}
+.amcc-head-name{background:#DEC9B4;min-width:104px;max-width:130px;vertical-align:middle;font-weight:800;}
 .amcc-head-bre{background:#C9E5D2;}
 .amcc-head-nonbre{background:#E3D0E8;}
 .amcc-head-eclgs{background:#C6E2EF;}
