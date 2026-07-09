@@ -899,17 +899,36 @@ body.dark .me-hist-cleaned-by{border-color:rgba(107,95,191,0.15);}
 .sme-daily-export .sme-disb-print{font-size:18px;font-weight:800;}
 .sme-daily-export .sme-daily-note{font-size:12px;color:#1c1b22;}
 
-/* ---- Format labels above each daily-reporting card ---- */
-.sme-format-label{
+/* ---- Collapsible section headers above each daily-reporting card ---- */
+.sme-format-toggle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
   font-weight:800;
   font-size:12px;
   letter-spacing:0.08em;
   text-transform:uppercase;
   color:#5147a3;
-  margin:4px 2px 8px;
+  background:#fff;
+  border:1px solid #d8d2ea;
+  border-radius:12px;
+  padding:12px 14px;
+  margin:0 0 10px;
+  cursor:pointer;
+  text-align:left;
+  box-shadow:0 3px 10px rgba(63,52,133,0.06);
 }
-.sme-format-label + .sme-daily-report,
-.sme-format-label + .amcc-smec-report{margin-bottom:18px;}
+.sme-format-chev{
+  font-size:14px;
+  line-height:1;
+  transition:transform 0.18s ease;
+}
+.sme-format-toggle.open .sme-format-chev{transform:rotate(180deg);}
+.sme-format-body{margin-bottom:14px;}
+.sme-format-body > .sme-daily-report,
+.sme-format-body > .amcc-smec-report{margin-bottom:4px;}
 
 /* ---- AMCC/SMEC Reporting (Format 2, second Daily view) ---- */
 .amcc-smec-report{

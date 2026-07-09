@@ -278,13 +278,37 @@ function buildAmccSmecReportHtml() {
     </div>`;
 }
 
+// Collapse state survives re-renders within the session so an open section
+// doesn't snap shut while the user is typing; both start collapsed.
+const dailySectionOpen = { sme: false, amcc: false };
+
+function dailySectionHtml(key, label, cardHtml) {
+  const open = !!dailySectionOpen[key];
+  return `<button type="button" class="sme-format-toggle${open ? ' open' : ''}" data-section="${key}" onclick="toggleDailyReportSection('${key}')" aria-expanded="${open}">
+      <span>${label}</span>
+      <span class="sme-format-chev" aria-hidden="true">&#9662;</span>
+    </button>
+    <div id="dailySection_${key}" class="sme-format-body"${open ? '' : ' style="display:none;"'}>${cardHtml}</div>`;
+}
+
+window.toggleDailyReportSection = function (key) {
+  if (!(key in dailySectionOpen)) return;
+  dailySectionOpen[key] = !dailySectionOpen[key];
+  const open = dailySectionOpen[key];
+  const body = document.getElementById(`dailySection_${key}`);
+  if (body) body.style.display = open ? '' : 'none';
+  const btn = document.querySelector(`.sme-format-toggle[data-section="${key}"]`);
+  if (btn) {
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+  }
+};
+
 export function renderSmeDailyReportView(target) {
   if (!target) return;
   target.innerHTML = `<div class="sme-daily-wrap">
-    <div class="sme-format-label">Format 1 &middot; SME Daily Reporting</div>
-    ${buildSmeDailyReportHtml()}
-    <div class="sme-format-label">Format 2 &middot; AMCC/SMEC Reporting</div>
-    ${buildAmccSmecReportHtml()}
+    ${dailySectionHtml('sme', 'SME Daily Reporting', buildSmeDailyReportHtml())}
+    ${dailySectionHtml('amcc', 'AMCC/SMEC Reporting', buildAmccSmecReportHtml())}
   </div>`;
   hydrateDisbursement(todayStr());
   hydrateAmccReport(todayStr());
