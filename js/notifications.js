@@ -2,6 +2,7 @@ import { collection, doc, limit, onSnapshot, orderBy, query, setDoc, writeBatch 
 import { db } from "./config.js";
 import { S } from "./state.js";
 import { fmtAmt, esc, toast, timeAgo } from "./utils.js";
+import { effectiveOfficer } from "./derived.js";
 
 const NOTIFICATION_LIMIT = 75;
 const typeIcon = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎', reminder: '✉' };
@@ -33,7 +34,7 @@ export function notifyLoanChange(loan) {
   if (!document.hidden && document.hasFocus()) return;
   const labels = { pending: 'Pending', sanctioned: '✓ Sanctioned', returned: '↩ Returned' };
   const title = `${labels[loan.status] || loan.status} — ${loan.customerName}`;
-  const body = `₹${fmtAmt(loan.amount)}L · ${loan.allocatedTo}`;
+  const body = `₹${fmtAmt(loan.amount)}L · ${effectiveOfficer(loan)}`;
   try { new Notification(title, { body, icon: '/icon-192.png', tag: loan.id, renotify: true }); } catch (e) { }
 }
 
@@ -43,7 +44,7 @@ export async function createNotification(type, loan) {
     type, loanId: loan.id || '',
     customerName: loan.customerName || '', amount: loan.amount || 0,
     branch: loan.branch || '', category: loan.category || '',
-    allocatedTo: loan.allocatedTo || '',
+    allocatedTo: effectiveOfficer(loan),
     by: S.user, timestamp: new Date().toISOString(), readBy: []
   });
 }

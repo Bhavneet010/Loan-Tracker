@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { getLoanMetrics, sumAmount } from "./derived.js";
+import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { catCls, esc, fmtAmt, fmtDate, fmtShortDate, isFreshCC, shortCat, toast } from "./utils.js";
 import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
 
@@ -71,7 +71,7 @@ function officerNamesFromMetrics(metrics) {
     metrics.renewalDoneThisMonth,
     metrics.renewalDoneToday,
   ].flat().forEach(loan => {
-    const name = loan.allocatedTo || "Unassigned";
+    const name = effectiveOfficer(loan);
     if (!seen.has(name)) {
       seen.add(name);
       extra.push(name);
@@ -93,7 +93,7 @@ function buildOfficerCategoryRows(loans, officerNames) {
   const byOfficer = new Map(rows.map(row => [row.name, row]));
 
   loans.forEach(loan => {
-    const name = loan.allocatedTo || "Unassigned";
+    const name = effectiveOfficer(loan);
     if (!byOfficer.has(name)) {
       const row = { name, cats: emptyCatTotals(), total: { count: 0, amount: 0 } };
       rows.push(row);
@@ -125,7 +125,7 @@ function buildOfficerRenewalRows(metrics, officerNames) {
 
   const addTo = (loans, key) => {
     loans.forEach(loan => {
-      const name = loan.allocatedTo || "Unassigned";
+      const name = effectiveOfficer(loan);
       if (!byOfficer.has(name)) {
         const row = {
           name,
@@ -678,7 +678,7 @@ function officerNamesFromWeekly(freshLoans, renewalLoans) {
   const seen = new Set(S.officers);
   const extra = [];
   [freshLoans, renewalLoans].flat().forEach(loan => {
-    const name = loan.allocatedTo || "Unassigned";
+    const name = effectiveOfficer(loan);
     if (!seen.has(name)) {
       seen.add(name);
       extra.push(name);
@@ -713,7 +713,7 @@ function buildWeeklyPerformanceData(targetDates) {
   const dateIndex = new Map(dates.map((date, index) => [date, index]));
 
   const addToRows = (rowsByOfficer, loan, dateKey) => {
-    const name = loan.allocatedTo || "Unassigned";
+    const name = effectiveOfficer(loan);
     const row = rowsByOfficer.get(name);
     const index = dateIndex.get(loan[dateKey]);
     if (!row || index === undefined) return;

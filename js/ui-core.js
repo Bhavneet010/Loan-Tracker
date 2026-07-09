@@ -2,7 +2,7 @@ import { S, PIN, saveSettings } from "./state.js";
 import { renderSettingsList } from "./ui-settings.js";
 import { toast, initials, officerColor, timeAgo, esc } from "./utils.js";
 import { initPresence } from "./presence.js";
-import { getLoanMetrics } from "./derived.js";
+import { getLoanMetrics, effectiveOfficer } from "./derived.js";
 import { requestNotifPermission } from "./notifications.js";
 import { isBiometricRegistered, authenticateBiometric, isBiometricAvailable } from "./biometric.js";
 import { openOverlay, closeOverlay, transitionContentSwap } from "./animate.js";
@@ -204,7 +204,7 @@ window.setAppMode = function (v) {
 window.showUserSelect = function () {
   const pending = getLoanMetrics().pending;
   document.getElementById('userList').innerHTML = S.officers.map(o => {
-    const n = pending.filter(l => l.allocatedTo === o).length;
+    const n = pending.filter(l => effectiveOfficer(l) === o).length;
     const badge = n ? `<span class="officer-count">${n}</span>` : '';
     const photo = S.officerPhotos?.[o];
     const avInner = photo

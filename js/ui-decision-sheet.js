@@ -1,4 +1,5 @@
 ﻿import { S } from "./state.js";
+import { effectiveOfficer } from "./derived.js";
 import { todayStr, esc, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo } from "./utils.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 import { matchBranchOption, assignedOfficerForBranch, normalizeName } from "./ui-forms.js";
@@ -11,7 +12,7 @@ export function accountAmount(loan) {
 
 export function cloneLoanDraft(loan) {
   return {
-    allocatedTo: loan.allocatedTo || '',
+    allocatedTo: effectiveOfficer(loan) === 'Unassigned' ? (loan.allocatedTo || '') : effectiveOfficer(loan),
     category: loan.category || '',
     branch: loan.branch || '',
     customerName: loan.customerName || '',
@@ -73,7 +74,7 @@ function reminderMailLine(loan) {
 function loanDecisionLines(loan) {
   const rows = [
     accountLine('Branch', loan.branch),
-    accountLine('Officer', loan.allocatedTo),
+    accountLine('Officer', effectiveOfficer(loan)),
     accountLine('Received', fmtDate(loan.receiveDate)),
   ];
   if (loan.category === 'SME') {
@@ -279,7 +280,7 @@ function loanAccountCardHtml(loan, linesHtml) {
 function renewalDecisionLines(loan, rs) {
   const rows = [
     accountLine('Branch', loan.branch),
-    accountLine('Officer', loan.allocatedTo),
+    accountLine('Officer', effectiveOfficer(loan)),
     accountLine('A/C No.', loan.acNumber),
     renewalDateAccountLine('Renewal Due', loan, 'renewalDueDate', rs?.dueDateStr),
     renewalDateAccountLine('Limit Expiry', loan, 'limitExpiryDate'),

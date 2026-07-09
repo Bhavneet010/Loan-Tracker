@@ -1,6 +1,6 @@
 import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
-import { esc, toast, initials, officerColor, timeAgo } from "./utils.js";
+import { esc, toast, initials, officerColor, timeAgo, branchCode } from "./utils.js";
 import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";
 import { AVAILABILITY_TYPES, availabilityLabel, normalizeAvailability } from "./officer-availability.js";
 
@@ -179,8 +179,44 @@ window.addOfficer = async function() {
   document.getElementById('newOfficer').value = ''; renderSettingsList(); window.render(); toast('Officer added');
 };
 window.removeOfficer = async function(i) {
-  if (!confirm(`Remove ${S.officers[i]}?`)) return;
-  S.officers.splice(i, 1); await saveSettings(); renderSettingsList(); window.render();
+  const name = S.officers[i];
+  if (!name) return;
+  if (!confirm(`Remove ${name}? Their branch assignments, targets, photo and availability will be cleared, and their loans will move to each branch's current officer.`)) return;
+  S.officers.splice(i, 1);
+
+  // Scrub every settings reference so the name stops appearing anywhere
+  Object.keys(S.branchOfficers || {}).forEach(code => {
+    if (S.branchOfficers[code] === name) delete S.branchOfficers[code];
+  });
+  Object.values(S.renewalTargets || {}).forEach(monthTargets => {
+    if (monthTargets && name in monthTargets) delete monthTargets[name];
+  });
+  if (S.officerPhotos?.[name]) delete S.officerPhotos[name];
+  S.officerAvailability = (S.officerAvailability || []).filter(item => item?.officer !== name);
+  await saveSettings();
+
+  // Hand the officer's loans to whoever now owns each branch (or Unassigned),
+  // and drop any manual month overrides that still point at them.
+  const affected = S.loans.filter(l => l.allocatedTo === name || l.manualOfficer === name);
+  if (affected.length) {
+    const { updateLoan } = await import("./db.js");
+    await Promise.all(affected.map(loan => {
+      const patch = {};
+      if (loan.allocatedTo === name) {
+        const code = branchCode(loan.branch || '').trim();
+        patch.allocatedTo = (code && S.branchOfficers[code]) || '';
+      }
+      if (loan.manualOfficer === name) {
+        patch.manualOfficer = '';
+        patch.manualOfficerMonth = '';
+      }
+      return updateLoan(loan.id, patch);
+    }));
+  }
+
+  renderSettingsList();
+  window.render();
+  toast(`${name} removed${affected.length ? ` · ${affected.length} loan${affected.length === 1 ? '' : 's'} reassigned` : ''}`);
 };
 window.addBranch = async function() {
   const v = document.getElementById('newBranch').value.trim();

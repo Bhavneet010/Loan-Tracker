@@ -5,6 +5,7 @@ import { db } from "./config.js";
 import { S, notifReady, setNotifReady } from "./state.js";
 import { scheduleRender } from "./ui-render.js";
 import { notifyLoanChange } from "./notifications.js";
+import { effectiveOfficer } from "./derived.js";
 
 export const newId = () => 'loan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
 export const ts = () => ({ updatedAt: new Date().toISOString(), updatedBy: S.user });
@@ -36,7 +37,7 @@ export function subscribeLoans() {
       snap.docChanges().forEach(change => {
         if (change.type === 'modified') {
           const loan = { id: change.doc.id, ...change.doc.data() };
-          if (S.isAdmin || loan.allocatedTo === S.user) notifyLoanChange(loan);
+          if (S.isAdmin || effectiveOfficer(loan) === S.user) notifyLoanChange(loan);
         }
       });
     }

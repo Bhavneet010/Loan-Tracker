@@ -10,7 +10,7 @@ import {
 import { db } from "./config.js";
 import { S } from "./state.js";
 import { ts } from "./db.js";
-import { getLoanMetricsForMonth, sumAmount } from "./derived.js";
+import { effectiveOfficer, getLoanMetricsForMonth, sumAmount } from "./derived.js";
 import { esc, fmtAmt, fmtDate, isFreshCC, isRenewalDatesMissing, toast } from "./utils.js";
 import {
   ensureHtml2Canvas,
@@ -40,8 +40,8 @@ function buildOfficerColorMap() {
 
 function sortByOfficerThenDate(loans, dateKey) {
   return [...loans].sort((a, b) => {
-    const ai = S.officers.indexOf(a.allocatedTo || '');
-    const bi = S.officers.indexOf(b.allocatedTo || '');
+    const ai = S.officers.indexOf(effectiveOfficer(a));
+    const bi = S.officers.indexOf(effectiveOfficer(b));
     const ao = ai === -1 ? S.officers.length : ai;
     const bo = bi === -1 ? S.officers.length : bi;
     if (ao !== bo) return ao - bo;
@@ -98,7 +98,7 @@ function officerNames(data) {
     data.metrics.renewalDueSoon,
     data.metrics.renewalOverdue,
   ].flat().forEach(loan => {
-    const name = loan.allocatedTo || "Unassigned";
+    const name = effectiveOfficer(loan);
     if (!seen.has(name)) {
       seen.add(name);
       extra.push(name);
@@ -109,7 +109,7 @@ function officerNames(data) {
 
 function aggregateByOfficer(data) {
   return officerNames(data).map(name => {
-    const byOfficer = loan => (loan.allocatedTo || "Unassigned") === name;
+    const byOfficer = loan => effectiveOfficer(loan) === name;
     const sanctioned = data.sanctioned.filter(byOfficer);
     const returned = data.returned.filter(byOfficer);
     const renewalsDone = data.renewalsDone.filter(byOfficer);
@@ -317,7 +317,7 @@ function detailRow(loan, index, dateKey, mode, color) {
   return `<tr ${rowStyle}>
     <td class="me-num">${esc(index)}</td>
     <td class="me-customer"><strong>${esc(loan.customerName || "Unnamed")}</strong><span>${esc(note)}</span></td>
-    <td>${esc(loan.allocatedTo || "Unassigned")}</td>
+    <td>${esc(effectiveOfficer(loan))}</td>
     <td>${esc(loan.branch || "-")}</td>
     <td>${esc(loan.category || "-")}</td>
     <td class="me-amount">Rs ${esc(fmtAmt(loan.amount))}L</td>
@@ -334,7 +334,7 @@ function officerGroupHeaderRow(officer, color) {
 function renderChunkRows(chunk, startIndex, dateKey, mode, colorMap) {
   let lastOfficer = null;
   return chunk.reduce((acc, loan, i) => {
-    const officer = loan.allocatedTo || 'Unassigned';
+    const officer = effectiveOfficer(loan);
     const color = colorMap.get(officer) || '#64748B';
     if (officer !== lastOfficer) {
       acc += officerGroupHeaderRow(officer, color);
@@ -348,7 +348,7 @@ function renderChunkRows(chunk, startIndex, dateKey, mode, colorMap) {
 function buildLegendHtml(loans, colorMap) {
   const seen = new Map();
   loans.forEach(loan => {
-    const name = loan.allocatedTo || 'Unassigned';
+    const name = effectiveOfficer(loan);
     if (!seen.has(name)) seen.set(name, colorMap.get(name) || '#64748B');
   });
   if (!seen.size) return '';
@@ -444,7 +444,7 @@ function paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budge
   };
 
   sorted.forEach((loan, index) => {
-    const officer = loan.allocatedTo || "Unassigned";
+    const officer = effectiveOfficer(loan);
     let addHeight = heightFor(index, officer);
     if (current.length && currentHeight + addHeight > budget) {
       pages.push(current);

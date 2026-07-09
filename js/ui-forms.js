@@ -5,6 +5,7 @@ import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCl
 import { db } from "./config.js";
 import { openOverlay, closeOverlay } from "./animate.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { effectiveOfficer } from "./derived.js";
 
 const RECENT_BRANCHES_KEY = 'lpRecentBranches';
 let duplicateDecisionResolve = null;
@@ -87,7 +88,7 @@ function duplicateCardHtml(loan) {
     </div>
     <div class="duplicate-tags">
       <span class="tag ${catCls(loan.category)}">${esc(loan.category || 'Loan')}</span>
-      <span class="tag officer">${esc(loan.allocatedTo || 'Unassigned')}</span>
+      <span class="tag officer">${esc(effectiveOfficer(loan))}</span>
       <span class="tag date">${esc(status)}</span>
       ${receiveDate ? `<span class="tag date">Recd ${receiveDate}</span>` : ''}
     </div>
@@ -303,8 +304,8 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
 
   const branchValue = matchBranchOption(loan.branch || '');
   setBranchValue(branchValue || loan.branch || '', { allowFallbackUser: !isEdit, rawText: loan.branch || '' });
-  if (isEdit && loan.allocatedTo) {
-    document.getElementById('fOfficer').value = loan.allocatedTo;
+  if (isEdit && (loan.allocatedTo || effectiveOfficer(loan) !== 'Unassigned')) {
+    document.getElementById('fOfficer').value = effectiveOfficer(loan);
     updateAssignedOfficerHint(branchValue);
   }
 

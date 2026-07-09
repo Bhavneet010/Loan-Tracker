@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { getLoanMetrics, sumAmount } from "./derived.js";
+import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
 import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
 
@@ -177,7 +177,7 @@ function buildNpaAlertTable(metrics) {
 
   const tableRows = npa15.slice(0, 10).map((loan, i) => {
     const rs = loan._rs || {};
-    const officer = loan.allocatedTo || 'Unassigned';
+    const officer = effectiveOfficer(loan);
     return `<tr>
       <td class="npa-num">${i + 1}</td>
       <td class="npa-customer"><strong>${catTag(loan)}${esc(loan.customerName || 'Unnamed')}</strong></td>

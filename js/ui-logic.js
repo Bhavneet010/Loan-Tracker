@@ -1,19 +1,20 @@
 import { S } from "./state.js";
 import { esc, todayStr } from "./utils.js";
+import { effectiveOfficer } from "./derived.js";
 
 /* ── SHARED UI UTILITIES ── */
 export function searchMatch(l) {
   if (!S.search) return true;
   return (l.customerName || '').toLowerCase().includes(S.search)
     || (l.branch || '').toLowerCase().includes(S.search)
-    || (l.allocatedTo || '').toLowerCase().includes(S.search);
+    || effectiveOfficer(l).toLowerCase().includes(S.search);
 }
 
 export function applyFilters(loans) {
   let out = loans;
   if (S.filter.category !== 'All') out = out.filter(l => l.category === S.filter.category);
-  if (S.filter.officer === 'Mine' && S.user) out = out.filter(l => l.allocatedTo === S.user);
-  else if (S.filter.officer !== 'All' && S.filter.officer !== 'Mine') out = out.filter(l => l.allocatedTo === S.filter.officer);
+  if (S.filter.officer === 'Mine' && S.user) out = out.filter(l => effectiveOfficer(l) === S.user);
+  else if (S.filter.officer !== 'All' && S.filter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.filter.officer);
   if (S.filter.today) {
     const today = todayStr();
     const dateKey = S.tab === 'sanctioned' ? 'sanctionDate' : S.tab === 'returned' ? 'returnedDate' : 'receiveDate';
@@ -31,7 +32,7 @@ export function applySort(loans) {
     let av, bv;
     if (field === 'date') { av = a[dateKey] || ''; bv = b[dateKey] || ''; }
     else if (field === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
-    else if (field === 'officer') { av = (a.allocatedTo || '').toLowerCase(); bv = (b.allocatedTo || '').toLowerCase(); }
+    else if (field === 'officer') { av = effectiveOfficer(a).toLowerCase(); bv = effectiveOfficer(b).toLowerCase(); }
     else if (field === 'category') { av = a.category || ''; bv = b.category || ''; }
     if (av < bv) return -1 * dir; if (av > bv) return 1 * dir; return 0;
   });

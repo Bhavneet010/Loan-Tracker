@@ -1,5 +1,5 @@
 ﻿import { S } from "./state.js";
-import { getLoanMetrics, sumAmount } from "./derived.js";
+import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, daysPending } from "./utils.js";
 import { countWorkingDaysLeft } from "./bank-holidays.js";
 
@@ -40,9 +40,9 @@ function buildCategoryItems(metrics, category, officer) {
     datesMissing:    metrics.renewalDatesMissing,
   }[category] || [];
 
-  if (officer === 'All') return S.isAdmin ? base : base.filter(l => l.allocatedTo === S.user);
-  if (officer)           return base.filter(l => l.allocatedTo === officer);
-  return S.isAdmin ? base : base.filter(l => l.allocatedTo === S.user);
+  if (officer === 'All') return S.isAdmin ? base : base.filter(l => effectiveOfficer(l) === S.user);
+  if (officer)           return base.filter(l => effectiveOfficer(l) === officer);
+  return S.isAdmin ? base : base.filter(l => effectiveOfficer(l) === S.user);
 }
 
 /* ── LEVEL 1: OVERVIEW ── */
@@ -78,7 +78,7 @@ function renderTaskOverview(c, metrics) {
 }
 
 function buildCriticalCare(metrics) {
-  const visible = l => S.isAdmin || l.allocatedTo === S.user;
+  const visible = l => S.isAdmin || effectiveOfficer(l) === S.user;
   return {
     npa15: metrics.renewalOverdue
       .filter(l => visible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15),
@@ -167,7 +167,7 @@ function criticalSortValue(key, loan, field) {
   if (field === 'branch') return branchCode(loan.branch);
   if (field === 'borrower') return (loan.customerName || '').toLowerCase();
   if (field === 'amount') return parseFloat(loan.amount) || 0;
-  if (field === 'officer') return (loan.allocatedTo || '').toLowerCase();
+  if (field === 'officer') return effectiveOfficer(loan).toLowerCase();
   if (field === 'status') {
     if (key === 'npa15') return loan._rs?.daysUntilNpa ?? 999;
     if (key === 'pending10') return daysPending(loan.receiveDate);
@@ -192,7 +192,7 @@ function criticalLoanRowHtml(key, loan) {
     <span class="task-critical-name">${esc(loan.customerName)}</span>
     ${isMissing ? '' : `<span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>`}
     <span class="task-critical-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
-    <span class="task-officer-mini" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
+    <span class="task-officer-mini" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
   </div>`;
 }
 
@@ -215,7 +215,7 @@ function bestOfficer(loans) {
   const rows = new Map();
   S.officers.forEach(officer => rows.set(officer, { officer, count: 0, amount: 0 }));
   loans.forEach(loan => {
-    const officer = loan.allocatedTo || 'Unassigned';
+    const officer = effectiveOfficer(loan);
     if (!rows.has(officer)) rows.set(officer, { officer, count: 0, amount: 0 });
     const row = rows.get(officer);
     row.count++;
@@ -322,7 +322,7 @@ function donutSvg(pct, color, size = 60, stroke = 8) {
 function countByOfficer(loans) {
   const map = new Map();
   loans.forEach(loan => {
-    const officer = loan.allocatedTo || 'Unassigned';
+    const officer = effectiveOfficer(loan);
     map.set(officer, (map.get(officer) || 0) + 1);
   });
   return map;
@@ -389,7 +389,7 @@ function taskLoanItemHtml(loan) {
   const days = daysPending(loan.receiveDate);
   return `<div class="task-item">
     <div class="task-item-info">
-      <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
+      <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
       <span class="task-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="task-name">${esc(loan.customerName)}</span>
       <span class="task-meta"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L · ${days}d</span>
@@ -413,7 +413,7 @@ function taskRenewalItemHtml(loan) {
     : 'rnw-chip-due-soon';
   return `<div class="task-item">
     <div class="task-item-info">
-      <span class="lr-av" style="background:${officerColor(loan.allocatedTo).bg};">${initials(loan.allocatedTo)}</span>
+      <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
       <span class="task-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="task-name">${esc(loan.customerName)}</span>
       <span class="tag ${statusCls} task-status-tag">${statusLabel}</span>
