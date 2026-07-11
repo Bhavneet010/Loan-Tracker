@@ -14,7 +14,6 @@ const targetsCelebratedMonths = new Set();
 
 const CRITICAL_META = {
   npa15:        { title: 'NPA in 15 days',     short: 'NPA IN 15D',   tone: 'red' },
-  pending10:    { title: 'Pending>10d',        short: 'PENDING >10D', tone: 'amber' },
   datesMissing: { title: 'Integration Pending', short: 'INTEGRATION',  tone: 'purple' },
   docPending:   { title: 'Documentation Pending', short: 'DOCS PENDING', tone: 'blue' },
   disbPending:  { title: 'Disbursement Pending',  short: 'DISB PENDING', tone: 'blue' },
@@ -94,8 +93,6 @@ function buildCriticalCare(metrics) {
   return {
     npa15: metrics.renewalOverdue
       .filter(l => visible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15),
-    pending10: metrics.pending
-      .filter(l => visible(l) && daysPending(l.receiveDate) > 10),
     datesMissing: metrics.renewalDatesMissing
       .filter(visible),
     docPending: [...metrics.docPendingFresh, ...metrics.docPendingRenewals].filter(visible),
@@ -150,7 +147,7 @@ function criticalSortLabel(key, field) {
   if (field === 'borrower') return 'borrower';
   if (field === 'amount') return 'amount';
   if (field === 'officer') return 'officer';
-  if (field === 'status') return key === 'pending10' ? 'days' : 'status';
+  if (field === 'status') return 'status';
   return 'urgency';
 }
 
@@ -177,7 +174,6 @@ function sortCriticalItems(key, items) {
 
 function defaultCriticalCompare(key, a, b) {
   if (key === 'npa15') return (a._rs?.daysUntilNpa ?? 999) - (b._rs?.daysUntilNpa ?? 999) || ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
-  if (key === 'pending10') return daysPending(b.receiveDate) - daysPending(a.receiveDate) || ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
   return ((parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0)) || (a.customerName || '').localeCompare(b.customerName || '');
 }
 
@@ -188,7 +184,6 @@ function criticalSortValue(key, loan, field) {
   if (field === 'officer') return effectiveOfficer(loan).toLowerCase();
   if (field === 'status') {
     if (key === 'npa15') return loan._rs?.daysUntilNpa ?? 999;
-    if (key === 'pending10') return daysPending(loan.receiveDate);
     if (isStageKey(key)) return daysPending(isFreshCC(loan) ? loan.sanctionDate : loan.renewedDate);
     return (loan.customerName || '').toLowerCase();
   }
@@ -210,7 +205,7 @@ function criticalLoanRowHtml(key, loan) {
     : stage
       ? `${stageDays}d`
       : `${daysPending(loan.receiveDate)}`;
-  const sheetCall = key === 'pending10' || (stage && isFreshCC(loan))
+  const sheetCall = stage && isFreshCC(loan)
     ? `openLoanDecisionSheet('${loan.id}')`
     : `openRenewalDecisionSheet('${loan.id}')`;
   const markStage = key === 'docPending' ? 'documentation' : 'disbursement';
