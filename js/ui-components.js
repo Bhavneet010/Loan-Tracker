@@ -136,7 +136,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
           </div>
         </div>
         ${datesMissing ? `<div class="rnw-date-warning">New limit expiry date and next renewal due date are pending. Old due warning is retained until the next due date is entered.</div>` : ''}
-        ${loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : ''}
+        ${(loan.remarks || (rnpActive && loan.renewalNotPossibleRemarks)) ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks || loan.renewalNotPossibleRemarks)}</div>` : ''}
         <div class="rnw-action-group">
           <button class="btn btn-rnw-done" onclick="openRenewalDecisionSheet('${loan.id}')">
             &#9850; Renewal Status

@@ -49,7 +49,10 @@ export function cloneLoanDraft(loan) {
     limitExpiryDatePending: loan.limitExpiryDatePending === true,
     nextRenewalDueDate: loan.renewedDate && loan.renewalDueDateEntered === true ? (loan.renewalDueDate || '') : '',
     nextLimitExpiryDate: loan.renewedDate && loan.limitExpiryDateEntered === true ? (loan.limitExpiryDate || '') : '',
-    remarks: loan.remarks || '',
+    // Accounts flagged before remarks became the reason keep it in
+    // renewalNotPossibleRemarks only — surface it as remarks so it shows and
+    // migrates into the remarks field on the next save.
+    remarks: loan.remarks || (loan.renewalNotPossible ? loan.renewalNotPossibleRemarks || '' : ''),
     renewalNotPossible: !!loan.renewalNotPossible,
     renewalNotPossibleRemarks: loan.renewalNotPossibleRemarks || '',
     loanType: loan.loanType || (loan.isTermLoan ? 'TL' : 'CC'),
