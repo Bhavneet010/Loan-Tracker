@@ -140,7 +140,10 @@ function inlineSelect(options, value) {
 
 function inlineAccountEditLine(label, html, tone = '') {
   const cls = tone ? ` decision-account-line--${esc(tone)}` : '';
-  return `<div class="decision-account-line decision-account-line--edit${cls}">
+  // Textarea rows are taller than the fixed 30px line — let them grow so the
+  // label stays vertically centered instead of hanging at the edge.
+  const grow = html.includes('<textarea') ? ' decision-account-line--grow' : '';
+  return `<div class="decision-account-line decision-account-line--edit${cls}${grow}">
     <small>${esc(label)}</small>
     <span class="decision-edit-control">${html}</span>
     <span></span>
