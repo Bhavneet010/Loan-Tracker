@@ -10,9 +10,9 @@ function reminderMailNote(loan) {
 }
 
 // Post-sanction stage chips (documentation → disbursement) for tracked fresh
-// loans. Disbursement stays visually locked until documentation is marked.
+// SME loans. Disbursement stays visually locked until documentation is marked.
 function stageChipsHtml(loan) {
-  if (loan.status !== 'sanctioned' || !isFreshCC(loan) || !isStageTracked(loan.sanctionDate)) return '';
+  if (loan.status !== 'sanctioned' || loan.category !== 'SME' || !isFreshCC(loan) || !isStageTracked(loan.sanctionDate)) return '';
   const docDone = !!loan.documentationDate;
   const disbDone = !!loan.disbursementDate;
   return `<div class="stage-chips">
@@ -55,7 +55,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
   const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">&#9888; ${daysPending(loan.receiveDate)}d</span>` : '';
   const mailCount = canTrackReminders(loan) ? reminderMails(loan).length : 0;
   const mailTag = mailCount ? `<span class="tag tag-mail" title="${mailCount} reminder mail${mailCount > 1 ? 's' : ''} sent">&#9993;${mailCount > 1 ? ' ' + mailCount : ''}</span>` : '';
-  const stagePending = loan.status === 'sanctioned' && isFreshCC(loan) && isStageTracked(loan.sanctionDate) && !loan.disbursementDate;
+  const stagePending = loan.status === 'sanctioned' && loan.category === 'SME' && isFreshCC(loan) && isStageTracked(loan.sanctionDate) && !loan.disbursementDate;
   const stageTag = stagePending ? `<span class="tag tag-stage" title="${loan.documentationDate ? 'Disbursement' : 'Documentation'} pending">${loan.documentationDate ? 'Disb' : 'Docs'}</span>` : '';
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
 

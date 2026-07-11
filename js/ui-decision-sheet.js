@@ -114,7 +114,7 @@ function loanDecisionLines(loan) {
   }
   if (loan.status === 'sanctioned') {
     rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
-    if (isFreshCC(loan) && isStageTracked(loan.sanctionDate)) {
+    if (loan.category === 'SME' && isFreshCC(loan) && isStageTracked(loan.sanctionDate)) {
       rows.push(accountLine('Documentation', loan.documentationDate ? fmtDate(loan.documentationDate) : 'Pending', loan.documentationDate ? '' : 'warn'));
       rows.push(accountLine('Disbursement', loan.disbursementDate ? fmtDate(loan.disbursementDate) : 'Pending', loan.disbursementDate ? '' : 'warn'));
     }

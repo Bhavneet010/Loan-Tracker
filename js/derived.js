@@ -48,11 +48,12 @@ function buildLoanMetricsForMonth(thisMonth, day) {
   const freshSanctionedAll = fresh.filter(loan => loan.status === "sanctioned");
   const sanctioned = freshSanctionedAll.filter(loan => !loan.monthEndCleared);
   const returned = fresh.filter(loan => loan.status === "returned");
+  // Documentation/disbursement stages are tracked for SME loans only
   const docPendingFresh = freshSanctionedAll.filter(
-    loan => isStageTracked(loan.sanctionDate) && !loan.documentationDate
+    loan => loan.category === "SME" && isStageTracked(loan.sanctionDate) && !loan.documentationDate
   );
   const disbPending = freshSanctionedAll.filter(
-    loan => isStageTracked(loan.sanctionDate) && loan.documentationDate && !loan.disbursementDate
+    loan => loan.category === "SME" && isStageTracked(loan.sanctionDate) && loan.documentationDate && !loan.disbursementDate
   );
   const sanctionedToday = sanctioned.filter(loan => loan.sanctionDate === day);
   const sanctionedThisMonth = sanctioned.filter(loan => (loan.sanctionDate || "").startsWith(thisMonth));

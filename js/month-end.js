@@ -84,7 +84,10 @@ function collectMonthEndData(month = previousMonthKey()) {
   const eligibleSanctioned = S.loans.filter(loan =>
     isFreshCC(loan) && loan.status === "sanctioned" && monthOf(loan.sanctionDate) <= month
   );
+  // Stages are tracked for SME loans only, so other categories clean up
+  // exactly as they did before stage tracking.
   const isSanctionCleanupReady = loan =>
+    loan.category !== "SME" ||
     monthOf(loan.sanctionDate) < STAGE_TRACKING_START_MONTH ||
     (loan.disbursementDate && monthOf(loan.disbursementDate) <= month);
   const sanctionedDeletable = eligibleSanctioned.filter(isSanctionCleanupReady);

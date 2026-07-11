@@ -25,7 +25,7 @@ window.moveToPending = async function(id) {
    then disbursement (fresh loans only). Both toggles, undo asks to confirm. */
 window.markLoanStage = async function(id, stage) {
   const l = S.loans.find(x => x.id === id);
-  if (!l) return;
+  if (!l || l.category !== 'SME') return;
   const renewalAccount = !isFreshCC(l);
   let data, notifType = '', msg = '';
   if (stage === 'documentation') {
