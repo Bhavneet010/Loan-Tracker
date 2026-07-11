@@ -1,7 +1,7 @@
 import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo } from "./utils.js";
+import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo, isFreshCC } from "./utils.js";
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
@@ -19,6 +19,47 @@ window.returnLoan = async function(id) {
 
 window.moveToPending = async function(id) {
   window.openLoanDecisionSheet(id, 'pending');
+};
+
+/* Post-sanction stage marks: documentation (fresh loans + renewals done),
+   then disbursement (fresh loans only). Both toggles, undo asks to confirm. */
+window.markLoanStage = async function(id, stage) {
+  const l = S.loans.find(x => x.id === id);
+  if (!l) return;
+  const renewalAccount = !isFreshCC(l);
+  let data, notifType = '', msg = '';
+  if (stage === 'documentation') {
+    if (renewalAccount ? !l.renewedDate : l.status !== 'sanctioned') return;
+    if (!l.documentationDate) {
+      if (!confirm(`Mark documentation done for ${l.customerName}?`)) return;
+      data = { documentationDate: todayStr() }; notifType = 'documentation'; msg = 'Documentation done ✓';
+    } else {
+      if (!renewalAccount && l.disbursementDate) { toast('Undo disbursement first'); return; }
+      if (!confirm(`Undo documentation for ${l.customerName}?`)) return;
+      data = { documentationDate: '' }; msg = 'Documentation undone';
+    }
+  } else if (stage === 'disbursement') {
+    if (renewalAccount || l.status !== 'sanctioned') return;
+    if (!l.documentationDate) { toast('Mark documentation done first'); return; }
+    if (!l.disbursementDate) {
+      if (!confirm(`Mark disbursement done for ${l.customerName}?`)) return;
+      data = { disbursementDate: todayStr() }; notifType = 'disbursement'; msg = 'Disbursement done ✓';
+    } else {
+      if (!confirm(`Undo disbursement for ${l.customerName}?`)) return;
+      data = { disbursementDate: '' }; msg = 'Disbursement undone';
+    }
+  } else {
+    return;
+  }
+  try {
+    await updateLoan(id, data);
+    Object.assign(l, data);
+    if (notifType) createNotification(notifType, l).catch(() => {});
+    toast(msg);
+  } catch (e) {
+    toast('Error');
+    console.error(e);
+  }
 };
 
 async function applyLoanStatus(id, nextStatus, remarks = '') {
@@ -57,7 +98,7 @@ async function applyRenewalStatus(id, renewed) {
     return true;
   }
   try {
-    await updateLoan(id, { renewedDate: '', renewalDatesPending: false });
+    await updateLoan(id, { renewedDate: '', renewalDatesPending: false, documentationDate: '' });
     toast('Renewal moved to pending');
     return true;
   } catch (e) {
@@ -98,6 +139,11 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   if (draft.acNumber !== undefined) data.acNumber = (draft.acNumber || '').trim();
 
   if (status) data.status = status;
+  // Leaving sanctioned resets the post-sanction stage marks
+  if (status && status !== 'sanctioned') {
+    data.documentationDate = '';
+    data.disbursementDate = '';
+  }
   if (status === 'sanctioned') data.sanctionDate = draft.sanctionDate || base.sanctionDate || todayStr();
   else if (draft.sanctionDate) data.sanctionDate = draft.sanctionDate;
   if (status === 'returned') data.returnedDate = draft.returnedDate || base.returnedDate || todayStr();
@@ -143,8 +189,11 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
     data.renewalDatesPending = !(nextRenewalDue && nextLimitExpiry);
     data.renewalNotPossible = false;
     data.renewalNotPossibleRemarks = '';
+    // Each renewal cycle needs its own documentation mark
+    data.documentationDate = '';
   } else if (renewalState === 'pending') {
     data.renewedDate = '';
+    data.documentationDate = '';
     data.renewalDueDatePending = false;
     data.limitExpiryDatePending = false;
     data.renewalDueDateEntered = false;
@@ -287,6 +336,8 @@ window.saveLoan = async function(e) {
       const hasRenewalDue = !!(renewalInput && renewalInput.value);
       const hasLimitExpiry = !!(limitExpiryInput && limitExpiryInput.value);
       data.renewedDate = todayStr();
+      // Each renewal cycle needs its own documentation mark
+      data.documentationDate = '';
       data.renewalDatesPending = !(hasRenewalDue && hasLimitExpiry);
       data.renewalDueDatePending = !hasRenewalDue;
       data.limitExpiryDatePending = !hasLimitExpiry;
@@ -344,7 +395,7 @@ window.undoRenewalDone = async function(id) {
   const l = S.loans.find(x => x.id === id); if (!l) return;
   if (!confirm(`Undo renewal for ${l.customerName}? It will return to overdue/due-soon.`)) return;
   try {
-    await updateLoan(id, { renewedDate: '', renewalDatesPending: false });
+    await updateLoan(id, { renewedDate: '', renewalDatesPending: false, documentationDate: '' });
     toast('Renewal undone');
   } catch (e) { toast('Error'); }
 };

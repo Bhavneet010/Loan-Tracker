@@ -1,6 +1,6 @@
 ﻿import { S } from "./state.js";
 import { effectiveOfficer } from "./derived.js";
-import { todayStr, esc, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo } from "./utils.js";
+import { todayStr, esc, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, isFreshCC, isStageTracked, timeAgo } from "./utils.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 import { matchBranchOption, assignedOfficerForBranch, normalizeName } from "./ui-forms.js";
 import { reminderSummary, canTrackReminders } from "./ui-reminder-mail.js";
@@ -111,7 +111,13 @@ function loanDecisionLines(loan) {
     rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`, days > 7 ? 'alert' : ''));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
   }
-  if (loan.status === 'sanctioned') rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
+  if (loan.status === 'sanctioned') {
+    rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
+    if (isFreshCC(loan) && isStageTracked(loan.sanctionDate)) {
+      rows.push(accountLine('Documentation', loan.documentationDate ? fmtDate(loan.documentationDate) : 'Pending', loan.documentationDate ? '' : 'warn'));
+      rows.push(accountLine('Disbursement', loan.disbursementDate ? fmtDate(loan.disbursementDate) : 'Pending', loan.disbursementDate ? '' : 'warn'));
+    }
+  }
   if (loan.status === 'returned') {
     rows.push(accountLine('Return Date', fmtDate(loan.returnedDate), 'alert'));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added', 'alert'));
@@ -319,7 +325,12 @@ function renewalDecisionLines(loan, rs) {
     renewalDateAccountLine('Renewal Due', loan, 'renewalDueDate', rs?.dueDateStr),
     renewalDateAccountLine('Limit Expiry', loan, 'limitExpiryDate'),
   ];
-  if (loan.renewedDate) rows.push(accountLine('Sanction Date', fmtDate(loan.renewedDate || loan.sanctionDate)));
+  if (loan.renewedDate) {
+    rows.push(accountLine('Sanction Date', fmtDate(loan.renewedDate || loan.sanctionDate)));
+    if (isStageTracked(loan.renewedDate)) {
+      rows.push(accountLine('Documentation', loan.documentationDate ? fmtDate(loan.documentationDate) : 'Pending', loan.documentationDate ? '' : 'warn'));
+    }
+  }
   else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
   else if (rs?.status === 'due-soon') rows.push(accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn'));
   else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert'));
@@ -332,8 +343,8 @@ function activityRowsHtml(loanId) {
   if (!entries.length) {
     return `<div class="decision-activity-empty">No activity recorded yet.</div>`;
   }
-  const icons = { added: '+', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;', reminder: '&#9993;' };
-  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated', reminder: 'Reminder mail' };
+  const icons = { added: '+', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;', reminder: '&#9993;', documentation: '&#128196;', disbursement: '&#128181;' };
+  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated', reminder: 'Reminder mail', documentation: 'Documentation done', disbursement: 'Disbursement done' };
   return entries.map(n => `<div class="decision-activity-row">
     <span class="decision-activity-icon decision-activity-${esc(n.type)}">${icons[n.type] || '•'}</span>
     <span class="decision-activity-main">

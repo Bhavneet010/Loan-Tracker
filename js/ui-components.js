@@ -1,4 +1,4 @@
-﻿import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isRenewalDatesMissing, timeAgo } from "./utils.js";
+﻿import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, timeAgo } from "./utils.js";
 import { S } from "./state.js";
 import { effectiveOfficer } from "./derived.js";
 import { reminderMails, reminderSummary, canTrackReminders } from "./ui-reminder-mail.js";
@@ -7,6 +7,18 @@ function reminderMailNote(loan) {
   if (!canTrackReminders(loan) || !reminderMails(loan).length) return '';
   const last = reminderMails(loan)[0];
   return `<div class="lc-reminder" onclick="openReminderMailSheet('${loan.id}')" title="Reminder mail log">&#9993; Reminder mail: ${esc(reminderSummary(loan))}${last.remarks ? ` — ${esc(last.remarks)}` : ''}</div>`;
+}
+
+// Post-sanction stage chips (documentation → disbursement) for tracked fresh
+// loans. Disbursement stays visually locked until documentation is marked.
+function stageChipsHtml(loan) {
+  if (loan.status !== 'sanctioned' || !isFreshCC(loan) || !isStageTracked(loan.sanctionDate)) return '';
+  const docDone = !!loan.documentationDate;
+  const disbDone = !!loan.disbursementDate;
+  return `<div class="stage-chips">
+    <button type="button" class="stage-chip${docDone ? ' done' : ''}" onclick="markLoanStage('${loan.id}','documentation')">${docDone ? `&#10003; Docs ${fmtDate(loan.documentationDate)}` : 'Docs pending'}</button>
+    <button type="button" class="stage-chip${disbDone ? ' done' : docDone ? '' : ' locked'}" onclick="markLoanStage('${loan.id}','disbursement')">${disbDone ? `&#10003; Disb ${fmtDate(loan.disbursementDate)}` : 'Disb pending'}</button>
+  </div>`;
 }
 
 export function loanCard(loan, actions, variant = '') {
@@ -33,6 +45,7 @@ export function loanCard(loan, actions, variant = '') {
         ${overdueTag}${sanctTag}${retTag}
       </div>
       ${remarks}
+      ${stageChipsHtml(loan)}
       ${reminderMailNote(loan)}
       <div class="lc-actions">${actions}</div>
     </div>`;
@@ -42,6 +55,8 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
   const overdueTag = itemCls.includes('overdue') ? `<span class="tag overdue">&#9888; ${daysPending(loan.receiveDate)}d</span>` : '';
   const mailCount = canTrackReminders(loan) ? reminderMails(loan).length : 0;
   const mailTag = mailCount ? `<span class="tag tag-mail" title="${mailCount} reminder mail${mailCount > 1 ? 's' : ''} sent">&#9993;${mailCount > 1 ? ' ' + mailCount : ''}</span>` : '';
+  const stagePending = loan.status === 'sanctioned' && isFreshCC(loan) && isStageTracked(loan.sanctionDate) && !loan.disbursementDate;
+  const stageTag = stagePending ? `<span class="tag tag-stage" title="${loan.documentationDate ? 'Disbursement' : 'Documentation'} pending">${loan.documentationDate ? 'Disb' : 'Docs'}</span>` : '';
   const cls = [`cat-${catCls(loan.category) || 'none'}`, `status-${loan.status || 'pending'}`, itemCls].filter(Boolean).join(' ');
 
   return `<div class="loan-item ${cls}" id="li-${loan.id}" style="--i:${idx}">
@@ -52,6 +67,7 @@ export function compactLoanItem(loan, actions, itemCls = '', cardVariant = '', i
         <span class="lr-name">${esc(loan.customerName || '')}</span>
       </div>
       <div class="lr-meta">
+        ${stageTag}
         ${mailTag}
         ${overdueTag}
         <span class="lr-amount"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
@@ -156,8 +172,8 @@ export function renewalItemHtml(loan, rs, idx = 0) {
 function auditTrailHtml(loanId) {
   const entries = S.notifications.filter(n => n.loanId === loanId).slice(0, 10);
   if (!entries.length) return '';
-  const icons = { added: '&#10133;', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;', reminder: '&#9993;' };
-  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated', reminder: 'Reminder mail' };
+  const icons = { added: '&#10133;', sanctioned: '&#10003;', returned: '&#8617;', edited: '&#9998;', reminder: '&#9993;', documentation: '&#128196;', disbursement: '&#128181;' };
+  const labels = { added: 'Added', sanctioned: 'Sanctioned', returned: 'Returned', edited: 'Updated', reminder: 'Reminder mail', documentation: 'Documentation done', disbursement: 'Disbursement done' };
   const rows = entries.map(n => `
     <div class="audit-row">
       <span class="audit-icon audit-${esc(n.type)}">${icons[n.type] || '•'}</span>

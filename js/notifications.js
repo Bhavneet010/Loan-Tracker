@@ -5,9 +5,9 @@ import { fmtAmt, esc, toast, timeAgo } from "./utils.js";
 import { effectiveOfficer } from "./derived.js";
 
 const NOTIFICATION_LIMIT = 75;
-const typeIcon = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎', reminder: '✉' };
-const typeLabel = { added: 'New loan added', sanctioned: 'Loan sanctioned', returned: 'Loan returned', edited: 'Loan updated', reminder: 'Reminder mail sent' };
-const typeCls = { added: 'notif-added', sanctioned: 'notif-sanctioned', returned: 'notif-returned', edited: 'notif-edited', reminder: 'notif-reminder' };
+const typeIcon = { added: '➕', sanctioned: '✓', returned: '↩', edited: '✎', reminder: '✉', documentation: '📄', disbursement: '💵' };
+const typeLabel = { added: 'New loan added', sanctioned: 'Loan sanctioned', returned: 'Loan returned', edited: 'Loan updated', reminder: 'Reminder mail sent', documentation: 'Documentation done', disbursement: 'Disbursement done' };
+const typeCls = { added: 'notif-added', sanctioned: 'notif-sanctioned', returned: 'notif-returned', edited: 'notif-edited', reminder: 'notif-reminder', documentation: 'notif-sanctioned', disbursement: 'notif-sanctioned' };
 
 function notificationCard(n) {
   const unread = !(n.readBy || []).includes(S.user);

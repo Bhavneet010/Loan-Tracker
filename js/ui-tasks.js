@@ -1,6 +1,6 @@
 ﻿import { S } from "./state.js";
 import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
-import { esc, fmtAmt, initials, officerColor, branchCode, daysPending } from "./utils.js";
+import { esc, fmtAmt, initials, officerColor, branchCode, daysPending, isFreshCC } from "./utils.js";
 import { countWorkingDaysLeft } from "./bank-holidays.js";
 
 const CATEGORY_META = {
@@ -16,7 +16,13 @@ const CRITICAL_META = {
   npa15:        { title: 'NPA in 15 days',     short: 'NPA IN 15D',   tone: 'red' },
   pending10:    { title: 'Pending>10d',        short: 'PENDING >10D', tone: 'amber' },
   datesMissing: { title: 'Integration Pending', short: 'INTEGRATION',  tone: 'purple' },
+  docPending:   { title: 'Documentation Pending', short: 'DOCS PENDING', tone: 'blue' },
+  disbPending:  { title: 'Disbursement Pending',  short: 'DISB PENDING', tone: 'blue' },
 };
+
+// Post-sanction stage queues: rows carry a quick "mark done" action and can
+// mix fresh loans with renewal accounts (documentation stage only).
+const isStageKey = key => key === 'docPending' || key === 'disbPending';
 
 // "Renewal not possible" accounts stay listed (greyed, sorted last) as a reminder
 // in case renewal becomes possible again, but are excluded from counts and totals
@@ -57,7 +63,7 @@ function renderTaskOverview(c, metrics) {
   const activeKey = CRITICAL_META[S.taskCategory] ? S.taskCategory : pickDefaultCritical(critical);
   const activeItems = sortCriticalItems(activeKey, critical[activeKey] || []);
 
-  const allCriticalItems = countableCritical([...critical.npa15, ...critical.pending10, ...critical.datesMissing]);
+  const allCriticalItems = countableCritical(Object.values(critical).flat());
   const totalAccounts = allCriticalItems.length;
   const totalAtRisk = sumAmount(allCriticalItems);
 
@@ -92,6 +98,8 @@ function buildCriticalCare(metrics) {
       .filter(l => visible(l) && daysPending(l.receiveDate) > 10),
     datesMissing: metrics.renewalDatesMissing
       .filter(visible),
+    docPending: [...metrics.docPendingFresh, ...metrics.docPendingRenewals].filter(visible),
+    disbPending: metrics.disbPending.filter(visible),
   };
 }
 
@@ -126,8 +134,9 @@ function criticalRowsHtml(key, items) {
     <div class="task-critical-table-head">
       ${criticalHeadCell(key, 'branch', 'Branch', sort)}
       ${criticalHeadCell(key, 'borrower', 'Borrower', sort)}
-      ${key === 'datesMissing' ? '' : criticalHeadCell(key, 'status', key === 'pending10' ? 'Days' : 'Status', sort)}
+      ${key === 'datesMissing' ? '' : criticalHeadCell(key, 'status', key === 'npa15' ? 'Status' : 'Days', sort)}
       ${criticalHeadCell(key, 'amount', 'Amt', sort)}
+      ${isStageKey(key) ? '<span></span>' : ''}
       ${criticalHeadCell(key, 'officer', 'Officer', sort)}
     </div>
     ${shown.map(loan => criticalLoanRowHtml(key, loan)).join('')}
@@ -180,6 +189,7 @@ function criticalSortValue(key, loan, field) {
   if (field === 'status') {
     if (key === 'npa15') return loan._rs?.daysUntilNpa ?? 999;
     if (key === 'pending10') return daysPending(loan.receiveDate);
+    if (isStageKey(key)) return daysPending(isFreshCC(loan) ? loan.sanctionDate : loan.renewedDate);
     return (loan.customerName || '').toLowerCase();
   }
   return '';
@@ -187,22 +197,33 @@ function criticalSortValue(key, loan, field) {
 
 function criticalLoanRowHtml(key, loan) {
   const isMissing = key === 'datesMissing';
+  const stage = isStageKey(key);
   const rnp = isRnpDeferred(loan);
+  const stageDays = stage ? daysPending(isFreshCC(loan) ? loan.sanctionDate : loan.renewedDate) : 0;
   const status = key === 'npa15'
     ? `${loan._rs?.daysUntilNpa ?? 0}d to NPA`
-    : `${daysPending(loan.receiveDate)}d pending`;
+    : stage
+      ? `${stageDays}d since ${isFreshCC(loan) ? 'sanction' : 'renewal'}`
+      : `${daysPending(loan.receiveDate)}d pending`;
   const statusShort = key === 'npa15'
     ? `${loan._rs?.daysUntilNpa ?? 0}d`
-    : `${daysPending(loan.receiveDate)}`;
-  const sheetCall = key === 'pending10'
+    : stage
+      ? `${stageDays}d`
+      : `${daysPending(loan.receiveDate)}`;
+  const sheetCall = key === 'pending10' || (stage && isFreshCC(loan))
     ? `openLoanDecisionSheet('${loan.id}')`
     : `openRenewalDecisionSheet('${loan.id}')`;
+  const markStage = key === 'docPending' ? 'documentation' : 'disbursement';
+  const markBtn = stage
+    ? `<button type="button" class="task-stage-mark" onclick="event.stopPropagation();markLoanStage('${loan.id}','${markStage}')" title="Mark ${markStage} done">&#10003;</button>`
+    : '';
   const rnpTitle = rnp ? ` title="Renewal not possible${loan.renewalNotPossibleRemarks ? ` — ${esc(loan.renewalNotPossibleRemarks)}` : ''} (not counted)"` : '';
   return `<div class="task-critical-row${rnp ? ' task-critical-row--rnp' : ''}"${rnpTitle} onclick="${sheetCall}">
     <span class="task-branch-chip">${esc(branchCode(loan.branch))}</span>
     <span class="task-critical-name">${esc(loan.customerName)}${rnp ? ' <span class="task-rnp-mark">NP</span>' : ''}</span>
     ${isMissing ? '' : `<span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>`}
     <span class="task-critical-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
+    ${markBtn}
     <span class="task-officer-mini" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
   </div>`;
 }

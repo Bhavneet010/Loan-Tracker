@@ -1126,6 +1126,21 @@ body.dark .stat-grad-returned.stat-fresh-active{border-color:var(--amber);}
 }
 body.dark .tag.tag-sanctioned{background:rgba(16,185,129,0.16);color:#6EE7B7;border-color:rgba(16,185,129,0.28);}
 body.dark .tag.tag-returned{background:rgba(245,158,11,0.16);color:#FBBF24;border-color:rgba(245,158,11,0.28);}
+
+/* ── POST-SANCTION STAGE CHIPS (documentation → disbursement) ── */
+.stage-chips{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.stage-chip{
+  padding:3px 10px;border-radius:var(--radius-pill);font-size:var(--tag-md);font-weight:800;
+  background:rgba(255,255,255,0.8);color:var(--muted);border:1px dashed rgba(0,0,0,0.20);
+  font-family:inherit;cursor:pointer;
+}
+.stage-chip:active{transform:scale(0.95);}
+.stage-chip.done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.stage-chip.locked{opacity:0.45;}
+.tag.tag-stage{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);font-weight:800;}
+body.dark .stage-chip{background:var(--dark-glass);color:var(--text2);border-color:rgba(155,143,228,0.32);}
+body.dark .stage-chip.done{background:rgba(16,185,129,0.16);color:#6EE7B7;border-color:rgba(16,185,129,0.28);}
+body.dark .tag.tag-stage{background:rgba(245,158,11,0.16);color:#FBBF24;border-color:rgba(245,158,11,0.28);}
 body.dark .tag.tag-mail{background:rgba(59,130,246,0.16);color:#93C5FD;border-color:rgba(59,130,246,0.28);}
 body.dark .lc-reminder{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.26);color:#93C5FD;}
 

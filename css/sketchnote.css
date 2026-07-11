@@ -556,6 +556,17 @@ body.theme-sketchnote .rnw-chip-npa-cd{
   border-color:#2D7A5F !important;
 }
 
+body.theme-sketchnote .task-critical-tab--blue.active,
+body.theme-sketchnote .task-critical-detail--blue{
+  background:#DDEAF6 !important;
+  color:#2E5C8A !important;
+  border-color:#2E5C8A !important;
+}
+
+body.theme-sketchnote .task-critical-tab--blue::before{
+  background:#6BA8D9;
+}
+
 /* ---------- Tasks ---------- */
 body.theme-sketchnote .task-care{
   background:#FBDDE6 !important;

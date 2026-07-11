@@ -405,6 +405,16 @@ body.theme-neo-brutalist .rnw-chip-npa-cd{
   color:#000!important;
 }
 
+body.theme-neo-brutalist .task-critical-tab--blue.active,
+body.theme-neo-brutalist .task-critical-detail--blue{
+  background:#E3F2FD!important;
+  color:#000!important;
+}
+
+body.theme-neo-brutalist .task-critical-tab--blue::before{
+  background:#2D9CDB;
+}
+
 body.theme-neo-brutalist .task-care{
   background:#FFF7BE;
   padding:12px;

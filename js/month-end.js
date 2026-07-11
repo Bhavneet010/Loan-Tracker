@@ -11,7 +11,7 @@ import { db } from "./config.js";
 import { S } from "./state.js";
 import { ts } from "./db.js";
 import { effectiveOfficer, getLoanMetricsForMonth, sumAmount } from "./derived.js";
-import { esc, fmtAmt, fmtDate, isFreshCC, isRenewalDatesMissing, toast } from "./utils.js";
+import { STAGE_TRACKING_START_MONTH, esc, fmtAmt, fmtDate, isFreshCC, isRenewalDatesMissing, monthOf, toast } from "./utils.js";
 import {
   ensureHtml2Canvas,
   ensureJsPdf,
@@ -74,7 +74,32 @@ function collectMonthEndData(month = previousMonthKey()) {
   const sanctioned = metrics.sanctionedThisMonth.filter(isFreshCC);
   const returned = metrics.returnedThisMonth.filter(isFreshCC);
   const renewalsDone = metrics.renewalDoneThisMonth;
-  const renewalsCleanupReady = renewalsDone.filter(loan => !isRenewalDatesMissing(loan));
+
+  // Stage-aware cleanup: only fully disbursed sanctions get deleted. The rest
+  // are flagged monthEndCleared (leaving the Sanctioned tab) and stay alive so
+  // Critical Care keeps tracking documentation/disbursement across months.
+  // Selection uses <= month so previously carried loans are swept once their
+  // stages complete. Loans sanctioned before stage tracking began are treated
+  // as complete and cleaned exactly as before.
+  const eligibleSanctioned = S.loans.filter(loan =>
+    isFreshCC(loan) && loan.status === "sanctioned" && monthOf(loan.sanctionDate) <= month
+  );
+  const isSanctionCleanupReady = loan =>
+    monthOf(loan.sanctionDate) < STAGE_TRACKING_START_MONTH ||
+    (loan.disbursementDate && monthOf(loan.disbursementDate) <= month);
+  const sanctionedDeletable = eligibleSanctioned.filter(isSanctionCleanupReady);
+  const sanctionedToCarry = eligibleSanctioned.filter(loan => !isSanctionCleanupReady(loan));
+
+  // Renewals with documentation pending are skipped (kept in Critical Care),
+  // mirroring the integration-pending skip. <= month also sweeps accounts
+  // whose dates or documentation were completed after their month was cleaned.
+  const renewalsCleanupReady = metrics.renewals.filter(loan =>
+    !isFreshCC(loan) &&
+    loan.renewedDate &&
+    monthOf(loan.renewedDate) <= month &&
+    !isRenewalDatesMissing(loan) &&
+    (monthOf(loan.renewedDate) < STAGE_TRACKING_START_MONTH || loan.documentationDate)
+  );
 
   return {
     month,
@@ -82,6 +107,8 @@ function collectMonthEndData(month = previousMonthKey()) {
     metrics,
     sanctioned,
     returned,
+    sanctionedDeletable,
+    sanctionedToCarry,
     renewalsDone,
     renewalsCleanupReady,
   };
@@ -150,6 +177,9 @@ function buildLightweightSummary(data) {
       pending: amountMetric(data.metrics.pending),
       renewalDueSoon: amountMetric(data.metrics.renewalDueSoon),
       renewalOverdue: amountMetric(data.metrics.renewalOverdue),
+      docsDone: amountMetric(S.loans.filter(loan => (loan.documentationDate || "").startsWith(data.month))),
+      disbursed: amountMetric(S.loans.filter(loan => (loan.disbursementDate || "").startsWith(data.month))),
+      carriedForward: amountMetric(data.sanctionedToCarry),
     },
     officers: officerRows,
     categories: {
@@ -224,6 +254,9 @@ function buildCoverPage(data, summary) {
       ${metricCard("Current Pending", summary.totals.pending, "warn")}
       ${metricCard("Due Soon", summary.totals.renewalDueSoon, "amber")}
       ${metricCard("Overdue / NPA", summary.totals.renewalOverdue, "danger")}
+      ${metricCard("Docs Done", summary.totals.docsDone || { count: 0, amount: 0 }, "blue")}
+      ${metricCard("Disbursed", summary.totals.disbursed || { count: 0, amount: 0 }, "good")}
+      ${metricCard("Carried Fwd", summary.totals.carriedForward || { count: 0, amount: 0 }, "warn")}
     </div>
     <div class="me-two-col">
       <section class="me-panel">
@@ -634,15 +667,25 @@ async function saveMonthlySummary(month, summary) {
 }
 
 function cleanupSummaryText(data) {
-  const integrationPending = data.renewalsDone.length - data.renewalsCleanupReady.length;
-  const skippedNote = integrationPending ? ` (${integrationPending} integration-pending account${integrationPending > 1 ? 's' : ''} will be skipped)` : '';
-  return `This will remove ${data.sanctioned.length} sanctions, ${data.returned.length} returns, and clear ${data.renewalsCleanupReady.length} renewal done flags for ${data.label}${skippedNote}. Continue?`;
+  const heldRenewals = data.renewalsDone.filter(loan => !data.renewalsCleanupReady.includes(loan)).length;
+  const skippedNote = heldRenewals ? ` (${heldRenewals} account${heldRenewals > 1 ? 's' : ''} with integration or documentation pending will be skipped)` : '';
+  const carried = data.sanctionedToCarry.length;
+  const carryNote = carried ? ` ${carried} sanctioned loan${carried > 1 ? 's' : ''} awaiting documentation/disbursement will stay in Critical Care.` : '';
+  return `This will remove ${data.sanctionedDeletable.length} sanctions, ${data.returned.length} returns, and clear ${data.renewalsCleanupReady.length} renewal done flags for ${data.label}${skippedNote}.${carryNote} Continue?`;
 }
 
 async function commitCleanup(data) {
   const operations = [
-    ...data.sanctioned.map(loan => ({ type: "delete", id: loan.id })),
+    ...data.sanctionedDeletable.map(loan => ({ type: "delete", id: loan.id })),
     ...data.returned.map(loan => ({ type: "delete", id: loan.id })),
+    ...data.sanctionedToCarry.map(loan => ({
+      type: "update",
+      id: loan.id,
+      data: {
+        monthEndCleared: data.month,
+        ...ts(),
+      },
+    })),
     ...data.renewalsCleanupReady.map(loan => ({
       type: "update",
       id: loan.id,
@@ -672,9 +715,10 @@ async function commitCleanup(data) {
     cleanup: {
       cleanedAt: new Date().toISOString(),
       cleanedBy: S.user || "Admin",
-      deletedSanctions: data.sanctioned.length,
+      deletedSanctions: data.sanctionedDeletable.length,
       deletedReturns: data.returned.length,
       clearedRenewals: data.renewalsCleanupReady.length,
+      carriedForwardSanctions: data.sanctionedToCarry.length,
     },
   }, { merge: true });
 }

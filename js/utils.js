@@ -19,6 +19,15 @@ export const fmtShortDate = s => {
   return `${parseInt(d)} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[parseInt(m) - 1]}`; 
 };
 
+export const monthOf = d => (d || '').slice(0, 7);
+
+// Documentation/disbursement stage tracking applies to loans sanctioned (or
+// renewals done) from this month onward. Older records are treated as complete
+// so month-end cleanup keeps its original behavior for them.
+export const STAGE_TRACKING_START_MONTH = '2026-07';
+
+export const isStageTracked = date => monthOf(date) >= STAGE_TRACKING_START_MONTH;
+
 export const branchCode = s => (s || '').split(' ')[0] || '';
 export const shortCat = s => ({ 'Agriculture': 'Agri', 'Education': 'Edu' }[s] || s);
 export const fmtAmt = v => (parseFloat(v) || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });

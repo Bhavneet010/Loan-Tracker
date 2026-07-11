@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, todayStr } from "./utils.js";
+import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, todayStr } from "./utils.js";
 
 function currentMonthKey() {
   const d = new Date();
@@ -43,8 +43,17 @@ export function getLoanMetricsForMonth(month, day = todayStr()) {
 function buildLoanMetricsForMonth(thisMonth, day) {
   const fresh = S.loans.filter(isFreshCC);
   const pending = fresh.filter(loan => loan.status === "pending");
-  const sanctioned = fresh.filter(loan => loan.status === "sanctioned");
+  // monthEndCleared loans already left the Sanctioned tab at cleanup; they only
+  // live on in Critical Care until their disbursement is marked done.
+  const freshSanctionedAll = fresh.filter(loan => loan.status === "sanctioned");
+  const sanctioned = freshSanctionedAll.filter(loan => !loan.monthEndCleared);
   const returned = fresh.filter(loan => loan.status === "returned");
+  const docPendingFresh = freshSanctionedAll.filter(
+    loan => isStageTracked(loan.sanctionDate) && !loan.documentationDate
+  );
+  const disbPending = freshSanctionedAll.filter(
+    loan => isStageTracked(loan.sanctionDate) && loan.documentationDate && !loan.disbursementDate
+  );
   const sanctionedToday = sanctioned.filter(loan => loan.sanctionDate === day);
   const sanctionedThisMonth = sanctioned.filter(loan => (loan.sanctionDate || "").startsWith(thisMonth));
   const returnedThisMonth = returned.filter(loan => (loan.returnedDate || "").startsWith(thisMonth));
@@ -57,6 +66,9 @@ function buildLoanMetricsForMonth(thisMonth, day) {
     loan => (loan.renewedDate || "").startsWith(thisMonth) && !isFreshCC(loan)
   );
   const renewalDoneToday = renewalDoneThisMonth.filter(loan => loan.renewedDate === day);
+  const docPendingRenewals = renewals.filter(
+    loan => !isFreshCC(loan) && loan.renewedDate && isStageTracked(loan.renewedDate) && !loan.documentationDate
+  );
   const renewalDatesMissing = renewals.filter(isRenewalDatesMissing);
   const renewalDueSoon = renewals.filter(loan => loan._rs.status === "due-soon" && !loan.renewedDate);
   const renewalOverdue = renewals.filter(
@@ -82,6 +94,9 @@ function buildLoanMetricsForMonth(thisMonth, day) {
     returnedThisMonth,
     sanctionedToday,
     sanctionedThisMonth,
+    docPendingFresh,
+    docPendingRenewals,
+    disbPending,
     renewals,
     renewalDoneThisMonth,
     renewalDoneToday,
