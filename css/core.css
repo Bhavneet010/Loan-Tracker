@@ -604,6 +604,12 @@ body.dark .loan-group-head{background:var(--dark-glass);border-color:rgba(107,95
 }
 .modal-box h2{margin:0 0 4px;font-size:var(--fs-xl);font-weight:800;color:var(--text1);}
 .modal-box p{font-size:var(--fs-md);color:var(--muted);margin:0 0 18px;}
+/* Compact confirm dialog (appConfirm) */
+.confirm-box{max-width:330px;padding:20px;}
+.confirm-box h2{font-size:var(--fs-lg);margin:0 0 6px;}
+.confirm-box p{margin:0 0 16px;line-height:1.4;}
+.confirm-actions{display:flex;gap:10px;}
+.confirm-overlay{z-index:260;}
 
 .user-list{display:flex;flex-direction:column;gap:var(--space-sm);}
 .user-btn{

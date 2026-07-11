@@ -1,7 +1,7 @@
 import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo, isFreshCC } from "./utils.js";
+import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo, isFreshCC, appConfirm } from "./utils.js";
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
@@ -31,21 +31,21 @@ window.markLoanStage = async function(id, stage) {
   if (stage === 'documentation') {
     if (renewalAccount ? !l.renewedDate : l.status !== 'sanctioned') return;
     if (!l.documentationDate) {
-      if (!confirm(`Mark documentation done for ${l.customerName}?`)) return;
+      if (!await appConfirm({ title: 'Documentation done?', message: `Mark documentation done for ${l.customerName}.`, confirmLabel: 'Mark done' })) return;
       data = { documentationDate: todayStr() }; notifType = 'documentation'; msg = 'Documentation done ✓';
     } else {
       if (!renewalAccount && l.disbursementDate) { toast('Undo disbursement first'); return; }
-      if (!confirm(`Undo documentation for ${l.customerName}?`)) return;
+      if (!await appConfirm({ title: 'Undo documentation?', message: `Clear the documentation mark for ${l.customerName}.`, confirmLabel: 'Undo' })) return;
       data = { documentationDate: '' }; msg = 'Documentation undone';
     }
   } else if (stage === 'disbursement') {
     if (renewalAccount || l.status !== 'sanctioned') return;
     if (!l.documentationDate) { toast('Mark documentation done first'); return; }
     if (!l.disbursementDate) {
-      if (!confirm(`Mark disbursement done for ${l.customerName}?`)) return;
+      if (!await appConfirm({ title: 'Disbursement done?', message: `Mark disbursement done for ${l.customerName}.`, confirmLabel: 'Mark done' })) return;
       data = { disbursementDate: todayStr() }; notifType = 'disbursement'; msg = 'Disbursement done ✓';
     } else {
-      if (!confirm(`Undo disbursement for ${l.customerName}?`)) return;
+      if (!await appConfirm({ title: 'Undo disbursement?', message: `Clear the disbursement mark for ${l.customerName}.`, confirmLabel: 'Undo' })) return;
       data = { disbursementDate: '' }; msg = 'Disbursement undone';
     }
   } else {

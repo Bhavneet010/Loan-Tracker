@@ -1,4 +1,5 @@
 import { countWorkingDaysBetween } from "./bank-holidays.js";
+import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 
 export const todayStr = () => {
   const d = new Date();
@@ -73,6 +74,37 @@ export function toast(msg) {
   t.textContent = msg;
   document.body.appendChild(t); 
   setTimeout(() => t.remove(), 2600);
+}
+
+// In-app replacement for window.confirm(): a small centered modal in the
+// app's design language. Resolves true on confirm, false on cancel/dismiss.
+export function appConfirm({ title = 'Are you sure?', message = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel' } = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay center confirm-overlay';
+    overlay.innerHTML = `<div class="modal-box confirm-box" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
+      <h2>${esc(title)}</h2>
+      ${message ? `<p>${esc(message)}</p>` : ''}
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-cancel-full" data-confirm-cancel>${esc(cancelLabel)}</button>
+        <button type="button" class="btn btn-primary-full" data-confirm-ok>${esc(confirmLabel)}</button>
+      </div>
+    </div>`;
+    let settled = false;
+    const done = val => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKey);
+      animateOverlayOut(overlay, () => resolve(val));
+    };
+    const onKey = e => { if (e.key === 'Escape') done(false); };
+    overlay.addEventListener('click', e => { if (e.target === overlay) done(false); });
+    overlay.querySelector('[data-confirm-cancel]').addEventListener('click', () => done(false));
+    overlay.querySelector('[data-confirm-ok]').addEventListener('click', () => done(true));
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+    animateOverlayIn(overlay);
+  });
 }
 
 export const daysPending = d => !d ? 0 : Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
