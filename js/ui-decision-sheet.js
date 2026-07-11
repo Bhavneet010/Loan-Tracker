@@ -20,13 +20,13 @@ const ICON_RNP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function titleActionsPillHtml(id, { rnp = null } = {}) {
   const sep = `<span class="decision-pill-sep" aria-hidden="true"></span>`;
   const rnpSegment = rnp && S.isAdmin
-    ? `<span data-rnp-wrap${rnp.hidden ? ' style="display:none;"' : ''}>${sep}<button type="button" class="decision-pill-btn decision-pill-btn--rnp${rnp.checked ? ' active' : ''}" data-rnp-toggle title="Renewal not possible" aria-label="Renewal not possible" aria-pressed="${rnp.checked}">${ICON_RNP}</button></span>`
+    ? `<span data-rnp-wrap${rnp.hidden ? ' style="display:none;"' : ''}><button type="button" class="decision-pill-btn decision-pill-btn--rnp${rnp.checked ? ' active' : ''}" data-rnp-toggle title="Renewal not possible" aria-label="Renewal not possible" aria-pressed="${rnp.checked}">${ICON_RNP}</button>${sep}</span>`
     : '';
   return `<div class="decision-action-pill">
+    ${rnpSegment}
     <button type="button" class="decision-pill-btn" title="Activity" aria-label="Activity" onclick="openDecisionActivity('${esc(id)}')">${ICON_HISTORY}</button>
     ${S.isAdmin ? `${sep}<button type="button" class="decision-pill-btn decision-pill-btn--danger" title="Delete loan" aria-label="Delete loan" onclick="closeDecisionSheet();deleteLoan('${esc(id)}')">${ICON_TRASH}</button>` : ''}
     ${sep}<button type="button" class="decision-pill-btn" title="Edit loan" aria-label="Edit loan" data-decision-edit>${ICON_EDIT}</button>
-    ${rnpSegment}
   </div>`;
 }
 
@@ -312,11 +312,7 @@ function renewalDecisionLines(loan, rs) {
   else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
   else if (rs?.status === 'due-soon') rows.push(accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn'));
   else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert'));
-  rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
-  if (!loan.renewedDate && loan.renewalNotPossible) {
-    rows.push(accountLine('Renewal', 'Not possible', 'alert'));
-    rows.push(accountLine('Reason', loan.renewalNotPossibleRemarks || 'No reason recorded', 'alert'));
-  }
+  rows.push(accountLine('Remarks', loan.remarks || 'No remarks added', !loan.renewedDate && loan.renewalNotPossible ? 'alert' : ''));
   return rows.join('');
 }
 
@@ -577,10 +573,6 @@ window.openRenewalDecisionSheet = function(id) {
     <div class="decision-outcome-block">
       ${sliderHtml(options, current, 'renewal')}
     </div>
-    ${S.isAdmin ? `<div class="decision-rnp-block" data-rnp-block style="${draft.renewalNotPossible && current !== 'renewed' ? '' : 'display:none;'}">
-      <div class="decision-rnp-label">Renewal not possible — reason</div>
-      <textarea data-rnp-remarks rows="2" placeholder="Reason (unit closed, account under litigation, etc.)">${esc(draft.renewalNotPossibleRemarks)}</textarea>
-    </div>` : ''}
     <div class="decision-action-row">
       <button type="button" class="btn btn-cancel-full" onclick="closeDecisionSheet()">Cancel</button>
       <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
@@ -591,10 +583,8 @@ window.openRenewalDecisionSheet = function(id) {
   const card = overlay.querySelector('[data-decision-card]');
   const editBtn = overlay.querySelector('[data-decision-edit]');
   const pill = overlay.querySelector('.decision-status-pill');
-  const rnpBlock = overlay.querySelector('[data-rnp-block]');
   const rnpToggle = overlay.querySelector('[data-rnp-toggle]');
   const rnpWrap = overlay.querySelector('[data-rnp-wrap]');
-  const rnpRemarks = overlay.querySelector('[data-rnp-remarks]');
   const renderCard = () => {
     const preview = loanFromDraft(loan, draft, loan.status || 'pending');
     const renewalDate = draft.sanctionDate || draft.renewedDate || todayStr();
@@ -615,7 +605,6 @@ window.openRenewalDecisionSheet = function(id) {
       rnpToggle.classList.toggle('active', draft.renewalNotPossible);
       rnpToggle.setAttribute('aria-pressed', draft.renewalNotPossible ? 'true' : 'false');
     }
-    if (rnpBlock) rnpBlock.style.display = draft.renewalNotPossible && stagedRenewal !== 'renewed' ? '' : 'none';
     setDecisionSelected(overlay, stagedRenewal, { emit: false });
   };
   editBtn?.addEventListener('click', () => {
@@ -625,10 +614,6 @@ window.openRenewalDecisionSheet = function(id) {
   rnpToggle?.addEventListener('click', () => {
     draft.renewalNotPossible = !draft.renewalNotPossible;
     renderCard();
-    if (draft.renewalNotPossible) rnpRemarks?.focus();
-  });
-  rnpRemarks?.addEventListener('input', () => {
-    draft.renewalNotPossibleRemarks = rnpRemarks.value;
   });
   overlay.addEventListener('decisionchange', e => {
     const newStaged = e.detail?.value || stagedRenewal;

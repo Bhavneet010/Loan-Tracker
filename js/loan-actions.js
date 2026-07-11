@@ -77,8 +77,8 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   if (!selectedOfficer) return { error: 'Select or assign an officer first' };
   if (!customerName) return { error: 'Customer name is required' };
   if (!(parseFloat(draft.amount) > 0)) return { error: 'Enter a valid amount' };
-  if (draft.category === 'SME' && renewalState !== 'renewed' && draft.renewalNotPossible && !(draft.renewalNotPossibleRemarks || '').trim()) {
-    return { error: 'Enter the reason renewal is not possible' };
+  if (draft.category === 'SME' && renewalState !== 'renewed' && draft.renewalNotPossible && !(draft.remarks || '').trim()) {
+    return { error: 'Add the reason in Remarks for renewal not possible' };
   }
 
   const isManualOverride = assignedOfficer && selectedOfficer !== assignedOfficer;
@@ -118,7 +118,8 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
       data.limitExpiryDate = draft.limitExpiryDate || '';
       if (data.renewalDueDate && data.limitExpiryDate) data.renewalDatesPending = false;
       data.renewalNotPossible = !!draft.renewalNotPossible;
-      data.renewalNotPossibleRemarks = draft.renewalNotPossible ? (draft.renewalNotPossibleRemarks || '').trim() : '';
+      // The general remarks field doubles as the "not possible" reason
+      data.renewalNotPossibleRemarks = draft.renewalNotPossible ? data.remarks : '';
     }
   } else {
     data.isTermLoan = false;
