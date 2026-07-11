@@ -190,8 +190,6 @@ function renewalDateAccountLine(label, loan, key, fallback = '') {
 }
 
 function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
-  const isSme = draft.category === 'SME';
-  const breEligible = isSme && parseFloat(draft.amount) > 10;
   const officerOptions = [{ value: '', label: 'Select officer' }, ...S.officers.map(o => ({ value: o, label: o }))];
   const branchOptions = [{ value: '', label: 'Select branch' }, ...S.branches.map(b => ({ value: b, label: b }))];
   const preview = { ...draft, renewedDate: stagedRenewal === 'renewed' ? (draft.sanctionDate || draft.renewedDate || todayStr()) : '' };
@@ -209,8 +207,6 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
       <div class="decision-account-lines decision-account-lines--edit">
         ${inlineAccountEditLine('Branch', `<select aria-label="Branch" data-draft="branch">${inlineSelect(branchOptions, matchBranchOption(draft.branch) || draft.branch)}</select>`)}
         ${inlineAccountEditLine('Officer', `<select aria-label="Officer" data-draft="allocatedTo">${inlineSelect(officerOptions, draft.allocatedTo)}</select>`)}
-        ${isSme ? inlineAccountEditLine('Loan Facility', `<select aria-label="Loan Facility" data-draft="loanType">${inlineSelect(LOAN_TYPE_OPTIONS, draft.loanType)}</select>`) : ''}
-        ${breEligible ? inlineAccountEditLine('BRE', `<input aria-label="Sanctioned through BRE" type="checkbox" data-draft="isBre" ${draft.isBre ? 'checked' : ''} style="width:18px;height:18px;">`) : ''}
         ${inlineAccountEditLine('A/C No.', `<input aria-label="Account Number" data-draft="acNumber" type="text" inputmode="numeric" value="${esc(draft.acNumber)}" placeholder="Account number">`)}
         ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="nextRenewalDueDate" type="date" value="${esc(draft.nextRenewalDueDate)}">`, !draft.nextRenewalDueDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="nextLimitExpiryDate" type="date" value="${esc(draft.nextLimitExpiryDate)}">`, !draft.nextLimitExpiryDate && stagedRenewal === 'renewed' ? 'warn' : '')}
