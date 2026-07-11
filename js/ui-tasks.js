@@ -81,7 +81,7 @@ function buildCriticalCare(metrics) {
   const visible = l => S.isAdmin || effectiveOfficer(l) === S.user;
   return {
     npa15: metrics.renewalOverdue
-      .filter(l => visible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15),
+      .filter(l => visible(l) && !l.renewedDate && !l.renewalNotPossible && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15),
     pending10: metrics.pending
       .filter(l => visible(l) && daysPending(l.receiveDate) > 10),
     datesMissing: metrics.renewalDatesMissing

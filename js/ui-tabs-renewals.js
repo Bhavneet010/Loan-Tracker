@@ -14,7 +14,7 @@ export function renderRenewals(c) {
   else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
   const canToggleNpa = ['due-soon', 'overdue', 'all', 'done'].includes(S.renewalTab) || S.renewalView === 'calendar';
-  if (canToggleNpa && !S.renewalShowNpa) tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
+  if (canToggleNpa && !S.renewalShowNpa && S.renewalFilter.possibility !== 'NotPossible') tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
 
   const sl = { daysFromSanction: 'Days', amount: 'Amount', officer: 'Officer', branch: 'Branch' };
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
@@ -40,11 +40,15 @@ export function renderRenewals(c) {
   if (S.renewalFilter.status === 'DueSoon') {
     tabMeta = { title: 'Due Soon Accounts', empty: '&#9200;', msg: 'No accounts due within 30 days' };
   }
+  if (S.renewalFilter.possibility === 'NotPossible') {
+    tabMeta = { title: 'Renewal Not Possible', empty: '&#9888;', msg: 'No accounts marked renewal not possible' };
+  }
 
   const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) +
     (S.renewalFilter.branch !== 'All' ? 1 : 0) +
     (S.renewalFilter.completion !== 'All' ? 1 : 0) +
     (S.renewalFilter.status && S.renewalFilter.status !== 'All' ? 1 : 0) +
+    (S.renewalFilter.possibility && S.renewalFilter.possibility !== 'All' ? 1 : 0) +
     (S.renewalFilter.today ? 1 : 0);
   const radio = (name, opts, cur) => opts.map(o => `<label><input type="radio" name="rnw_${name}" value="${esc(o.v)}" ${cur === o.v ? 'checked' : ''} onchange="${name === 'sortField' ? `setRenewalSort('${esc(o.v)}',null)` : name === 'sortDir' ? `setRenewalSort(null,'${esc(o.v)}')` : `setRenewalFilter('${name}','${esc(o.v)}')`}">${esc(o.label)}</label>`).join('');
 
@@ -75,6 +79,8 @@ export function renderRenewals(c) {
     </div>
     <div class="fs-pop" style="${filterStyle}">
       <h4>Status</h4>${radio('status', [{ v: 'All', label: 'All statuses' }, { v: 'DueSoon', label: 'Due soon accounts' }], S.renewalFilter.status || 'All')}
+      <hr>
+      <h4>Renewal Possibility</h4>${radio('possibility', [{ v: 'All', label: 'All accounts' }, { v: 'NotPossible', label: 'Renewal not possible' }], S.renewalFilter.possibility || 'All')}
       <hr>
       <h4>Completion</h4>${radio('completion', [{ v: 'All', label: 'All renewals' }, { v: 'DatesMissing', label: 'Integration pending' }, { v: 'Complete', label: 'Integration complete' }], S.renewalFilter.completion)}
       <hr><h4>Officer</h4>${radio('officer', [{ v: 'All', label: 'All officers' }, ...(S.user && !S.isAdmin ? [{ v: 'Mine', label: 'Just me' }] : []), ...S.officers.map(o => ({ v: o, label: o }))], S.renewalFilter.officer)}
@@ -166,7 +172,7 @@ function buildRenewalListContent(metrics) {
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
 
   const canToggleNpa = ['due-soon', 'overdue', 'all', 'done'].includes(S.renewalTab) || S.renewalView === 'calendar';
-  if (canToggleNpa && !S.renewalShowNpa) tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
+  if (canToggleNpa && !S.renewalShowNpa && S.renewalFilter.possibility !== 'NotPossible') tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
 
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
   const sorted = [...applyRenewalFilters(tabFiltered)].sort((a, b) => {
@@ -191,6 +197,9 @@ function buildRenewalListContent(metrics) {
   if (S.renewalFilter.status === 'DueSoon') {
     tabMeta = { title: 'Due Soon Accounts', empty: '&#9200;', msg: 'No accounts due within 30 days' };
   }
+  if (S.renewalFilter.possibility === 'NotPossible') {
+    tabMeta = { title: 'Renewal Not Possible', empty: '&#9888;', msg: 'No accounts marked renewal not possible' };
+  }
 
   const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
   return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
@@ -199,6 +208,7 @@ function buildRenewalListContent(metrics) {
 export function applyRenewalFilters(enriched) {
   let out = enriched;
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon' && !l.renewedDate);
+  if (S.renewalFilter.possibility === 'NotPossible') out = out.filter(l => l.renewalNotPossible === true && !l.renewedDate);
   if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => effectiveOfficer(l) === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') {

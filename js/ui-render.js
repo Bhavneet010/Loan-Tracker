@@ -76,6 +76,12 @@ window.setRenewalFilter = function(k, v) {
     S.renewalView = 'list';
     S.calendarOpenDay = null;
   }
+  // Marked-not-possible accounts are excluded from the calendar, so show them as a list
+  if (k === 'possibility' && S.renewalFilter.possibility === 'NotPossible') {
+    S.renewalTab = 'all';
+    S.renewalView = 'list';
+    S.calendarOpenDay = null;
+  }
   render();
 };
 window.setRenewalSort = function(f, d) { if (f) S.renewalSort.field = f; if (d) S.renewalSort.dir = d; render(); };

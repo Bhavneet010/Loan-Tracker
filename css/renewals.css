@@ -10,6 +10,20 @@
 .tag.rnw-chip-pending  {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
 .tag.rnw-chip-npa      {background:var(--rnw-npa-bg);     color:var(--rnw-npa-fg);     border:1px solid var(--rnw-npa-bd);  font-weight:800;}
 .tag.rnw-chip-npa-cd   {background:var(--rnw-pending-bg); color:var(--rnw-pending-fg); border:1px solid var(--rnw-pending-bd);}
+.tag.rnw-chip-rnp      {background:rgba(100,116,139,0.14);color:#475569;border:1px solid rgba(100,116,139,0.30);font-weight:800;}
+body.dark .tag.rnw-chip-rnp{background:rgba(148,163,184,0.16);color:#CBD5E1;border-color:rgba(148,163,184,0.32);}
+.rnw-rnp-note{
+  margin:10px 0 0;
+  padding:9px 10px;
+  border-left:4px solid #64748B;
+  border-radius:var(--radius-sm);
+  background:rgba(100,116,139,0.10);
+  color:#334155;
+  font-size:var(--fs-sm);
+  font-weight:700;
+  line-height:1.35;
+}
+body.dark .rnw-rnp-note{background:rgba(148,163,184,0.12);color:#CBD5E1;}
 .rnw-date-warning{
   margin:10px 0 0;
   padding:9px 10px;

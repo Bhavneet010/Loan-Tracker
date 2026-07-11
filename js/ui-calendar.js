@@ -23,7 +23,8 @@ export function renderCalendar(c) {
 }
 
 function getFilteredRenewals(metrics) {
-  let out = metrics.renewals.filter(l => !l.renewedDate);
+  // Accounts marked "renewal not possible" are excluded from the NPA calendar and month bar
+  let out = metrics.renewals.filter(l => !l.renewedDate && !l.renewalNotPossible);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
   if (!S.isAdmin) out = out.filter(l => effectiveOfficer(l) === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.renewalFilter.officer);
@@ -38,7 +39,7 @@ function getFilteredRenewals(metrics) {
 
 // Like getFilteredRenewals but skips the officer filter — used for officer pills in expanded view
 function getAllOfficerRenewals(metrics) {
-  let out = metrics.renewals.filter(l => !l.renewedDate);
+  let out = metrics.renewals.filter(l => !l.renewedDate && !l.renewalNotPossible);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
   if (S.renewalFilter.branch !== 'All') {
     const filterCode = branchCode(S.renewalFilter.branch);

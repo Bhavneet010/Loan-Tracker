@@ -77,6 +77,9 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   if (!selectedOfficer) return { error: 'Select or assign an officer first' };
   if (!customerName) return { error: 'Customer name is required' };
   if (!(parseFloat(draft.amount) > 0)) return { error: 'Enter a valid amount' };
+  if (draft.category === 'SME' && renewalState !== 'renewed' && draft.renewalNotPossible && !(draft.renewalNotPossibleRemarks || '').trim()) {
+    return { error: 'Enter the reason renewal is not possible' };
+  }
 
   const isManualOverride = assignedOfficer && selectedOfficer !== assignedOfficer;
   const monthKey = (() => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 7); })();
@@ -114,6 +117,8 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
       data.renewalDueDate = draft.renewalDueDate || '';
       data.limitExpiryDate = draft.limitExpiryDate || '';
       if (data.renewalDueDate && data.limitExpiryDate) data.renewalDatesPending = false;
+      data.renewalNotPossible = !!draft.renewalNotPossible;
+      data.renewalNotPossibleRemarks = draft.renewalNotPossible ? (draft.renewalNotPossibleRemarks || '').trim() : '';
     }
   } else {
     data.isTermLoan = false;
@@ -135,6 +140,8 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
     data.renewalDueDateEntered = !!nextRenewalDue;
     data.limitExpiryDateEntered = !!nextLimitExpiry;
     data.renewalDatesPending = !(nextRenewalDue && nextLimitExpiry);
+    data.renewalNotPossible = false;
+    data.renewalNotPossibleRemarks = '';
   } else if (renewalState === 'pending') {
     data.renewedDate = '';
     data.renewalDueDatePending = false;
@@ -286,6 +293,8 @@ window.saveLoan = async function(e) {
       data.limitExpiryDateEntered = hasLimitExpiry;
       if (hasRenewalDue) data.renewalDueDate = renewalInput.value;
       if (hasLimitExpiry) data.limitExpiryDate = limitExpiryInput.value;
+      data.renewalNotPossible = false;
+      data.renewalNotPossibleRemarks = '';
     } else if (isRenewalDoneEdit) {
       if (renewalInput && renewalInput.value) data.renewalDueDate = renewalInput.value;
       if (limitExpiryInput && limitExpiryInput.value) data.limitExpiryDate = limitExpiryInput.value;

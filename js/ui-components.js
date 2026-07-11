@@ -92,7 +92,9 @@ export function renewalItemHtml(loan, rs, idx = 0) {
     ? `<span class="tag rnw-chip-npa-cd">${rs.daysUntilNpa}d to NPA</span>`
     : '';
   const oldDueChip = datesMissing ? `<span class="tag rnw-chip-pending">${sm.label}</span>` : '';
-    
+  const rnpActive = !loan.renewedDate && loan.renewalNotPossible === true;
+  const rnpChip = rnpActive ? `<span class="tag rnw-chip-rnp">Not Possible</span>` : '';
+
   const itemId = 'rnw-' + loan.id;
   
   return `<div class="loan-item ${statusCls}" id="li-${itemId}" style="--i:${idx}">
@@ -103,6 +105,7 @@ export function renewalItemHtml(loan, rs, idx = 0) {
         <span class="lr-name">${esc(loan.customerName || '')} ${loan.acNumber ? `<span class="ac-sub">A/C: ${esc(loan.acNumber)}</span>` : ''}</span>
       </div>
       <div class="lr-meta">
+        ${rnpChip}
         ${loan.renewedDate ? '' : `<span class="tag ${sm.cls}">${sm.label}</span>`}
         ${oldDueChip}
         <span class="lr-amount"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
@@ -129,9 +132,11 @@ export function renewalItemHtml(loan, rs, idx = 0) {
             ${loan.renewedDate ? '' : `<span class="tag ${sm.cls}">${sm.label}</span>`}
             ${loan.renewedDate && datesMissing ? `<span class="tag ${sm.cls}">${sm.label}</span>` : ''}
             ${npaChip}
+            ${rnpChip}
           </div>
         </div>
         ${datesMissing ? `<div class="rnw-date-warning">New limit expiry date and next renewal due date are pending. Old due warning is retained until the next due date is entered.</div>` : ''}
+        ${rnpActive ? `<div class="rnw-rnp-note">&#9888; Renewal not possible${loan.renewalNotPossibleRemarks ? ` — ${esc(loan.renewalNotPossibleRemarks)}` : ''}</div>` : ''}
         ${loan.remarks ? `<div class="lc-remarks">&#128221; ${esc(loan.remarks)}</div>` : ''}
         <div class="rnw-action-group">
           <button class="btn btn-rnw-done" onclick="openRenewalDecisionSheet('${loan.id}')">

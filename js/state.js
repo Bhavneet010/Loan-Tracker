@@ -17,7 +17,7 @@ export const S = {
   freshGroupMode: 'officer',
   freshGroupCollapsed: {},
   renewalTab: 'done',
-  renewalFilter: { officer: 'All', branch: 'All', completion: 'All', status: 'All', today: false },
+  renewalFilter: { officer: 'All', branch: 'All', completion: 'All', status: 'All', possibility: 'All', today: false },
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },
   renewalShowNpa: false,
   renewalOfficersExpanded: false,

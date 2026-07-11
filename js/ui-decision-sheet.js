@@ -30,6 +30,8 @@ export function cloneLoanDraft(loan) {
     nextRenewalDueDate: loan.renewedDate && loan.renewalDueDateEntered === true ? (loan.renewalDueDate || '') : '',
     nextLimitExpiryDate: loan.renewedDate && loan.limitExpiryDateEntered === true ? (loan.limitExpiryDate || '') : '',
     remarks: loan.remarks || '',
+    renewalNotPossible: !!loan.renewalNotPossible,
+    renewalNotPossibleRemarks: loan.renewalNotPossibleRemarks || '',
     loanType: loan.loanType || (loan.isTermLoan ? 'TL' : 'CC'),
     isBre: !!loan.isBre,
   };
@@ -289,6 +291,10 @@ function renewalDecisionLines(loan, rs) {
   else if (rs?.status === 'pending-renewal') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue${rs.daysUntilNpa >= 0 ? ` • ${rs.daysUntilNpa} days to NPA` : ''}`, 'alert'));
   else if (rs?.status === 'due-soon') rows.push(accountLine('Status', `Due in ${rs.daysUntilDue} days`, 'warn'));
   else if (rs?.status === 'npa') rows.push(accountLine('Status', `${rs.daysOverdue} days overdue • NPA`, 'alert'));
+  if (!loan.renewedDate && loan.renewalNotPossible) {
+    rows.push(accountLine('Renewal', 'Not possible', 'alert'));
+    rows.push(accountLine('Reason', loan.renewalNotPossibleRemarks || 'No reason recorded', 'alert'));
+  }
   return rows.join('');
 }
 
@@ -553,6 +559,13 @@ window.openRenewalDecisionSheet = function(id) {
     <div class="decision-outcome-block">
       ${sliderHtml(options, current, 'renewal')}
     </div>
+    <div class="decision-rnp-block" data-rnp-block style="${current === 'renewed' ? 'display:none;' : ''}">
+      <label class="decision-rnp-toggle">
+        <input type="checkbox" data-rnp-checkbox ${draft.renewalNotPossible ? 'checked' : ''}>
+        <span>Renewal not possible</span>
+      </label>
+      <textarea data-rnp-remarks rows="2" placeholder="Reason (unit closed, account under litigation, etc.)" style="${draft.renewalNotPossible ? '' : 'display:none;'}">${esc(draft.renewalNotPossibleRemarks)}</textarea>
+    </div>
     <div class="decision-action-row">
       <button type="button" class="btn btn-cancel-full" onclick="closeDecisionSheet()">Cancel</button>
       <button type="button" class="btn btn-primary-full" data-decision-save>Save</button>
@@ -563,6 +576,9 @@ window.openRenewalDecisionSheet = function(id) {
   const card = overlay.querySelector('[data-decision-card]');
   const editBtn = overlay.querySelector('[data-decision-edit]');
   const pill = overlay.querySelector('.decision-status-pill');
+  const rnpBlock = overlay.querySelector('[data-rnp-block]');
+  const rnpCheckbox = overlay.querySelector('[data-rnp-checkbox]');
+  const rnpRemarks = overlay.querySelector('[data-rnp-remarks]');
   const renderCard = () => {
     const preview = loanFromDraft(loan, draft, loan.status || 'pending');
     const renewalDate = draft.sanctionDate || draft.renewedDate || todayStr();
@@ -578,11 +594,23 @@ window.openRenewalDecisionSheet = function(id) {
     if (pill) pill.textContent = stagedRenewal === 'renewed' ? 'Renewed' : (previewRs?.status === 'pending-renewal' ? 'Overdue' : previewRs?.status === 'due-soon' ? 'Due Soon' : previewRs?.status === 'npa' ? 'NPA' : 'Pending');
     editBtn?.classList.toggle('active', editMode);
     editBtn?.setAttribute('aria-pressed', editMode ? 'true' : 'false');
+    if (rnpBlock) rnpBlock.style.display = stagedRenewal === 'renewed' ? 'none' : '';
     setDecisionSelected(overlay, stagedRenewal, { emit: false });
   };
   editBtn?.addEventListener('click', () => {
     editMode = !editMode;
     renderCard();
+  });
+  rnpCheckbox?.addEventListener('change', () => {
+    draft.renewalNotPossible = rnpCheckbox.checked;
+    if (rnpRemarks) {
+      rnpRemarks.style.display = rnpCheckbox.checked ? '' : 'none';
+      if (rnpCheckbox.checked) rnpRemarks.focus();
+    }
+    renderCard();
+  });
+  rnpRemarks?.addEventListener('input', () => {
+    draft.renewalNotPossibleRemarks = rnpRemarks.value;
   });
   overlay.addEventListener('decisionchange', e => {
     const newStaged = e.detail?.value || stagedRenewal;
