@@ -224,9 +224,10 @@
 .task-critical-tab--purple.active{border-color:var(--p1);}
 .task-critical-tab--blue.active{border-color:#2563EB;}
 .task-critical-title{
-  font-size:clamp(8px,2.15vw,var(--fs-xs));font-weight:900;color:var(--p1);
-  letter-spacing:0;text-transform:uppercase;line-height:1;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;
+  font-size:clamp(11px,3.1vw,12px);font-weight:900;color:var(--p1);
+  letter-spacing:0;text-transform:uppercase;line-height:1.15;
+  overflow:hidden;overflow-wrap:anywhere;align-self:stretch;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
 }
 .task-critical-count{
   font-size:20px;font-weight:900;line-height:1;
