@@ -15,8 +15,8 @@ const targetsCelebratedMonths = new Set();
 const CRITICAL_META = {
   npa15:        { title: 'NPA in 15 days',     short: 'NPA IN 15D',   tone: 'red' },
   datesMissing: { title: 'Integration Pending', short: 'INTEGRATION',  tone: 'purple' },
-  docPending:   { title: 'Documentation Pending', short: 'DOCS PENDING', tone: 'blue' },
-  disbPending:  { title: 'Disbursement Pending',  short: 'DISB PENDING', tone: 'blue' },
+  docPending:   { title: 'Documentation Pending', short: 'DOCS', tone: 'blue' },
+  disbPending:  { title: 'Disbursement Pending',  short: 'DISB', tone: 'blue' },
 };
 
 // Post-sanction stage queues: rows carry a quick "mark done" action and can
