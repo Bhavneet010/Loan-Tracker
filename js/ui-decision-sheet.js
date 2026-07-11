@@ -215,7 +215,7 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
         ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="nextRenewalDueDate" type="date" value="${esc(draft.nextRenewalDueDate)}">`, !draft.nextRenewalDueDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="nextLimitExpiryDate" type="date" value="${esc(draft.nextLimitExpiryDate)}">`, !draft.nextLimitExpiryDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Sanction Date', `<input aria-label="Sanction Date" data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
-        ${inlineAccountEditLine('Remarks', `<textarea aria-label="Remarks" data-draft="remarks" rows="2" placeholder="Additional notes">${esc(draft.remarks)}</textarea>`)}
+        ${inlineAccountEditLine('Remarks', `<textarea aria-label="Remarks" data-draft="remarks" rows="1" placeholder="Additional notes">${esc(draft.remarks)}</textarea>`)}
       </div>
     </div>
   </div>`;
@@ -250,7 +250,7 @@ function inlineEditHtml(draft, status) {
         ${showRenewalDue ? inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="renewalDueDate" type="date" value="${esc(draft.renewalDueDate)}">`) : ''}
         ${showLimitExpiry ? inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="limitExpiryDate" type="date" value="${esc(draft.limitExpiryDate)}">`) : ''}
         ${status === 'pending' ? accountLine('Ageing', `${daysPending(draft.receiveDate)} ${daysPending(draft.receiveDate) === 1 ? 'day' : 'days'}`, daysPending(draft.receiveDate) > 7 ? 'alert' : '') : ''}
-        ${status === 'pending' || status === 'returned' ? inlineAccountEditLine('Remarks', `<textarea aria-label="Remarks" data-draft="remarks" rows="2" placeholder="Additional notes">${esc(draft.remarks)}</textarea>`, status === 'returned' ? 'alert' : '') : ''}
+        ${status === 'pending' || status === 'returned' ? inlineAccountEditLine('Remarks', `<textarea aria-label="Remarks" data-draft="remarks" rows="1" placeholder="Additional notes">${esc(draft.remarks)}</textarea>`, status === 'returned' ? 'alert' : '') : ''}
       </div>
     </div>
   </div>`;
@@ -288,6 +288,15 @@ function bindInlineDraftControls(container, draft, onStructuralChange) {
       update();
       if (structural) onStructuralChange?.();
     });
+  });
+  // Single-row textareas grow with their content instead of showing a resize handle
+  container.querySelectorAll('textarea[data-draft]').forEach(area => {
+    const autosize = () => {
+      area.style.height = 'auto';
+      area.style.height = `${area.scrollHeight + area.offsetHeight - area.clientHeight}px`;
+    };
+    autosize();
+    area.addEventListener('input', autosize);
   });
 }
 

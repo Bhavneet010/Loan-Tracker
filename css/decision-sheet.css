@@ -179,7 +179,8 @@ body.dark .decision-pill-sep{background:rgba(107,95,191,0.30);}
   border:1px solid rgba(107,95,191,0.10);color:var(--text1);font:900 10.5px/1 inherit;
 }
 .decision-account-line--edit textarea{
-  min-height:28px;resize:vertical;
+  min-height:22px;resize:none;overflow:hidden;display:block;
+  font-family:inherit;font-size:10.5px;font-weight:900;line-height:18px;padding:1px 6px;
 }
 .decision-name--edit input:focus,
 .decision-amount--edit input:focus,
