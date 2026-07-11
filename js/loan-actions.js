@@ -189,8 +189,9 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
     data.renewalDatesPending = !(nextRenewalDue && nextLimitExpiry);
     data.renewalNotPossible = false;
     data.renewalNotPossibleRemarks = '';
-    // Each renewal cycle needs its own documentation mark
-    data.documentationDate = '';
+    // Preserve (and allow editing) the documentation mark when re-saving an
+    // already-renewed loan; a brand-new renewal cycle starts docs-pending.
+    data.documentationDate = base.renewedDate ? (draft.documentationDate || '') : '';
   } else if (renewalState === 'pending') {
     data.renewedDate = '';
     data.documentationDate = '';

@@ -134,7 +134,7 @@ body.dark .decision-pill-sep{background:rgba(107,95,191,0.30);}
   border:1px solid rgba(107,95,191,0.10);background:rgba(107,95,191,0.05);
 }
 .decision-account-line{
-  display:grid;grid-template-columns:78px minmax(0,1fr) 18px;gap:var(--space-sm);align-items:center;
+  display:grid;grid-template-columns:104px minmax(0,1fr) 18px;gap:var(--space-sm);align-items:center;
   height:30px;padding:2px 8px;border-top:1px solid rgba(107,95,191,0.09);
   transition:background var(--dur-fast) ease;
 }
@@ -147,6 +147,7 @@ body.dark .decision-pill-sep{background:rgba(107,95,191,0.30);}
 }
 .decision-account-line small{
   color:var(--text3);font-size:var(--fs-xs);font-weight:900;letter-spacing:0.45px;text-transform:uppercase;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .decision-account-line b{
   min-width:0;color:var(--text1);font-size:10.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;

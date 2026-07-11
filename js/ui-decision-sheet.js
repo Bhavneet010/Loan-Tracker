@@ -40,6 +40,7 @@ export function cloneLoanDraft(loan) {
     acNumber: loan.acNumber || '',
     receiveDate: loan.receiveDate || todayStr(),
     sanctionDate: loan.sanctionDate || '',
+    documentationDate: loan.documentationDate || '',
     returnedDate: loan.returnedDate || '',
     renewedDate: loan.renewedDate || '',
     renewalDueDate: loan.renewalDueDate || '',
@@ -217,6 +218,7 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
         ${inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="nextRenewalDueDate" type="date" value="${esc(draft.nextRenewalDueDate)}">`, !draft.nextRenewalDueDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="nextLimitExpiryDate" type="date" value="${esc(draft.nextLimitExpiryDate)}">`, !draft.nextLimitExpiryDate && stagedRenewal === 'renewed' ? 'warn' : '')}
         ${stagedRenewal === 'renewed' ? inlineAccountEditLine('Sanction Date', `<input aria-label="Sanction Date" data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || todayStr())}">`) : renewalStatusLineHtml(preview, rs)}
+        ${stagedRenewal === 'renewed' && isStageTracked(draft.sanctionDate || draft.renewedDate || todayStr()) ? inlineAccountEditLine('Documentation', `<input aria-label="Documentation Date" data-draft="documentationDate" type="date" value="${esc(draft.documentationDate)}">`, draft.documentationDate ? '' : 'warn') : ''}
         ${inlineAccountEditLine('Remarks', `<textarea aria-label="Remarks" data-draft="remarks" rows="1" placeholder="Additional notes">${esc(draft.remarks)}</textarea>`)}
       </div>
     </div>
@@ -643,6 +645,8 @@ window.openRenewalDecisionSheet = function(id) {
       if (!renewalDateInitialized) {
         draft.sanctionDate = todayStr();
         draft.renewedDate = todayStr();
+        // Fresh renewal cycle starts with documentation pending
+        draft.documentationDate = '';
         renewalDateInitialized = true;
       }
     }
