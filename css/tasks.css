@@ -322,6 +322,13 @@
   color:#fff;font-size:var(--fs-xs);font-weight:900;justify-self:end;
 }
 .task-critical-empty{padding:10px 2px;font-size:var(--fs-sm);font-weight:800;color:var(--text3);}
+.task-critical-row--rnp{opacity:0.5;}
+.task-critical-row--rnp .task-critical-days{color:var(--text3);}
+.task-rnp-mark{
+  display:inline-block;padding:0 3px;border-radius:var(--radius-xs);
+  background:rgba(100,116,139,0.18);color:#475569;font-size:9px;font-weight:900;vertical-align:1px;
+}
+body.dark .task-rnp-mark{background:rgba(148,163,184,0.20);color:#CBD5E1;}
 .task-critical-more{
   width:100%;border:0;background:transparent;color:var(--p1);
   padding:9px 0 1px;font-size:var(--fs-md);font-weight:900;cursor:pointer;

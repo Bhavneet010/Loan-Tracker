@@ -7,6 +7,11 @@ import { holidayReason, findCustomHoliday, countWorkingDaysLeft } from "./bank-h
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS = ['M','T','W','T','F','S','S'];
 
+// "Renewal not possible" accounts stay on the calendar (greyed) as a reminder in
+// case renewal becomes possible again, but are excluded from counts and the month
+// bar until they actually turn NPA — after that they behave like any NPA account.
+const isRnpDeferred = l => l.renewalNotPossible === true && l._rs?.status !== 'npa';
+
 export function buildCalendarViewHtml(metrics = getLoanMetrics()) {
   const renewals = getFilteredRenewals(metrics);
   if (!S.calendarState) {
@@ -23,8 +28,7 @@ export function renderCalendar(c) {
 }
 
 function getFilteredRenewals(metrics) {
-  // Accounts marked "renewal not possible" are excluded from the NPA calendar and month bar
-  let out = metrics.renewals.filter(l => !l.renewedDate && !l.renewalNotPossible);
+  let out = metrics.renewals.filter(l => !l.renewedDate);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
   if (!S.isAdmin) out = out.filter(l => effectiveOfficer(l) === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.renewalFilter.officer);
@@ -39,7 +43,7 @@ function getFilteredRenewals(metrics) {
 
 // Like getFilteredRenewals but skips the officer filter — used for officer pills in expanded view
 function getAllOfficerRenewals(metrics) {
-  let out = metrics.renewals.filter(l => !l.renewedDate && !l.renewalNotPossible);
+  let out = metrics.renewals.filter(l => !l.renewedDate);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
   if (S.renewalFilter.branch !== 'All') {
     const filterCode = branchCode(S.renewalFilter.branch);
@@ -54,6 +58,7 @@ function findFirstRenewalMonth(renewals) {
   const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const months = new Set();
   renewals.forEach(loan => {
+    if (isRnpDeferred(loan)) return;
     const rs = loan._rs;
     if (rs?.npaDateStr && rs.status !== 'active') months.add(rs.npaDateStr.slice(0, 7));
   });
@@ -68,6 +73,7 @@ function findFirstRenewalMonth(renewals) {
 function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   const monthMap = new Map();
   renewals.forEach(loan => {
+    if (isRnpDeferred(loan)) return;
     const rs = loan._rs;
     if (!rs?.npaDateStr || rs.status === 'active') return;
     const key = rs.npaDateStr.slice(0, 7);
@@ -110,6 +116,7 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
 function buildOfficerPillsHtml(renewals, currentKey, currentOfficer) {
   const officerMap = new Map();
   renewals.forEach(loan => {
+    if (isRnpDeferred(loan)) return;
     const rs = loan._rs;
     if (!rs?.npaDateStr || rs.status === 'active') return;
     const officer = effectiveOfficer(loan);
@@ -148,8 +155,9 @@ function buildCalendarData(renewals, year, month) {
     const rs = loan._rs;
     if (!rs || !rs.npaDateStr) return;
     if (!rs.npaDateStr.startsWith(monthStr)) return;
-    if (!map.has(rs.npaDateStr)) map.set(rs.npaDateStr, { loans: [], urgency: 'active' });
+    if (!map.has(rs.npaDateStr)) map.set(rs.npaDateStr, { loans: [], rnpLoans: [], urgency: 'active' });
     const entry = map.get(rs.npaDateStr);
+    if (isRnpDeferred(loan)) { entry.rnpLoans.push(loan); return; }
     entry.loans.push(loan);
     if (rs.status === 'npa') entry.urgency = 'overdue';
     else if ((rs.daysUntilNpa || 0) <= 30 && entry.urgency !== 'overdue') entry.urgency = 'due-soon';
@@ -172,14 +180,18 @@ function calendarHtml(calData, year, month, renewals) {
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const entry = calData.get(dateStr);
+    const countable = entry ? entry.loans.length : 0;
+    const rnpCount = entry ? entry.rnpLoans.length : 0;
     const isToday = dateStr === today;
     const isPast = dateStr < today;
     const hReason = holidayReason(dateStr);
     const customHoliday = hReason === 'custom' ? findCustomHoliday(dateStr) : null;
     let cls = 'cal-cell';
     if (isToday) cls += ' cal-cell--today';
-    if (entry) {
+    if (countable) {
       cls += entry.urgency === 'overdue' ? ' cal-cell--overdue' : entry.urgency === 'due-soon' ? ' cal-cell--soon' : ' cal-cell--active-has';
+    } else if (rnpCount) {
+      cls += ' cal-cell--rnp';
     } else if (isPast) {
       cls += ' cal-cell--past';
     }
@@ -189,9 +201,10 @@ function calendarHtml(calData, year, month, renewals) {
     if (isOpen) cls += ' cal-cell--open';
     const tappable = !!entry || S.isAdmin || !!hReason;
     const titleAttr = customHoliday?.label ? ` title="${esc(customHoliday.label)}"` : (hReason === 'sunday' ? ' title="Sunday"' : hReason === 'saturday' ? ' title="2nd/4th Saturday"' : '');
+    const badges = `${countable ? `<span class="cal-count">${countable}</span>` : ''}${rnpCount ? `<span class="cal-count cal-count--rnp" title="Renewal not possible — not counted">${rnpCount}</span>` : ''}`;
     cells.push(`<div class="${cls}" data-date="${dateStr}"${tappable ? ` onclick="toggleCalendarDay('${dateStr}')"` : ''}${titleAttr}>
       <span class="cal-day-num">${day}</span>
-      ${entry ? `<span class="cal-count">${entry.loans.length}</span>` : (hReason ? `<span class="cal-holiday-mark">H</span>` : '')}
+      ${badges || (hReason ? `<span class="cal-holiday-mark">H</span>` : '')}
     </div>`);
   }
 
@@ -200,6 +213,7 @@ function calendarHtml(calData, year, month, renewals) {
     : '';
 
   const monthTotal = [...calData.values()].reduce((s, e) => s + e.loans.length, 0);
+  const rnpMonthTotal = [...calData.values()].reduce((s, e) => s + e.rnpLoans.length, 0);
   const workingDays = countWorkingDaysLeft(year, month);
 
   const monthBar = buildMonthBarHtml(renewals, year, month);
@@ -216,6 +230,7 @@ function calendarHtml(calData, year, month, renewals) {
       </div>
       <div class="cal-month-meta">
         ${monthTotal > 0 ? `<span class="cal-month-count">${monthTotal} NPA date${monthTotal !== 1 ? 's' : ''}</span>` : '<span class="cal-month-count cal-month-count--empty">No NPA dates</span>'}
+        ${rnpMonthTotal > 0 ? `<span class="cal-month-sep">·</span><span class="cal-month-count cal-month-count--rnp">${rnpMonthTotal} not possible</span>` : ''}
         <span class="cal-month-sep">·</span>
         <span class="cal-working-days">${workingDays} working day${workingDays !== 1 ? 's' : ''} left</span>
       </div>
@@ -223,6 +238,7 @@ function calendarHtml(calData, year, month, renewals) {
         <span class="cal-dot cal-dot--overdue"></span>NPA
         <span class="cal-dot cal-dot--soon"></span>NPA within 30d
         <span class="cal-dot cal-dot--active"></span>Future NPA
+        <span class="cal-dot cal-dot--rnp"></span>Not possible
         <span class="cal-dot cal-dot--holiday"></span>Holiday
       </div>
       <div class="cal-grid">
@@ -239,7 +255,9 @@ function dayDetailHtml(dateStr, entry) {
   const label = `${parseInt(d)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m) - 1]}`;
   const hReason = holidayReason(dateStr);
   const customHoliday = hReason === 'custom' ? findCustomHoliday(dateStr) : null;
-  const loanItems = entry ? entry.loans.map(loan => {
+  const countableLoans = entry?.loans || [];
+  const rnpLoans = entry?.rnpLoans || [];
+  const normalItems = countableLoans.map(loan => {
     const rs = loan._rs;
     const statusCls = rs.status === 'npa' ? 'rnw-chip-npa' : rs.status === 'pending-renewal' ? 'rnw-chip-pending' : rs.status === 'due-soon' ? 'rnw-chip-due-soon' : 'rnw-chip-active';
     const statusLabel = rs.status === 'npa' ? 'NPA' : `${rs.daysUntilNpa}d to NPA`;
@@ -250,7 +268,15 @@ function dayDetailHtml(dateStr, entry) {
       <span class="cal-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
       <span class="tag ${statusCls}">${statusLabel}</span>
     </div>`;
-  }).join('') : '';
+  }).join('');
+  const rnpItems = rnpLoans.map(loan => `<div class="cal-detail-item cal-detail-item--rnp"${loan.renewalNotPossibleRemarks ? ` title="${esc(loan.renewalNotPossibleRemarks)}"` : ''}>
+      <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
+      <span class="cal-name">${esc(loan.customerName)}${loan.renewalNotPossibleRemarks ? ` <small class="cal-rnp-reason">— ${esc(loan.renewalNotPossibleRemarks)}</small>` : ''}</span>
+      <span class="cal-bcode">${esc(branchCode(loan.branch))}</span>
+      <span class="cal-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
+      <span class="tag rnw-chip-rnp">Not possible</span>
+    </div>`).join('');
+  const loanItems = normalItems + rnpItems;
 
   let holidayBlock = '';
   if (hReason === 'sunday' || hReason === 'saturday') {
@@ -266,7 +292,10 @@ function dayDetailHtml(dateStr, entry) {
 
   let head;
   if (entry) {
-    head = `NPA date ${label} · ${entry.loans.length} renewal${entry.loans.length !== 1 ? 's' : ''}`;
+    const parts = [];
+    if (countableLoans.length) parts.push(`${countableLoans.length} renewal${countableLoans.length !== 1 ? 's' : ''}`);
+    if (rnpLoans.length) parts.push(`${rnpLoans.length} not possible`);
+    head = `NPA date ${label} · ${parts.join(' · ')}`;
   } else if (hReason) {
     head = `${label} · Holiday`;
   } else {

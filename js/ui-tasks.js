@@ -18,6 +18,12 @@ const CRITICAL_META = {
   datesMissing: { title: 'Integration Pending', short: 'INTEGRATION',  tone: 'purple' },
 };
 
+// "Renewal not possible" accounts stay listed (greyed, sorted last) as a reminder
+// in case renewal becomes possible again, but are excluded from counts and totals
+// until they actually turn NPA — after that they are treated like any NPA account.
+const isRnpDeferred = l => l.renewalNotPossible === true && !l.renewedDate && l._rs?.status !== 'npa';
+const countableCritical = items => items.filter(l => !isRnpDeferred(l));
+
 /* ── ENTRY POINT ── */
 export function renderTasks(c) {
   const metrics = getLoanMetrics();
@@ -28,7 +34,7 @@ export function renderTasks(c) {
 
 export function getTaskCounts(metrics) {
   const critical = buildCriticalCare(metrics);
-  return Object.values(critical).reduce((sum, items) => sum + items.length, 0);
+  return Object.values(critical).reduce((sum, items) => sum + countableCritical(items).length, 0);
 }
 
 /* ── DATA HELPER ── */
@@ -51,7 +57,7 @@ function renderTaskOverview(c, metrics) {
   const activeKey = CRITICAL_META[S.taskCategory] ? S.taskCategory : pickDefaultCritical(critical);
   const activeItems = sortCriticalItems(activeKey, critical[activeKey] || []);
 
-  const allCriticalItems = [...critical.npa15, ...critical.pending10, ...critical.datesMissing];
+  const allCriticalItems = countableCritical([...critical.npa15, ...critical.pending10, ...critical.datesMissing]);
   const totalAccounts = allCriticalItems.length;
   const totalAtRisk = sumAmount(allCriticalItems);
 
@@ -81,7 +87,7 @@ function buildCriticalCare(metrics) {
   const visible = l => S.isAdmin || effectiveOfficer(l) === S.user;
   return {
     npa15: metrics.renewalOverdue
-      .filter(l => visible(l) && !l.renewedDate && !l.renewalNotPossible && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15),
+      .filter(l => visible(l) && !l.renewedDate && l._rs?.status === 'pending-renewal' && l._rs.daysUntilNpa >= 0 && l._rs.daysUntilNpa <= 15),
     pending10: metrics.pending
       .filter(l => visible(l) && daysPending(l.receiveDate) > 10),
     datesMissing: metrics.renewalDatesMissing
@@ -90,16 +96,17 @@ function buildCriticalCare(metrics) {
 }
 
 function pickDefaultCritical(critical) {
-  return Object.keys(CRITICAL_META).find(key => critical[key].length) || 'npa15';
+  return Object.keys(CRITICAL_META).find(key => countableCritical(critical[key]).length) || 'npa15';
 }
 
 function criticalTabHtml(key, items, active) {
   const meta = CRITICAL_META[key];
-  const total = sumAmount(items);
+  const countable = countableCritical(items);
+  const total = sumAmount(countable);
   return `<button type="button" data-critical-key="${key}" class="task-critical-tab task-critical-tab--${meta.tone} ${active ? 'active' : ''}" onclick="toggleCriticalCare('${key}')" aria-expanded="${active}">
       <span class="task-critical-title">${meta.short}</span>
       <span class="task-critical-stats">
-        <span class="task-critical-count">${items.length}</span>
+        <span class="task-critical-count">${countable.length}</span>
         <span class="task-critical-sub"><span class="rs">&#8377;</span>${fmtAmt(total)}L</span>
       </span>
     </button>`;
@@ -147,7 +154,7 @@ function criticalHeadCell(key, field, label, sort) {
 function sortCriticalItems(key, items) {
   const sort = S.taskCriticalSort?.[key] || { field: 'urgency', dir: 'desc' };
   const dir = sort.dir === 'asc' ? 1 : -1;
-  return [...items].sort((a, b) => {
+  const sorted = [...items].sort((a, b) => {
     if (sort.field === 'urgency') return defaultCriticalCompare(key, a, b);
     const av = criticalSortValue(key, a, sort.field);
     const bv = criticalSortValue(key, b, sort.field);
@@ -155,6 +162,8 @@ function sortCriticalItems(key, items) {
     if (av > bv) return 1 * dir;
     return defaultCriticalCompare(key, a, b);
   });
+  // Uncounted "renewal not possible" reminders always sit below the real accounts
+  return [...sorted.filter(l => !isRnpDeferred(l)), ...sorted.filter(isRnpDeferred)];
 }
 
 function defaultCriticalCompare(key, a, b) {
@@ -178,6 +187,7 @@ function criticalSortValue(key, loan, field) {
 
 function criticalLoanRowHtml(key, loan) {
   const isMissing = key === 'datesMissing';
+  const rnp = isRnpDeferred(loan);
   const status = key === 'npa15'
     ? `${loan._rs?.daysUntilNpa ?? 0}d to NPA`
     : `${daysPending(loan.receiveDate)}d pending`;
@@ -187,9 +197,10 @@ function criticalLoanRowHtml(key, loan) {
   const sheetCall = key === 'pending10'
     ? `openLoanDecisionSheet('${loan.id}')`
     : `openRenewalDecisionSheet('${loan.id}')`;
-  return `<div class="task-critical-row" onclick="${sheetCall}">
+  const rnpTitle = rnp ? ` title="Renewal not possible${loan.renewalNotPossibleRemarks ? ` — ${esc(loan.renewalNotPossibleRemarks)}` : ''} (not counted)"` : '';
+  return `<div class="task-critical-row${rnp ? ' task-critical-row--rnp' : ''}"${rnpTitle} onclick="${sheetCall}">
     <span class="task-branch-chip">${esc(branchCode(loan.branch))}</span>
-    <span class="task-critical-name">${esc(loan.customerName)}</span>
+    <span class="task-critical-name">${esc(loan.customerName)}${rnp ? ' <span class="task-rnp-mark">NP</span>' : ''}</span>
     ${isMissing ? '' : `<span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>`}
     <span class="task-critical-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
     <span class="task-officer-mini" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
