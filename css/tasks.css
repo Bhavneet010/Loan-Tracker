@@ -294,19 +294,27 @@
 .task-critical-detail--purple .task-critical-row{
   grid-template-columns:44px minmax(0,1fr) 54px 30px;
 }
-/* Stage queues carry an extra "mark done" column */
+/* Stage queues carry an extra "mark done" column at the row end */
 .task-critical-detail--blue .task-critical-table-head,
 .task-critical-detail--blue .task-critical-row{
-  grid-template-columns:44px minmax(0,1fr) 32px 54px 28px 30px;
+  grid-template-columns:44px minmax(0,1fr) 32px 54px 30px 26px;
 }
 .task-stage-mark{
   appearance:none;display:inline-flex;align-items:center;justify-content:center;
-  width:26px;height:22px;padding:0;border-radius:var(--radius-pill);
-  border:1px solid rgba(37,99,235,0.30);background:rgba(37,99,235,0.10);
-  color:#2563EB;font-size:12px;font-weight:900;cursor:pointer;
+  width:26px;height:26px;padding:0;border-radius:50%;justify-self:end;
+  border:1.5px solid rgba(37,99,235,0.35);
+  background:linear-gradient(135deg,rgba(37,99,235,0.16),rgba(37,99,235,0.04));
+  color:#2563EB;font-size:12px;font-weight:900;line-height:1;cursor:pointer;
+  box-shadow:0 1px 3px rgba(37,99,235,0.18),inset 0 1px 0 rgba(255,255,255,0.6);
+  transition:transform var(--dur-fast) ease,background var(--dur-fast) ease,box-shadow var(--dur-fast) ease;
 }
-.task-stage-mark:active{transform:scale(0.92);}
-body.dark .task-stage-mark{background:rgba(59,130,246,0.16);color:#93C5FD;border-color:rgba(59,130,246,0.30);}
+.task-stage-mark:hover{background:linear-gradient(135deg,rgba(37,99,235,0.26),rgba(37,99,235,0.10));box-shadow:0 2px 5px rgba(37,99,235,0.26),inset 0 1px 0 rgba(255,255,255,0.6);}
+.task-stage-mark:active{transform:scale(0.88);}
+body.dark .task-stage-mark{
+  background:linear-gradient(135deg,rgba(59,130,246,0.24),rgba(59,130,246,0.08));
+  color:#93C5FD;border-color:rgba(59,130,246,0.40);
+  box-shadow:0 1px 3px rgba(0,0,0,0.35);
+}
 .task-critical-head-btn{
   appearance:none;border:0;background:transparent;padding:0;
   color:inherit;font:inherit;font-weight:900;text-align:left;cursor:pointer;

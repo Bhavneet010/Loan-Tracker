@@ -136,8 +136,8 @@ function criticalRowsHtml(key, items) {
       ${criticalHeadCell(key, 'borrower', 'Borrower', sort)}
       ${key === 'datesMissing' ? '' : criticalHeadCell(key, 'status', key === 'npa15' ? 'Status' : 'Days', sort)}
       ${criticalHeadCell(key, 'amount', 'Amt', sort)}
-      ${isStageKey(key) ? '<span></span>' : ''}
       ${criticalHeadCell(key, 'officer', 'Officer', sort)}
+      ${isStageKey(key) ? '<span></span>' : ''}
     </div>
     ${shown.map(loan => criticalLoanRowHtml(key, loan)).join('')}
     ${items.length > 5 && !expanded ? `<button type="button" class="task-critical-more" onclick="expandCriticalCare('${key}')">View all ${total} accounts &#8250;</button>` : ''}
@@ -223,8 +223,8 @@ function criticalLoanRowHtml(key, loan) {
     <span class="task-critical-name">${esc(loan.customerName)}${rnp ? ' <span class="task-rnp-mark">NP</span>' : ''}</span>
     ${isMissing ? '' : `<span class="task-critical-days" title="${esc(status)}">${esc(statusShort)}</span>`}
     <span class="task-critical-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
-    ${markBtn}
     <span class="task-officer-mini" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
+    ${markBtn}
   </div>`;
 }
 
