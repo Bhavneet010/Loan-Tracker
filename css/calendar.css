@@ -36,6 +36,11 @@
 .cal-detail-head{font-size:var(--fs-md);font-weight:800;color:var(--text1);margin-bottom:8px;}
 .cal-detail-item{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid rgba(107,95,191,0.07);}
 .cal-detail-item:last-child{border-bottom:none;}
+.cal-detail-item--tap{cursor:pointer;border-radius:var(--radius-xs);transition:background var(--dur-fast);}
+.cal-detail-item--tap:hover{background:rgba(107,95,191,0.07);}
+.cal-detail-item--tap:active{background:rgba(107,95,191,0.12);}
+.cal-detail-chev{color:var(--text3);font-size:var(--fs-md);font-weight:800;flex-shrink:0;line-height:1;}
+body.dark .cal-detail-item--tap:hover{background:rgba(107,95,191,0.16);}
 .cal-name{flex:1;font-size:var(--fs-md);font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cal-bcode{font-size:var(--fs-sm);color:var(--text3);font-weight:700;flex-shrink:0;}
 .cal-amt{font-size:var(--fs-sm);font-weight:800;color:var(--text1);white-space:nowrap;flex-shrink:0;}

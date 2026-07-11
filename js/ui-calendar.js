@@ -261,20 +261,22 @@ function dayDetailHtml(dateStr, entry) {
     const rs = loan._rs;
     const statusCls = rs.status === 'npa' ? 'rnw-chip-npa' : rs.status === 'pending-renewal' ? 'rnw-chip-pending' : rs.status === 'due-soon' ? 'rnw-chip-due-soon' : 'rnw-chip-active';
     const statusLabel = rs.status === 'npa' ? 'NPA' : `${rs.daysUntilNpa}d to NPA`;
-    return `<div class="cal-detail-item">
+    return `<div class="cal-detail-item cal-detail-item--tap" onclick="openRenewalDecisionSheet('${esc(loan.id)}')" role="button" tabindex="0" title="Open renewal status">
       <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
       <span class="cal-name">${esc(loan.customerName)}</span>
       <span class="cal-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="cal-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
       <span class="tag ${statusCls}">${statusLabel}</span>
+      <span class="cal-detail-chev">&rsaquo;</span>
     </div>`;
   }).join('');
-  const rnpItems = rnpLoans.map(loan => `<div class="cal-detail-item cal-detail-item--rnp"${loan.renewalNotPossibleRemarks ? ` title="${esc(loan.renewalNotPossibleRemarks)}"` : ''}>
+  const rnpItems = rnpLoans.map(loan => `<div class="cal-detail-item cal-detail-item--rnp cal-detail-item--tap" onclick="openRenewalDecisionSheet('${esc(loan.id)}')" role="button" tabindex="0" title="Open renewal status${loan.renewalNotPossibleRemarks ? ` — ${esc(loan.renewalNotPossibleRemarks)}` : ''}">
       <span class="lr-av" style="background:${officerColor(effectiveOfficer(loan)).bg};">${initials(effectiveOfficer(loan))}</span>
       <span class="cal-name">${esc(loan.customerName)}${loan.renewalNotPossibleRemarks ? ` <small class="cal-rnp-reason">— ${esc(loan.renewalNotPossibleRemarks)}</small>` : ''}</span>
       <span class="cal-bcode">${esc(branchCode(loan.branch))}</span>
       <span class="cal-amt"><span class="rs">&#8377;</span>${fmtAmt(loan.amount)}L</span>
       <span class="tag rnw-chip-rnp">Not possible</span>
+      <span class="cal-detail-chev">&rsaquo;</span>
     </div>`).join('');
   const loanItems = normalItems + rnpItems;
 
