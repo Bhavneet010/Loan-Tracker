@@ -167,6 +167,13 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
       // The general remarks field doubles as the "not possible" reason
       data.renewalNotPossibleRemarks = draft.renewalNotPossible ? data.remarks : '';
     }
+    // Post-sanction stage dates for fresh loans (the renewed path handles its
+    // own documentation mark below). Disbursement can't precede documentation.
+    if (data.isFreshCC && status === 'sanctioned' && renewalState !== 'renewed') {
+      const documentationDate = draft.documentationDate || '';
+      data.documentationDate = documentationDate;
+      data.disbursementDate = documentationDate ? (draft.disbursementDate || '') : '';
+    }
   } else {
     data.isTermLoan = false;
     data.isCC = false;

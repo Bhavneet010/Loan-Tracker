@@ -41,6 +41,7 @@ export function cloneLoanDraft(loan) {
     receiveDate: loan.receiveDate || todayStr(),
     sanctionDate: loan.sanctionDate || '',
     documentationDate: loan.documentationDate || '',
+    disbursementDate: loan.disbursementDate || '',
     returnedDate: loan.returnedDate || '',
     renewedDate: loan.renewedDate || '',
     renewalDueDate: loan.renewalDueDate || '',
@@ -114,7 +115,9 @@ function loanDecisionLines(loan) {
   }
   if (loan.status === 'sanctioned') {
     rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
-    if (loan.category === 'SME' && isFreshCC(loan) && isStageTracked(loan.sanctionDate)) {
+    // Stage-tracked loans always show the rows (Pending until marked); older
+    // loans that predate tracking only surface them once a date is recorded.
+    if (loan.category === 'SME' && isFreshCC(loan) && (isStageTracked(loan.sanctionDate) || loan.documentationDate || loan.disbursementDate)) {
       rows.push(accountLine('Documentation', loan.documentationDate ? fmtDate(loan.documentationDate) : 'Pending', loan.documentationDate ? '' : 'warn'));
       rows.push(accountLine('Disbursement', loan.disbursementDate ? fmtDate(loan.disbursementDate) : 'Pending', loan.disbursementDate ? '' : 'warn'));
     }
@@ -225,10 +228,14 @@ function inlineRenewalEditHtml(draft, stagedRenewal, rs) {
   </div>`;
 }
 
-function inlineEditHtml(draft, status) {
+function inlineEditHtml(draft, status, loan = {}) {
   const isSme = draft.category === 'SME';
   const showRenewalDue = isSme && !!draft.renewalDueDate;
   const showLimitExpiry = isSme && !!draft.limitExpiryDate;
+  // Post-sanction stage dates (documentation → disbursement) for fresh SME
+  // loans, mirroring the renewal editor's Documentation row. Shown for any
+  // sanctioned fresh loan, including older ones that predate stage tracking.
+  const showStageDates = isSme && status === 'sanctioned' && isFreshCC(loan);
   const breEligible = isSme && parseFloat(draft.amount) > 10;
   const officerOptions = [{ value: '', label: 'Select officer' }, ...S.officers.map(o => ({ value: o, label: o }))];
   const branchOptions = [{ value: '', label: 'Select branch' }, ...S.branches.map(b => ({ value: b, label: b }))];
@@ -250,6 +257,8 @@ function inlineEditHtml(draft, status) {
         ${breEligible ? inlineAccountEditLine('BRE', `<input aria-label="Sanctioned through BRE" type="checkbox" data-draft="isBre" ${draft.isBre ? 'checked' : ''} style="width:18px;height:18px;">`) : ''}
         ${inlineAccountEditLine('Received', `<input aria-label="Receive Date" data-draft="receiveDate" type="date" value="${esc(draft.receiveDate)}">`)}
         ${status === 'sanctioned' ? inlineAccountEditLine('Sanction Date', `<input data-draft="sanctionDate" type="date" value="${esc(draft.sanctionDate || todayStr())}">`) : ''}
+        ${showStageDates ? inlineAccountEditLine('Documentation', `<input aria-label="Documentation Date" data-draft="documentationDate" type="date" value="${esc(draft.documentationDate)}">`, draft.documentationDate ? '' : 'warn') : ''}
+        ${showStageDates ? inlineAccountEditLine('Disbursement', `<input aria-label="Disbursement Date" data-draft="disbursementDate" type="date" value="${esc(draft.disbursementDate)}">`, draft.disbursementDate ? '' : 'warn') : ''}
         ${status === 'returned' ? inlineAccountEditLine('Return Date', `<input aria-label="Return Date" data-draft="returnedDate" type="date" value="${esc(draft.returnedDate || todayStr())}">`, 'alert') : ''}
         ${showRenewalDue ? inlineAccountEditLine('Renewal Due', `<input aria-label="Renewal Due Date" data-draft="renewalDueDate" type="date" value="${esc(draft.renewalDueDate)}">`) : ''}
         ${showLimitExpiry ? inlineAccountEditLine('Limit Expiry', `<input aria-label="Limit Expiry Date" data-draft="limitExpiryDate" type="date" value="${esc(draft.limitExpiryDate)}">`) : ''}
@@ -529,7 +538,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
   const renderCard = () => {
     const preview = previewLoanStatus(loanFromDraft(loan, draft, stagedStatus), stagedStatus, draft.remarks);
     if (editMode) {
-      card.innerHTML = inlineEditHtml(draft, stagedStatus);
+      card.innerHTML = inlineEditHtml(draft, stagedStatus, loan);
       bindInlineDraftControls(card, draft, renderCard);
     } else {
       card.innerHTML = loanAccountCardHtml(preview, loanDecisionLines(preview));
