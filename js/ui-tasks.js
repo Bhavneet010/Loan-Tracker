@@ -16,7 +16,7 @@ const CRITICAL_META = {
   npa15:        { title: 'NPA in 15 days',     short: 'NPA IN 15D',   tone: 'red' },
   datesMissing: { title: 'Integration Pending', short: 'INTEGRATION',  tone: 'purple' },
   docPending:   { title: 'Documentation Pending', short: 'DOCUMENTATION', tone: 'blue' },
-  disbPending:  { title: 'Disbursement Pending',  short: 'DISBURSEMENT', tone: 'blue' },
+  disbPending:  { title: 'Disbursement Pending',  short: 'DISBURSEMENT', tone: 'teal' },
 };
 
 // Post-sanction stage queues: rows carry a quick "mark done" action and can

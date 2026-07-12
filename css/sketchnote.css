@@ -567,6 +567,17 @@ body.theme-sketchnote .task-critical-tab--blue::before{
   background:#6BA8D9;
 }
 
+body.theme-sketchnote .task-critical-tab--teal.active,
+body.theme-sketchnote .task-critical-detail--teal{
+  background:#D6EFE9 !important;
+  color:#1F6F63 !important;
+  border-color:#1F6F63 !important;
+}
+
+body.theme-sketchnote .task-critical-tab--teal::before{
+  background:#5BC2A8;
+}
+
 /* ---------- Tasks ---------- */
 body.theme-sketchnote .task-care{
   background:#FBDDE6 !important;

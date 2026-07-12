@@ -218,11 +218,13 @@
 .task-critical-tab--amber::before{background:var(--amber);}
 .task-critical-tab--purple::before{background:var(--p1);}
 .task-critical-tab--blue::before{background:#2563EB;}
+.task-critical-tab--teal::before{background:#0D9488;}
 .task-critical-tab.active{box-shadow:0 4px 10px rgba(107,95,191,0.10);}
 .task-critical-tab--red.active{border-color:var(--red);}
 .task-critical-tab--amber.active{border-color:var(--amber);}
 .task-critical-tab--purple.active{border-color:var(--p1);}
 .task-critical-tab--blue.active{border-color:#2563EB;}
+.task-critical-tab--teal.active{border-color:#0D9488;}
 .task-critical-title{
   font-size:clamp(9.5px,2.7vw,10.5px);font-weight:900;color:var(--p1);
   letter-spacing:0;text-transform:uppercase;line-height:1.15;
@@ -237,6 +239,7 @@
 .task-critical-tab--amber.active .task-critical-count{color:var(--amber);}
 .task-critical-tab--purple.active .task-critical-count{color:var(--p1);}
 .task-critical-tab--blue.active .task-critical-count{color:#2563EB;}
+.task-critical-tab--teal.active .task-critical-count{color:#0D9488;}
 .task-critical-sub{
   font-size:var(--fs-xs);font-weight:900;color:var(--p2);
   white-space:nowrap;letter-spacing:-0.2px;
@@ -246,6 +249,7 @@
 .task-critical-tab--amber.active .task-critical-sub{color:var(--amber);}
 .task-critical-tab--purple.active .task-critical-sub{color:var(--p1);}
 .task-critical-tab--blue.active .task-critical-sub{color:#2563EB;}
+.task-critical-tab--teal.active .task-critical-sub{color:#0D9488;}
 .task-critical-detail{
   padding:6px 4px 6px;margin-top:0;
   border:1px solid rgba(107,95,191,0.12);border-left:3px solid var(--amber);border-radius:var(--radius-sm);
@@ -283,6 +287,7 @@
 .task-critical-detail--red{border-left-color:var(--red);}
 .task-critical-detail--purple{border-left-color:var(--p1);}
 .task-critical-detail--blue{border-left-color:#2563EB;}
+.task-critical-detail--teal{border-left-color:#0D9488;}
 .task-critical-rows{padding:0;}
 .task-critical-sort{display:flex;align-items:center;gap:var(--space-sm);font-size:var(--fs-sm);font-weight:900;color:var(--text1);margin:0 0 6px;}
 .task-sort-icon{color:var(--p2);font-size:var(--fs-md);}
@@ -297,7 +302,9 @@
 }
 /* Stage queues carry an extra "mark done" column at the row end */
 .task-critical-detail--blue .task-critical-table-head,
-.task-critical-detail--blue .task-critical-row{
+.task-critical-detail--blue .task-critical-row,
+.task-critical-detail--teal .task-critical-table-head,
+.task-critical-detail--teal .task-critical-row{
   grid-template-columns:38px minmax(0,1fr) 28px 46px 40px 26px;
 }
 .task-stage-mark{
@@ -316,6 +323,18 @@ body.dark .task-stage-mark{
   color:#93C5FD;border-color:rgba(59,130,246,0.40);
   box-shadow:0 1px 3px rgba(0,0,0,0.35);
 }
+.task-critical-detail--teal .task-stage-mark{
+  border-color:rgba(13,148,136,0.35);
+  background:linear-gradient(135deg,rgba(13,148,136,0.16),rgba(13,148,136,0.04));
+  color:#0D9488;
+  box-shadow:0 1px 3px rgba(13,148,136,0.18),inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.task-critical-detail--teal .task-stage-mark:hover{background:linear-gradient(135deg,rgba(13,148,136,0.26),rgba(13,148,136,0.10));box-shadow:0 2px 5px rgba(13,148,136,0.26),inset 0 1px 0 rgba(255,255,255,0.6);}
+body.dark .task-critical-detail--teal .task-stage-mark{
+  background:linear-gradient(135deg,rgba(45,212,191,0.24),rgba(45,212,191,0.08));
+  color:#5EEAD4;border-color:rgba(45,212,191,0.40);
+  box-shadow:0 1px 3px rgba(0,0,0,0.35);
+}
 .task-critical-head-btn{
   appearance:none;border:0;background:transparent;padding:0;
   color:inherit;font:inherit;font-weight:900;text-align:left;cursor:pointer;
@@ -328,6 +347,7 @@ body.dark .task-stage-mark{
 .task-critical-head-btn span{font-size:var(--fs-xs);}
 .task-critical-detail--red .task-critical-head-btn.active{color:var(--red);}
 .task-critical-detail--purple .task-critical-head-btn.active{color:var(--p1);}
+.task-critical-detail--teal .task-critical-head-btn.active{color:#0D9488;}
 .task-critical-row{
   display:grid;grid-template-columns:38px minmax(0,1fr) 40px 46px 40px;align-items:center;gap:4px;
   padding:7px 0;border-top:1px solid rgba(107,95,191,0.10);

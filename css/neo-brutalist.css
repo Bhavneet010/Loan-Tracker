@@ -415,6 +415,16 @@ body.theme-neo-brutalist .task-critical-tab--blue::before{
   background:#2D9CDB;
 }
 
+body.theme-neo-brutalist .task-critical-tab--teal.active,
+body.theme-neo-brutalist .task-critical-detail--teal{
+  background:#C5F5E9!important;
+  color:#000!important;
+}
+
+body.theme-neo-brutalist .task-critical-tab--teal::before{
+  background:#00C2A8;
+}
+
 body.theme-neo-brutalist .task-care{
   background:#FFF7BE;
   padding:12px;
