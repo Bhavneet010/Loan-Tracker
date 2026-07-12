@@ -1,7 +1,7 @@
 ﻿import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, isFreshCC, isStageTracked } from "./utils.js";
+import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, isFreshCC } from "./utils.js";
 import { db } from "./config.js";
 import { openOverlay, closeOverlay } from "./animate.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -331,12 +331,13 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
   if (renewalInput) renewalInput.value = hideRenewalDates ? '' : (loan.renewalDueDate || '');
   if (limitExpiryInput) limitExpiryInput.value = hideRenewalDates ? '' : (loan.limitExpiryDate || '');
 
-  // Post-sanction stage dates (documentation → disbursement) are editable when
-  // a fresh SME loan is sanctioned and stage-tracked — the same loans that show
-  // the stage chips on the card. Outside edit mode these fields stay hidden.
+  // Post-sanction stage dates (documentation → disbursement) are editable for
+  // any sanctioned fresh SME loan while editing, including older loans that
+  // predate stage tracking (their cards don't show the chips, so the form is
+  // the only way to record these). Outside edit mode these fields stay hidden.
   const showStageDates = isEdit && mode !== 'renewal-done'
     && loan.category === 'SME' && isFreshCC(loan)
-    && loan.status === 'sanctioned' && isStageTracked(loan.sanctionDate);
+    && loan.status === 'sanctioned';
   const docGroup = document.getElementById('fDocumentationGroup');
   const disbGroup = document.getElementById('fDisbursementGroup');
   const docInput = document.getElementById('fDocumentation');
