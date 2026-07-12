@@ -1,7 +1,7 @@
 ﻿import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls } from "./utils.js";
+import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, isFreshCC, isStageTracked } from "./utils.js";
 import { db } from "./config.js";
 import { openOverlay, closeOverlay } from "./animate.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -330,6 +330,21 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
   const hideRenewalDates = mode === 'renewal-done' || (isEdit && !!loan.renewedDate);
   if (renewalInput) renewalInput.value = hideRenewalDates ? '' : (loan.renewalDueDate || '');
   if (limitExpiryInput) limitExpiryInput.value = hideRenewalDates ? '' : (loan.limitExpiryDate || '');
+
+  // Post-sanction stage dates (documentation → disbursement) are editable when
+  // a fresh SME loan is sanctioned and stage-tracked — the same loans that show
+  // the stage chips on the card. Outside edit mode these fields stay hidden.
+  const showStageDates = isEdit && mode !== 'renewal-done'
+    && loan.category === 'SME' && isFreshCC(loan)
+    && loan.status === 'sanctioned' && isStageTracked(loan.sanctionDate);
+  const docGroup = document.getElementById('fDocumentationGroup');
+  const disbGroup = document.getElementById('fDisbursementGroup');
+  const docInput = document.getElementById('fDocumentation');
+  const disbInput = document.getElementById('fDisbursement');
+  if (docGroup) docGroup.style.display = showStageDates ? 'block' : 'none';
+  if (disbGroup) disbGroup.style.display = showStageDates ? 'block' : 'none';
+  if (docInput) docInput.value = showStageDates ? (loan.documentationDate || '') : '';
+  if (disbInput) disbInput.value = showStageDates ? (loan.disbursementDate || '') : '';
 }
 
 function getDuplicateMatches({ id = '', customerName = '', branch = '' }) {
@@ -425,6 +440,10 @@ window.openForm = function(loan = null, mode = null, options = {}) {
   document.getElementById('fSanction').value = '';
   document.getElementById('fRenewalDue').value = '';
   document.getElementById('fLimitExpiry').value = '';
+  document.getElementById('fDocumentation').value = '';
+  document.getElementById('fDisbursement').value = '';
+  document.getElementById('fDocumentationGroup').style.display = 'none';
+  document.getElementById('fDisbursementGroup').style.display = 'none';
   document.getElementById('fRemarks').value = '';
   setBranchValue('', { allowFallbackUser: true, rawText: '' });
 

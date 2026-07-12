@@ -1,7 +1,7 @@
 import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo, isFreshCC, appConfirm } from "./utils.js";
+import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo, isFreshCC, isStageTracked, appConfirm } from "./utils.js";
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
@@ -368,6 +368,21 @@ window.saveLoan = async function(e) {
   const sanctionDate = document.getElementById('fSanction').value;
   if (sanctionDate) data.sanctionDate = sanctionDate;
   if (mode === 'renewal-done' && sanctionDate) data.renewedDate = sanctionDate;
+
+  // Post-sanction stage dates are only editable for fresh SME loans whose stage
+  // fields were shown (see fillFormFromLoan). Disbursement can't precede docs.
+  const stageEditable = document.getElementById('fDocumentationGroup')?.style.display !== 'none';
+  if (stageEditable && cat === 'SME') {
+    const documentationDate = document.getElementById('fDocumentation').value;
+    const disbursementDate = document.getElementById('fDisbursement').value;
+    if (disbursementDate && !documentationDate) {
+      toast('Set the documentation date before disbursement');
+      document.getElementById('fDocumentation').focus();
+      return;
+    }
+    data.documentationDate = documentationDate;
+    data.disbursementDate = documentationDate ? disbursementDate : '';
+  }
 
   try {
     if (id) {
