@@ -223,7 +223,7 @@ window.selectUser = function (name) {
   S.filter = { category: 'All', officer: 'Mine' };
   localStorage.setItem('lpUser', name); localStorage.setItem('lpAdmin', 'false');
   updateUserAvatar(name);
-  closeOverlay('userModal', () => { requestNotifPermission(); initPresence(); window.render(); });
+  closeOverlay('userModal', () => { requestNotifPermission(); initPresence(); window.render(); window.maybeShowDailyTaskPopup?.(); });
 };
 
 let _bioAvailableForModal = false;

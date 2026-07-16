@@ -4,7 +4,7 @@ import {
 import { db } from "./config.js";
 import { S } from "./state.js";
 import { esc, toast, initials, officerColor, todayStr } from "./utils.js";
-import { openOverlay, closeOverlay } from "./animate.js";
+import { openOverlay, closeOverlay, animateOverlayIn, animateOverlayOut } from "./animate.js";
 
 /* Personal to-do list stored per officer, per day. Each document is one task
    tagged with the date it belongs to. The board opens on today and steps a day
@@ -91,11 +91,14 @@ function dateSubLabel(dateStr) {
 
 /* ── DATA LAYER ── */
 export function subscribeOfficerTasks() {
+  let firstLoad = true;
   onSnapshot(collection(db, COLLECTION), snap => {
     S.officerTasks = [];
     snap.forEach(d => S.officerTasks.push({ id: d.id, ...d.data() }));
     updateTaskListBadge();
     if (isOverlayOpen()) renderTaskListBody();
+    if (isDailyPopupOpen()) renderDailyPopupBody();
+    if (firstLoad) { firstLoad = false; maybeShowDailyTaskPopup(); }
   }, err => console.error("[Tasks] Snapshot error:", err));
 }
 
@@ -268,6 +271,102 @@ function syncEditToggle() {
   btn.classList.toggle("active", S.taskEditMode);
 }
 
+/* ── DAILY REMINDER POPUP ──
+   Shown once per session when an officer opens the app: today's pending tasks
+   with a completed-today counter. Tasks can be checked off here, and the whole
+   thing closes on a tap outside the card. */
+let _popupKeyHandler = null;
+
+function isDailyPopupOpen() { return !!document.getElementById("tlDailyPopup"); }
+
+export function maybeShowDailyTaskPopup() {
+  if (!S.user || S.isAdmin) return;
+  if (sessionStorage.getItem("tlDailyPopupShown")) return;
+  const today = todayStr();
+  const pending = S.officerTasks.filter(t => t.officer === S.user && taskDate(t) === today && !t.done);
+  if (!pending.length) return;
+  sessionStorage.setItem("tlDailyPopupShown", "1");
+  showDailyTaskPopup();
+}
+window.maybeShowDailyTaskPopup = maybeShowDailyTaskPopup;
+
+function showDailyTaskPopup() {
+  const existing = document.getElementById("tlDailyPopup");
+  if (existing) existing.remove();
+  const ov = document.createElement("div");
+  ov.className = "overlay center tl-popup-overlay";
+  ov.id = "tlDailyPopup";
+  ov.innerHTML = `<div class="modal-box tl-popup" role="dialog" aria-modal="true" aria-label="Today's tasks"></div>`;
+  ov.addEventListener("click", e => { if (e.target === ov) window.closeDailyTaskPopup(); });
+  document.body.appendChild(ov);
+  renderDailyPopupBody();
+  animateOverlayIn(ov);
+  _popupKeyHandler = e => { if (e.key === "Escape") window.closeDailyTaskPopup(); };
+  document.addEventListener("keydown", _popupKeyHandler);
+}
+
+function renderDailyPopupBody() {
+  const box = document.querySelector("#tlDailyPopup .tl-popup");
+  if (!box) return;
+  const today = todayStr();
+  const mine = S.officerTasks.filter(t => t.officer === S.user && taskDate(t) === today);
+  const doneCount = mine.filter(t => t.done).length;
+  const pending = mine.filter(t => !t.done)
+    .sort((a, b) => (orderOf(a) - orderOf(b)) || (a.createdAt || "").localeCompare(b.createdAt || ""));
+  const d = new Date(today + "T00:00:00");
+  const dateLbl = `${WD[d.getDay()]} · ${d.getDate()} ${MON[d.getMonth()]}`;
+
+  const list = pending.length
+    ? pending.map((t, i) => `
+        <div class="tl-popup-task">
+          <span class="tl-serial">${i + 1}</span>
+          <span class="tl-popup-text">${esc(t.text)}</span>
+          <button type="button" class="tl-popup-check" onclick="markDailyPopupTask('${t.id}')" aria-label="Mark done" title="Mark done">
+            <span class="tl-check-tick">✓</span>
+          </button>
+        </div>`).join("")
+    : `<div class="tl-popup-alldone">
+        <div class="tl-popup-alldone-icon">🎉</div>
+        <div class="tl-popup-alldone-title">All done for today!</div>
+        <div class="tl-popup-alldone-sub">Every task is complete.</div>
+      </div>`;
+
+  const pendingNote = pending.length
+    ? `${pending.length} task${pending.length === 1 ? "" : "s"} pending`
+    : "Nothing pending";
+
+  box.innerHTML = `
+    <div class="tl-popup-head">
+      <div class="tl-popup-heading">
+        <div class="tl-popup-title">Today's Tasks</div>
+        <div class="tl-popup-sub">${dateLbl} · ${pendingNote}</div>
+      </div>
+      <div class="tl-popup-counter" title="Tasks completed today">
+        <span class="tl-popup-counter-num">${doneCount}</span>
+        <span class="tl-popup-counter-lbl">done today</span>
+      </div>
+    </div>
+    <div class="tl-popup-list">${list}</div>
+    <div class="tl-popup-hint">Tap anywhere outside to close</div>`;
+}
+
+window.closeDailyTaskPopup = function () {
+  if (_popupKeyHandler) { document.removeEventListener("keydown", _popupKeyHandler); _popupKeyHandler = null; }
+  const ov = document.getElementById("tlDailyPopup");
+  if (ov) animateOverlayOut(ov);
+};
+
+window.markDailyPopupTask = async function (id) {
+  const t = S.officerTasks.find(x => x.id === id);
+  if (!t || t.done) return;
+  try {
+    await setTaskDone(id, true);
+  } catch (e) {
+    console.error("[Tasks] mark done failed:", e);
+    toast("Could not update task");
+  }
+};
+
 /* Full content: officer selector (admin), date nav, add row, and the list. */
 function renderTaskListShell() {
   const c = document.getElementById("taskListContent");
@@ -345,7 +444,7 @@ function renderTaskListBody() {
   }
 
   const activeHtml = active.map((t, i) => taskRowHtml(t, i + 1, i, active.length)).join("");
-  const doneHtml = done.map(t => taskRowHtml(t, null, -1, 0)).join("");
+  const doneHtml = done.map((t, i) => taskRowHtml(t, active.length + i + 1, -1, 0)).join("");
   const doneSection = done.length ? `
     <div class="tl-done-label">Completed · ${done.length}</div>
     ${doneHtml}` : "";
@@ -353,17 +452,17 @@ function renderTaskListBody() {
   list.innerHTML = `${activeHtml}${doneSection}`;
 }
 
-/* serial: 1-based number for active rows, null for completed rows.
-   idx/total: position within the active list, used to gate the reorder arrows. */
+/* serial: 1-based running number (active tasks first, then completed).
+   idx: position within the active list (-1 for completed, which can't be
+   reordered); total: size of the active list, used to gate the arrows. */
 function taskRowHtml(t, serial, idx, total) {
   const edit = S.taskEditMode;
-  const serialCell = serial != null
-    ? `<span class="tl-serial">${serial}</span>`
-    : `<span class="tl-serial tl-serial--done"></span>`;
+  const reorderable = idx >= 0;
+  const serialCell = `<span class="tl-serial">${serial}</span>`;
 
   let right;
   if (edit) {
-    const reorder = (serial != null && total > 1)
+    const reorder = (reorderable && total > 1)
       ? `<div class="tl-reorder">
           <button type="button" class="tl-move" ${idx === 0 ? "disabled" : ""} onclick="moveOfficerTask('${t.id}',-1)" aria-label="Move up">&#9650;</button>
           <button type="button" class="tl-move" ${idx === total - 1 ? "disabled" : ""} onclick="moveOfficerTask('${t.id}',1)" aria-label="Move down">&#9660;</button>
