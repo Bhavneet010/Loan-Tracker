@@ -31,6 +31,7 @@ export const S = {
   taskCriticalExpanded: {},
   taskCriticalSort: {},
   taskListOfficer: null,
+  taskListDate: null,
   openPop: null,
   loans: [],
   loanMap: new Map(),

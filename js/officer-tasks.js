@@ -3,19 +3,34 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S } from "./state.js";
-import { esc, toast, initials, officerColor } from "./utils.js";
+import { esc, toast, initials, officerColor, todayStr } from "./utils.js";
 import { openOverlay, closeOverlay } from "./animate.js";
 
-/* Personal to-do list stored per officer. Each document is one task.
-   Tasks only cover a rolling 30-day window on screen and are wiped in full
-   during the month-end data cleanup, so the board starts fresh each month. */
+/* Personal to-do list stored per officer, per day. Each document is one task
+   tagged with the date it belongs to. The board opens on today and steps a day
+   at a time with the arrows. Tasks only cover a rolling 30-day window and the
+   whole collection is wiped during month-end cleanup, so each month starts fresh. */
 const COLLECTION = "officerTasks";
 const WINDOW_DAYS = 30;
-const WINDOW_MS = WINDOW_DAYS * 86400000;
+
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const newTaskId = () => "task_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
 
-const withinWindow = t => !t.createdAt || (Date.now() - new Date(t.createdAt).getTime()) <= WINDOW_MS;
+/* Older tasks were stored without a date field; fall back to their creation day. */
+const taskDate = t => t.date || (t.createdAt || "").slice(0, 10);
+
+function shiftDate(dateStr, delta) {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+/* The day the board is currently showing (defaults to today). */
+function activeDate() {
+  return S.taskListDate || todayStr();
+}
 
 /* Who the currently open board belongs to. Officers only ever see their own
    list; Admin picks an officer (defaults to the first one). */
@@ -25,8 +40,8 @@ function activeOfficer() {
   return S.officers[0] || null;
 }
 
-function tasksFor(officer) {
-  return S.officerTasks.filter(t => t.officer === officer && withinWindow(t));
+function tasksFor(officer, date) {
+  return S.officerTasks.filter(t => t.officer === officer && taskDate(t) === date);
 }
 
 /* Active tasks first (oldest at the top), completed tasks sink to the bottom
@@ -39,6 +54,29 @@ function sortTasks(list) {
   return { active, done };
 }
 
+/* ── DATE LABELS ── */
+function relativeLabel(dateStr) {
+  const diff = Math.round(
+    (new Date(dateStr + "T00:00:00") - new Date(todayStr() + "T00:00:00")) / 86400000
+  );
+  if (diff === 0) return "Today";
+  if (diff === -1) return "Yesterday";
+  if (diff === 1) return "Tomorrow";
+  return null;
+}
+
+function dateMainLabel(dateStr) {
+  const rel = relativeLabel(dateStr);
+  if (rel) return rel;
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getDate()} ${MON[d.getMonth()]}`;
+}
+
+function dateSubLabel(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return `${WD[d.getDay()]} · ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 /* ── DATA LAYER ── */
 export function subscribeOfficerTasks() {
   onSnapshot(collection(db, COLLECTION), snap => {
@@ -49,10 +87,11 @@ export function subscribeOfficerTasks() {
   }, err => console.error("[Tasks] Snapshot error:", err));
 }
 
-async function createTask(officer, text) {
+async function createTask(officer, date, text) {
   const id = newTaskId();
   await setDoc(doc(db, COLLECTION, id), {
     officer,
+    date,
     text,
     done: false,
     createdAt: new Date().toISOString(),
@@ -85,13 +124,14 @@ export async function purgeOfficerTasks() {
   return ids.length;
 }
 
-/* ── BADGE ── */
+/* ── BADGE ── (open tasks dated today) */
 export function updateTaskListBadge() {
   const el = document.getElementById("b-tasklist");
   if (!el || !S.user) return;
-  const open = S.isAdmin
-    ? S.officerTasks.filter(t => !t.done && withinWindow(t))
-    : tasksFor(S.user).filter(t => !t.done);
+  const today = todayStr();
+  const open = S.officerTasks.filter(t =>
+    !t.done && taskDate(t) === today && (S.isAdmin || t.officer === S.user)
+  );
   el.textContent = open.length || "";
 }
 
@@ -104,6 +144,7 @@ function isOverlayOpen() {
 window.showTaskListOverlay = function () {
   if (!S.user) { toast("Select your name first"); return; }
   if (S.isAdmin && !S.taskListOfficer) S.taskListOfficer = S.officers[0] || null;
+  S.taskListDate = todayStr();
   openOverlay("taskListOverlay", "block");
   document.body.style.overflow = "hidden";
   renderTaskListShell();
@@ -118,6 +159,17 @@ window.setTaskListOfficer = function (name) {
   renderTaskListShell();
 };
 
+window.taskListNavDate = function (delta) {
+  S.taskListDate = shiftDate(activeDate(), delta);
+  renderTaskListShell();
+};
+
+window.taskListToday = function () {
+  if (activeDate() === todayStr()) return;
+  S.taskListDate = todayStr();
+  renderTaskListShell();
+};
+
 window.submitOfficerTask = async function () {
   const input = document.getElementById("tlInput");
   if (!input) return;
@@ -128,7 +180,7 @@ window.submitOfficerTask = async function () {
   input.value = "";
   input.focus();
   try {
-    await createTask(officer, text);
+    await createTask(officer, activeDate(), text);
   } catch (e) {
     console.error("[Tasks] create failed:", e);
     toast("Could not add task");
@@ -160,11 +212,13 @@ window.deleteOfficerTask = async function (id) {
   }
 };
 
-/* Full content: officer selector (admin), add row, and the list. */
+/* Full content: officer selector (admin), date nav, add row, and the list. */
 function renderTaskListShell() {
   const c = document.getElementById("taskListContent");
   if (!c) return;
   const officer = activeOfficer();
+  const date = activeDate();
+  const isToday = date === todayStr();
 
   const selector = S.isAdmin ? `
     <div class="tl-officer-bar">
@@ -172,7 +226,7 @@ function renderTaskListShell() {
       <div class="tl-officer-chips">
         ${S.officers.map(o => {
           const active = o === officer;
-          const openCount = tasksFor(o).filter(t => !t.done).length;
+          const openCount = tasksFor(o, date).filter(t => !t.done).length;
           return `<button type="button" class="tl-officer-chip${active ? " active" : ""}" onclick="setTaskListOfficer('${esc(o)}')">
             <span class="tl-chip-av" style="background:${officerColor(o).bg};">${initials(o)}</span>
             <span class="tl-chip-name">${esc(o)}</span>
@@ -185,16 +239,20 @@ function renderTaskListShell() {
   const addRow = officer ? `
     <div class="tl-add-row">
       <input type="text" id="tlInput" class="tl-input" maxlength="200" autocomplete="off"
-        placeholder="Add a task for ${esc(officer)}…" onkeydown="handleTaskInputKey(event)">
+        placeholder="Add a task${S.isAdmin ? " for " + esc(officer) : ""}…" onkeydown="handleTaskInputKey(event)">
       <button type="button" class="tl-add-btn" onclick="submitOfficerTask()" aria-label="Add task" title="Add task">+</button>
     </div>` : "";
 
   c.innerHTML = `
     ${selector}
     <div class="tl-board">
-      <div class="tl-board-head">
-        <span class="tl-board-who">${officer ? esc(officer) + "'s tasks" : "No officer"}</span>
-        <span class="tl-board-note">Last ${WINDOW_DAYS} days · resets monthly</span>
+      <div class="tl-datenav">
+        <button type="button" class="tl-nav-btn" onclick="taskListNavDate(-1)" aria-label="Previous day">&lsaquo;</button>
+        <button type="button" class="tl-date-label${isToday ? " is-today" : ""}" onclick="taskListToday()" title="${isToday ? "Today" : "Jump to today"}">
+          <span class="tl-date-main">${dateMainLabel(date)}</span>
+          <span class="tl-date-sub">${dateSubLabel(date)}</span>
+        </button>
+        <button type="button" class="tl-nav-btn" onclick="taskListNavDate(1)" aria-label="Next day">&rsaquo;</button>
       </div>
       ${addRow}
       <div id="tlList" class="tl-list"></div>
@@ -202,7 +260,7 @@ function renderTaskListShell() {
 
   renderTaskListBody();
   const input = document.getElementById("tlInput");
-  if (input) input.focus();
+  if (input && isToday) input.focus();
 }
 
 /* List only — safe to re-run on every Firestore snapshot without disturbing
@@ -211,18 +269,21 @@ function renderTaskListBody() {
   const list = document.getElementById("tlList");
   if (!list) return;
   const officer = activeOfficer();
+  const date = activeDate();
   if (!officer) {
     list.innerHTML = `<div class="tl-empty">No officers configured.</div>`;
     return;
   }
 
-  const { active, done } = sortTasks(tasksFor(officer));
+  const { active, done } = sortTasks(tasksFor(officer, date));
 
   if (!active.length && !done.length) {
+    const rel = relativeLabel(date);
+    const when = rel ? rel.toLowerCase() : "this day";
     list.innerHTML = `<div class="tl-empty">
       <div class="tl-empty-icon">📝</div>
-      <div class="tl-empty-title">No tasks yet</div>
-      <div class="tl-empty-sub">Add ${esc(officer)}'s first task above.</div>
+      <div class="tl-empty-title">No tasks for ${esc(rel || dateMainLabel(date))}</div>
+      <div class="tl-empty-sub">Add ${S.isAdmin ? esc(officer) + "'s" : "your"} first task for ${esc(when)} above.</div>
     </div>`;
     return;
   }
