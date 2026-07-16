@@ -14,7 +14,7 @@
 
 /* ── Admin officer selector ── */
 .tl-officer-bar{
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 .tl-officer-bar-label{
   display:block;
@@ -27,37 +27,45 @@
 }
 .tl-officer-chips{
   display:flex;
-  flex-wrap:wrap;
   gap:8px;
 }
 .tl-officer-chip{
+  flex:1 1 0;
+  min-width:0;
   display:inline-flex;
   align-items:center;
+  justify-content:center;
   gap:7px;
-  padding:5px 12px 5px 5px;
-  border-radius:var(--radius-pill);
+  padding:7px 8px;
+  border-radius:var(--radius-sm);
   border:1px solid var(--p-bd);
   background:var(--glass);
   color:var(--text1);
   font-size:var(--fs-md);
   font-weight:600;
   cursor:pointer;
-  transition:border-color var(--dur-fast),background var(--dur-fast),transform var(--dur-fast);
+  transition:border-color var(--dur-fast),background var(--dur-fast);
 }
-.tl-officer-chip:hover{transform:translateY(-1px);}
 .tl-officer-chip.active{
   border-color:var(--p1);
   background:var(--p-bg);
   box-shadow:0 0 0 1px var(--p1) inset;
 }
 .tl-chip-av{
-  width:24px;height:24px;border-radius:50%;
+  width:22px;height:22px;border-radius:50%;
   display:inline-flex;align-items:center;justify-content:center;
   color:#fff;font-size:var(--fs-sm);font-weight:800;
   flex-shrink:0;
 }
+.tl-chip-name{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 .tl-chip-count{
-  min-width:18px;height:18px;padding:0 5px;
+  flex-shrink:0;
+  min-width:17px;height:17px;padding:0 5px;
   border-radius:var(--radius-pill);
   background:var(--p1);color:#fff;
   font-size:var(--fs-xs);font-weight:800;
@@ -73,17 +81,18 @@
   box-shadow:0 6px 20px rgba(107,95,191,0.08);
 }
 
-/* ── Date navigator (mirrors the calendar's month nav) ── */
+/* ── Date navigator (top bar, mirrors the calendar's month nav) ── */
 .tl-datenav{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  margin-bottom:12px;
-  padding:4px 6px;
-  border-radius:var(--radius-sm);
-  background:var(--p-subtle);
-  border:1px solid rgba(107,95,191,0.10);
+  margin-bottom:14px;
+  padding:6px;
+  border-radius:var(--radius-lg);
+  background:var(--glass);
+  border:1px solid var(--glass-bd);
+  box-shadow:0 6px 20px rgba(107,95,191,0.08);
 }
 .tl-nav-btn{
   flex-shrink:0;
@@ -115,11 +124,11 @@
 }
 .tl-date-label:hover{background:rgba(107,95,191,0.06);}
 .tl-date-main{
-  font-size:16px;
+  font-size:var(--fs-base);
   font-weight:800;
   color:var(--text1);
   letter-spacing:-0.3px;
-  line-height:1.1;
+  line-height:1.15;
 }
 .tl-date-sub{
   font-size:var(--fs-sm);
@@ -254,12 +263,12 @@
 /* ── Empty state ── */
 .tl-empty{
   text-align:center;
-  padding:30px 16px;
+  padding:26px 16px;
   color:var(--muted);
 }
-.tl-empty-icon{font-size:28px;margin-bottom:8px;}
-.tl-empty-title{font-size:var(--fs-base);font-weight:800;color:var(--text1);margin-bottom:4px;}
-.tl-empty-sub{font-size:var(--fs-md);}
+.tl-empty-icon{font-size:24px;margin-bottom:6px;}
+.tl-empty-title{font-size:var(--fs-md);font-weight:800;color:var(--text1);margin-bottom:3px;}
+.tl-empty-sub{font-size:var(--fs-sm);}
 
 /* ── Dark theme tweaks ── */
 body.dark .tl-board{box-shadow:0 6px 20px rgba(0,0,0,0.35);}

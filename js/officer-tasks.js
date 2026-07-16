@@ -22,9 +22,12 @@ const newTaskId = () => "task_" + Date.now() + "_" + Math.random().toString(36).
 const taskDate = t => t.date || (t.createdAt || "").slice(0, 10);
 
 function shiftDate(dateStr, delta) {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setDate(d.getDate() + delta);
-  return d.toISOString().slice(0, 10);
+  // Work in UTC so the ISO conversion can't shift the calendar day in
+  // non-UTC timezones (e.g. IST +5:30 would otherwise roll the date back).
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + delta);
+  return dt.toISOString().slice(0, 10);
 }
 
 /* The day the board is currently showing (defaults to today). */
@@ -244,16 +247,16 @@ function renderTaskListShell() {
     </div>` : "";
 
   c.innerHTML = `
+    <div class="tl-datenav">
+      <button type="button" class="tl-nav-btn" onclick="taskListNavDate(-1)" aria-label="Previous day">&lsaquo;</button>
+      <button type="button" class="tl-date-label${isToday ? " is-today" : ""}" onclick="taskListToday()" title="${isToday ? "Today" : "Jump to today"}">
+        <span class="tl-date-main">${dateMainLabel(date)}</span>
+        <span class="tl-date-sub">${dateSubLabel(date)}</span>
+      </button>
+      <button type="button" class="tl-nav-btn" onclick="taskListNavDate(1)" aria-label="Next day">&rsaquo;</button>
+    </div>
     ${selector}
     <div class="tl-board">
-      <div class="tl-datenav">
-        <button type="button" class="tl-nav-btn" onclick="taskListNavDate(-1)" aria-label="Previous day">&lsaquo;</button>
-        <button type="button" class="tl-date-label${isToday ? " is-today" : ""}" onclick="taskListToday()" title="${isToday ? "Today" : "Jump to today"}">
-          <span class="tl-date-main">${dateMainLabel(date)}</span>
-          <span class="tl-date-sub">${dateSubLabel(date)}</span>
-        </button>
-        <button type="button" class="tl-nav-btn" onclick="taskListNavDate(1)" aria-label="Next day">&rsaquo;</button>
-      </div>
       ${addRow}
       <div id="tlList" class="tl-list"></div>
     </div>`;
