@@ -32,6 +32,7 @@ export const S = {
   taskCriticalSort: {},
   taskListOfficer: null,
   taskListDate: null,
+  taskEditMode: false,
   openPop: null,
   loans: [],
   loanMap: new Map(),

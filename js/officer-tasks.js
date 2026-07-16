@@ -47,14 +47,23 @@ function tasksFor(officer, date) {
   return S.officerTasks.filter(t => t.officer === officer && taskDate(t) === date);
 }
 
-/* Active tasks first (oldest at the top), completed tasks sink to the bottom
-   ordered by when they were checked off (most recent first). */
+const orderOf = t => (typeof t.order === "number" ? t.order : Number.POSITIVE_INFINITY);
+
+/* Active tasks first, ordered by their manual serial order (falling back to
+   creation time for tasks saved before ordering existed); completed tasks sink
+   to the bottom ordered by when they were checked off (most recent first). */
 function sortTasks(list) {
   const active = list.filter(t => !t.done)
-    .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+    .sort((a, b) => (orderOf(a) - orderOf(b)) || (a.createdAt || "").localeCompare(b.createdAt || ""));
   const done = list.filter(t => t.done)
     .sort((a, b) => (b.completedAt || "").localeCompare(a.completedAt || ""));
   return { active, done };
+}
+
+/* Officers may remove only tasks they created; a task added by Admin can be
+   removed only by Admin. Admin can remove anything. */
+function canDelete(t) {
+  return S.isAdmin || t.createdBy === S.user;
 }
 
 /* ── DATE LABELS ── */
@@ -91,12 +100,17 @@ export function subscribeOfficerTasks() {
 }
 
 async function createTask(officer, date, text) {
+  // Append new tasks below the existing ones for this officer/day.
+  const maxOrder = S.officerTasks
+    .filter(t => t.officer === officer && taskDate(t) === date)
+    .reduce((mx, t) => Math.max(mx, orderOf(t) === Infinity ? -1 : t.order), -1);
   const id = newTaskId();
   await setDoc(doc(db, COLLECTION, id), {
     officer,
     date,
     text,
     done: false,
+    order: maxOrder + 1,
     createdAt: new Date().toISOString(),
     createdBy: S.user || "Unknown",
     completedAt: null,
@@ -148,8 +162,10 @@ window.showTaskListOverlay = function () {
   if (!S.user) { toast("Select your name first"); return; }
   if (S.isAdmin && !S.taskListOfficer) S.taskListOfficer = S.officers[0] || null;
   S.taskListDate = todayStr();
+  S.taskEditMode = false;
   openOverlay("taskListOverlay", "block");
   document.body.style.overflow = "hidden";
+  syncEditToggle();
   renderTaskListShell();
 };
 
@@ -207,6 +223,9 @@ window.toggleOfficerTask = async function (id) {
 };
 
 window.deleteOfficerTask = async function (id) {
+  const task = S.officerTasks.find(t => t.id === id);
+  if (!task) return;
+  if (!canDelete(task)) { toast("Added by Admin — only Admin can remove it"); return; }
   try {
     await removeTask(id);
   } catch (e) {
@@ -214,6 +233,40 @@ window.deleteOfficerTask = async function (id) {
     toast("Could not delete task");
   }
 };
+
+/* Reorder an active task up (dir=-1) or down (dir=1) within its day, then
+   persist the new serial order for every affected task. */
+window.moveOfficerTask = async function (id, dir) {
+  const { active } = sortTasks(tasksFor(activeOfficer(), activeDate()));
+  const i = active.findIndex(t => t.id === id);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= active.length) return;
+  const arr = active.slice();
+  const [moved] = arr.splice(i, 1);
+  arr.splice(j, 0, moved);
+  try {
+    const batch = writeBatch(db);
+    arr.forEach((t, idx) => { if (t.order !== idx) batch.update(doc(db, COLLECTION, t.id), { order: idx }); });
+    await batch.commit();
+  } catch (e) {
+    console.error("[Tasks] reorder failed:", e);
+    toast("Could not reorder");
+  }
+};
+
+window.toggleTaskEditMode = function () {
+  S.taskEditMode = !S.taskEditMode;
+  syncEditToggle();
+  renderTaskListBody();
+};
+
+function syncEditToggle() {
+  const btn = document.getElementById("tlEditToggle");
+  if (!btn) return;
+  btn.textContent = S.taskEditMode ? "Done" : "Edit";
+  btn.classList.toggle("active", S.taskEditMode);
+}
 
 /* Full content: officer selector (admin), date nav, add row, and the list. */
 function renderTaskListShell() {
@@ -291,21 +344,45 @@ function renderTaskListBody() {
     return;
   }
 
-  const rowsHtml = rows => rows.map(taskRowHtml).join("");
+  const activeHtml = active.map((t, i) => taskRowHtml(t, i + 1, i, active.length)).join("");
+  const doneHtml = done.map(t => taskRowHtml(t, null, -1, 0)).join("");
   const doneSection = done.length ? `
     <div class="tl-done-label">Completed · ${done.length}</div>
-    ${rowsHtml(done)}` : "";
+    ${doneHtml}` : "";
 
-  list.innerHTML = `${rowsHtml(active)}${doneSection}`;
+  list.innerHTML = `${activeHtml}${doneSection}`;
 }
 
-function taskRowHtml(t) {
-  return `<div class="tl-task${t.done ? " tl-task--done" : ""}">
-    <button type="button" class="tl-check${t.done ? " checked" : ""}" onclick="toggleOfficerTask('${t.id}')"
+/* serial: 1-based number for active rows, null for completed rows.
+   idx/total: position within the active list, used to gate the reorder arrows. */
+function taskRowHtml(t, serial, idx, total) {
+  const edit = S.taskEditMode;
+  const serialCell = serial != null
+    ? `<span class="tl-serial">${serial}</span>`
+    : `<span class="tl-serial tl-serial--done"></span>`;
+
+  let right;
+  if (edit) {
+    const reorder = (serial != null && total > 1)
+      ? `<div class="tl-reorder">
+          <button type="button" class="tl-move" ${idx === 0 ? "disabled" : ""} onclick="moveOfficerTask('${t.id}',-1)" aria-label="Move up">&#9650;</button>
+          <button type="button" class="tl-move" ${idx === total - 1 ? "disabled" : ""} onclick="moveOfficerTask('${t.id}',1)" aria-label="Move down">&#9660;</button>
+        </div>`
+      : "";
+    const action = canDelete(t)
+      ? `<button type="button" class="tl-del" onclick="deleteOfficerTask('${t.id}')" aria-label="Delete task" title="Delete">✕</button>`
+      : `<span class="tl-lock" title="Added by Admin — can't remove" aria-label="Added by Admin">🔒</span>`;
+    right = `${reorder}${action}`;
+  } else {
+    right = `<button type="button" class="tl-check${t.done ? " checked" : ""}" onclick="toggleOfficerTask('${t.id}')"
       role="checkbox" aria-checked="${t.done}" aria-label="${t.done ? "Mark not done" : "Mark done"}">
       <span class="tl-check-tick">✓</span>
-    </button>
+    </button>`;
+  }
+
+  return `<div class="tl-task${t.done ? " tl-task--done" : ""}${edit ? " tl-task--edit" : ""}">
+    ${serialCell}
     <span class="tl-task-text">${esc(t.text)}</span>
-    <button type="button" class="tl-del" onclick="deleteOfficerTask('${t.id}')" aria-label="Delete task" title="Delete">✕</button>
+    ${right}
   </div>`;
 }
