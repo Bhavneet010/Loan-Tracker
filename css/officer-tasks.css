@@ -37,15 +37,6 @@
 .tl-officer-bar{
   margin-bottom:12px;
 }
-.tl-officer-bar-label{
-  display:block;
-  font-size:var(--fs-sm);
-  font-weight:700;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:0.4px;
-  margin:0 2px 8px;
-}
 .tl-officer-chips{
   display:flex;
   gap:8px;
@@ -296,6 +287,25 @@
   text-decoration-thickness:2px;
   color:var(--muted);
   font-weight:500;
+}
+
+/* Carried-forward age badge */
+.tl-age{
+  flex-shrink:0;
+  font-size:var(--fs-xs);
+  font-weight:800;
+  color:var(--amber);
+  background:var(--amber-bg);
+  border:1px solid var(--amber-bd);
+  border-radius:var(--radius-pill);
+  padding:1px 7px;
+  line-height:1.5;
+  white-space:nowrap;
+}
+.tl-age--old{
+  color:var(--red);
+  background:var(--red-bg);
+  border-color:var(--red-bd);
 }
 
 .tl-del{

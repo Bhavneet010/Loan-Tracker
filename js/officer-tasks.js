@@ -43,27 +43,54 @@ function activeOfficer() {
   return S.officers[0] || null;
 }
 
-function tasksFor(officer, date) {
-  return S.officerTasks.filter(t => t.officer === officer && taskDate(t) === date);
-}
-
 const orderOf = t => (typeof t.order === "number" ? t.order : Number.POSITIVE_INFINITY);
-
-/* Active tasks first, ordered by their manual serial order (falling back to
-   creation time for tasks saved before ordering existed); completed tasks sink
-   to the bottom ordered by when they were checked off (most recent first). */
-function sortTasks(list) {
-  const active = list.filter(t => !t.done)
-    .sort((a, b) => (orderOf(a) - orderOf(b)) || (a.createdAt || "").localeCompare(b.createdAt || ""));
-  const done = list.filter(t => t.done)
-    .sort((a, b) => (b.completedAt || "").localeCompare(a.completedAt || ""));
-  return { active, done };
-}
 
 /* Officers may remove only tasks they created; a task added by Admin can be
    removed only by Admin. Admin can remove anything. */
 function canDelete(t) {
   return S.isAdmin || t.createdBy === S.user;
+}
+
+const completedDay = t => (t.completedAt || "").slice(0, 10) || taskDate(t);
+
+/* Whole days between two YYYY-MM-DD dates (never negative). */
+function ageDays(fromStr, toStr) {
+  const a = new Date(fromStr + "T00:00:00");
+  const b = new Date(toStr + "T00:00:00");
+  return Math.max(0, Math.round((b - a) / 86400000));
+}
+
+/* Tasks visible on officer O's board for day D:
+   - active: every incomplete task dated on/before D — anything left unfinished
+     rolls forward and keeps showing until it is completed.
+   - done:   tasks completed on day D.
+   Active tasks are grouped oldest day first (so carried-forward items sit on
+   top), then by their manual order within the day. */
+function boardTasks(officer, D) {
+  const mine = S.officerTasks.filter(t => t.officer === officer);
+  const active = mine
+    .filter(t => !t.done && taskDate(t) <= D)
+    .sort((a, b) =>
+      taskDate(a).localeCompare(taskDate(b)) ||
+      (orderOf(a) - orderOf(b)) ||
+      (a.createdAt || "").localeCompare(b.createdAt || ""));
+  const done = mine
+    .filter(t => t.done && completedDay(t) === D)
+    .sort((a, b) => (b.completedAt || "").localeCompare(a.completedAt || ""));
+  return { active, done };
+}
+
+/* Incomplete tasks on an officer's plate for day D (dated on/before D). */
+function boardPending(officer, D) {
+  return S.officerTasks.filter(t => t.officer === officer && !t.done && taskDate(t) <= D);
+}
+
+/* Small "how old" badge for a task carried forward to day D. */
+function ageBadgeHtml(t, D) {
+  const age = ageDays(taskDate(t), D);
+  if (age < 1) return "";
+  const cls = age >= 3 ? "tl-age tl-age--old" : "tl-age";
+  return `<span class="${cls}" title="Carried forward · ${age} day${age > 1 ? "s" : ""} old">${age}d</span>`;
 }
 
 /* ── DATE LABELS ── */
@@ -144,13 +171,13 @@ export async function purgeOfficerTasks() {
   return ids.length;
 }
 
-/* ── BADGE ── (open tasks dated today) */
+/* ── BADGE ── (open tasks on today's plate, incl. carried-forward) */
 export function updateTaskListBadge() {
   const el = document.getElementById("b-tasklist");
   if (!el || !S.user) return;
   const today = todayStr();
   const open = S.officerTasks.filter(t =>
-    !t.done && taskDate(t) === today && (S.isAdmin || t.officer === S.user)
+    !t.done && taskDate(t) <= today && (S.isAdmin || t.officer === S.user)
   );
   el.textContent = open.length || "";
 }
@@ -237,15 +264,19 @@ window.deleteOfficerTask = async function (id) {
   }
 };
 
-/* Reorder an active task up (dir=-1) or down (dir=1) within its day, then
-   persist the new serial order for every affected task. */
+/* Reorder an active task up (dir=-1) or down (dir=1) within its own day
+   (carried-forward tasks from other days keep their own order), then persist
+   the new serial order for every task in that day's group. */
 window.moveOfficerTask = async function (id, dir) {
-  const { active } = sortTasks(tasksFor(activeOfficer(), activeDate()));
-  const i = active.findIndex(t => t.id === id);
-  if (i < 0) return;
+  const task = S.officerTasks.find(t => t.id === id);
+  if (!task) return;
+  const group = S.officerTasks
+    .filter(t => t.officer === task.officer && taskDate(t) === taskDate(task) && !t.done)
+    .sort((a, b) => (orderOf(a) - orderOf(b)) || (a.createdAt || "").localeCompare(b.createdAt || ""));
+  const i = group.findIndex(t => t.id === id);
   const j = i + dir;
-  if (j < 0 || j >= active.length) return;
-  const arr = active.slice();
+  if (i < 0 || j < 0 || j >= group.length) return;
+  const arr = group.slice();
   const [moved] = arr.splice(i, 1);
   arr.splice(j, 0, moved);
   try {
@@ -282,9 +313,7 @@ function isDailyPopupOpen() { return !!document.getElementById("tlDailyPopup"); 
 export function maybeShowDailyTaskPopup() {
   if (!S.user || S.isAdmin) return;
   if (sessionStorage.getItem("tlDailyPopupShown")) return;
-  const today = todayStr();
-  const pending = S.officerTasks.filter(t => t.officer === S.user && taskDate(t) === today && !t.done);
-  if (!pending.length) return;
+  if (!boardPending(S.user, todayStr()).length) return;
   sessionStorage.setItem("tlDailyPopupShown", "1");
   showDailyTaskPopup();
 }
@@ -309,10 +338,8 @@ function renderDailyPopupBody() {
   const box = document.querySelector("#tlDailyPopup .tl-popup");
   if (!box) return;
   const today = todayStr();
-  const mine = S.officerTasks.filter(t => t.officer === S.user && taskDate(t) === today);
-  const doneCount = mine.filter(t => t.done).length;
-  const pending = mine.filter(t => !t.done)
-    .sort((a, b) => (orderOf(a) - orderOf(b)) || (a.createdAt || "").localeCompare(b.createdAt || ""));
+  const { active: pending, done } = boardTasks(S.user, today);
+  const doneCount = done.length;
   const d = new Date(today + "T00:00:00");
   const dateLbl = `${WD[d.getDay()]} · ${d.getDate()} ${MON[d.getMonth()]}`;
 
@@ -321,6 +348,7 @@ function renderDailyPopupBody() {
         <div class="tl-popup-task">
           <span class="tl-serial">${i + 1}</span>
           <span class="tl-popup-text">${esc(t.text)}</span>
+          ${ageBadgeHtml(t, today)}
           <button type="button" class="tl-popup-check" onclick="markDailyPopupTask('${t.id}')" aria-label="Mark done" title="Mark done">
             <span class="tl-check-tick">✓</span>
           </button>
@@ -377,11 +405,10 @@ function renderTaskListShell() {
 
   const selector = S.isAdmin ? `
     <div class="tl-officer-bar">
-      <span class="tl-officer-bar-label">Create for</span>
       <div class="tl-officer-chips">
         ${S.officers.map(o => {
           const active = o === officer;
-          const openCount = tasksFor(o, date).filter(t => !t.done).length;
+          const openCount = boardPending(o, date).length;
           return `<button type="button" class="tl-officer-chip${active ? " active" : ""}" onclick="setTaskListOfficer('${esc(o)}')">
             <span class="tl-chip-av" style="background:${officerColor(o).bg};">${initials(o)}</span>
             <span class="tl-chip-name">${esc(o)}</span>
@@ -430,7 +457,7 @@ function renderTaskListBody() {
     return;
   }
 
-  const { active, done } = sortTasks(tasksFor(officer, date));
+  const { active, done } = boardTasks(officer, date);
 
   if (!active.length && !done.length) {
     const rel = relativeLabel(date);
@@ -443,8 +470,13 @@ function renderTaskListBody() {
     return;
   }
 
-  const activeHtml = active.map((t, i) => taskRowHtml(t, i + 1, i, active.length)).join("");
-  const doneHtml = done.map((t, i) => taskRowHtml(t, active.length + i + 1, -1, 0)).join("");
+  const activeHtml = active.map((t, i) => {
+    // Reorder is only allowed between tasks of the same day (adjacent in the list).
+    const canUp = i > 0 && taskDate(active[i - 1]) === taskDate(t);
+    const canDown = i < active.length - 1 && taskDate(active[i + 1]) === taskDate(t);
+    return taskRowHtml(t, i + 1, date, canUp, canDown);
+  }).join("");
+  const doneHtml = done.map((t, i) => taskRowHtml(t, active.length + i + 1, date, false, false)).join("");
   const doneSection = done.length ? `
     <div class="tl-done-label">Completed · ${done.length}</div>
     ${doneHtml}` : "";
@@ -453,19 +485,19 @@ function renderTaskListBody() {
 }
 
 /* serial: 1-based running number (active tasks first, then completed).
-   idx: position within the active list (-1 for completed, which can't be
-   reordered); total: size of the active list, used to gate the arrows. */
-function taskRowHtml(t, serial, idx, total) {
+   D: the day being viewed (for the carried-forward age badge).
+   canUp/canDown: whether reorder arrows are enabled (same-day neighbour). */
+function taskRowHtml(t, serial, D, canUp, canDown) {
   const edit = S.taskEditMode;
-  const reorderable = idx >= 0;
   const serialCell = `<span class="tl-serial">${serial}</span>`;
+  const ageBadge = t.done ? "" : ageBadgeHtml(t, D);
 
   let right;
   if (edit) {
-    const reorder = (reorderable && total > 1)
+    const reorder = (!t.done && (canUp || canDown))
       ? `<div class="tl-reorder">
-          <button type="button" class="tl-move" ${idx === 0 ? "disabled" : ""} onclick="moveOfficerTask('${t.id}',-1)" aria-label="Move up">&#9650;</button>
-          <button type="button" class="tl-move" ${idx === total - 1 ? "disabled" : ""} onclick="moveOfficerTask('${t.id}',1)" aria-label="Move down">&#9660;</button>
+          <button type="button" class="tl-move" ${canUp ? "" : "disabled"} onclick="moveOfficerTask('${t.id}',-1)" aria-label="Move up">&#9650;</button>
+          <button type="button" class="tl-move" ${canDown ? "" : "disabled"} onclick="moveOfficerTask('${t.id}',1)" aria-label="Move down">&#9660;</button>
         </div>`
       : "";
     const action = canDelete(t)
@@ -482,6 +514,7 @@ function taskRowHtml(t, serial, idx, total) {
   return `<div class="tl-task${t.done ? " tl-task--done" : ""}${edit ? " tl-task--edit" : ""}">
     ${serialCell}
     <span class="tl-task-text">${esc(t.text)}</span>
+    ${ageBadge}
     ${right}
   </div>`;
 }
