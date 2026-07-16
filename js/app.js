@@ -1,6 +1,7 @@
 import { S, loadSettings } from "./state.js";
 import { subscribeLoans } from "./db.js";
 import { subscribeNotifications } from "./notifications.js";
+import { subscribeOfficerTasks } from "./officer-tasks.js";
 import { render } from "./ui-render.js";
 import { initPushNotifications } from "./push-notifications.js";
 import { initPresence } from "./presence.js";
@@ -113,6 +114,7 @@ async function init() {
   console.log('[INIT] Connecting to database...');
   subscribeLoans();
   subscribeNotifications();
+  subscribeOfficerTasks();
   
   if (!S.user) {
     if (window.showUserSelect) window.showUserSelect();

@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="css/audit.css">
 <link rel="stylesheet" href="css/calendar.css">
 <link rel="stylesheet" href="css/tasks.css?v=159">
+<link rel="stylesheet" href="css/officer-tasks.css?v=180">
 <link rel="stylesheet" href="css/notifications.css">
 <link rel="stylesheet" href="css/snapshot-modal.css?v=2">
   <link rel="stylesheet" href="css/snapshot-report.css?v=153">
@@ -80,6 +81,9 @@
       <div class="header-right">
         <div class="hbtn notif-hbtn" onclick="showNotifOverlay()" title="Notifications">
           🔔<span class="hbtn-badge" id="b-notifs"></span>
+        </div>
+        <div class="hbtn tasklist-hbtn" onclick="showTaskListOverlay()" title="Task List">
+          📝<span class="hbtn-badge" id="b-tasklist"></span>
         </div>
         <div class="hbtn" onclick="showPerfOverlay()" title="Performance">
           📊
@@ -174,6 +178,15 @@
     </div>
   </div>
   <div id="perfOverlayContent" style="padding:14px;"></div>
+</div>
+
+<!-- TASK LIST OVERLAY -->
+<div id="taskListOverlay" class="perf-overlay" style="display:none;">
+  <div class="perf-overlay-header">
+    <button class="back-btn" onclick="closeTaskListOverlay()">← Back</button>
+    <span class="perf-overlay-title">Task List</span>
+  </div>
+  <div id="taskListContent" class="tl-wrap"></div>
 </div>
 
 <!-- NOTIFICATIONS OVERLAY -->

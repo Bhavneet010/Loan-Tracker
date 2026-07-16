@@ -16,6 +16,7 @@ import {
   ensureHtml2Canvas,
   ensureJsPdf,
 } from "./performance-snapshot.js";
+import { purgeOfficerTasks } from "./officer-tasks.js";
 import {
   PDF_PAGE_HEIGHT,
   PDF_PAGE_WIDTH,
@@ -712,6 +713,14 @@ async function commitCleanup(data) {
       else batch.update(ref, op.data);
     });
     await batch.commit();
+  }
+
+  // Reset every officer's task board so the new month starts fresh. Isolated
+  // in its own try/catch so a task-purge hiccup can't roll back the loan cleanup.
+  try {
+    await purgeOfficerTasks();
+  } catch (err) {
+    console.error("[MonthEnd] Task list reset failed:", err);
   }
 
   await setDoc(doc(db, SNAPSHOT_COLLECTION, data.month), {

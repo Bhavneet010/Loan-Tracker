@@ -2,6 +2,7 @@
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { fmtAmt } from "./utils.js";
 import { getTaskCounts } from "./ui-tasks.js";
+import { updateTaskListBadge } from "./officer-tasks.js";
 
 let lastHeroMode = '';
 let lastHeroSelection = '';
@@ -91,6 +92,8 @@ export function updateBadges() {
     const taskCount = getTaskCounts(metrics);
     bTasks.textContent = taskCount || '';
   }
+
+  updateTaskListBadge();
 }
 
 /* HERO STATS */
