@@ -315,9 +315,30 @@ export function maybeShowDailyTaskPopup() {
   if (sessionStorage.getItem("tlDailyPopupShown")) return;
   if (!boardPending(S.user, todayStr()).length) return;
   sessionStorage.setItem("tlDailyPopupShown", "1");
-  showDailyTaskPopup();
+  // On a fresh (re)open the first Firestore snapshot can fire before
+  // officer-tasks.css has finished loading, which would paint the popup as
+  // raw unstyled HTML. Wait until the stylesheet is actually applied.
+  whenTaskStylesReady(showDailyTaskPopup);
 }
 window.maybeShowDailyTaskPopup = maybeShowDailyTaskPopup;
+
+/* True once officer-tasks.css is applied — probed via a style only it sets. */
+function taskStylesApplied() {
+  const probe = document.createElement("div");
+  probe.className = "tl-popup-counter";
+  probe.style.cssText = "position:absolute;left:-9999px;top:-9999px;visibility:hidden;";
+  document.body.appendChild(probe);
+  const bg = getComputedStyle(probe).backgroundColor;
+  probe.remove();
+  return !!bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent";
+}
+
+/* Poll until the task stylesheet is live (or give up after ~3s and show
+   anyway, so the popup is never permanently withheld). */
+function whenTaskStylesReady(fn, tries = 0) {
+  if (taskStylesApplied() || tries >= 50) { fn(); return; }
+  setTimeout(() => whenTaskStylesReady(fn, tries + 1), 60);
+}
 
 function showDailyTaskPopup() {
   const existing = document.getElementById("tlDailyPopup");
