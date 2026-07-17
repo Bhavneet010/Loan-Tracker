@@ -462,8 +462,8 @@ function renderTaskListShell() {
     </div>`;
 
   renderTaskListBody();
-  const input = document.getElementById("tlInput");
-  if (input && isToday) input.focus();
+  // Intentionally do NOT focus the input on open — auto-focus pops the mobile
+  // keyboard every time the board appears. The user taps the field when ready.
 }
 
 /* List only — safe to re-run on every Firestore snapshot without disturbing
