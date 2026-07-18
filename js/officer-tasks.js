@@ -60,16 +60,33 @@ function ageDays(fromStr, toStr) {
   return Math.max(0, Math.round((b - a) / 86400000));
 }
 
-/* Tasks visible on officer O's board for day D:
-   - active: every incomplete task dated on/before D — anything left unfinished
-     rolls forward and keeps showing until it is completed.
-   - done:   tasks completed on day D.
-   Active tasks are grouped oldest day first (so carried-forward items sit on
-   top), then by their manual order within the day. */
+/* Tasks visible on officer O's board for day D. The shape depends on when D is:
+   - today  → the live board: every incomplete task dated on/before D (carried
+     forward, oldest first) plus what was completed today.
+   - past   → a retrospective summary of the tasks that originated that day
+     (total / done / pending). Pending items have rolled forward to today, so
+     they are only counted here, not listed again.
+   - future → only tasks explicitly scheduled for that exact day. */
 function boardTasks(officer, D) {
   const mine = S.officerTasks.filter(t => t.officer === officer);
-  const active = mine
-    .filter(t => !t.done && taskDate(t) <= D)
+  const today = todayStr();
+
+  if (D < today) {
+    const dayTasks = mine.filter(t => taskDate(t) === D);
+    return {
+      mode: "past",
+      total: dayTasks.length,
+      doneCount: dayTasks.filter(t => t.done).length,
+      pendingCount: dayTasks.filter(t => !t.done).length,
+      active: [],
+      done: [],
+    };
+  }
+
+  const activeFilter = D > today
+    ? t => !t.done && taskDate(t) === D                 // future: scheduled that day
+    : t => !t.done && taskDate(t) <= D;                 // today: carried forward
+  const active = mine.filter(activeFilter)
     .sort((a, b) =>
       taskDate(a).localeCompare(taskDate(b)) ||
       (orderOf(a) - orderOf(b)) ||
@@ -77,12 +94,22 @@ function boardTasks(officer, D) {
   const done = mine
     .filter(t => t.done && completedDay(t) === D)
     .sort((a, b) => (b.completedAt || "").localeCompare(a.completedAt || ""));
-  return { active, done };
+  return { mode: D > today ? "future" : "today", active, done };
 }
 
-/* Incomplete tasks on an officer's plate for day D (dated on/before D). */
+/* Incomplete tasks on an officer's plate for today (dated on/before today). */
 function boardPending(officer, D) {
   return S.officerTasks.filter(t => t.officer === officer && !t.done && taskDate(t) <= D);
+}
+
+/* Open-task count for an officer's chip on day D (carry-forward on today,
+   only that day's own tasks otherwise). */
+function pendingCountFor(officer, D) {
+  const today = todayStr();
+  return S.officerTasks.filter(t =>
+    t.officer === officer && !t.done &&
+    (D === today ? taskDate(t) <= D : taskDate(t) === D)
+  ).length;
 }
 
 /* Small "how old" badge for a task carried forward to day D. */
@@ -423,13 +450,14 @@ function renderTaskListShell() {
   const officer = activeOfficer();
   const date = activeDate();
   const isToday = date === todayStr();
+  const isPast = date < todayStr();
 
   const selector = S.isAdmin ? `
     <div class="tl-officer-bar">
       <div class="tl-officer-chips">
         ${S.officers.map(o => {
           const active = o === officer;
-          const openCount = boardPending(o, date).length;
+          const openCount = pendingCountFor(o, date);
           return `<button type="button" class="tl-officer-chip${active ? " active" : ""}" onclick="setTaskListOfficer('${esc(o)}')">
             <span class="tl-chip-av" style="background:${officerColor(o).bg};">${initials(o)}</span>
             <span class="tl-chip-name">${esc(o)}</span>
@@ -439,7 +467,8 @@ function renderTaskListShell() {
       </div>
     </div>` : "";
 
-  const addRow = officer ? `
+  // No add row on past days — they show a read-only retrospective.
+  const addRow = (officer && !isPast) ? `
     <div class="tl-add-row">
       <input type="text" id="tlInput" class="tl-input" maxlength="200" autocomplete="off"
         placeholder="Add a task${S.isAdmin ? " for " + esc(officer) : ""}…" onkeydown="handleTaskInputKey(event)">
@@ -478,7 +507,23 @@ function renderTaskListBody() {
     return;
   }
 
-  const { active, done } = boardTasks(officer, date);
+  const board = boardTasks(officer, date);
+
+  // Past days: show a retrospective summary instead of the (rolled-forward) list.
+  if (board.mode === "past") {
+    if (!board.total) {
+      list.innerHTML = `<div class="tl-empty">
+        <div class="tl-empty-icon">📝</div>
+        <div class="tl-empty-title">No tasks for ${esc(relativeLabel(date) || dateMainLabel(date))}</div>
+        <div class="tl-empty-sub">Nothing was added on this day.</div>
+      </div>`;
+      return;
+    }
+    list.innerHTML = legendHtml(board);
+    return;
+  }
+
+  const { active, done } = board;
 
   if (!active.length && !done.length) {
     const rel = relativeLabel(date);
@@ -503,6 +548,29 @@ function renderTaskListBody() {
     ${doneHtml}` : "";
 
   list.innerHTML = `${activeHtml}${doneSection}`;
+}
+
+/* Retrospective summary card for a past day. */
+function legendHtml(b) {
+  const note = b.pendingCount
+    ? `<div class="tl-legend-note">${b.pendingCount} pending task${b.pendingCount === 1 ? "" : "s"} carried forward to today</div>`
+    : `<div class="tl-legend-note tl-legend-note--clear">🎉 All tasks were completed</div>`;
+  return `
+    <div class="tl-legend">
+      <div class="tl-legend-item">
+        <span class="tl-legend-num">${b.total}</span>
+        <span class="tl-legend-lbl">Total</span>
+      </div>
+      <div class="tl-legend-item tl-legend-item--done">
+        <span class="tl-legend-num">${b.doneCount}</span>
+        <span class="tl-legend-lbl">Done</span>
+      </div>
+      <div class="tl-legend-item tl-legend-item--pending">
+        <span class="tl-legend-num">${b.pendingCount}</span>
+        <span class="tl-legend-lbl">Pending</span>
+      </div>
+    </div>
+    ${note}`;
 }
 
 /* serial: 1-based running number (active tasks first, then completed).

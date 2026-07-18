@@ -289,6 +289,52 @@
   font-weight:500;
 }
 
+/* Past-day retrospective legend */
+.tl-legend{
+  display:flex;
+  gap:8px;
+  margin:2px 0 4px;
+}
+.tl-legend-item{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:14px 8px;
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  border:1px solid var(--p-bd);
+}
+.tl-legend-num{
+  font-size:26px;
+  font-weight:900;
+  color:var(--text1);
+  line-height:1;
+}
+.tl-legend-lbl{
+  font-size:var(--fs-xs);
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  color:var(--muted);
+  margin-top:6px;
+}
+.tl-legend-item--done{background:var(--green-bg);border-color:var(--green-bd);}
+.tl-legend-item--done .tl-legend-num,
+.tl-legend-item--done .tl-legend-lbl{color:var(--green);}
+.tl-legend-item--pending{background:var(--amber-bg);border-color:var(--amber-bd);}
+.tl-legend-item--pending .tl-legend-num,
+.tl-legend-item--pending .tl-legend-lbl{color:var(--amber);}
+.tl-legend-note{
+  text-align:center;
+  margin-top:12px;
+  font-size:var(--fs-sm);
+  font-weight:700;
+  color:var(--text3);
+}
+.tl-legend-note--clear{color:var(--green);}
+
 /* Carried-forward age badge */
 .tl-age{
   flex-shrink:0;
