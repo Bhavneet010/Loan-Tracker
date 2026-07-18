@@ -73,13 +73,16 @@ function boardTasks(officer, D) {
 
   if (D < today) {
     const dayTasks = mine.filter(t => taskDate(t) === D);
+    const done = dayTasks
+      .filter(t => t.done)
+      .sort((a, b) => (b.completedAt || "").localeCompare(a.completedAt || ""));
     return {
       mode: "past",
       total: dayTasks.length,
-      doneCount: dayTasks.filter(t => t.done).length,
-      pendingCount: dayTasks.filter(t => !t.done).length,
+      doneCount: done.length,
+      pendingCount: dayTasks.length - done.length,
       active: [],
-      done: [],
+      done,
     };
   }
 
@@ -509,7 +512,8 @@ function renderTaskListBody() {
 
   const board = boardTasks(officer, date);
 
-  // Past days: show a retrospective summary instead of the (rolled-forward) list.
+  // Past days: a retrospective summary for the pending (rolled-forward) tasks,
+  // but the completed tasks are still listed individually below it.
   if (board.mode === "past") {
     if (!board.total) {
       list.innerHTML = `<div class="tl-empty">
@@ -519,7 +523,11 @@ function renderTaskListBody() {
       </div>`;
       return;
     }
-    list.innerHTML = legendHtml(board);
+    const doneHtml = board.done.map((t, i) => taskRowHtml(t, i + 1, date, false, false)).join("");
+    const doneSection = board.done.length
+      ? `<div class="tl-done-label">Completed · ${board.done.length}</div>${doneHtml}`
+      : "";
+    list.innerHTML = `${legendHtml(board)}${doneSection}`;
     return;
   }
 

@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v191';
+const CACHE = 'nirnay-v192';
 const ASSETS = [
   './',
   './index.html',
@@ -50,7 +50,7 @@ const ASSETS = [
   './css/snapshot-modal.css?v=2',
   './css/snapshot-report.css',
   './css/tasks.css?v=159',
-  './css/officer-tasks.css?v=191',
+  './css/officer-tasks.css?v=192',
   './js/animate.js',
   './js/app.js',
   './js/config.js',
