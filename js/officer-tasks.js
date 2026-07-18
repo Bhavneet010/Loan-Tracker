@@ -561,7 +561,7 @@ function renderTaskListBody() {
 /* Retrospective summary card for a past day. */
 function legendHtml(b) {
   const note = b.pendingCount
-    ? `<div class="tl-legend-note">${b.pendingCount} pending task${b.pendingCount === 1 ? "" : "s"} carried forward to today</div>`
+    ? `<div class="tl-legend-note">${b.pendingCount} task${b.pendingCount === 1 ? "" : "s"} not done, carried forward to today</div>`
     : `<div class="tl-legend-note tl-legend-note--clear">🎉 All tasks were completed</div>`;
   return `
     <div class="tl-legend">
@@ -575,7 +575,7 @@ function legendHtml(b) {
       </div>
       <div class="tl-legend-item tl-legend-item--pending">
         <span class="tl-legend-num">${b.pendingCount}</span>
-        <span class="tl-legend-lbl">Pending</span>
+        <span class="tl-legend-lbl">Not Done</span>
       </div>
     </div>
     ${note}`;
