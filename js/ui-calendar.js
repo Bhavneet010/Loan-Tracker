@@ -27,6 +27,29 @@ export function renderCalendar(c) {
   c.innerHTML = buildCalendarViewHtml();
 }
 
+// Renewals due (NPA date) in the month currently shown on the calendar,
+// respecting the active officer/branch/status filters — used by the export button.
+export function getCalendarMonthExport(metrics = getLoanMetrics()) {
+  const renewals = getFilteredRenewals(metrics);
+  if (!S.calendarState) {
+    const now = new Date();
+    S.calendarState = findFirstRenewalMonth(renewals) || { year: now.getFullYear(), month: now.getMonth() };
+  }
+  const { year, month } = S.calendarState;
+  const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const loans = [];
+  const rnpLoans = [];
+  renewals.forEach(loan => {
+    const rs = loan._rs;
+    if (!rs?.npaDateStr || !rs.npaDateStr.startsWith(monthStr)) return;
+    (isRnpDeferred(loan) ? rnpLoans : loans).push(loan);
+  });
+  const byNpaDate = (a, b) => a._rs.npaDateStr.localeCompare(b._rs.npaDateStr);
+  loans.sort(byNpaDate);
+  rnpLoans.sort(byNpaDate);
+  return { year, month, monthName: MONTHS[month], loans, rnpLoans };
+}
+
 function getFilteredRenewals(metrics) {
   let out = metrics.renewals.filter(l => !l.renewedDate);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
@@ -225,6 +248,9 @@ function calendarHtml(calData, year, month, renewals) {
         <button class="cal-nav-btn" onclick="calendarNavMonth(-1)">&lsaquo;</button>
         <span class="cal-month-label">${MONTHS[month]} ${year}</span>
         <div class="cal-nav-actions">
+          <button class="cal-nav-btn cal-export-btn" onclick="exportCalendarRenewalsExcel()" title="Export ${MONTHS[month]} renewals due to Excel" aria-label="Export ${MONTHS[month]} renewals due to Excel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
           <button class="cal-nav-btn" onclick="calendarNavMonth(1)">&rsaquo;</button>
         </div>
       </div>

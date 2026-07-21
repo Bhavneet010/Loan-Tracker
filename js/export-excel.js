@@ -1,6 +1,7 @@
 import { S } from "./state.js";
 import { effectiveOfficer, getLoanMetrics } from "./derived.js";
 import { isFreshCC, toast } from "./utils.js";
+import { getCalendarMonthExport } from "./ui-calendar.js";
 
 const XLSX_CDN = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
 
@@ -144,6 +145,57 @@ window.exportLoansExcel = async function () {
     toast("Excel exported!");
   } catch (err) {
     console.error("[Excel export]", err);
+    toast("Export failed. Please try again.");
+  }
+};
+
+const RENEWAL_STATUS_LABEL = {
+  "npa": "NPA",
+  "pending-renewal": "Pending renewal",
+  "due-soon": "Due within 30 days",
+  "active": "Active",
+};
+
+function renewalDueRow(l, statusOverride) {
+  const rs = l._rs;
+  return {
+    "Officer": up(effectiveOfficer(l)),
+    "Branch": up(l.branch),
+    "Customer Name": up(l.customerName),
+    "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
+    "Category": up(l.category),
+    "Sanction Date": fmt(l.sanctionDate),
+    "Renewal Due Date": fmt(rs.dueDateStr),
+    "NPA Date": fmt(rs.npaDateStr),
+    "Status": statusOverride || RENEWAL_STATUS_LABEL[rs.status] || up(rs.status),
+    "Remarks": up(l.renewalNotPossible ? (l.renewalNotPossibleRemarks || l.remarks) : l.remarks),
+  };
+}
+
+const RENEWAL_DUE_HEADERS = ["Officer", "Branch", "Customer Name", "Limit (₹ Lakhs)", "Category", "Sanction Date", "Renewal Due Date", "NPA Date", "Status", "Remarks"];
+
+window.exportCalendarRenewalsExcel = async function () {
+  try {
+    const { year, monthName, loans, rnpLoans } = getCalendarMonthExport();
+    if (!loans.length && !rnpLoans.length) {
+      toast(`No renewals due in ${monthName} ${year}`);
+      return;
+    }
+    toast("Preparing Excel export…");
+    await ensureXlsx();
+    const XLSX = window.XLSX;
+
+    const rows = [
+      ...loans.map(l => renewalDueRow(l)),
+      ...rnpLoans.map(l => renewalDueRow(l, "Renewal not possible")),
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, makeSheet(rows, RENEWAL_DUE_HEADERS), `${monthName} ${year}`.slice(0, 31));
+    XLSX.writeFile(wb, `nirnay-renewals-due-${monthName.toLowerCase()}-${year}.xlsx`);
+    toast(`${monthName} renewals exported!`);
+  } catch (err) {
+    console.error("[Calendar export]", err);
     toast("Export failed. Please try again.");
   }
 };
