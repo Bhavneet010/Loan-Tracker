@@ -68,51 +68,81 @@ window.handleCsvUpload = function (e) {
   reader.onload = async function (ev) {
     const btn = document.getElementById('importCsvBtn');
     try {
-      const text = ev.target.result;
-      const rows = text.split('\n').filter(Boolean);
+      const text = String(ev.target.result).replace(/^\uFEFF/, '');
+      const rows = text.split(/\r?\n/).filter(r => r.trim());
       if (rows.length < 2) { toast('Empty CSV'); return; }
-      const header = rows[0].split(',').map(c => c.toUpperCase().trim());
-      let added = 0, updated = 0, renewedUntouched = 0, unchanged = 0;
-      if (btn) { btn.disabled = true; btn.textContent = 'Importing...'; }
-      const createdIds = new Set();
-      const normAc = v => String(v || '').replace(/\D/g, '');
-      const isRenewalAccount = l => l.category === 'SME' && !isFreshCC(l);
 
-      for (let i = 1; i < rows.length; i++) {
-        let cols = [];
-        let cur = '', inQuote = false;
-        for (let j = 0; j < rows[i].length; j++) {
-          const c = rows[i][j];
-          if (c === '"' && rows[i][j + 1] === '"') { cur += '"'; j++; }
+      const parseLine = (line) => {
+        let cols = [], cur = '', inQuote = false;
+        for (let j = 0; j < line.length; j++) {
+          const c = line[j];
+          if (c === '"' && line[j + 1] === '"') { cur += '"'; j++; }
           else if (c === '"') inQuote = !inQuote;
           else if (c === ',' && !inQuote) { cols.push(cur); cur = ''; }
           else cur += c;
         }
         cols.push(cur);
-        cols = cols.map(c => c.trim());
+        return cols.map(c => c.trim());
+      };
+
+      const ALIASES = {
+        branch: ['HOME BRANCH', 'BRANCH', 'BRANCH CODE', 'BRANCH NAME', 'SOL ID'],
+        acNumber: ['AC NUMBER', 'A/C NUMBER', 'A/C NO', 'AC NO', 'ACCOUNT NUMBER', 'ACCOUNT NO', 'ACCT NO'],
+        customerName: ['CUSTOMER NAME', 'CUST NAME', 'CUSTOMER', 'BORROWER NAME', 'PARTY NAME', 'NAME'],
+        amount: ['LIMIT', 'SANCTION LIMIT', 'SANCTIONED LIMIT', 'SANC LIMIT', 'LIMIT AMOUNT', 'LIMIT AMT'],
+        limitExpiryDate: ['LMT EXPY DT', 'LIMIT EXPIRY DATE', 'LIMIT EXPIRY', 'LMT EXP DT', 'EXPIRY DATE', 'EXPY DT'],
+        renewalDueDate: ['RENEWAL DATE', 'RENEWAL DUE DATE', 'RENEWAL DUE', 'NEXT RENEWAL DATE']
+      };
+      const fieldFor = (h) => Object.keys(ALIASES).find(f => ALIASES[f].includes(h)) || null;
+
+      // Bank exports often carry report-title lines above the real header row
+      // — scan the first few lines for the one holding a customer-name column.
+      let headerIdx = -1, colMap = null;
+      for (let i = 0; i < Math.min(rows.length, 10) && headerIdx < 0; i++) {
+        const cells = parseLine(rows[i]).map(c => c.toUpperCase().replace(/\s+/g, ' ').trim());
+        const map = {};
+        cells.forEach((h, idx) => { const f = fieldFor(h); if (f && map[f] === undefined) map[f] = idx; });
+        if (map.customerName !== undefined) { headerIdx = i; colMap = map; }
+      }
+      if (headerIdx < 0) {
+        const found = parseLine(rows[0]).filter(Boolean).slice(0, 8).join(', ');
+        toast(`CSV not recognised — no customer name column found. First row reads: ${found}`);
+        return;
+      }
+
+      let added = 0, updated = 0, renewedUntouched = 0, unchanged = 0, noName = 0;
+      if (btn) { btn.disabled = true; btn.textContent = 'Importing...'; }
+      const createdIds = new Set();
+      const normAc = v => String(v || '').replace(/\D/g, '');
+      const isRenewalAccount = l => l.category === 'SME' && !isFreshCC(l);
+      const MONTHS = { JAN: '01', FEB: '02', MAR: '03', APR: '04', MAY: '05', JUN: '06', JUL: '07', AUG: '08', SEP: '09', OCT: '10', NOV: '11', DEC: '12' };
+      const parseDate = (dStr) => {
+        if (!dStr) return '';
+        const s = dStr.trim();
+        let m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+        if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+        m = s.match(/^(\d{1,2})[- ]([A-Za-z]{3})[- ](\d{2}|\d{4})$/);
+        if (m && MONTHS[m[2].toUpperCase()]) {
+          return `${m[3].length === 2 ? '20' + m[3] : m[3]}-${MONTHS[m[2].toUpperCase()]}-${m[1].padStart(2, '0')}`;
+        }
+        return s;
+      };
+
+      for (let i = headerIdx + 1; i < rows.length; i++) {
+        const cols = parseLine(rows[i]);
+        const get = f => colMap[f] === undefined ? '' : (cols[colMap[f]] || '');
         let obj = { allocatedTo: '' };
-        const parseDate = (dStr) => {
-          if (!dStr) return '';
-          let s = dStr.trim();
-          if (s.match(/^\d{2}-\d{2}-\d{4}$/)) {
-            const p = s.split('-'); return `${p[2]}-${p[1]}-${p[0]}`;
-          } else if (s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-            const p = s.split('/'); return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
-          }
-          return s;
-        };
-        header.forEach((h, idx) => {
-          const val = cols[idx] || '';
-          if (h === 'HOME BRANCH') obj.branch = val;
-          else if (h === 'AC NUMBER') obj.acNumber = val;
-          else if (h === 'CUSTOMER NAME') obj.customerName = val;
-          else if (h === 'LIMIT') obj.amount = Number(((parseFloat(val.replace(/[^0-9.]/g, '')) || 0) / 100000).toFixed(2));
-          else if (h === 'LMT EXPY DT') obj.limitExpiryDate = parseDate(val);
-          else if (h === 'RENEWAL DATE') obj.renewalDueDate = parseDate(val);
-        });
-        if (!obj.customerName) continue;
-        if (obj.branch && S.branchOfficers && S.branchOfficers[obj.branch]) {
-          obj.allocatedTo = S.branchOfficers[obj.branch];
+        obj.branch = get('branch');
+        obj.acNumber = get('acNumber');
+        obj.customerName = get('customerName');
+        obj.amount = Number(((parseFloat(get('amount').replace(/[^0-9.]/g, '')) || 0) / 100000).toFixed(2));
+        obj.limitExpiryDate = parseDate(get('limitExpiryDate'));
+        obj.renewalDueDate = parseDate(get('renewalDueDate'));
+        if (!obj.customerName) { noName++; continue; }
+        // Branch column may hold "2413" or "2413 : MAJRA" — officer map is keyed by code
+        const brKey = (obj.branch.match(/\d+/) || [])[0];
+        if (S.branchOfficers && (S.branchOfficers[obj.branch] || (brKey && S.branchOfficers[brKey]))) {
+          obj.allocatedTo = S.branchOfficers[obj.branch] || S.branchOfficers[brKey];
         }
         const baseDate = obj.limitExpiryDate || obj.renewalDueDate || '';
         const id = ('import_sme_csv_' + slugifyId(obj.customerName)).replace(/-/g, '');
@@ -173,6 +203,7 @@ window.handleCsvUpload = function (e) {
       const parts = [`${added} added`, `${updated} updated`];
       if (renewedUntouched) parts.push(`${renewedUntouched} renewed (untouched)`);
       if (unchanged) parts.push(`${unchanged} unchanged`);
+      if (noName) parts.push(`${noName} rows without name skipped`);
       toast(`CSV Import: ${parts.join(', ')}`);
     } catch (err) {
       console.error(err); toast('Error parsing CSV');
