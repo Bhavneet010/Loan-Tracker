@@ -66,15 +66,18 @@ window.handleCsvUpload = function (e) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async function (ev) {
+    const btn = document.getElementById('importCsvBtn');
     try {
       const text = ev.target.result;
       const rows = text.split('\n').filter(Boolean);
       if (rows.length < 2) { toast('Empty CSV'); return; }
       const header = rows[0].split(',').map(c => c.toUpperCase().trim());
-      let added = 0, skipped = 0;
-      const btn = document.getElementById('importCsvBtn');
+      let added = 0, updated = 0, renewedUntouched = 0, unchanged = 0;
       if (btn) { btn.disabled = true; btn.textContent = 'Importing...'; }
-      
+      const createdIds = new Set();
+      const normAc = v => String(v || '').replace(/\D/g, '');
+      const isRenewalAccount = l => l.category === 'SME' && !isFreshCC(l);
+
       for (let i = 1; i < rows.length; i++) {
         let cols = [];
         let cur = '', inQuote = false;
@@ -113,8 +116,40 @@ window.handleCsvUpload = function (e) {
         }
         const baseDate = obj.limitExpiryDate || obj.renewalDueDate || '';
         const id = ('import_sme_csv_' + slugifyId(obj.customerName)).replace(/-/g, '');
-        const existingDoc = await getDoc(doc(db, 'loans', id));
-        if (existingDoc.exists()) { skipped++; continue; }
+
+        // Match existing renewal accounts by import id, then account number,
+        // then customer name, so manually-added accounts get updated instead
+        // of duplicated.
+        let existing = S.loanMap.get(id) || null;
+        if (!existing && normAc(obj.acNumber)) {
+          existing = S.loans.find(l => isRenewalAccount(l) && normAc(l.acNumber) === normAc(obj.acNumber)) || null;
+        }
+        if (!existing) {
+          const name = obj.customerName.toUpperCase();
+          existing = S.loans.find(l => isRenewalAccount(l) && (l.customerName || '').toUpperCase() === name) || null;
+        }
+        if (!existing && createdIds.has(id)) { unchanged++; continue; }
+        if (!existing) {
+          const snap = await getDoc(doc(db, 'loans', id));
+          if (snap.exists()) existing = { id, ...snap.data() };
+        }
+
+        if (existing) {
+          // Renewal already done: leave the account completely untouched so
+          // the renewed/documentation/integration state is never disturbed.
+          if (existing.renewedDate) { renewedUntouched++; continue; }
+          const data = {};
+          if (obj.limitExpiryDate && obj.limitExpiryDate !== existing.limitExpiryDate) data.limitExpiryDate = obj.limitExpiryDate;
+          if (obj.renewalDueDate && obj.renewalDueDate !== existing.renewalDueDate) data.renewalDueDate = obj.renewalDueDate;
+          if (obj.amount && obj.amount !== existing.amount) data.amount = obj.amount;
+          if (obj.acNumber && !existing.acNumber) data.acNumber = obj.acNumber;
+          if (Object.keys(data).length) {
+            await updateDoc(doc(db, 'loans', existing.id), { ...data, ...ts() });
+            updated++;
+          } else unchanged++;
+          continue;
+        }
+
         await setDoc(doc(db, 'loans', id), {
           allocatedTo: obj.allocatedTo || '',
           category: 'SME', branch: obj.branch || '',
@@ -132,13 +167,17 @@ window.handleCsvUpload = function (e) {
           createdAt: new Date().toISOString(), createdBy: S.user || 'import',
           source: 'import:sme_renewal:csv', ...ts()
         });
+        createdIds.add(id);
         added++;
       }
-      toast(`CSV Import: ${added} added, ${skipped} skipped`);
-      if (btn) { btn.disabled = false; btn.textContent = '📥 Upload CSV (CC Accounts)'; }
+      const parts = [`${added} added`, `${updated} updated`];
+      if (renewedUntouched) parts.push(`${renewedUntouched} renewed (untouched)`);
+      if (unchanged) parts.push(`${unchanged} unchanged`);
+      toast(`CSV Import: ${parts.join(', ')}`);
     } catch (err) {
       console.error(err); toast('Error parsing CSV');
-      if (btn) { btn.disabled = false; btn.textContent = '📥 Upload CSV (CC Accounts)'; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '📥 Upload CSV'; }
     }
   };
   reader.readAsText(file);
