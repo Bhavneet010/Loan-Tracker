@@ -2,6 +2,7 @@ import { S } from "./state.js";
 import { effectiveOfficer, getLoanMetrics } from "./derived.js";
 import { isFreshCC, toast } from "./utils.js";
 import { getCalendarMonthExport } from "./ui-calendar.js";
+import { ensureJsPdf } from "./performance-snapshot.js";
 
 const XLSX_CDN = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
 
@@ -149,6 +150,24 @@ window.exportLoansExcel = async function () {
   }
 };
 
+window.toggleCalExportMenu = function (e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById("calExportMenu");
+  if (!menu) return;
+  const isOpen = menu.classList.contains("open");
+  if (isOpen) {
+    menu.classList.remove("open");
+  } else {
+    menu.classList.add("open");
+    setTimeout(() => document.addEventListener("click", window.closeCalExportMenu, { once: true }), 0);
+  }
+};
+
+window.closeCalExportMenu = function () {
+  const menu = document.getElementById("calExportMenu");
+  if (menu) menu.classList.remove("open");
+};
+
 const RENEWAL_STATUS_LABEL = {
   "npa": "NPA",
   "pending-renewal": "Pending renewal",
@@ -196,6 +215,137 @@ window.exportCalendarRenewalsExcel = async function () {
     toast(`${monthName} renewals exported!`);
   } catch (err) {
     console.error("[Calendar export]", err);
+    toast("Export failed. Please try again.");
+  }
+};
+
+// jsPDF's built-in fonts can't render ₹, so amounts use "Rs".
+const PDF_COLS = [
+  { header: "#", w: 8 },
+  { header: "Customer Name", w: 50, key: "Customer Name" },
+  { header: "Officer", w: 26, key: "Officer" },
+  { header: "Branch", w: 24, key: "Branch" },
+  { header: "Limit (Rs L)", w: 18, key: "Limit (₹ Lakhs)", align: "right" },
+  { header: "Category", w: 20, key: "Category" },
+  { header: "Sanction", w: 21, key: "Sanction Date" },
+  { header: "Renewal Due", w: 21, key: "Renewal Due Date" },
+  { header: "NPA Date", w: 21, key: "NPA Date" },
+  { header: "Status", w: 32, key: "Status" },
+  { header: "Remarks", w: 36, key: "Remarks" },
+];
+
+const PDF_STATUS_COLOR = {
+  "NPA": [127, 29, 29],
+  "Pending renewal": [220, 38, 38],
+  "Due within 30 days": [217, 119, 6],
+  "Renewal not possible": [100, 116, 139],
+};
+
+function pdfFitText(doc, text, maxW) {
+  let t = String(text ?? "");
+  if (doc.getTextWidth(t) <= maxW) return t;
+  while (t.length && doc.getTextWidth(t + "...") > maxW) t = t.slice(0, -1);
+  return t + "...";
+}
+
+window.exportCalendarRenewalsPdf = async function () {
+  try {
+    const { year, monthName, loans, rnpLoans } = getCalendarMonthExport();
+    if (!loans.length && !rnpLoans.length) {
+      toast(`No renewals due in ${monthName} ${year}`);
+      return;
+    }
+    toast("Preparing PDF export…");
+    await ensureJsPdf();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    const rows = [
+      ...loans.map(l => renewalDueRow(l)),
+      ...rnpLoans.map(l => renewalDueRow(l, "Renewal not possible")),
+    ];
+
+    const M = 10;
+    const pageH = doc.internal.pageSize.getHeight();
+    const rowH = 6.5;
+    const cellPad = 1.6;
+    let y;
+
+    const colX = [];
+    let x = M;
+    PDF_COLS.forEach(c => { colX.push(x); x += c.w; });
+    const tableW = x - M;
+
+    const drawHeaderRow = () => {
+      doc.setFillColor(107, 95, 191);
+      doc.rect(M, y, tableW, rowH, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      PDF_COLS.forEach((c, i) => {
+        const tx = c.align === "right" ? colX[i] + c.w - cellPad : colX[i] + cellPad;
+        doc.text(c.header, tx, y + rowH - 2, { align: c.align === "right" ? "right" : "left" });
+      });
+      y += rowH;
+    };
+
+    const startPage = () => {
+      y = M;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(40, 35, 70);
+      doc.text(`Renewals Due — ${monthName} ${year}`, M, y + 4);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(110, 110, 125);
+      const parts = [`${loans.length} renewal${loans.length !== 1 ? "s" : ""} due`];
+      if (rnpLoans.length) parts.push(`${rnpLoans.length} not possible`);
+      parts.push(`generated ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`);
+      doc.text(parts.join("  ·  "), M, y + 9.5);
+      y += 14;
+      drawHeaderRow();
+    };
+
+    startPage();
+    rows.forEach((r, idx) => {
+      if (y + rowH > pageH - M) {
+        doc.addPage("a4", "landscape");
+        startPage();
+      }
+      if (idx % 2 === 1) {
+        doc.setFillColor(244, 242, 250);
+        doc.rect(M, y, tableW, rowH, "F");
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      PDF_COLS.forEach((c, i) => {
+        const raw = c.key ? r[c.key] : idx + 1;
+        const statusColor = c.key === "Status" ? PDF_STATUS_COLOR[r["Status"]] : null;
+        doc.setTextColor(...(statusColor || [45, 45, 55]));
+        if (statusColor) doc.setFont("helvetica", "bold"); else doc.setFont("helvetica", "normal");
+        const text = pdfFitText(doc, raw, c.w - cellPad * 2);
+        const tx = c.align === "right" ? colX[i] + c.w - cellPad : colX[i] + cellPad;
+        doc.text(text, tx, y + rowH - 2, { align: c.align === "right" ? "right" : "left" });
+      });
+      doc.setDrawColor(225, 222, 238);
+      doc.setLineWidth(0.15);
+      doc.line(M, y + rowH, M + tableW, y + rowH);
+      y += rowH;
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(150, 150, 160);
+      doc.text(`Page ${p} of ${pageCount}`, doc.internal.pageSize.getWidth() - M, pageH - 4, { align: "right" });
+    }
+
+    doc.save(`nirnay-renewals-due-${monthName.toLowerCase()}-${year}.pdf`);
+    toast(`${monthName} renewals PDF exported!`);
+  } catch (err) {
+    console.error("[Calendar PDF export]", err);
     toast("Export failed. Please try again.");
   }
 };
