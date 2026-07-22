@@ -202,6 +202,22 @@ window.exportCalendarRenewalsExcel = async function () {
     ];
 
     const ws = makeSheet(rows, RENEWAL_DUE_HEADERS);
+
+    // Cap the Remarks column width and wrap long remarks onto multiple lines,
+    // growing the row height to fit instead of stretching the column.
+    const REMARKS_COL = RENEWAL_DUE_HEADERS.indexOf("Remarks");
+    const REMARKS_WCH = 40;
+    if (ws["!cols"] && ws["!cols"][REMARKS_COL] && ws["!cols"][REMARKS_COL].wch > REMARKS_WCH) {
+      ws["!cols"][REMARKS_COL] = { wch: REMARKS_WCH };
+    }
+    ws["!rows"] = [{}];
+    rows.forEach((row, i) => {
+      const lines = Math.max(1, Math.ceil(String(row["Remarks"] || "").length / REMARKS_WCH));
+      ws["!rows"][i + 1] = lines > 1 ? { hpt: 13 * lines + 4 } : {};
+      const cell = ws[XLSX.utils.encode_cell({ r: i + 1, c: REMARKS_COL })];
+      if (cell) cell.s = { alignment: { wrapText: true, vertical: "top" } };
+    });
+
     // Grey-fill "renewal not possible" rows (they sit after the normal rows;
     // +1 skips the header row). Needs the style-capable xlsx-js-style build —
     // a plain SheetJS build already on the page just ignores the styling.
@@ -209,7 +225,7 @@ window.exportCalendarRenewalsExcel = async function () {
       const r = loans.length + i + 1;
       for (let c = 0; c < RENEWAL_DUE_HEADERS.length; c++) {
         const cell = ws[XLSX.utils.encode_cell({ r, c })];
-        if (cell) cell.s = { fill: { patternType: "solid", fgColor: { rgb: "E2E8F0" } } };
+        if (cell) cell.s = { ...(cell.s || {}), fill: { patternType: "solid", fgColor: { rgb: "E2E8F0" } } };
       }
     }
 
@@ -302,31 +318,44 @@ window.exportCalendarRenewalsPdf = async function () {
     };
 
     startPage();
+    const lineH = 3.1;
+    const remarksW = PDF_COLS[PDF_COLS.length - 1].w - cellPad * 2;
     rows.forEach(({ r, rnp }, idx) => {
-      if (y + rowH > pageH - M) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.2);
+      // Long remarks wrap within their column; the row grows to fit and
+      // everything below shifts down.
+      const remarkLines = doc.splitTextToSize(String(r["Remarks"] ?? ""), remarksW);
+      const h = Math.max(rowH, remarkLines.length * lineH + (rowH - lineH));
+      if (y + h > pageH - M) {
         doc.addPage("a4", "portrait");
         startPage();
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.2);
       }
       if (rnp) {
         doc.setFillColor(226, 232, 240);
-        doc.rect(M, y, tableW, rowH, "F");
+        doc.rect(M, y, tableW, h, "F");
       } else if (idx % 2 === 1) {
         doc.setFillColor(244, 242, 250);
-        doc.rect(M, y, tableW, rowH, "F");
+        doc.rect(M, y, tableW, h, "F");
       }
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
       doc.setTextColor(...(rnp ? [100, 116, 139] : [45, 45, 55]));
+      const baseY = y + rowH - 1.7;
       PDF_COLS.forEach((c, i) => {
+        const tx = c.align === "right" ? colX[i] + c.w - cellPad : colX[i] + cellPad;
+        if (c.key === "Remarks") {
+          remarkLines.forEach((ln, li) => doc.text(ln, tx, baseY + li * lineH));
+          return;
+        }
         const raw = c.key ? r[c.key] : idx + 1;
         const text = pdfFitText(doc, raw, c.w - cellPad * 2);
-        const tx = c.align === "right" ? colX[i] + c.w - cellPad : colX[i] + cellPad;
-        doc.text(text, tx, y + rowH - 1.7, { align: c.align === "right" ? "right" : "left" });
+        doc.text(text, tx, baseY, { align: c.align === "right" ? "right" : "left" });
       });
       doc.setDrawColor(225, 222, 238);
       doc.setLineWidth(0.15);
-      doc.line(M, y + rowH, M + tableW, y + rowH);
-      y += rowH;
+      doc.line(M, y + h, M + tableW, y + h);
+      y += h;
     });
 
     const pageCount = doc.getNumberOfPages();
