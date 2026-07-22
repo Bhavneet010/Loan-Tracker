@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v197';
+const CACHE = 'nirnay-v198';
 const ASSETS = [
   './',
   './index.html',
@@ -38,7 +38,7 @@ const ASSETS = [
   './assets/snapshot/top-performer-bg.png',
   './assets/sme/sbi-logo.svg',
   './css/audit.css',
-  './css/calendar.css',
+  './css/calendar.css?v=198',
   './css/core.css',
   './css/forms.css',
   './css/decision-sheet.css',
@@ -53,9 +53,12 @@ const ASSETS = [
   './css/officer-tasks.css?v=193',
   './js/animate.js',
   './js/app.js',
+  './js/bank-holidays.js',
+  './js/biometric.js',
   './js/config.js',
   './js/db.js',
   './js/derived.js',
+  './js/export-excel.js',
   './js/importers.js',
   './js/loan-actions.js',
   './js/month-end.js',
@@ -70,6 +73,7 @@ const ASSETS = [
   './js/performance-utils.js',
   './js/performance-pdf.js',
   './js/performance-snapshot.js',
+  './js/presence.js',
   './js/sme-daily-report.js',
   './js/state.js',
   './js/ui-calendar.js',
