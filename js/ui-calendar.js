@@ -246,8 +246,8 @@ function calendarHtml(calData, year, month, renewals) {
       ${monthBar}
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="calendarNavMonth(-1)">&lsaquo;</button>
-        <span class="cal-month-label">${MONTHS[month]} ${year}</span>
-        <div class="cal-nav-actions">
+        <div class="cal-month-group">
+          <span class="cal-month-label">${MONTHS[month]} ${year}</span>
           <div class="cal-export-dd">
             <button class="cal-nav-btn cal-export-btn" onclick="toggleCalExportMenu(event)" title="Export ${MONTHS[month]} renewals due" aria-label="Export ${MONTHS[month]} renewals due" aria-haspopup="menu">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -264,8 +264,8 @@ function calendarHtml(calData, year, month, renewals) {
               </button>
             </div>
           </div>
-          <button class="cal-nav-btn" onclick="calendarNavMonth(1)">&rsaquo;</button>
         </div>
+        <button class="cal-nav-btn" onclick="calendarNavMonth(1)">&rsaquo;</button>
       </div>
       <div class="cal-month-meta">
         ${monthTotal > 0 ? `<span class="cal-month-count">${monthTotal} NPA date${monthTotal !== 1 ? 's' : ''}</span>` : '<span class="cal-month-count cal-month-count--empty">No NPA dates</span>'}

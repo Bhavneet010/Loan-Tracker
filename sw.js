@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v199';
+const CACHE = 'nirnay-v200';
 const ASSETS = [
   './',
   './index.html',
@@ -38,7 +38,7 @@ const ASSETS = [
   './assets/snapshot/top-performer-bg.png',
   './assets/sme/sbi-logo.svg',
   './css/audit.css',
-  './css/calendar.css?v=198',
+  './css/calendar.css?v=200',
   './css/core.css',
   './css/forms.css',
   './css/decision-sheet.css',
