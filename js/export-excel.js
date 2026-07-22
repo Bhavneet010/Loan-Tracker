@@ -1,10 +1,12 @@
 import { S } from "./state.js";
 import { effectiveOfficer, getLoanMetrics } from "./derived.js";
-import { isFreshCC, toast } from "./utils.js";
+import { isFreshCC, toast, branchCode } from "./utils.js";
 import { getCalendarMonthExport } from "./ui-calendar.js";
 import { ensureJsPdf } from "./performance-snapshot.js";
 
-const XLSX_CDN = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
+// xlsx-js-style is API-compatible with SheetJS but can also write cell styles
+// (used to grey out "renewal not possible" rows in the calendar export).
+const XLSX_CDN = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js";
 
 let xlsxLoadPromise = null;
 function ensureXlsx() {
@@ -168,30 +170,20 @@ window.closeCalExportMenu = function () {
   if (menu) menu.classList.remove("open");
 };
 
-const RENEWAL_STATUS_LABEL = {
-  "npa": "NPA",
-  "pending-renewal": "Pending renewal",
-  "due-soon": "Due within 30 days",
-  "active": "Active",
-};
-
-function renewalDueRow(l, statusOverride) {
+function renewalDueRow(l) {
   const rs = l._rs;
   return {
     "Officer": up(effectiveOfficer(l)),
-    "Branch": up(l.branch),
     "Customer Name": up(l.customerName),
+    "Branch": up(branchCode(l.branch)),
     "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
-    "Category": up(l.category),
-    "Sanction Date": fmt(l.sanctionDate),
     "Renewal Due Date": fmt(rs.dueDateStr),
     "NPA Date": fmt(rs.npaDateStr),
-    "Status": statusOverride || RENEWAL_STATUS_LABEL[rs.status] || up(rs.status),
     "Remarks": up(l.renewalNotPossible ? (l.renewalNotPossibleRemarks || l.remarks) : l.remarks),
   };
 }
 
-const RENEWAL_DUE_HEADERS = ["Officer", "Branch", "Customer Name", "Limit (₹ Lakhs)", "Category", "Sanction Date", "Renewal Due Date", "NPA Date", "Status", "Remarks"];
+const RENEWAL_DUE_HEADERS = ["Officer", "Customer Name", "Branch", "Limit (₹ Lakhs)", "Renewal Due Date", "NPA Date", "Remarks"];
 
 window.exportCalendarRenewalsExcel = async function () {
   try {
@@ -205,12 +197,24 @@ window.exportCalendarRenewalsExcel = async function () {
     const XLSX = window.XLSX;
 
     const rows = [
-      ...loans.map(l => renewalDueRow(l)),
-      ...rnpLoans.map(l => renewalDueRow(l, "Renewal not possible")),
+      ...loans.map(renewalDueRow),
+      ...rnpLoans.map(renewalDueRow),
     ];
 
+    const ws = makeSheet(rows, RENEWAL_DUE_HEADERS);
+    // Grey-fill "renewal not possible" rows (they sit after the normal rows;
+    // +1 skips the header row). Needs the style-capable xlsx-js-style build —
+    // a plain SheetJS build already on the page just ignores the styling.
+    for (let i = 0; i < rnpLoans.length; i++) {
+      const r = loans.length + i + 1;
+      for (let c = 0; c < RENEWAL_DUE_HEADERS.length; c++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c })];
+        if (cell) cell.s = { fill: { patternType: "solid", fgColor: { rgb: "E2E8F0" } } };
+      }
+    }
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, makeSheet(rows, RENEWAL_DUE_HEADERS), `${monthName} ${year}`.slice(0, 31));
+    XLSX.utils.book_append_sheet(wb, ws, `${monthName} ${year}`.slice(0, 31));
     XLSX.writeFile(wb, `nirnay-renewals-due-${monthName.toLowerCase()}-${year}.xlsx`);
     toast(`${monthName} renewals exported!`);
   } catch (err) {
@@ -220,26 +224,17 @@ window.exportCalendarRenewalsExcel = async function () {
 };
 
 // jsPDF's built-in fonts can't render ₹, so amounts use "Rs".
+// Widths sum to 194mm = portrait A4 (210) minus 8mm margins.
 const PDF_COLS = [
-  { header: "#", w: 8 },
-  { header: "Customer Name", w: 50, key: "Customer Name" },
-  { header: "Officer", w: 26, key: "Officer" },
-  { header: "Branch", w: 24, key: "Branch" },
-  { header: "Limit (Rs L)", w: 18, key: "Limit (₹ Lakhs)", align: "right" },
-  { header: "Category", w: 20, key: "Category" },
-  { header: "Sanction", w: 21, key: "Sanction Date" },
-  { header: "Renewal Due", w: 21, key: "Renewal Due Date" },
-  { header: "NPA Date", w: 21, key: "NPA Date" },
-  { header: "Status", w: 32, key: "Status" },
-  { header: "Remarks", w: 36, key: "Remarks" },
+  { header: "#", w: 7 },
+  { header: "Officer", w: 24, key: "Officer" },
+  { header: "Customer Name", w: 48, key: "Customer Name" },
+  { header: "Branch", w: 14, key: "Branch" },
+  { header: "Limit (Rs L)", w: 16, key: "Limit (₹ Lakhs)", align: "right" },
+  { header: "Renewal Due", w: 20, key: "Renewal Due Date" },
+  { header: "NPA Date", w: 20, key: "NPA Date" },
+  { header: "Remarks", w: 45, key: "Remarks" },
 ];
-
-const PDF_STATUS_COLOR = {
-  "NPA": [127, 29, 29],
-  "Pending renewal": [220, 38, 38],
-  "Due within 30 days": [217, 119, 6],
-  "Renewal not possible": [100, 116, 139],
-};
 
 function pdfFitText(doc, text, maxW) {
   let t = String(text ?? "");
@@ -258,17 +253,17 @@ window.exportCalendarRenewalsPdf = async function () {
     toast("Preparing PDF export…");
     await ensureJsPdf();
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     const rows = [
-      ...loans.map(l => renewalDueRow(l)),
-      ...rnpLoans.map(l => renewalDueRow(l, "Renewal not possible")),
+      ...loans.map(l => ({ r: renewalDueRow(l), rnp: false })),
+      ...rnpLoans.map(l => ({ r: renewalDueRow(l), rnp: true })),
     ];
 
-    const M = 10;
+    const M = 8;
     const pageH = doc.internal.pageSize.getHeight();
-    const rowH = 6.5;
-    const cellPad = 1.6;
+    const rowH = 5.4;
+    const cellPad = 1.2;
     let y;
 
     const colX = [];
@@ -280,11 +275,11 @@ window.exportCalendarRenewalsPdf = async function () {
       doc.setFillColor(107, 95, 191);
       doc.rect(M, y, tableW, rowH, "F");
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
+      doc.setFontSize(7.2);
       doc.setTextColor(255, 255, 255);
       PDF_COLS.forEach((c, i) => {
         const tx = c.align === "right" ? colX[i] + c.w - cellPad : colX[i] + cellPad;
-        doc.text(c.header, tx, y + rowH - 2, { align: c.align === "right" ? "right" : "left" });
+        doc.text(c.header, tx, y + rowH - 1.7, { align: c.align === "right" ? "right" : "left" });
       });
       y += rowH;
     };
@@ -292,40 +287,41 @@ window.exportCalendarRenewalsPdf = async function () {
     const startPage = () => {
       y = M;
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
+      doc.setFontSize(12.5);
       doc.setTextColor(40, 35, 70);
       doc.text(`Renewals Due — ${monthName} ${year}`, M, y + 4);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
+      doc.setFontSize(7.8);
       doc.setTextColor(110, 110, 125);
       const parts = [`${loans.length} renewal${loans.length !== 1 ? "s" : ""} due`];
-      if (rnpLoans.length) parts.push(`${rnpLoans.length} not possible`);
+      if (rnpLoans.length) parts.push(`${rnpLoans.length} not possible (grey rows)`);
       parts.push(`generated ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`);
-      doc.text(parts.join("  ·  "), M, y + 9.5);
-      y += 14;
+      doc.text(parts.join("  ·  "), M, y + 8.6);
+      y += 12.5;
       drawHeaderRow();
     };
 
     startPage();
-    rows.forEach((r, idx) => {
+    rows.forEach(({ r, rnp }, idx) => {
       if (y + rowH > pageH - M) {
-        doc.addPage("a4", "landscape");
+        doc.addPage("a4", "portrait");
         startPage();
       }
-      if (idx % 2 === 1) {
+      if (rnp) {
+        doc.setFillColor(226, 232, 240);
+        doc.rect(M, y, tableW, rowH, "F");
+      } else if (idx % 2 === 1) {
         doc.setFillColor(244, 242, 250);
         doc.rect(M, y, tableW, rowH, "F");
       }
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
+      doc.setFontSize(7.2);
+      doc.setTextColor(...(rnp ? [100, 116, 139] : [45, 45, 55]));
       PDF_COLS.forEach((c, i) => {
         const raw = c.key ? r[c.key] : idx + 1;
-        const statusColor = c.key === "Status" ? PDF_STATUS_COLOR[r["Status"]] : null;
-        doc.setTextColor(...(statusColor || [45, 45, 55]));
-        if (statusColor) doc.setFont("helvetica", "bold"); else doc.setFont("helvetica", "normal");
         const text = pdfFitText(doc, raw, c.w - cellPad * 2);
         const tx = c.align === "right" ? colX[i] + c.w - cellPad : colX[i] + cellPad;
-        doc.text(text, tx, y + rowH - 2, { align: c.align === "right" ? "right" : "left" });
+        doc.text(text, tx, y + rowH - 1.7, { align: c.align === "right" ? "right" : "left" });
       });
       doc.setDrawColor(225, 222, 238);
       doc.setLineWidth(0.15);
@@ -337,7 +333,7 @@ window.exportCalendarRenewalsPdf = async function () {
     for (let p = 1; p <= pageCount; p++) {
       doc.setPage(p);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
+      doc.setFontSize(7);
       doc.setTextColor(150, 150, 160);
       doc.text(`Page ${p} of ${pageCount}`, doc.internal.pageSize.getWidth() - M, pageH - 4, { align: "right" });
     }
