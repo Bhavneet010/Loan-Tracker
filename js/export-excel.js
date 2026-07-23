@@ -175,6 +175,7 @@ function renewalDueRow(l) {
   return {
     "Officer": up(effectiveOfficer(l)),
     "Customer Name": up(l.customerName),
+    "A/C Number": up(l.acNumber),
     "Branch": up(branchCode(l.branch)),
     "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
     "Renewal Due Date": fmt(rs.dueDateStr),
@@ -183,7 +184,7 @@ function renewalDueRow(l) {
   };
 }
 
-const RENEWAL_DUE_HEADERS = ["Officer", "Customer Name", "Branch", "Limit (₹ Lakhs)", "Renewal Due Date", "NPA Date", "Remarks"];
+const RENEWAL_DUE_HEADERS = ["Officer", "Customer Name", "A/C Number", "Branch", "Limit (₹ Lakhs)", "Renewal Due Date", "NPA Date", "Remarks"];
 
 window.exportCalendarRenewalsExcel = async function () {
   try {
@@ -243,13 +244,14 @@ window.exportCalendarRenewalsExcel = async function () {
 // Widths sum to 194mm = portrait A4 (210) minus 8mm margins.
 const PDF_COLS = [
   { header: "#", w: 7 },
-  { header: "Officer", w: 24, key: "Officer" },
-  { header: "Customer Name", w: 48, key: "Customer Name" },
-  { header: "Branch", w: 14, key: "Branch" },
-  { header: "Limit (Rs L)", w: 16, key: "Limit (₹ Lakhs)", align: "right" },
-  { header: "Renewal Due", w: 20, key: "Renewal Due Date" },
-  { header: "NPA Date", w: 20, key: "NPA Date" },
-  { header: "Remarks", w: 45, key: "Remarks" },
+  { header: "Officer", w: 22, key: "Officer" },
+  { header: "Customer Name", w: 40, key: "Customer Name" },
+  { header: "A/C Number", w: 22, key: "A/C Number" },
+  { header: "Branch", w: 12, key: "Branch" },
+  { header: "Limit (Rs L)", w: 15, key: "Limit (₹ Lakhs)", align: "right" },
+  { header: "Renewal Due", w: 19, key: "Renewal Due Date" },
+  { header: "NPA Date", w: 19, key: "NPA Date" },
+  { header: "Remarks", w: 38, key: "Remarks" },
 ];
 
 function pdfFitText(doc, text, maxW) {
