@@ -7,8 +7,11 @@ function currentMonthKey() {
   return d.toISOString().slice(0, 7);
 }
 
-export function effectiveOfficer(loan) {
-  if (loan.manualOfficer && loan.manualOfficerMonth === currentMonthKey()) {
+// Manual allocations are month-scoped: pass a monthKey to resolve the officer
+// as of that month (e.g. month-end snapshots), otherwise the current month is
+// used and expired overrides fall back to the branch allocation.
+export function effectiveOfficer(loan, monthKey = currentMonthKey()) {
+  if (loan.manualOfficer && loan.manualOfficerMonth === monthKey) {
     return loan.manualOfficer;
   }
   const code = branchCode(loan.branch || '').trim();

@@ -39,10 +39,10 @@ function buildOfficerColorMap() {
   return map;
 }
 
-function sortByOfficerThenDate(loans, dateKey) {
+function sortByOfficerThenDate(loans, dateKey, month) {
   return [...loans].sort((a, b) => {
-    const ai = S.officers.indexOf(effectiveOfficer(a));
-    const bi = S.officers.indexOf(effectiveOfficer(b));
+    const ai = S.officers.indexOf(effectiveOfficer(a, month));
+    const bi = S.officers.indexOf(effectiveOfficer(b, month));
     const ao = ai === -1 ? S.officers.length : ai;
     const bo = bi === -1 ? S.officers.length : bi;
     if (ao !== bo) return ao - bo;
@@ -129,7 +129,7 @@ function officerNames(data) {
     data.metrics.renewalDueSoon,
     data.metrics.renewalOverdue,
   ].flat().forEach(loan => {
-    const name = effectiveOfficer(loan);
+    const name = effectiveOfficer(loan, data.month);
     if (!seen.has(name)) {
       seen.add(name);
       extra.push(name);
@@ -140,7 +140,7 @@ function officerNames(data) {
 
 function aggregateByOfficer(data) {
   return officerNames(data).map(name => {
-    const byOfficer = loan => effectiveOfficer(loan) === name;
+    const byOfficer = loan => effectiveOfficer(loan, data.month) === name;
     const sanctioned = data.sanctioned.filter(byOfficer);
     const returned = data.returned.filter(byOfficer);
     const renewalsDone = data.renewalsDone.filter(byOfficer);
@@ -345,7 +345,7 @@ function buildOfficerPage(data, summary) {
   </section>`;
 }
 
-function detailRow(loan, index, dateKey, mode, color) {
+function detailRow(loan, index, dateKey, mode, color, month) {
   const dateText = fmtDate(loan[dateKey]) || "-";
   const note = mode === "renewal"
     ? `Due ${fmtDate(loan.renewalDueDate || loan._rs?.dueDateStr) || "-"} / Exp ${fmtDate(loan.limitExpiryDate) || "-"}`
@@ -354,7 +354,7 @@ function detailRow(loan, index, dateKey, mode, color) {
   return `<tr ${rowStyle}>
     <td class="me-num">${esc(index)}</td>
     <td class="me-customer"><strong>${esc(loan.customerName || "Unnamed")}</strong><span>${esc(note)}</span></td>
-    <td>${esc(effectiveOfficer(loan))}</td>
+    <td>${esc(effectiveOfficer(loan, month))}</td>
     <td>${esc(loan.branch || "-")}</td>
     <td>${esc(loan.category || "-")}</td>
     <td class="me-amount">Rs ${esc(fmtAmt(loan.amount))}L</td>
@@ -368,24 +368,24 @@ function officerGroupHeaderRow(officer, color) {
   </tr>`;
 }
 
-function renderChunkRows(chunk, startIndex, dateKey, mode, colorMap) {
+function renderChunkRows(chunk, startIndex, dateKey, mode, colorMap, month) {
   let lastOfficer = null;
   return chunk.reduce((acc, loan, i) => {
-    const officer = effectiveOfficer(loan);
+    const officer = effectiveOfficer(loan, month);
     const color = colorMap.get(officer) || '#64748B';
     if (officer !== lastOfficer) {
       acc += officerGroupHeaderRow(officer, color);
       lastOfficer = officer;
     }
-    acc += detailRow(loan, startIndex + i + 1, dateKey, mode, color);
+    acc += detailRow(loan, startIndex + i + 1, dateKey, mode, color, month);
     return acc;
   }, '');
 }
 
-function buildLegendHtml(loans, colorMap) {
+function buildLegendHtml(loans, colorMap, month) {
   const seen = new Map();
   loans.forEach(loan => {
-    const name = effectiveOfficer(loan);
+    const name = effectiveOfficer(loan, month);
     if (!seen.has(name)) seen.set(name, colorMap.get(name) || '#64748B');
   });
   if (!seen.size) return '';
@@ -399,8 +399,8 @@ function buildLegendHtml(loans, colorMap) {
 // row heights by hand is fragile - it depends on which font actually loaded -
 // so pagination is driven off the live DOM instead, which is correct by
 // construction regardless of font metrics.
-async function measureDetailRowHeights(sorted, dateKey, mode, colorMap) {
-  const bodyRows = renderChunkRows(sorted, 0, dateKey, mode, colorMap);
+async function measureDetailRowHeights(sorted, dateKey, mode, colorMap, month) {
+  const bodyRows = renderChunkRows(sorted, 0, dateKey, mode, colorMap, month);
   const probe = document.createElement("div");
   probe.style.position = "fixed";
   probe.style.left = "-10000px";
@@ -468,7 +468,7 @@ async function measureDetailRowHeights(sorted, dateKey, mode, colorMap) {
 // renewal row is taller than a plain sanction/return row, and even those vary
 // once a remark note is present). Each new page reprints the officer group
 // header for whichever officer it starts with, matching renderChunkRows.
-function paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budgetFirst, budgetLater) {
+function paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budgetFirst, budgetLater, month) {
   const pages = [];
   let current = [];
   let currentHeight = 0;
@@ -481,7 +481,7 @@ function paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budge
   };
 
   sorted.forEach((loan, index) => {
-    const officer = effectiveOfficer(loan);
+    const officer = effectiveOfficer(loan, month);
     let addHeight = heightFor(index, officer);
     if (current.length && currentHeight + addHeight > budget) {
       pages.push(current);
@@ -499,8 +499,8 @@ function paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budge
   return pages;
 }
 
-async function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
-  const sorted = sortByOfficerThenDate(loans, dateKey);
+async function buildDetailPages(title, loans, dateKey, tone, month, mode = "fresh") {
+  const sorted = sortByOfficerThenDate(loans, dateKey, month);
   const colorMap = buildOfficerColorMap();
 
   if (!sorted.length) {
@@ -513,14 +513,14 @@ async function buildDetailPages(title, loans, dateKey, tone, mode = "fresh") {
     </section>`;
   }
 
-  const legend = buildLegendHtml(sorted, colorMap);
-  const { dataRowHeights, groupRowHeight, budgetFirst, budgetLater } = await measureDetailRowHeights(sorted, dateKey, mode, colorMap);
-  const chunks = paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budgetFirst, budgetLater);
+  const legend = buildLegendHtml(sorted, colorMap, month);
+  const { dataRowHeights, groupRowHeight, budgetFirst, budgetLater } = await measureDetailRowHeights(sorted, dateKey, mode, colorMap, month);
+  const chunks = paginateByMeasuredHeights(sorted, dataRowHeights, groupRowHeight, budgetFirst, budgetLater, month);
   const totalParts = chunks.length;
   let start = 0;
   return chunks.map((chunk, index) => {
     const part = index + 1;
-    const bodyRows = renderChunkRows(chunk, start, dateKey, mode, colorMap);
+    const bodyRows = renderChunkRows(chunk, start, dateKey, mode, colorMap, month);
     start += chunk.length;
     return `<section class="me-page">
       <header class="me-section-head ${tone}">
@@ -602,9 +602,9 @@ function monthlyPdfCss() {
 }
 
 async function buildMonthlySnapshotPdfHtml(data, summary) {
-  const sanctionsPages = await buildDetailPages("Sanctions Done", data.sanctioned, "sanctionDate", "good");
-  const returnsPages = await buildDetailPages("Returns Done", data.returned, "returnedDate", "danger");
-  const renewalsPages = await buildDetailPages("Renewals Done", data.renewalsDone, "renewedDate", "blue", "renewal");
+  const sanctionsPages = await buildDetailPages("Sanctions Done", data.sanctioned, "sanctionDate", "good", data.month);
+  const returnsPages = await buildDetailPages("Returns Done", data.returned, "returnedDate", "danger", data.month);
+  const renewalsPages = await buildDetailPages("Renewals Done", data.renewalsDone, "renewedDate", "blue", data.month, "renewal");
   return `<div class="me-report">
     <style>${monthlyPdfCss()}</style>
     ${buildCoverPage(data, summary)}
