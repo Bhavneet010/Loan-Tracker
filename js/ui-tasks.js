@@ -330,7 +330,7 @@ function renewalTargetsHtml(metrics) {
       <div class="task-target-month">Renewal Target · ${monthName}</div>
       <div class="task-target-daysleft">${daysLeft} working day${daysLeft !== 1 ? 's' : ''} left</div>
     </div>
-    <div class="targets-tile-grid">${tiles}</div>
+    <div class="targets-tile-grid" style="grid-template-columns:repeat(${Math.max(1, officers.length)},minmax(0,1fr));">${tiles}</div>
   </section>`;
 }
 
