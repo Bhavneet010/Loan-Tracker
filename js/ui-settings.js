@@ -1,4 +1,3 @@
-import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
 import { esc, toast, initials, officerColor, timeAgo, branchCode } from "./utils.js";
 import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";

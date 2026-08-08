@@ -1,4 +1,4 @@
-﻿import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, timeAgo } from "./utils.js";
+﻿import { esc, fmtDate, fmtAmt, catCls, daysPending, initials, officerColor, branchCode, isFreshCC, isRenewalDatesMissing, isStageTracked, timeAgo } from "./utils.js";
 import { S } from "./state.js";
 import { effectiveOfficer } from "./derived.js";
 import { reminderMails, reminderSummary, canTrackReminders } from "./ui-reminder-mail.js";

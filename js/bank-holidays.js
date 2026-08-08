@@ -39,16 +39,6 @@ export function holidayReason(dateStr) {
   return null;
 }
 
-export function countWorkingDaysInMonth(year, month) {
-  const days = new Date(year, month + 1, 0).getDate();
-  let n = 0;
-  for (let day = 1; day <= days; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    if (!isBankHoliday(dateStr)) n++;
-  }
-  return n;
-}
-
 // Working days where startStr < date <= endStr.
 // Excludes the start date itself, includes the end date if it's a working day.
 export function countWorkingDaysBetween(startStr, endStr) {

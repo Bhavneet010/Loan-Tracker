@@ -89,16 +89,6 @@ window.cycleTheme = function () {
   setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
 };
 
-window.toggleDark = function () {
-  document.body.classList.remove('theme-neo-brutalist');
-  document.body.classList.remove('theme-sketchnote');
-  localStorage.setItem('lpTheme', 'default');
-  S.dark = !S.dark;
-  document.body.classList.toggle('dark', S.dark);
-  localStorage.setItem('lpDark', S.dark ? '1' : '0');
-  updateThemeColor();
-};
-
 function updateThemeColor() {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (!meta) return;

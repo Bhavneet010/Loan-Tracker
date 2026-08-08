@@ -166,15 +166,6 @@ function slideCalMbar(bar, key) {
   return true;
 }
 
-function applyCalMbarKey(bar, key) {
-  if (!key) return;
-  const [y, m] = key.split('-').map(Number);
-  if (S.calendarState?.year === y && S.calendarState?.month === m - 1) return;
-  if (!slideCalMbar(bar, key)) return;
-  S.calendarState = { year: y, month: m - 1 };
-  // No render here — DOM must stay intact while dragging so activeBar stays valid
-}
-
 window.toggleCalMbarExpand = function() {
   if (!S.isAdmin) return;
   S.calendarBarExpanded = !S.calendarBarExpanded;
@@ -342,12 +333,6 @@ window.removeBankHoliday = function(dateStr) {
   }, true);
 })();
 
-window.setTaskCategory = function(cat) {
-  S.taskCategory = cat;
-  S.taskView = S.isAdmin ? 'officers' : 'detail';
-  S.taskOfficer = S.isAdmin ? null : S.user;
-  render();
-};
 window.setTaskOfficer = function(officer) { S.taskOfficer = officer; S.taskView = 'detail'; render(); };
 window.taskBack = function() {
   if (S.taskView === 'detail') {

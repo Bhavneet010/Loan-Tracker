@@ -3,7 +3,6 @@ import { subscribeLoans } from "./db.js";
 import { subscribeNotifications } from "./notifications.js";
 import { subscribeOfficerTasks } from "./officer-tasks.js";
 import { render } from "./ui-render.js";
-import { initPushNotifications } from "./push-notifications.js";
 import { initPresence } from "./presence.js";
 
 // Import modules to register window actions and side effects

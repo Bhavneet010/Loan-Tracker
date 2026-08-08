@@ -1,9 +1,7 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
-import { catCls, esc, fmtAmt, fmtDate, fmtShortDate, isFreshCC, shortCat, toast } from "./utils.js";
-import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
-
-import { buildDetailedSnapshotPdfHtml, miniFreshRow, miniRiskRow, miniRenewalDoneRow, buildOfficerPdfSections, paginateOfficerPdfSectionsWithHeights, compactPdfSection, compactPdfSectionV2, buildOfficerPdfPages, buildCompactOfficerPdfPage, buildCompactOfficerPdfPageV2, buildOfficerPdfPage, detailedSnapshotPdfCss } from "./performance-pdf.js";
+import { catCls, esc, fmtAmt, fmtShortDate, isFreshCC, shortCat } from "./utils.js";
+import { metricHtml, CATS, amountOf } from "./performance-utils.js";
 import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
 import { availabilityLabel, availabilityShortLabel, officerAvailabilityForDate } from "./officer-availability.js";
 
@@ -968,25 +966,6 @@ function renderWeeklyComparativeCharts(thisData, prevData) {
     <div class="weekly-comp-charts">
       ${renderSection("Fresh Sanctions", thisData.fresh.rows, prevData.fresh.rows, 0)}
       ${renderSection("Renewals", thisData.renewal.rows, prevData.renewal.rows, 1)}
-    </div>
-  </section>`;
-}
-
-function renderWeeklyOfficerStrip(rows) {
-  return `<section class="weekly-officer-strip">
-    <div class="weekly-strip-head">
-      <span>Officer Summary</span>
-      <strong>Fresh + renewal totals</strong>
-    </div>
-    <div class="weekly-strip-grid">
-      ${rows.map((row, index) => `<article class="weekly-officer-mini">
-        <div class="weekly-mini-rank">${esc(ordinal(index + 1))}</div>
-        <div>
-          <h4>${esc(row.name)}</h4>
-          <p>Fresh ${esc(row.fresh.count)} / Rs ${esc(fmtAmt(row.fresh.amount))}L</p>
-          <p>Renewal ${esc(row.renewal.count)} / Rs ${esc(fmtAmt(row.renewal.amount))}L</p>
-        </div>
-      </article>`).join("")}
     </div>
   </section>`;
 }

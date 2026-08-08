@@ -1,12 +1,22 @@
 import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, timeAgo, isFreshCC, appConfirm } from "./utils.js";
+import { todayStr, showUndoToast, toast, isFreshCC, appConfirm } from "./utils.js";
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-import { animateOverlayIn, animateOverlayOut } from "./animate.js";
-
-import { getBranchSearchInput, getBranchValueInput, getCategorySelect, getLoanTypeValue, normalizeName, normalizeBranchText, recentBranches, saveRecentBranch, branchesForUser, branchLabel, duplicateCardHtml, populateFormOptions, renderCategoryChips, updateCategoryHint, setCategoryValue, matchBranchOption, assignedOfficerForBranch, setAdvancedFieldsVisible, setFormEntryMode, updateAssignedOfficerHint, updateBranchMatchHint, renderBranchQuickPicks, setBranchValue, fillFormFromLoan, getDuplicateMatches, showDuplicateModal, confirmPotentialDuplicate, RECENT_BRANCHES_KEY, duplicateDecisionResolve } from "./ui-forms.js";
+import {
+  getBranchSearchInput,
+  getBranchValueInput,
+  getCategorySelect,
+  getLoanTypeValue,
+  normalizeName,
+  saveRecentBranch,
+  updateCategoryHint,
+  matchBranchOption,
+  assignedOfficerForBranch,
+  fillFormFromLoan,
+  confirmPotentialDuplicate,
+} from "./ui-forms.js";
 
 /* CORE LOAN ACTIONS */
 window.sanctionLoan = async function(id) {
@@ -15,10 +25,6 @@ window.sanctionLoan = async function(id) {
 
 window.returnLoan = async function(id) {
   window.openLoanDecisionSheet(id, 'returned');
-};
-
-window.moveToPending = async function(id) {
-  window.openLoanDecisionSheet(id, 'pending');
 };
 
 /* Post-sanction stage marks: documentation (fresh loans + renewals done),
@@ -61,52 +67,6 @@ window.markLoanStage = async function(id, stage) {
     console.error(e);
   }
 };
-
-async function applyLoanStatus(id, nextStatus, remarks = '') {
-  const l = S.loans.find(x => x.id === id);
-  if (!l || !nextStatus) return null;
-  const data = { status: nextStatus };
-  if (nextStatus === 'sanctioned') {
-    data.sanctionDate = l.sanctionDate || todayStr();
-  } else if (nextStatus === 'returned') {
-    data.returnedDate = l.returnedDate || todayStr();
-    data.remarks = remarks.trim();
-  }
-  const noStatusChange = nextStatus === l.status;
-  const noRemarkChange = nextStatus !== 'returned' || (data.remarks || '') === (l.remarks || '');
-  if (noStatusChange && noRemarkChange) return null;
-  try {
-    await updateLoan(id, data);
-    if (nextStatus === 'sanctioned') createNotification('sanctioned', { ...l, ...data }).catch(() => {});
-    else if (nextStatus === 'returned') createNotification('returned', { ...l, ...data }).catch(() => {});
-    toast(nextStatus === 'sanctioned' ? 'Sanctioned ✓' : nextStatus === 'returned' ? 'Marked as returned' : 'Moved to pending');
-    Object.assign(l, data);
-    return data;
-  } catch (e) {
-    toast('Error');
-    console.error(e);
-    return null;
-  }
-}
-
-async function applyRenewalStatus(id, renewed) {
-  const l = S.loans.find(x => x.id === id);
-  if (!l) return false;
-  if (renewed) {
-    window.closeDecisionSheet();
-    window.openForm({ ...l, renewedDate: l.renewedDate || todayStr() }, 'renewal-done', { entryMode: 'full' });
-    return true;
-  }
-  try {
-    await updateLoan(id, { renewedDate: '', renewalDatesPending: false, documentationDate: '' });
-    toast('Renewal moved to pending');
-    return true;
-  } catch (e) {
-    toast('Error');
-    console.error(e);
-    return false;
-  }
-}
 
 function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) {
   const branch = matchBranchOption(draft.branch);

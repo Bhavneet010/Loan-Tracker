@@ -15,10 +15,6 @@ export function reminderMails(loan) {
   return [...list].sort((a, b) => (b.sentAt || '').localeCompare(a.sentAt || ''));
 }
 
-export function lastReminderMail(loan) {
-  return reminderMails(loan)[0] || null;
-}
-
 export function fmtDateTime(iso) {
   if (!iso) return '';
   const [datePart, timePart = ''] = String(iso).split('T');

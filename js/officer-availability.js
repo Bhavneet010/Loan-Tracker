@@ -54,16 +54,3 @@ export function officerAvailabilityForDate(officer, dateStr) {
       item.endDate >= dateStr
     ) || null;
 }
-
-export function expandAvailabilityDates(item) {
-  const normalized = normalizeAvailability(item);
-  if (!normalized) return [];
-  const out = [];
-  const cursor = parseDate(normalized.startDate);
-  const end = parseDate(normalized.endDate);
-  while (cursor <= end) {
-    out.push(isoDate(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return out;
-}

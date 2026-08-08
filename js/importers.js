@@ -1,9 +1,8 @@
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
-import { S, saveSettings } from "./state.js";
+import { S } from "./state.js";
 import { slugifyId, toast, isFreshCC } from "./utils.js";
 import { ts } from "./db.js";
-import { renderSettingsList } from "./ui-settings.js";
 
 window.triggerCsvUpload = function () {
   if (!S.isAdmin) { toast('Admin only'); return; }
