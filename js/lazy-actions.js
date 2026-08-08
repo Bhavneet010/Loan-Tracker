@@ -1,21 +1,18 @@
 import { toast } from "./utils.js";
+import { createLazyAction } from "./lazy-action.js";
 
-function registerLazyAction(name, modulePath, failureLabel) {
-  const lazyAction = async (...args) => {
-    try {
-      await import(modulePath);
-      const loadedAction = window[name];
-      if (typeof loadedAction !== "function" || loadedAction === lazyAction) {
-        throw new Error(`${modulePath} did not register window.${name}`);
-      }
-      return await loadedAction(...args);
-    } catch (error) {
+function registerLazyAction(name, modulePath, failureLabel, beforeLoad) {
+  window[name] = createLazyAction({
+    name,
+    modulePath,
+    loadModule: path => import(path),
+    getAction: actionName => window[actionName],
+    beforeLoad,
+    onError: error => {
       console.error(`[LazyAction] ${name} failed`, error);
       toast(`Could not load ${failureLabel}`);
-      return undefined;
-    }
-  };
-  window[name] = lazyAction;
+    },
+  });
 }
 
 for (const name of [
@@ -32,10 +29,16 @@ for (const name of [
 
 for (const name of [
   "exportLoansExcel",
-  "toggleCalExportMenu",
   "closeCalExportMenu",
   "exportCalendarRenewalsExcel",
   "exportCalendarRenewalsPdf",
 ]) {
   registerLazyAction(name, "./export-excel.js", "export tools");
 }
+
+registerLazyAction(
+  "toggleCalExportMenu",
+  "./export-excel.js",
+  "export tools",
+  event => event?.stopPropagation(),
+);

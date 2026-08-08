@@ -33,7 +33,8 @@ async function fetchOk(reference, base = `${origin}/index.html`) {
   return response;
 }
 
-function executeWorkerAssetContract(workerSource) {
+function executeWorkerContract(workerSource, overrides = {}) {
+  const listeners = new Map();
   const sandbox = {
     URL,
     console,
@@ -44,24 +45,24 @@ function executeWorkerAssetContract(workerSource) {
       messaging() { return { onBackgroundMessage() {} }; },
     },
     self: {
-      addEventListener() {},
+      addEventListener(type, listener) { listeners.set(type, listener); },
       registration: { showNotification() {} },
-      skipWaiting() {},
-      clients: { claim() {} },
+      skipWaiting: overrides.skipWaiting || (() => {}),
+      clients: overrides.clients || { claim() {} },
     },
-    caches: {},
+    caches: overrides.caches || {},
   };
   vm.runInNewContext(
     `${workerSource}\nself.__assetContract = { cache: CACHE, assets: ASSETS };`,
     sandbox,
   );
-  return sandbox.self.__assetContract;
+  return { ...sandbox.self.__assetContract, listeners };
 }
 
 test("the served shell and worker use stable asset URLs", async () => {
   const index = await (await fetchOk("/index.html")).text();
   const workerSource = await (await fetchOk("/sw.js")).text();
-  const { cache, assets } = executeWorkerAssetContract(workerSource);
+  const { cache, assets } = executeWorkerContract(workerSource);
   const pageAssets = [...index.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
     .map(match => match[1])
     .filter(reference => new URL(reference, origin).origin === origin);
@@ -76,7 +77,7 @@ test("every served shell and precache asset returns successfully", async () => {
   const index = await (await fetchOk("/index.html")).text();
   const workerSource = await (await fetchOk("/sw.js")).text();
   const manifest = await (await fetchOk("/manifest.json")).json();
-  const { assets } = executeWorkerAssetContract(workerSource);
+  const { assets } = executeWorkerContract(workerSource);
   const pageAssets = [...index.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
     .map(match => match[1])
     .filter(reference => new URL(reference, origin).origin === origin);
@@ -91,7 +92,7 @@ test("every served shell and precache asset returns successfully", async () => {
 
 test("report-only resources are deferred from install-time precaching", async () => {
   const workerSource = await (await fetchOk("/sw.js")).text();
-  const { assets } = executeWorkerAssetContract(workerSource);
+  const { assets } = executeWorkerContract(workerSource);
   for (const deferredAsset of [
     "./assets/snapshot/top-performer-bg.png",
     "./assets/sme/sbi-logo.svg",
@@ -105,4 +106,48 @@ test("report-only resources are deferred from install-time precaching", async ()
   ]) {
     assert.equal(assets.includes(deferredAsset), false, deferredAsset);
   }
+});
+
+test("install-time precache failures reject the worker lifetime", async () => {
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const precacheError = new Error("asset unavailable");
+  const caches = {
+    async open() {
+      return { async addAll() { throw precacheError; } };
+    },
+  };
+  const { listeners } = executeWorkerContract(workerSource, { caches });
+  let lifetime;
+
+  listeners.get("install")({ waitUntil(promise) { lifetime = promise; } });
+
+  await assert.rejects(lifetime, precacheError);
+});
+
+test("activation waits for client claim and deletes only obsolete Nirnay caches", async () => {
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const deleted = [];
+  const caches = {
+    async keys() {
+      return ["nirnay-v201", "nirnay-v202", "nirnay-v203", "third-party-cache"];
+    },
+    async delete(key) { deleted.push(key); },
+  };
+  let resolveClaim;
+  const claimGate = new Promise(resolve => { resolveClaim = resolve; });
+  const clients = { claim() { return claimGate; } };
+  const { listeners } = executeWorkerContract(workerSource, { caches, clients });
+  let lifetime;
+
+  listeners.get("activate")({ waitUntil(promise) { lifetime = promise; } });
+
+  const stateBeforeClaim = await Promise.race([
+    lifetime.then(() => "settled"),
+    new Promise(resolve => setTimeout(() => resolve("pending"), 20)),
+  ]);
+  assert.equal(stateBeforeClaim, "pending", "activation settled before clients.claim()");
+  assert.deepEqual(deleted, ["nirnay-v201", "nirnay-v202"]);
+
+  resolveClaim();
+  await lifetime;
 });

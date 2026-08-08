@@ -58,6 +58,7 @@ const ASSETS = [
   './js/derived.js',
   './js/fresh-group-state.js',
   './js/importers.js',
+  './js/lazy-action.js',
   './js/lazy-actions.js',
   './js/loan-actions.js',
   './js/officer-availability.js',
@@ -96,9 +97,8 @@ self.addEventListener('activate', event => {
       keys
         .filter(key => key.startsWith('nirnay-v') && key !== CACHE)
         .map(key => caches.delete(key))
-    ))
+    )).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
