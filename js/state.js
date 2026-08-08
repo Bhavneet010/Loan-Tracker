@@ -66,7 +66,12 @@ function timeoutAfter(ms) {
 function applySettings(d) {
   if (d.officers?.length) S.officers = d.officers;
   if (d.branches?.length) S.branches = d.branches;
-  if (d.branchOfficers) S.branchOfficers = { ...S.branchOfficers, ...d.branchOfficers };
+  // Replace (not merge) so branches unassigned in saved settings don't fall
+  // back to the hardcoded defaults and resurrect removed officers.
+  if (d.branchOfficers) S.branchOfficers = { ...d.branchOfficers };
+  Object.keys(S.branchOfficers).forEach(code => {
+    if (!S.officers.includes(S.branchOfficers[code])) delete S.branchOfficers[code];
+  });
   if (d.renewalTargets) S.renewalTargets = d.renewalTargets;
   if (d.officerPhotos) S.officerPhotos = d.officerPhotos;
   if (Array.isArray(d.officerAvailability)) S.officerAvailability = d.officerAvailability;
