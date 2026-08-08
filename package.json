@@ -1,0 +1,7 @@
+{
+  "name": "nirnay-loan-tracker",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

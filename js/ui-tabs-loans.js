@@ -1,4 +1,5 @@
 ﻿import { S } from "./state.js";
+import { effectiveFreshGroupCollapsed } from "./fresh-group-state.js";
 import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { fmtAmt, daysPending, esc, officerColor, initials, catCls } from "./utils.js";
 import { emptyState, compactLoanItem } from "./ui-components.js";
@@ -50,7 +51,7 @@ function freshGroupsHtml(loans, itemHtml) {
   let idx = 0;
   return buildFreshGroups(loans).map(({ key, loans: groupLoans }) => {
     const stored = S.freshGroupCollapsed?.[key];
-    const collapsed = stored !== undefined ? !!stored : S.isAdmin;
+    const collapsed = effectiveFreshGroupCollapsed(stored, S.isAdmin);
     const total = sumAmount(groupLoans);
     const marker = mode === 'category'
       ? `<span class="grp-dot ${catCls(key) || 'none'}"></span>`

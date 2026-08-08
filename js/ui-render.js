@@ -1,5 +1,7 @@
 import { S, saveSettings } from "./state.js";
 
+import { nextFreshGroupCollapsed } from "./fresh-group-state.js";
+
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
@@ -118,7 +120,11 @@ window.setFreshGroupMode = function(mode) {
   render();
 };
 window.toggleFreshGroup = function(key) {
-  S.freshGroupCollapsed = { ...(S.freshGroupCollapsed || {}), [key]: !S.freshGroupCollapsed?.[key] };
+  const stored = S.freshGroupCollapsed?.[key];
+  S.freshGroupCollapsed = {
+    ...(S.freshGroupCollapsed || {}),
+    [key]: nextFreshGroupCollapsed(stored, S.isAdmin),
+  };
   render();
 };
 window.toggleRenewalToday = function() {
