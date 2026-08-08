@@ -5,11 +5,12 @@ import { getCalendarMonthExport, getCalendarMonthsExport } from "./ui-calendar.j
 import { ensureJsPdf } from "./performance-snapshot.js";
 import { buildMultiMonthExportFilename } from "./calendar-export-model.js";
 import { buildMultiMonthTabularLayout } from "./calendar-export-layout.js";
+import { renderMultiMonthRenewalPdf } from "./calendar-export-pdf.js";
 import { createRetryableScriptLoader } from "./script-loader.js";
 
 // xlsx-js-style is API-compatible with SheetJS but can also write cell styles
 // (used to grey out "renewal not possible" rows in the calendar export).
-const XLSX_CDN = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js";
+const XLSX_CDN = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js";
 
 const ensureXlsx = createRetryableScriptLoader({
   documentRef: document,
@@ -468,5 +469,27 @@ window.exportCalendarRenewalsPdf = async function () {
   } catch (err) {
     console.error("[Calendar PDF export]", err);
     toast("Export failed. Please try again.");
+  }
+};
+
+window.exportCalendarRenewalsMultiPdf = async function (monthKeys) {
+  try {
+    const sections = getCalendarMonthsExport(monthKeys);
+    if (!sections.length) throw new TypeError("Select at least one month");
+    toast("Preparing multi-month PDF export…");
+    await ensureJsPdf();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    renderMultiMonthRenewalPdf(doc, sections, {
+      columns: PDF_COLS,
+      rowMapper: renewalDueRow,
+    });
+    doc.save(buildMultiMonthExportFilename(monthKeys, "pdf"));
+    toast(`${sections.length} month${sections.length === 1 ? "" : "s"} exported to PDF!`);
+    return true;
+  } catch (err) {
+    console.error("[Multi-month calendar PDF export]", err);
+    toast("Export failed. Please try again.");
+    return false;
   }
 };

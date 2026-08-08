@@ -4,9 +4,9 @@ import { catCls, esc, fmtAmt, fmtShortDate, isFreshCC, shortCat } from "./utils.
 import { metricHtml, CATS, amountOf } from "./performance-utils.js";
 import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
 import { availabilityLabel, availabilityShortLabel, officerAvailabilityForDate } from "./officer-availability.js";
+import { createRetryableScriptLoader } from "./script-loader.js";
 
 let localHtml2CanvasPromise = null;
-let localJsPdfPromise = null;
 
 function ensureHtml2Canvas() {
   if (window.html2canvas) return Promise.resolve();
@@ -22,19 +22,12 @@ function ensureHtml2Canvas() {
   return localHtml2CanvasPromise;
 }
 
-function ensureJsPdf() {
-  if (window.jspdf?.jsPDF) return Promise.resolve();
-  if (localJsPdfPromise) return localJsPdfPromise;
-  localJsPdfPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
-    script.async = true;
-    script.onload = () => window.jspdf?.jsPDF ? resolve() : reject(new Error("jsPDF did not load"));
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-  return localJsPdfPromise;
-}
+const ensureJsPdf = createRetryableScriptLoader({
+  documentRef: document,
+  isReady: () => !!window.jspdf?.jsPDF,
+  src: "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
+  errorMessage: "Failed to load jsPDF",
+});
 
 function ensureImageLoaded(src) {
   return new Promise((resolve, reject) => {
