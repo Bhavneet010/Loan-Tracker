@@ -29,10 +29,7 @@
 - `js/fresh-group-state.js` — owns effective and next collapsed-state calculations.
 - `js/lazy-actions.js` — registers stable lazy entry points for month-end and spreadsheet modules.
 - `tests/fresh-group-state.test.mjs` — regression tests for first-click and repeated collapse transitions.
-- `tests/stale-recovery.test.mjs` — prevents the April 2026 recovery assets and entry points from returning.
-- `tests/code-hygiene.test.mjs` — detects the confirmed dead definitions, legacy CSS files, and unused named imports.
-- `tests/static-assets.test.mjs` — validates local asset existence, stable URLs, module references, and lazy-loading boundaries.
-- `tests/accessibility-contract.test.mjs` — validates the primary header and loan-form accessibility contract.
+- `tests/runtime-assets.test.mjs` — executes the local server and service worker manifest to validate stable, loadable application assets.
 
 ### Modified files
 
@@ -213,7 +210,6 @@ git commit -m "fix: toggle fresh loan groups on first click"
 
 **Files:**
 
-- Create: `tests/stale-recovery.test.mjs`
 - Modify: `js/importers.js:1-56,265-309`
 - Modify: `js/ui-settings.js:112-120`
 - Delete: `data/pending-2026-04.json`
@@ -226,63 +222,17 @@ git commit -m "fix: toggle fresh loan groups on first click"
 - Preserves: `window.clearAllSmeRenewals()` and `window.wipeSanctionedFreshLoans()` without invoking them.
 - Removes: `importReturnsFromUrl()`, `window.importMonthlyReturns()`, `importSanctionedFromUrl()`, and `window.importMonthlySanctioned()`.
 
-- [ ] **Step 1: Write the failing stale-recovery contract test**
+- [ ] **Step 1: Record the approved deletion boundary before editing**
 
-Create `tests/stale-recovery.test.mjs`:
-
-```js
-import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import test from "node:test";
-
-const root = new URL("../", import.meta.url);
-const importers = await readFile(new URL("js/importers.js", root), "utf8");
-const settings = await readFile(new URL("js/ui-settings.js", root), "utf8");
-
-test("fixed April recovery data is absent", () => {
-  for (const path of [
-    "data/pending-2026-04.json",
-    "data/returns-2026-04.json",
-    "data/sanctioned-2026-04.json",
-  ]) {
-    assert.equal(existsSync(new URL(path, root)), false, `${path} should be deleted`);
-  }
-});
-
-test("fixed April recovery entry points are absent", () => {
-  const source = `${importers}\n${settings}`;
-  for (const marker of [
-    "importReturnsFromUrl",
-    "importMonthlyReturns",
-    "importSanctionedFromUrl",
-    "importMonthlySanctioned",
-    "returns-2026-04.json",
-    "sanctioned-2026-04.json",
-    "Import April 2026",
-  ]) {
-    assert.equal(source.includes(marker), false, `${marker} should be removed`);
-  }
-});
-
-test("supported recovery paths remain", async () => {
-  assert.match(importers, /window\.triggerCsvUpload\s*=/);
-  assert.match(importers, /window\.handleCsvUpload\s*=/);
-  assert.equal(existsSync(new URL("data/monthly-snapshot-2026-06.json", root)), true);
-});
-```
-
-- [ ] **Step 2: Run the stale-recovery test and verify its current failures**
-
-Run:
+Run this read-only inventory:
 
 ```powershell
-npm test -- tests/stale-recovery.test.mjs
+rg -n "importReturnsFromUrl|importMonthlyReturns|importSanctionedFromUrl|importMonthlySanctioned|pending-2026-04|returns-2026-04|sanctioned-2026-04|Import April 2026|triggerCsvUpload|handleCsvUpload|monthly-snapshot-2026-06" index.html js data sw.js
 ```
 
-Expected: FAIL because the three files and four recovery entry points still exist.
+Expected: the fixed April handlers and files are present, while the generic CSV functions and June snapshot are independently identifiable. This is cleanup evidence, not a permanent source-text regression test.
 
-- [ ] **Step 3: Remove the dedicated April import code and controls**
+- [ ] **Step 2: Remove the dedicated April import code and controls**
 
 In `js/importers.js`, delete these complete definitions:
 
@@ -305,7 +255,7 @@ el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;">
   <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">&#128229; Upload CSV</button>`;
 ```
 
-- [ ] **Step 4: Delete only the three approved April data files**
+- [ ] **Step 3: Delete only the three approved April data files**
 
 Use `apply_patch` to delete:
 
@@ -317,21 +267,21 @@ data/sanctioned-2026-04.json
 
 Do not delete `data/monthly-snapshot-2026-06.json`.
 
-- [ ] **Step 5: Run the focused test and reference scan**
+- [ ] **Step 4: Run syntax checks, the existing behavior suite, and the final reference scan**
 
 ```powershell
-npm test -- tests/stale-recovery.test.mjs
 rg -n "importReturnsFromUrl|importMonthlyReturns|importSanctionedFromUrl|importMonthlySanctioned|pending-2026-04|returns-2026-04|sanctioned-2026-04|Import April 2026" index.html js data sw.js
 node --check js/importers.js
 node --check js/ui-settings.js
+npm test
 ```
 
-Expected: the test passes, `rg` returns no matches, and syntax checks pass.
+Expected: `rg` returns no matches, syntax checks pass, and the existing behavior suite passes. Confirm separately that `window.triggerCsvUpload`, `window.handleCsvUpload`, and `data/monthly-snapshot-2026-06.json` still exist.
 
-- [ ] **Step 6: Commit the approved recovery cleanup**
+- [ ] **Step 5: Commit the approved recovery cleanup**
 
 ```powershell
-git add -- tests/stale-recovery.test.mjs js/importers.js js/ui-settings.js data/pending-2026-04.json data/returns-2026-04.json data/sanctioned-2026-04.json
+git add -- js/importers.js js/ui-settings.js data/pending-2026-04.json data/returns-2026-04.json data/sanctioned-2026-04.json
 git diff --cached --check
 git commit -m "refactor: remove stale April recovery imports"
 ```
@@ -342,7 +292,6 @@ git commit -m "refactor: remove stale April recovery imports"
 
 **Files:**
 
-- Create: `tests/code-hygiene.test.mjs`
 - Modify: `js/app.js`, `js/importers.js`, `js/loan-actions.js`, `js/ui-components.js`, `js/ui-forms.js`, `js/ui-settings.js`, `js/performance-utils.js`, `js/performance-pdf.js`, `js/performance-snapshot.js`, `js/performance.js`
 - Modify: `js/bank-holidays.js`, `js/officer-availability.js`, `js/ui-reminder-mail.js`, `js/ui-calendar.js`, `js/ui-render.js`, `js/month-end.js`
 - Delete: `css/base.css`, `css/theme.css`, `css/layout.css`, `css/components.css`
@@ -351,88 +300,13 @@ git commit -m "refactor: remove stale April recovery imports"
 
 - Removes only the 13 definitions listed in the test below.
 - Preserves every remaining `window.*` action and every CSS file referenced by `index.html` or `sw.js`.
-- Produces a repository-wide unused named-import check for browser modules under `js/`.
+- Preserves runtime behavior while reducing definitions and bindings already proven unreachable by the audit.
 
-- [ ] **Step 1: Write the failing code-hygiene test**
+- [ ] **Step 1: Reconfirm the 13 definitions have no callers**
 
-Create `tests/code-hygiene.test.mjs`:
+Run `rg -n "SYMBOL_NAME" index.html js` for every name below. Expected: only the definition itself. If an unexpected caller appears, stop this task and report the exact caller instead of deleting the definition.
 
-```js
-import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
-import test from "node:test";
-
-const root = new URL("../", import.meta.url);
-
-const deadDefinitions = new Map([
-  ["js/bank-holidays.js", ["countWorkingDaysInMonth"]],
-  ["js/officer-availability.js", ["expandAvailabilityDates"]],
-  ["js/ui-reminder-mail.js", ["lastReminderMail"]],
-  ["js/ui-calendar.js", ["renderCalendar"]],
-  ["js/loan-actions.js", ["moveToPending", "applyLoanStatus", "applyRenewalStatus"]],
-  ["js/month-end.js", ["buildOfficerPage", "totalsLine"]],
-  ["js/performance-snapshot.js", ["renderWeeklyOfficerStrip"]],
-  ["js/ui-render.js", ["applyCalMbarKey", "setTaskCategory"]],
-  ["js/ui-core.js", ["toggleDark"]],
-]);
-
-test("confirmed dead definitions are absent", async () => {
-  for (const [path, names] of deadDefinitions) {
-    const source = await readFile(new URL(path, root), "utf8");
-    for (const name of names) {
-      const definition = new RegExp(
-        `(?:function\\s+${name}\\b|window\\.${name}\\s*=|export\\s+function\\s+${name}\\b)`,
-      );
-      assert.doesNotMatch(source, definition, `${path} still defines ${name}`);
-    }
-  }
-});
-
-test("unloaded legacy stylesheets are absent", () => {
-  for (const path of [
-    "css/base.css",
-    "css/theme.css",
-    "css/layout.css",
-    "css/components.css",
-  ]) {
-    assert.equal(existsSync(new URL(path, root)), false, `${path} should be deleted`);
-  }
-});
-
-test("named imports have a local reference", async () => {
-  const files = (await readdir(new URL("js/", root))).filter(path => path.endsWith(".js"));
-  const unused = [];
-  const importPattern = /^\s*import\s*\{([\s\S]*?)\}\s*from\s*["'][^"']+["'];?/gm;
-
-  for (const file of files) {
-    const source = await readFile(new URL(`js/${file}`, root), "utf8");
-    const body = source.replace(importPattern, "");
-    for (const match of source.matchAll(importPattern)) {
-      for (const binding of match[1].split(",")) {
-        const parts = binding.trim().split(/\s+as\s+/);
-        const local = parts.at(-1)?.trim();
-        if (!local || !/^[A-Za-z_$][\w$]*$/.test(local)) continue;
-        const escaped = local.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const reference = new RegExp(`(^|[^A-Za-z0-9_$])${escaped}([^A-Za-z0-9_$]|$)`);
-        if (!reference.test(body)) unused.push(`js/${file}:${local}`);
-      }
-    }
-  }
-
-  assert.deepEqual(unused, []);
-});
-```
-
-- [ ] **Step 2: Run the hygiene test and verify the existing failures**
-
-```powershell
-npm test -- tests/code-hygiene.test.mjs
-```
-
-Expected: FAIL with the listed definitions, CSS files, and unused named imports.
-
-- [ ] **Step 3: Remove the 13 exact dead definitions**
+- [ ] **Step 2: Remove the 13 exact dead definitions**
 
 Delete each complete definition, including its assignment terminator where applicable:
 
@@ -448,9 +322,7 @@ js/ui-render.js: applyCalMbarKey, window.setTaskCategory
 js/ui-core.js: window.toggleDark
 ```
 
-Before each deletion, run `rg -n "SYMBOL_NAME" index.html js`. Expected: only the definition listed above. If an unexpected caller appears, stop this task and report the exact caller instead of deleting the definition or weakening the test.
-
-- [ ] **Step 4: Replace named imports with their exact used bindings**
+- [ ] **Step 3: Replace named imports with their exact used bindings**
 
 Use these import clauses; remove any clause whose right-hand side is empty:
 
@@ -539,7 +411,7 @@ import {
 // Delete the named import from "./derived.js".
 ```
 
-- [ ] **Step 5: Delete the four CSS files after a final reference check**
+- [ ] **Step 4: Delete the four CSS files after a final reference check**
 
 Run:
 
@@ -556,20 +428,34 @@ css/layout.css
 css/components.css
 ```
 
-- [ ] **Step 6: Run the hygiene test, syntax checks, and full test suite**
+- [ ] **Step 5: Run the unused-binding audit, syntax checks, and full behavior suite**
 
 ```powershell
-npm test -- tests/code-hygiene.test.mjs
+$unused = @()
+Get-ChildItem js -Filter *.js | ForEach-Object {
+  $fileName = $_.Name
+  $raw = Get-Content -Raw $_.FullName
+  $body = [regex]::Replace($raw, '(?ms)^\s*import\s*\{.*?\}\s*from\s*["''][^"'']+["''];?', '')
+  [regex]::Matches($raw, '(?ms)^\s*import\s*\{(?<names>.*?)\}\s*from\s*["''][^"'']+["''];?') | ForEach-Object {
+    foreach ($binding in ($_.Groups['names'].Value -split ',')) {
+      $local = (($binding.Trim() -split '\s+as\s+')[-1]).Trim()
+      if ($local -match '^[A-Za-z_$][\w$]*$' -and -not [regex]::IsMatch($body, "(?<![A-Za-z0-9_$])$([regex]::Escape($local))(?![A-Za-z0-9_$])")) {
+        $unused += "${fileName}:$local"
+      }
+    }
+  }
+}
+if ($unused.Count) { $unused; exit 1 }
 $syntaxFailed = $false; Get-ChildItem js -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { $syntaxFailed = $true } }; if ($syntaxFailed) { exit 1 }
 npm test
 ```
 
-Expected: all commands PASS.
+Expected: the one-time audit reports no unused named imports, all syntax checks pass, and the behavior suite passes. This audit remains execution evidence rather than a permanent source-text test.
 
-- [ ] **Step 7: Commit the conservative redundancy cleanup**
+- [ ] **Step 6: Commit the conservative redundancy cleanup**
 
 ```powershell
-git add -- tests/code-hygiene.test.mjs js/app.js js/importers.js js/loan-actions.js js/ui-components.js js/ui-forms.js js/ui-settings.js js/performance-utils.js js/performance-pdf.js js/performance-snapshot.js js/performance.js js/bank-holidays.js js/officer-availability.js js/ui-reminder-mail.js js/ui-calendar.js js/ui-render.js js/month-end.js js/ui-core.js css/base.css css/theme.css css/layout.css css/components.css
+git add -- js/app.js js/importers.js js/loan-actions.js js/ui-components.js js/ui-forms.js js/ui-settings.js js/performance-utils.js js/performance-pdf.js js/performance-snapshot.js js/performance.js js/bank-holidays.js js/officer-availability.js js/ui-reminder-mail.js js/ui-calendar.js js/ui-render.js js/month-end.js js/ui-core.js css/base.css css/theme.css css/layout.css css/components.css
 git diff --cached --check
 git commit -m "refactor: remove confirmed dead code and styles"
 ```
@@ -580,7 +466,7 @@ git commit -m "refactor: remove confirmed dead code and styles"
 
 **Files:**
 
-- Create: `tests/static-assets.test.mjs`
+- Create: `tests/runtime-assets.test.mjs`
 - Create: `js/lazy-actions.js`
 - Modify: `js/app.js:9-18`
 - Modify: `js/ui-core.js:150-157`
@@ -594,102 +480,105 @@ git commit -m "refactor: remove confirmed dead code and styles"
 - Preserves: `window.showPerfOverlay()` and all existing inline HTML handlers.
 - Changes: local application asset URLs become stable paths without `?v=` or `?t=` parameters.
 
-- [ ] **Step 1: Write the failing static-asset and lazy-boundary test**
+- [ ] **Step 1: Write a failing runtime asset test**
 
-Create `tests/static-assets.test.mjs`:
+Create `tests/runtime-assets.test.mjs`. It must start the real `dev-server.js`, execute `sw.js` in a controlled VM sandbox to obtain its runtime asset contract, fetch the served page/manifest/assets over HTTP, and assert user-visible loading properties rather than grepping repository files:
 
 ```js
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import test from "node:test";
+import { spawn } from "node:child_process";
+import { after, before, test } from "node:test";
+import vm from "node:vm";
 
-const rootUrl = new URL("../", import.meta.url);
-const rootPath = fileURLToPath(rootUrl);
-const index = await readFile(new URL("index.html", rootUrl), "utf8");
-const worker = await readFile(new URL("sw.js", rootUrl), "utf8");
-const manifest = JSON.parse(await readFile(new URL("manifest.json", rootUrl), "utf8"));
-const app = await readFile(new URL("js/app.js", rootUrl), "utf8");
-const uiCore = await readFile(new URL("js/ui-core.js", rootUrl), "utf8");
+const port = 43000 + (process.pid % 1000);
+const origin = `http://127.0.0.1:${port}`;
+const root = new URL("../", import.meta.url);
+let server;
 
-function stripQuery(reference) {
-  return reference.split(/[?#]/, 1)[0];
+before(async () => {
+  server = spawn(process.execPath, ["dev-server.js"], {
+    cwd: root,
+    env: { ...process.env, PORT: String(port) },
+    stdio: "ignore",
+  });
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    try {
+      const response = await fetch(`${origin}/index.html`);
+      if (response.ok) return;
+    } catch {}
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  throw new Error("dev-server.js did not become ready");
+});
+
+after(() => server?.kill());
+
+async function fetchOk(reference, base = `${origin}/index.html`) {
+  const url = new URL(reference, base);
+  const response = await fetch(url);
+  assert.equal(response.ok, true, `${url.pathname} returned ${response.status}`);
+  return response;
 }
 
-function localReference(reference) {
-  return !/^(?:[a-z]+:|\/\/|#|data:)/i.test(reference);
+function executeWorkerAssetContract(workerSource) {
+  const sandbox = {
+    URL,
+    console,
+    fetch,
+    importScripts() {},
+    firebase: {
+      initializeApp() {},
+      messaging() { return { onBackgroundMessage() {} }; },
+    },
+    self: {
+      addEventListener() {},
+      registration: { showNotification() {} },
+      skipWaiting() {},
+      clients: { claim() {} },
+    },
+    caches: {},
+  };
+  vm.runInNewContext(
+    `${workerSource}\nself.__assetContract = { cache: CACHE, assets: ASSETS };`,
+    sandbox,
+  );
+  return sandbox.self.__assetContract;
 }
 
-function resolveLocal(fromFile, reference) {
-  return path.resolve(rootPath, path.dirname(fromFile), stripQuery(reference));
-}
-
-const assetBlock = worker.match(/const ASSETS = \[([\s\S]*?)\];/);
-assert.ok(assetBlock, "sw.js must declare ASSETS");
-const workerAssets = [...assetBlock[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]);
-
-test("page and worker use stable local asset URLs", () => {
-  const indexAssets = [...index.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
+test("the served shell and worker use stable asset URLs", async () => {
+  const index = await (await fetchOk("/index.html")).text();
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const { cache, assets } = executeWorkerAssetContract(workerSource);
+  const pageAssets = [...index.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
     .map(match => match[1])
-    .filter(localReference);
-  for (const reference of [...indexAssets, ...workerAssets]) {
-    assert.doesNotMatch(reference, /[?&](?:v|t)=/, `${reference} is cache-busted`);
+    .filter(reference => new URL(reference, origin).origin === origin);
+
+  assert.match(cache, /^nirnay-v\d+$/);
+  for (const reference of [...pageAssets, ...assets]) {
+    assert.doesNotMatch(reference, /[?&](?:v|t)=/, `${reference} bypasses the stable cache key`);
   }
 });
 
-test("every declared local page and worker asset exists", () => {
-  const indexAssets = [...index.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
+test("every served shell and precache asset returns successfully", async () => {
+  const index = await (await fetchOk("/index.html")).text();
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const manifest = await (await fetchOk("/manifest.json")).json();
+  const { assets } = executeWorkerAssetContract(workerSource);
+  const pageAssets = [...index.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
     .map(match => match[1])
-    .filter(localReference);
-  for (const reference of indexAssets) {
-    assert.equal(existsSync(resolveLocal("index.html", reference)), true, reference);
-  }
-  for (const reference of workerAssets) {
-    assert.equal(existsSync(resolveLocal("sw.js", reference)), true, reference);
+    .filter(reference => new URL(reference, origin).origin === origin);
+
+  for (const reference of [...new Set([...pageAssets, ...assets])]) {
+    await fetchOk(reference);
   }
   for (const icon of manifest.icons || []) {
-    assert.equal(existsSync(resolveLocal("manifest.json", icon.src)), true, icon.src);
+    await fetchOk(icon.src, `${origin}/manifest.json`);
   }
 });
 
-test("every local page asset is covered by the application shell cache", () => {
-  const cached = new Set(workerAssets.map(reference => stripQuery(reference).replace(/^\.\//, "")));
-  const indexAssets = [...index.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
-    .map(match => match[1])
-    .filter(localReference)
-    .map(reference => stripQuery(reference).replace(/^\.\//, ""));
-  for (const reference of indexAssets) {
-    assert.ok(cached.has(reference), `${reference} is not precached`);
-  }
-});
-
-test("every relative JavaScript module reference resolves", async () => {
-  const files = (await readdir(new URL("js/", rootUrl))).filter(file => file.endsWith(".js"));
-  for (const file of files) {
-    const source = await readFile(new URL(`js/${file}`, rootUrl), "utf8");
-    const references = [
-      ...source.matchAll(/\bfrom\s*["'](\.\.?\/[^"']+)["']/g),
-      ...source.matchAll(/\bimport\s*\(\s*["'](\.\.?\/[^"']+)["']\s*\)/g),
-      ...source.matchAll(/^\s*import\s*["'](\.\.?\/[^"']+)["'];?/gm),
-    ].map(match => match[1]);
-    for (const reference of references) {
-      assert.equal(existsSync(resolveLocal(`js/${file}`, reference)), true, `${file}: ${reference}`);
-    }
-  }
-});
-
-test("the page and worker agree on the application entry point", () => {
-  assert.match(index, /<script type="module" src="js\/app\.js"><\/script>/);
-  assert.ok(workerAssets.includes("./js/app.js"));
-});
-
-test("heavy administrative exports are registered through the lazy boundary", () => {
-  assert.doesNotMatch(app, /^import\s+["']\.\/(?:month-end|export-excel)\.js["'];?/m);
-  assert.match(app, /^import\s+["']\.\/lazy-actions\.js["'];?/m);
-  assert.doesNotMatch(uiCore, /performance\.js\?(?:t|v)=/);
-  assert.ok(workerAssets.includes("./js/lazy-actions.js"));
+test("report-only resources are deferred from install-time precaching", async () => {
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const { assets } = executeWorkerAssetContract(workerSource);
   for (const deferredAsset of [
     "./assets/snapshot/top-performer-bg.png",
     "./assets/sme/sbi-logo.svg",
@@ -701,18 +590,18 @@ test("heavy administrative exports are registered through the lazy boundary", ()
     "./js/performance-snapshot.js",
     "./js/sme-daily-report.js",
   ]) {
-    assert.equal(workerAssets.includes(deferredAsset), false, `${deferredAsset} should load on demand`);
+    assert.equal(assets.includes(deferredAsset), false, deferredAsset);
   }
 });
 ```
 
-- [ ] **Step 2: Run the static-asset test and verify current failures**
+- [ ] **Step 2: Run the runtime asset test and verify the expected failures**
 
 ```powershell
-npm test -- tests/static-assets.test.mjs
+npm test -- tests/runtime-assets.test.mjs
 ```
 
-Expected: FAIL on versioned page URLs, the timestamped Performance import, eager module imports, and the missing lazy-actions asset.
+Expected: FAIL because served URLs contain query-based cache busting and report-only resources remain in the install-time manifest.
 
 - [ ] **Step 3: Add stable lazy entry points for report-only modules**
 
@@ -853,7 +742,7 @@ Do not change the Firebase background-messaging setup or the network-first fetch
 - [ ] **Step 6: Run static-asset, syntax, and complete tests**
 
 ```powershell
-npm test -- tests/static-assets.test.mjs
+npm test -- tests/runtime-assets.test.mjs
 node --check js/lazy-actions.js
 node --check js/app.js
 node --check js/ui-core.js
@@ -866,7 +755,7 @@ Expected: all commands PASS.
 - [ ] **Step 7: Commit the PWA and lazy-loading boundary**
 
 ```powershell
-git add -- tests/static-assets.test.mjs js/lazy-actions.js js/app.js js/ui-core.js index.html sw.js
+git add -- tests/runtime-assets.test.mjs js/lazy-actions.js js/app.js js/ui-core.js index.html sw.js
 git diff --cached --check
 git commit -m "fix: stabilize PWA assets and lazy report loading"
 ```
@@ -877,7 +766,6 @@ git commit -m "fix: stabilize PWA assets and lazy report loading"
 
 **Files:**
 
-- Create: `tests/accessibility-contract.test.mjs`
 - Modify: `index.html:5,67-98,208-209,239-344`
 - Modify: `js/animate.js:1-35`
 - Modify: `js/ui-forms.js:497-509,532-534`
@@ -893,65 +781,18 @@ git commit -m "fix: stabilize PWA assets and lazy report loading"
 - `closeOverlay(id, callback)` sets `aria-hidden="true"` and restores focus after the close animation.
 - `window.toggleUserMenu()` keeps `aria-expanded` synchronized with the dropdown's visibility.
 
-- [ ] **Step 1: Write the failing accessibility contract test**
+- [ ] **Step 1: Record the failing browser accessibility behavior before editing**
 
-Create `tests/accessibility-contract.test.mjs`:
+Start `node dev-server.js` and inspect `http://127.0.0.1:4175` using the browser accessibility tree and keyboard only. Record these expected RED observations in the task report:
 
-```js
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import test from "node:test";
+1. Tab cannot reach the Tasks brand, Notifications, Task List, Performance, or user control because they are clickable `div` elements.
+2. The Add Loan overlay is not exposed as a named modal dialog.
+3. Allocated To, Branch, Customer Name, Amount, date fields, and Remarks do not have programmatically associated labels.
+4. The viewport metadata disables user scaling.
 
-const index = await readFile(new URL("../index.html", import.meta.url), "utf8");
+Do not save a loan or invoke any administrative action while recording this baseline.
 
-test("the viewport permits user zoom", () => {
-  assert.doesNotMatch(index, /user-scalable\s*=\s*no/i);
-  assert.doesNotMatch(index, /maximum-scale\s*=\s*1/i);
-});
-
-test("primary header actions are native buttons with accessible names", () => {
-  for (const className of ["brand", "notif-hbtn", "tasklist-hbtn", "performance-hbtn", "user-pill"]) {
-    const button = new RegExp(`<button[^>]*class=["'][^"']*\\b${className}\\b[^"']*["'][^>]*>`, "i");
-    assert.match(index, button, `${className} should be a button`);
-  }
-  assert.match(index, /class="hbtn performance-hbtn"[^>]*aria-label="Performance"/i);
-  assert.match(index, /class="user-pill"[^>]*aria-haspopup="menu"[^>]*aria-expanded="false"/i);
-});
-
-test("the loan form exposes modal semantics", () => {
-  assert.match(index, /id="formModal"[^>]*role="dialog"[^>]*aria-modal="true"[^>]*aria-labelledby="formTitle"[^>]*aria-hidden="true"/i);
-});
-
-test("loan form text controls have associated labels", () => {
-  for (const id of [
-    "fOfficer",
-    "fBranchSearch",
-    "fName",
-    "fAmount",
-    "fReceive",
-    "fSanction",
-    "fRenewalDue",
-    "fLimitExpiry",
-    "fDocumentation",
-    "fDisbursement",
-    "fRemarks",
-  ]) {
-    assert.match(index, new RegExp(`<label[^>]*for=["']${id}["']`, "i"), `${id} needs a label`);
-  }
-  assert.match(index, /id="categoryChips"[^>]*role="group"[^>]*aria-labelledby="categoryLabel"/i);
-  assert.match(index, /class="loan-type-options"[^>]*role="radiogroup"[^>]*aria-labelledby="loanTypeLabel"/i);
-});
-```
-
-- [ ] **Step 2: Run the accessibility contract and verify current failures**
-
-```powershell
-npm test -- tests/accessibility-contract.test.mjs
-```
-
-Expected: FAIL on zoom restriction, non-button header actions, missing dialog semantics, and unassociated labels.
-
-- [ ] **Step 3: Convert the primary header actions to named native buttons**
+- [ ] **Step 2: Convert the primary header actions to named native buttons**
 
 In `index.html`:
 
@@ -980,7 +821,7 @@ The resulting header action skeleton must be:
 </div>
 ```
 
-- [ ] **Step 4: Add modal semantics and explicit form-label relationships**
+- [ ] **Step 3: Add modal semantics and explicit form-label relationships**
 
 Change the form overlay opening tag to:
 
@@ -1013,7 +854,7 @@ Replace the Category label and chip opening tag with:
 
 Give the Loan Facility label `id="loanTypeLabel"`, replace its outer `label` element with a `span class="form-label"`, and add `role="radiogroup" aria-labelledby="loanTypeLabel"` to `.loan-type-options`.
 
-- [ ] **Step 5: Restore focus when overlays close and synchronize the user menu state**
+- [ ] **Step 4: Restore focus when overlays close and synchronize the user menu state**
 
 At the top of `js/animate.js`, add:
 
@@ -1073,7 +914,7 @@ function _setUserMenuOpen(open) {
 
 Use `_setUserMenuOpen(true)` when opening, `_setUserMenuOpen(false)` when closing, and add `role="menuitem"` to each generated `.udrop-item` button.
 
-- [ ] **Step 6: Preserve visual styling and enlarge interactive targets**
+- [ ] **Step 5: Preserve visual styling and enlarge interactive targets**
 
 Update `css/core.css` with:
 
@@ -1112,22 +953,29 @@ Update `css/core.css` with:
 
 Update the form-label selector in `css/core.css`, `css/forms.css`, `css/neo-brutalist.css`, and `css/sketchnote.css` from `.form-group label` to `.form-group label, .form-group .form-label` so the Category and Loan Facility labels retain the existing appearance in every theme.
 
-- [ ] **Step 7: Run the accessibility, syntax, and complete tests**
+- [ ] **Step 6: Verify the corrected behavior in the browser and run automated checks**
 
 ```powershell
-npm test -- tests/accessibility-contract.test.mjs
 node --check js/animate.js
 node --check js/ui-forms.js
 node --check js/ui-core.js
 npm test
 ```
 
-Expected: all commands PASS.
+Then repeat the browser check and record these GREEN observations:
 
-- [ ] **Step 8: Commit the accessibility improvements**
+1. Tab and Shift+Tab reach all five header actions, which have the intended accessible names; Enter and Space activate them.
+2. Opening Add Loan moves focus into the visible form without submitting data.
+3. The accessibility tree exposes a modal dialog named by `Add New Loan` and each primary field exposes its visible label.
+4. Cancel closes the form and returns focus to the Add button.
+5. The viewport permits zoom and the 44-pixel controls do not introduce horizontal page overflow at 390 × 844.
+
+Expected: the browser observations are GREEN, syntax checks pass, and the behavior suite passes without warnings.
+
+- [ ] **Step 7: Commit the accessibility improvements**
 
 ```powershell
-git add -- tests/accessibility-contract.test.mjs index.html js/animate.js js/ui-forms.js js/ui-core.js css/core.css css/forms.css css/neo-brutalist.css css/sketchnote.css
+git add -- index.html js/animate.js js/ui-forms.js js/ui-core.js css/core.css css/forms.css css/neo-brutalist.css css/sketchnote.css
 git diff --cached --check
 git commit -m "fix: improve primary navigation and form accessibility"
 ```
@@ -1208,7 +1056,7 @@ $syntaxFailed = $false; Get-ChildItem js -Filter *.js | ForEach-Object { node --
 │   ├── month-end.js           Monthly snapshot and cleanup tools
 │   └── lazy-actions.js        Deferred report/export entry points
 ├── data/                      Preserved recovery snapshots
-└── tests/                     Node regression and static-contract tests
+└── tests/                     Node behavior and runtime-asset tests
 ```
 
 ## Firebase and Security
