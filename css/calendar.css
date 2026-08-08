@@ -21,29 +21,29 @@ body.dark .cal-export-item{color:var(--text1);}
 body.dark .cal-export-item:hover{background:rgba(155,143,228,0.14);color:var(--p3);}
 body.dark .cal-export-divider{background:rgba(155,143,228,0.18);}
 
-.cal-multi-modal{width:min(420px,92vw);max-height:min(680px,88vh);display:flex;flex-direction:column;gap:12px;padding:18px;overflow:hidden;}
-.cal-multi-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
-.cal-multi-head h2{margin:0 0 2px;}
-.cal-multi-head p{margin:0;font-size:var(--fs-sm);}
-.cal-multi-icon-btn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(107,95,191,0.18);border-radius:var(--radius-sm);background:rgba(255,255,255,0.72);color:var(--p1);font:inherit;font-size:var(--fs-lg);font-weight:800;cursor:pointer;}
+.cal-multi-modal{width:min(380px,90vw);max-height:min(620px,86vh);display:flex;flex-direction:column;gap:9px;padding:14px;overflow:hidden;}
+.cal-multi-head{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;}
+.cal-multi-head h2{margin:0 0 1px;font-size:16px;}
+.cal-multi-head p{margin:0;font-size:10px;}
+.cal-multi-icon-btn{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(107,95,191,0.18);border-radius:var(--radius-sm);background:rgba(255,255,255,0.72);color:var(--p1);font:inherit;font-size:16px;font-weight:800;cursor:pointer;}
 .cal-multi-icon-btn:hover{background:var(--p-bg);}
 .cal-multi-icon-btn:focus-visible,.cal-multi-month:focus-visible,.cal-multi-link:focus-visible{outline:2px solid var(--p2);outline-offset:2px;}
-.cal-multi-year-nav{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;}
-.cal-multi-year-nav strong{text-align:center;font-size:var(--fs-lg);color:var(--text1);}
-.cal-multi-months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;overflow-y:auto;padding:2px;}
-.cal-multi-month{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 9px;border:1px solid rgba(107,95,191,0.16);border-radius:var(--radius-sm);background:rgba(255,255,255,0.64);color:var(--text1);font:inherit;cursor:pointer;transition:background var(--dur-fast),border-color var(--dur-fast),box-shadow var(--dur-fast);}
+.cal-multi-year-nav{display:grid;grid-template-columns:38px 1fr 38px;align-items:center;gap:6px;}
+.cal-multi-year-nav strong{text-align:center;font-size:16px;color:var(--text1);}
+.cal-multi-months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow-y:auto;padding:1px;}
+.cal-multi-month{min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:5px;padding:6px 7px;border:1px solid rgba(107,95,191,0.16);border-radius:var(--radius-sm);background:rgba(255,255,255,0.64);color:var(--text1);font:inherit;cursor:pointer;transition:background var(--dur-fast),border-color var(--dur-fast),box-shadow var(--dur-fast);}
 .cal-multi-month:hover{background:var(--p-subtle);border-color:rgba(107,95,191,0.34);}
 .cal-multi-month.selected{background:var(--p1);border-color:var(--p1);color:#fff;box-shadow:0 5px 14px rgba(90,78,175,0.20);}
-.cal-multi-month-name{font-size:var(--fs-md);font-weight:800;}
-.cal-multi-month-count{min-width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;gap:2px;padding:0 6px;border-radius:var(--radius-pill);background:rgba(107,95,191,0.10);color:var(--p1);font-size:var(--fs-sm);font-weight:800;white-space:nowrap;}
+.cal-multi-month-name{font-size:12px;font-weight:800;}
+.cal-multi-month-count{min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;gap:2px;padding:0 5px;border-radius:var(--radius-pill);background:rgba(107,95,191,0.10);color:var(--p1);font-size:10px;font-weight:800;white-space:nowrap;}
 .cal-multi-month.selected .cal-multi-month-count{background:rgba(255,255,255,0.20);color:#fff;}
-.cal-multi-month-count small{font-size:8px;font-weight:800;opacity:0.78;}
-.cal-multi-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--text3);font-size:var(--fs-sm);font-weight:700;}
+.cal-multi-month-count small{font-size:7px;font-weight:800;opacity:0.78;}
+.cal-multi-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--text3);font-size:10px;font-weight:700;}
 .cal-multi-tools>div{display:flex;gap:4px;}
-.cal-multi-link{min-height:36px;padding:5px 9px;border:0;border-radius:var(--radius-xs);background:transparent;color:var(--p1);font:inherit;font-size:var(--fs-sm);font-weight:800;cursor:pointer;}
+.cal-multi-link{min-height:32px;padding:4px 7px;border:0;border-radius:var(--radius-xs);background:transparent;color:var(--p1);font:inherit;font-size:10px;font-weight:800;cursor:pointer;}
 .cal-multi-link:hover{background:var(--p-subtle);}
-.cal-multi-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.cal-multi-actions .btn{min-height:44px;margin:0;}
+.cal-multi-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.cal-multi-actions .btn{min-height:42px;margin:0;padding:6px 7px;font-size:10px;}
 .cal-multi-actions .btn:disabled{cursor:not-allowed;opacity:0.48;}
 body.dark .cal-multi-icon-btn,body.dark .cal-multi-month{background:rgba(36,32,64,0.9);border-color:rgba(155,143,228,0.24);color:var(--text1);}
 body.dark .cal-multi-icon-btn{color:var(--p3);}
@@ -53,11 +53,14 @@ body.dark .cal-multi-month-count{background:rgba(155,143,228,0.14);color:var(--p
 body.dark .cal-multi-month.selected .cal-multi-month-count{background:rgba(255,255,255,0.18);color:#fff;}
 
 @media(max-width:480px){
-  .cal-multi-modal{width:min(94vw,420px);max-height:92vh;padding:14px;gap:10px;}
-  .cal-multi-months{gap:6px;}
-  .cal-multi-month{min-height:54px;padding:7px;}
-  .cal-multi-month-count{padding:0 5px;}
+  .cal-multi-modal{width:min(90vw,380px);max-height:90vh;padding:12px;gap:8px;}
+  .cal-multi-icon-btn{width:44px;height:44px;}
+  .cal-multi-year-nav{grid-template-columns:44px 1fr 44px;gap:5px;}
+  .cal-multi-months{gap:5px;}
+  .cal-multi-month{min-height:48px;padding:6px;}
+  .cal-multi-month-count{padding:0 4px;}
   .cal-multi-actions{grid-template-columns:1fr;}
+  .cal-multi-actions .btn{min-height:44px;}
 }
 .cal-month-label{font-size:16px;font-weight:800;color:var(--text1);letter-spacing:-0.3px;}
 .cal-month-count{font-size:var(--fs-sm);font-weight:600;color:var(--text3);margin-bottom:8px;}
