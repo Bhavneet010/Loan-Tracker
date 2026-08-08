@@ -122,7 +122,7 @@ body::after{
 .brand-sub{font-size:var(--fs-sm);color:var(--text3);font-weight:500;}
 .header-right{display:flex;gap:7px;align-items:center;}
 .hbtn{
-  width:44px;height:44px;border-radius:var(--radius-sm);
+  width:36px;height:36px;border-radius:var(--radius-sm);
   padding:0;
   color:inherit;
   font:inherit;
@@ -132,8 +132,6 @@ body::after{
   font-size:16px;cursor:pointer;
 }
 .user-pill{
-  min-width:44px;
-  min-height:44px;
   color:inherit;
   font:inherit;
   display:flex;align-items:center;gap:var(--space-sm);
@@ -933,7 +931,6 @@ body.dark .duplicate-card{background:rgba(107,95,191,0.12);border-color:rgba(107
   border-radius:var(--radius-sm);padding:3px;
 }
 .mode-btn{
-  min-height:44px;
   flex:1;padding:8px 10px;border:none;border-radius:var(--radius-xs);
   font-size:var(--fs-md);font-weight:600;cursor:pointer;
   background:transparent;color:var(--text3);
