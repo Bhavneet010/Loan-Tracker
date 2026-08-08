@@ -12,6 +12,23 @@ export function normalizeMonthKeys(monthKeys) {
   )].sort();
 }
 
+export function monthKeysForYear(year) {
+  if (!Number.isInteger(year) || year < 1000 || year > 9999) return [];
+  return CALENDAR_MONTH_NAMES.map((_, month) => `${year}-${String(month + 1).padStart(2, "0")}`);
+}
+
+export function toggleSelectedMonthKey(monthKeys, key) {
+  const selected = new Set(normalizeMonthKeys(monthKeys));
+  if (!MONTH_KEY_PATTERN.test(key || "")) return [...selected];
+  if (selected.has(key)) selected.delete(key);
+  else selected.add(key);
+  return [...selected].sort();
+}
+
+export function selectYearMonthKeys(monthKeys, year) {
+  return normalizeMonthKeys([...normalizeMonthKeys(monthKeys), ...monthKeysForYear(year)]);
+}
+
 export function buildRenewalMonthSections(renewals, monthKeys) {
   const sections = normalizeMonthKeys(monthKeys).map(key => {
     const [year, monthNumber] = key.split("-").map(Number);

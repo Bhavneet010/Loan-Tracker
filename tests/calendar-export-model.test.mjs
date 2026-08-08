@@ -7,7 +7,10 @@ const moduleUrl = `data:text/javascript;base64,${Buffer.from(source).toString("b
 const {
   buildMultiMonthExportFilename,
   buildRenewalMonthSections,
+  monthKeysForYear,
   normalizeMonthKeys,
+  selectYearMonthKeys,
+  toggleSelectedMonthKey,
 } = await import(moduleUrl);
 
 test("month keys are validated, deduplicated, and sorted chronologically", () => {
@@ -57,4 +60,25 @@ test("cross-year and long selections use range filenames", () => {
 test("filenames reject empty selections and unsupported formats", () => {
   assert.throws(() => buildMultiMonthExportFilename([], "xlsx"), TypeError);
   assert.throws(() => buildMultiMonthExportFilename(["2026-08"], "csv"), TypeError);
+});
+
+test("a visible year exposes all twelve canonical month keys", () => {
+  assert.deepEqual(monthKeysForYear(2026), [
+    "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
+    "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12",
+  ]);
+});
+
+test("month selection toggles one key without disturbing cross-year choices", () => {
+  assert.deepEqual(toggleSelectedMonthKey(["2026-08", "2027-01"], "2026-10"), ["2026-08", "2026-10", "2027-01"]);
+  assert.deepEqual(toggleSelectedMonthKey(["2026-08", "2027-01"], "2026-08"), ["2027-01"]);
+  assert.deepEqual(toggleSelectedMonthKey(["2026-08"], "invalid"), ["2026-08"]);
+});
+
+test("selecting a year preserves existing choices and adds all visible months", () => {
+  const selected = selectYearMonthKeys(["2027-02"], 2026);
+  assert.equal(selected.length, 13);
+  assert.equal(selected[0], "2026-01");
+  assert.equal(selected[11], "2026-12");
+  assert.equal(selected[12], "2027-02");
 });

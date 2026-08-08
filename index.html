@@ -408,6 +408,36 @@
   </div>
 </div>
 
+<!-- MULTI-MONTH RENEWAL EXPORT -->
+<div class="overlay center" id="calMultiExportOverlay" role="dialog" aria-modal="true" aria-labelledby="calMultiExportTitle" aria-hidden="true" style="display:none;" onclick="if(event.target===this)closeCalMultiExport()">
+  <div class="modal-box cal-multi-modal">
+    <div class="cal-multi-head">
+      <div>
+        <h2 id="calMultiExportTitle">Export multiple months</h2>
+        <p>Select any months to include in one file.</p>
+      </div>
+      <button type="button" class="cal-multi-icon-btn" onclick="closeCalMultiExport()" aria-label="Close month selector">&#10005;</button>
+    </div>
+    <div class="cal-multi-year-nav" aria-label="Choose year">
+      <button type="button" class="cal-multi-icon-btn" onclick="calMultiExportYear(-1)" aria-label="Previous year">&lsaquo;</button>
+      <strong id="calMultiExportYearLabel"></strong>
+      <button type="button" class="cal-multi-icon-btn" onclick="calMultiExportYear(1)" aria-label="Next year">&rsaquo;</button>
+    </div>
+    <div class="cal-multi-months" id="calMultiExportMonths" aria-label="Months"></div>
+    <div class="cal-multi-tools">
+      <span id="calMultiExportSummary" aria-live="polite">0 months selected</span>
+      <div>
+        <button type="button" class="cal-multi-link" onclick="selectCalMultiExportYear()">Select all</button>
+        <button type="button" class="cal-multi-link" onclick="clearCalMultiExport()">Clear</button>
+      </div>
+    </div>
+    <div class="cal-multi-actions">
+      <button type="button" class="btn btn-cancel-full" id="calMultiExportExcel" onclick="downloadCalMultiExport('excel')" disabled>Download Excel</button>
+      <button type="button" class="btn btn-primary-full" id="calMultiExportPdf" onclick="downloadCalMultiExport('pdf')" disabled>Download PDF</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADMIN SETTINGS -->
 <div class="overlay" id="settingsModal" style="display:none;">
   <div class="sheet">

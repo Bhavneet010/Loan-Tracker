@@ -1,10 +1,19 @@
 ﻿import { S } from "./state.js";
 import { getLoanMetrics, effectiveOfficer } from "./derived.js";
-import { esc, fmtAmt, initials, officerColor, branchCode } from "./utils.js";
+import { esc, fmtAmt, initials, officerColor, branchCode, toast } from "./utils.js";
 import { searchMatch } from "./ui-logic.js";
 import { holidayReason, findCustomHoliday, countWorkingDaysLeft } from "./bank-holidays.js";
+import { closeOverlay, openOverlay } from "./animate.js";
+import {
+  buildRenewalMonthSections,
+  CALENDAR_MONTH_NAMES,
+  monthKeysForYear,
+  normalizeMonthKeys,
+  selectYearMonthKeys,
+  toggleSelectedMonthKey,
+} from "./calendar-export-model.js";
 
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS = CALENDAR_MONTH_NAMES;
 const DAYS = ['M','T','W','T','F','S','S'];
 
 // "Renewal not possible" accounts stay on the calendar (greyed) as a reminder in
@@ -26,24 +35,19 @@ export function buildCalendarViewHtml(metrics = getLoanMetrics()) {
 // Renewals due (NPA date) in the month currently shown on the calendar,
 // respecting the active officer/branch/status filters — used by the export button.
 export function getCalendarMonthExport(metrics = getLoanMetrics()) {
-  const renewals = getFilteredRenewals(metrics);
   if (!S.calendarState) {
+    const renewals = getFilteredRenewals(metrics);
     const now = new Date();
     S.calendarState = findFirstRenewalMonth(renewals) || { year: now.getFullYear(), month: now.getMonth() };
   }
   const { year, month } = S.calendarState;
-  const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-  const loans = [];
-  const rnpLoans = [];
-  renewals.forEach(loan => {
-    const rs = loan._rs;
-    if (!rs?.npaDateStr || !rs.npaDateStr.startsWith(monthStr)) return;
-    (isRnpDeferred(loan) ? rnpLoans : loans).push(loan);
-  });
-  const byNpaDate = (a, b) => a._rs.npaDateStr.localeCompare(b._rs.npaDateStr);
-  loans.sort(byNpaDate);
-  rnpLoans.sort(byNpaDate);
-  return { year, month, monthName: MONTHS[month], loans, rnpLoans };
+  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const section = getCalendarMonthsExport([key], metrics)[0];
+  return { year, month, monthName: MONTHS[month], loans: section.loans, rnpLoans: section.rnpLoans };
+}
+
+export function getCalendarMonthsExport(monthKeys, metrics = getLoanMetrics()) {
+  return buildRenewalMonthSections(getFilteredRenewals(metrics), monthKeys);
 }
 
 function getFilteredRenewals(metrics) {
@@ -245,7 +249,7 @@ function calendarHtml(calData, year, month, renewals) {
         <div class="cal-month-group">
           <span class="cal-month-label">${MONTHS[month]} ${year}</span>
           <div class="cal-export-dd">
-            <button class="cal-nav-btn cal-export-btn" onclick="toggleCalExportMenu(event)" title="Export ${MONTHS[month]} renewals due" aria-label="Export ${MONTHS[month]} renewals due" aria-haspopup="menu">
+            <button class="cal-nav-btn cal-export-btn" id="calExportTrigger" onclick="toggleCalExportMenu(event)" title="Export ${MONTHS[month]} renewals due" aria-label="Export ${MONTHS[month]} renewals due" aria-haspopup="menu" aria-expanded="false" aria-controls="calExportMenu">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </button>
             <div class="cal-export-menu" id="calExportMenu" role="menu">
@@ -257,6 +261,11 @@ function calendarHtml(calData, year, month, renewals) {
               <button class="cal-export-item" onclick="exportCalendarRenewalsPdf();closeCalExportMenu()" role="menuitem">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 PDF File
+              </button>
+              <div class="cal-export-divider" role="separator"></div>
+              <button class="cal-export-item cal-export-item--multi" onclick="openCalMultiExport();closeCalExportMenu()" role="menuitem">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 15h.01M12 15h.01M16 15h.01"/></svg>
+                Multiple months&hellip;
               </button>
             </div>
           </div>
@@ -347,3 +356,122 @@ function dayDetailHtml(dateStr, entry) {
     ${loanItems}
   </div>`;
 }
+
+let calMultiExportYearValue = new Date().getFullYear();
+let calMultiExportSelection = [];
+let calMultiExportBusy = null;
+
+function renderCalMultiExportDialog() {
+  const yearLabel = document.getElementById('calMultiExportYearLabel');
+  const monthGrid = document.getElementById('calMultiExportMonths');
+  const summary = document.getElementById('calMultiExportSummary');
+  const excelButton = document.getElementById('calMultiExportExcel');
+  const pdfButton = document.getElementById('calMultiExportPdf');
+  if (!yearLabel || !monthGrid || !summary || !excelButton || !pdfButton) return;
+
+  const keys = monthKeysForYear(calMultiExportYearValue);
+  const sections = getCalendarMonthsExport(keys);
+  const selected = new Set(calMultiExportSelection);
+  yearLabel.textContent = String(calMultiExportYearValue);
+  monthGrid.innerHTML = sections.map(section => {
+    const active = selected.has(section.key);
+    const count = section.loans.length;
+    const rnpCount = section.rnpLoans.length;
+    const countLabel = `${count} pending renewal${count === 1 ? '' : 's'}${rnpCount ? `, ${rnpCount} not possible` : ''}`;
+    return `<button type="button" class="cal-multi-month${active ? ' selected' : ''}" data-month-key="${section.key}" aria-pressed="${active}" aria-label="${section.monthName} ${section.year}, ${countLabel}" onclick="toggleCalMultiExportMonth('${section.key}')">
+      <span class="cal-multi-month-name">${section.monthName.slice(0, 3)}</span>
+      <span class="cal-multi-month-count">${count}${rnpCount ? `<small>+${rnpCount} NP</small>` : ''}</span>
+    </button>`;
+  }).join('');
+
+  const selectedCount = calMultiExportSelection.length;
+  summary.textContent = `${selectedCount} month${selectedCount === 1 ? '' : 's'} selected`;
+  const disabled = selectedCount === 0 || !!calMultiExportBusy;
+  excelButton.disabled = disabled;
+  pdfButton.disabled = disabled;
+  excelButton.textContent = calMultiExportBusy === 'excel' ? 'Preparing Excel…' : 'Download Excel';
+  pdfButton.textContent = calMultiExportBusy === 'pdf' ? 'Preparing PDF…' : 'Download PDF';
+}
+
+window.openCalMultiExport = function () {
+  const now = new Date();
+  const year = S.calendarState?.year ?? now.getFullYear();
+  const month = S.calendarState?.month ?? now.getMonth();
+  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+  calMultiExportYearValue = year;
+  calMultiExportSelection = [key];
+  calMultiExportBusy = null;
+  renderCalMultiExportDialog();
+  openOverlay('calMultiExportOverlay');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelector(`#calMultiExportMonths [data-month-key="${key}"]`)?.focus();
+  }));
+};
+
+function closeCalMultiExportOverlay() {
+  closeOverlay('calMultiExportOverlay', () => {
+    document.getElementById('calExportTrigger')?.focus();
+  });
+}
+
+window.closeCalMultiExport = function () {
+  if (calMultiExportBusy) return;
+  closeCalMultiExportOverlay();
+};
+
+window.calMultiExportYear = function (delta) {
+  const nextYear = calMultiExportYearValue + Number(delta || 0);
+  if (!monthKeysForYear(nextYear).length) return;
+  calMultiExportYearValue = nextYear;
+  renderCalMultiExportDialog();
+};
+
+window.toggleCalMultiExportMonth = function (key) {
+  if (calMultiExportBusy) return;
+  calMultiExportSelection = toggleSelectedMonthKey(calMultiExportSelection, key);
+  renderCalMultiExportDialog();
+};
+
+window.selectCalMultiExportYear = function () {
+  if (calMultiExportBusy) return;
+  calMultiExportSelection = selectYearMonthKeys(calMultiExportSelection, calMultiExportYearValue);
+  renderCalMultiExportDialog();
+};
+
+window.clearCalMultiExport = function () {
+  if (calMultiExportBusy) return;
+  calMultiExportSelection = [];
+  renderCalMultiExportDialog();
+};
+
+window.downloadCalMultiExport = async function (format) {
+  if (calMultiExportBusy) return;
+  const keys = normalizeMonthKeys(calMultiExportSelection);
+  if (!keys.length) return;
+  const exporter = format === 'excel'
+    ? window.exportCalendarRenewalsMultiExcel
+    : format === 'pdf' ? window.exportCalendarRenewalsMultiPdf : null;
+  if (typeof exporter !== 'function') {
+    toast('Export tools are unavailable.');
+    return;
+  }
+  calMultiExportBusy = format;
+  renderCalMultiExportDialog();
+  try {
+    const succeeded = await exporter(keys);
+    if (succeeded === true) closeCalMultiExportOverlay();
+  } catch (error) {
+    console.error('[Multi-month calendar export]', error);
+    toast('Export failed. Please try again.');
+  } finally {
+    calMultiExportBusy = null;
+    renderCalMultiExportDialog();
+  }
+};
+
+document.addEventListener('keydown', event => {
+  const overlay = document.getElementById('calMultiExportOverlay');
+  if (event.key === 'Escape' && overlay?.getAttribute('aria-hidden') === 'false') {
+    window.closeCalMultiExport();
+  }
+});

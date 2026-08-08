@@ -155,12 +155,15 @@ window.exportLoansExcel = async function () {
 window.toggleCalExportMenu = function (e) {
   if (e) e.stopPropagation();
   const menu = document.getElementById("calExportMenu");
+  const trigger = document.getElementById("calExportTrigger");
   if (!menu) return;
   const isOpen = menu.classList.contains("open");
   if (isOpen) {
     menu.classList.remove("open");
+    trigger?.setAttribute("aria-expanded", "false");
   } else {
     menu.classList.add("open");
+    trigger?.setAttribute("aria-expanded", "true");
     setTimeout(() => document.addEventListener("click", window.closeCalExportMenu, { once: true }), 0);
   }
 };
@@ -168,6 +171,7 @@ window.toggleCalExportMenu = function (e) {
 window.closeCalExportMenu = function () {
   const menu = document.getElementById("calExportMenu");
   if (menu) menu.classList.remove("open");
+  document.getElementById("calExportTrigger")?.setAttribute("aria-expanded", "false");
 };
 
 function renewalDueRow(l) {
