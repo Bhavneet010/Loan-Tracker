@@ -142,8 +142,19 @@ window.showPerfOverlay = async function () {
   document.body.style.overflow = 'hidden';
   const target = document.getElementById('perfOverlayContent');
   if (target) target.innerHTML = '<div class="skeleton-wrap"><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div></div>';
-  await import(`./performance.js?t=${Date.now()}`);
-  if (typeof window.showDailySnapshot === 'function') window.showDailySnapshot();
+  try {
+    await import('./performance.js');
+    if (typeof window.showDailySnapshot !== 'function') {
+      throw new Error('Performance module did not register showDailySnapshot');
+    }
+    window.showDailySnapshot();
+  } catch (error) {
+    console.error('[Performance] Failed to load', error);
+    if (target) {
+      target.innerHTML = '<div class="empty-state" style="padding:32px 20px;">Could not load Performance.<br><button class="btn btn-primary-full" style="margin-top:12px;" onclick="showPerfOverlay()">Retry</button></div>';
+    }
+    toast('Could not load Performance');
+  }
 };
 
 window.closePerfOverlay = function () {
