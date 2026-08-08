@@ -1,5 +1,7 @@
 import { S, saveSettings } from "./state.js";
 
+import { nextFreshGroupCollapsed } from "./fresh-group-state.js";
+
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
 import { renderPending, renderSanctioned, renderReturned } from "./ui-tabs-loans.js";
@@ -118,7 +120,11 @@ window.setFreshGroupMode = function(mode) {
   render();
 };
 window.toggleFreshGroup = function(key) {
-  S.freshGroupCollapsed = { ...(S.freshGroupCollapsed || {}), [key]: !S.freshGroupCollapsed?.[key] };
+  const stored = S.freshGroupCollapsed?.[key];
+  S.freshGroupCollapsed = {
+    ...(S.freshGroupCollapsed || {}),
+    [key]: nextFreshGroupCollapsed(stored, S.isAdmin),
+  };
   render();
 };
 window.toggleRenewalToday = function() {
@@ -158,15 +164,6 @@ function slideCalMbar(bar, key) {
   bar.style.setProperty('--active-idx', idx);
   items.forEach((el, i) => el.classList.toggle('cal-mbar-item--active', i === idx));
   return true;
-}
-
-function applyCalMbarKey(bar, key) {
-  if (!key) return;
-  const [y, m] = key.split('-').map(Number);
-  if (S.calendarState?.year === y && S.calendarState?.month === m - 1) return;
-  if (!slideCalMbar(bar, key)) return;
-  S.calendarState = { year: y, month: m - 1 };
-  // No render here — DOM must stay intact while dragging so activeBar stays valid
 }
 
 window.toggleCalMbarExpand = function() {
@@ -336,12 +333,6 @@ window.removeBankHoliday = function(dateStr) {
   }, true);
 })();
 
-window.setTaskCategory = function(cat) {
-  S.taskCategory = cat;
-  S.taskView = S.isAdmin ? 'officers' : 'detail';
-  S.taskOfficer = S.isAdmin ? null : S.user;
-  render();
-};
 window.setTaskOfficer = function(officer) { S.taskOfficer = officer; S.taskView = 'detail'; render(); };
 window.taskBack = function() {
   if (S.taskView === 'detail') {

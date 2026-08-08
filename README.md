@@ -1,55 +1,66 @@
 # Nirnay Loan Tracker PWA
 
-A static Progressive Web App for tracking loan applications across Pending, Sanctioned, Returned, and SME Renewal workflows with Firebase Firestore sync.
+Nirnay is a browser-native Progressive Web App for tracking fresh loan applications, SME renewals, officer tasks, and performance reporting with Firebase Firestore synchronization.
 
 ## Features
 
-- Officer and Admin modes with configurable officers, branches, branch ownership, and Admin PIN.
-- Realtime Firestore sync for loan changes and notifications.
+- Officer and Admin views with configurable officers, branches, ownership, targets, and availability.
 - Fresh loan tracking across Pending, Sanctioned, and Returned states.
-- SME CC renewal dashboard with Done, Due Soon, Overdue, and All account views.
-- Performance dashboard loaded on demand so the main tracking view stays lightweight.
-- Installable PWA shell with local app assets cached for offline launch.
+- SME renewal tracking with calendar, due-soon, overdue, completed, and not-possible views.
+- Task, notification, month-end snapshot, spreadsheet, PDF, and image-report workflows.
+- Stable lazy loading for performance, spreadsheet, and month-end reporting code.
+- Installable application shell cached for offline launch after a successful online load.
 - Firestore offline persistence when supported by the browser.
 
-## Local Testing
+## Local Development
 
-This app has no build step. Serve the repository root with any static server, then open the local URL in a browser.
+The app has no build step and no runtime package dependencies.
 
-```bash
-python -m http.server 4173
+```powershell
+node dev-server.js
 ```
 
-Recommended lightweight test data volume: up to 50 representative loan records across officers, branches, categories, statuses, and renewal states.
+Open `http://127.0.0.1:4175`.
 
-## Deployment
+## Verification
 
-You can deploy the repository root to any static host, including GitHub Pages, Netlify, or Firebase Hosting. Required runtime files include `index.html`, `manifest.json`, `sw.js`, `css/styles.css`, `js/`, and the icon files.
+Run the dependency-free regression and static-integrity suite:
 
-## Admin And Settings
+```powershell
+npm test
+```
 
-The default Admin PIN and officer/branch defaults are defined in `js/state.js`, then persisted in the Firestore `settings/config` document after first launch. Use the in-app Admin Settings screen for normal changes.
+Check all application modules for JavaScript syntax errors:
 
-## Firestore Notes
+```powershell
+$syntaxFailed = $false; Get-ChildItem js -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { $syntaxFailed = $true } }; if ($syntaxFailed) { exit 1 }
+```
 
-The app uses the Firebase project configured in `js/config.js`. For real usage, avoid open test-mode rules and protect reads/writes with Firebase Auth and role-aware Firestore rules.
-
-## File Structure
+## Project Structure
 
 ```text
 .
-├── index.html
-├── manifest.json
-├── sw.js
-├── css/styles.css
-├── js/
-│   ├── app.js
-│   ├── config.js
-│   ├── db.js
-│   ├── derived.js
-│   ├── notifications.js
-│   ├── performance.js
-│   └── ui-*.js
-├── data/
-└── icon-192.png / icon-512.png
+├── index.html                 Application shell and shared overlays
+├── manifest.json              PWA metadata
+├── sw.js                      Offline shell and background messaging worker
+├── dev-server.js              Local static HTTP server
+├── css/                       Feature and theme stylesheets
+├── js/                        Browser ES modules
+│   ├── app.js                 Application startup and subscriptions
+│   ├── state.js               In-memory state and persisted settings
+│   ├── db.js                  Firestore loan subscription and writes
+│   ├── ui-*.js                Rendering, forms, navigation, and UI actions
+│   ├── performance*.js        Performance views and report generation
+│   ├── month-end.js           Monthly snapshot and cleanup tools
+│   └── lazy-actions.js        Deferred report/export entry points
+├── data/                      Preserved recovery snapshots
+└── tests/                     Node behavior and runtime-asset tests
 ```
+
+## Firebase and Security
+
+Firebase project configuration is defined in `js/config.js`. The client configuration values are public identifiers; production protection must come from Firebase Authentication, server-enforced Firestore rules, and App Check.
+
+The current Admin mode is client-managed and must not be treated as a security boundary. A separate security migration is required before exposing sensitive production data to untrusted users.
+
+The cached application shell can launch offline, but uncached Firebase operations and first-time report-library downloads still require network access.

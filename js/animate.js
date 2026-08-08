@@ -1,3 +1,5 @@
+const overlayReturnFocus = new WeakMap();
+
 // Must be >= longest CSS exit animation (backdropOut: 0.24s + sheet/modal: 0.24s)
 const CLOSE_MS = 260;
 
@@ -9,6 +11,14 @@ const CLOSE_MS = 260;
 export function openOverlay(id, displayMode = 'flex') {
   const el = typeof id === 'string' ? document.getElementById(id) : id;
   if (!el) return;
+  const wasOpen = el.getAttribute('aria-hidden') === 'false';
+  if (!wasOpen) {
+    const active = document.activeElement;
+    if (active && typeof active.focus === 'function') {
+      overlayReturnFocus.set(el, active);
+    }
+  }
+  el.setAttribute('aria-hidden', 'false');
   el.classList.remove('is-closing');
   el.style.opacity = '0';
   el.style.display = displayMode;
@@ -29,6 +39,10 @@ export function closeOverlay(id, cb) {
   el.classList.add('is-closing');
   setTimeout(() => {
     el.style.display = 'none';
+    el.setAttribute('aria-hidden', 'true');
+    const returnFocus = overlayReturnFocus.get(el);
+    overlayReturnFocus.delete(el);
+    if (returnFocus?.isConnected) returnFocus.focus();
     el.classList.remove('is-closing');
     cb?.();
   }, CLOSE_MS);

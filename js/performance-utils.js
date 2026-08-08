@@ -1,6 +1,5 @@
-import { S } from "./state.js";
-import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
-import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
+import { sumAmount, effectiveOfficer } from "./derived.js";
+import { esc, fmtAmt, fmtDate, shortCat } from "./utils.js";
 
 let html2canvasLoadPromise = null;
 let jsPdfLoadPromise = null;

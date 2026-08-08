@@ -310,41 +310,6 @@ function buildCoverPage(data, summary) {
   </section>`;
 }
 
-function buildOfficerPage(data, summary) {
-  return `<section class="me-page">
-    <header class="me-section-head">
-      <div>
-        <span class="me-kicker">OFFICER SUMMARY</span>
-        <h2>${esc(data.label)}</h2>
-      </div>
-      <strong>${esc(summary.officers.length)} officers</strong>
-    </header>
-    <table class="me-table me-officer-table">
-      <thead>
-        <tr>
-          <th>Officer</th>
-          <th>Sanctioned</th>
-          <th>Returned</th>
-          <th>Renewals Done</th>
-          <th>Pending</th>
-          <th>Renewal Risk</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${summary.officers.map(row => `<tr>
-          <th>${esc(row.name)}</th>
-          <td>${esc(row.sanctioned.count)}<small>Rs ${esc(fmtAmt(row.sanctioned.amount))}L</small></td>
-          <td>${esc(row.returned.count)}<small>Rs ${esc(fmtAmt(row.returned.amount))}L</small></td>
-          <td>${esc(row.renewalsDone.count)}<small>Rs ${esc(fmtAmt(row.renewalsDone.amount))}L</small></td>
-          <td>${esc(row.pending.count)}<small>Rs ${esc(fmtAmt(row.pending.amount))}L</small></td>
-          <td>${esc(row.dueSoon.count + row.overdue.count)}<small>${esc(row.dueSoon.count)} due / ${esc(row.overdue.count)} OD</small></td>
-        </tr>`).join("")}
-      </tbody>
-    </table>
-    <footer class="me-footer"><span>Month End Snapshot</span><span>${esc(data.label)}</span></footer>
-  </section>`;
-}
-
 function detailRow(loan, index, dateKey, mode, color, month) {
   const dateText = fmtDate(loan[dateKey]) || "-";
   const note = mode === "renewal"
@@ -859,14 +824,6 @@ window.runMonthEndCleanup = async function () {
     }
   }
 };
-
-function totalsLine(totals) {
-  return [
-    `Sanctioned ${totals.sanctioned?.count || 0}`,
-    `Returned ${totals.returned?.count || 0}`,
-    `Renewals ${totals.renewalsDone?.count || 0}`,
-  ].join(" | ");
-}
 
 export async function renderMonthEndSettings() {
   const target = document.getElementById("monthEndHistory");

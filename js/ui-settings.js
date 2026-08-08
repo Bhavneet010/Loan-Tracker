@@ -1,4 +1,3 @@
-import { initPushNotifications } from "./push-notifications.js";
 import { S, saveSettings } from "./state.js";
 import { esc, toast, initials, officerColor, timeAgo, branchCode } from "./utils.js";
 import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";
@@ -110,12 +109,10 @@ export function renderSettingsList() {
       </div>`;
     _renderBiometricSettings();
   } else if (S.settingsTab === 'import') {
-    el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;">Bulk-import data from the data/ folder.</div>
+    el.innerHTML = `<div style="padding:4px 2px 12px;font-size:13px;color:#7B7A9A;">Bulk-import loan data from a CSV file.</div>
       <button type="button" id="clearRenewalsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#EF4444,#B91C1C);" onclick="clearAllSmeRenewals()">&#128465; Clear All SME Renewals</button>
       <button type="button" id="wipeFreshBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#DC2626,#991B1B);" onclick="wipeSanctionedFreshLoans()">&#128465; Wipe All Sanctioned Fresh</button>
-      <button type="button" id="importSanctionedBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#047857);" onclick="importMonthlySanctioned()">&#128229; Import April 2026 sanctioned</button>
-      <button type="button" id="importReturnsBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#F59E0B,#B45309);" onclick="importMonthlyReturns()">&#128229; Import April 2026 returns</button>
-      <input type="file" id="csvFileInput" style="display:none;" onchange="handleCsvUpload(event)">
+      <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none;" onchange="handleCsvUpload(event)">
       <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">&#128229; Upload CSV</button>`;
   } else if (S.settingsTab === 'userstatus') {
     el.innerHTML = `

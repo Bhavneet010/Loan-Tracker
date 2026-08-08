@@ -1,7 +1,17 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
-import { catCls, esc, fmtAmt, fmtDate, shortCat, toast } from "./utils.js";
-import { monthDays, trendBuckets, groupAmountByBucket, buildOfficerTotals, buildTrendDatasets, buildLeaderboardRows, summaryRows, reportCell, metricBox, trendTable, performerTable, summaryTable, loanOfficer, loansForOfficer, totalMetric, metricHtml, statusRank, renewalUrgencyValue, sortRenewalRisk, riskWatchForOfficer, detailOfficerNames, officerPdfData, freshLoanLine, renewalLoanLine, riskStatusText, compactBranch, pdfSection, coverOfficerRow, CATS, TREND_COLORS, amountOf, PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT, html2canvasLoadPromise, jsPdfLoadPromise } from "./performance-utils.js";
+import { esc, fmtAmt, fmtDate } from "./utils.js";
+import {
+  totalMetric,
+  metricHtml,
+  officerPdfData,
+  freshLoanLine,
+  renewalLoanLine,
+  compactBranch,
+  pdfSection,
+  PDF_PAGE_WIDTH,
+  PDF_PAGE_HEIGHT,
+} from "./performance-utils.js";
 
 function coverMetricHtml(label, loans, tone, iconSvg) {
   const total = totalMetric(loans);

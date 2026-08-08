@@ -3,7 +3,6 @@ import { subscribeLoans } from "./db.js";
 import { subscribeNotifications } from "./notifications.js";
 import { subscribeOfficerTasks } from "./officer-tasks.js";
 import { render } from "./ui-render.js";
-import { initPushNotifications } from "./push-notifications.js";
 import { initPresence } from "./presence.js";
 
 // Import modules to register window actions and side effects
@@ -13,8 +12,7 @@ import "./ui-reminder-mail.js";
 import "./importers.js";
 import "./loan-actions.js";
 import "./ui-settings.js";
-import "./month-end.js";
-import "./export-excel.js";
+import "./lazy-actions.js";
 
 /* ── TABS CLICK LISTENER ── */
 const mainTabs = document.getElementById('mainTabs');

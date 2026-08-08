@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v202';
+const CACHE = 'nirnay-v203';
 const ASSETS = [
   './',
   './index.html',
@@ -35,22 +35,20 @@ const ASSETS = [
   './assets/splash/splash-light.png',
   './assets/splash/splash-dark-master.svg',
   './assets/splash/splash-light-master.svg',
-  './assets/snapshot/top-performer-bg.png',
-  './assets/sme/sbi-logo.svg',
   './css/audit.css',
-  './css/calendar.css?v=200',
+  './css/calendar.css',
   './css/core.css',
   './css/forms.css',
   './css/decision-sheet.css',
   './css/notifications.css',
   './css/renewals.css',
-  './css/dark-mode.css?v=159',
-  './css/neo-brutalist.css?v=159',
-  './css/sketchnote.css?v=159',
-  './css/snapshot-modal.css?v=2',
+  './css/dark-mode.css',
+  './css/neo-brutalist.css',
+  './css/sketchnote.css',
+  './css/snapshot-modal.css',
   './css/snapshot-report.css',
-  './css/tasks.css?v=159',
-  './css/officer-tasks.css?v=193',
+  './css/tasks.css',
+  './css/officer-tasks.css',
   './js/animate.js',
   './js/app.js',
   './js/bank-holidays.js',
@@ -58,23 +56,19 @@ const ASSETS = [
   './js/config.js',
   './js/db.js',
   './js/derived.js',
-  './js/export-excel.js',
+  './js/fresh-group-state.js',
   './js/importers.js',
+  './js/lazy-action.js',
+  './js/lazy-actions.js',
   './js/loan-actions.js',
-  './js/month-end.js',
   './js/officer-availability.js',
   './js/ui-forms.js',
   './js/ui-decision-sheet.js',
   './js/ui-reminder-mail.js',
   './js/notifications.js',
   './js/officer-tasks.js',
-  './js/performance.js',
   './js/push-notifications.js',
-  './js/performance-utils.js',
-  './js/performance-pdf.js',
-  './js/performance-snapshot.js',
   './js/presence.js',
-  './js/sme-daily-report.js',
   './js/state.js',
   './js/ui-calendar.js',
   './js/ui-components.js',
@@ -89,18 +83,22 @@ const ASSETS = [
   './js/utils.js',
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
-  self.skipWaiting();
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(ASSETS))
+      .then(() => self.skipWaiting())
+  );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys
+        .filter(key => key.startsWith('nirnay-v') && key !== CACHE)
+        .map(key => caches.delete(key))
+    )).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
@@ -110,7 +108,9 @@ self.addEventListener('fetch', e => {
     fetch(e.request).then(res => {
       if (res && res.status === 200 && e.request.method === 'GET') {
         const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return caches.open(CACHE)
+          .then(c => c.put(e.request, clone))
+          .then(() => res, () => res);
       }
       return res;
     }).catch(() => caches.match(e.request))

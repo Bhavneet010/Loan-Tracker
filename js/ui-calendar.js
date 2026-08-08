@@ -23,10 +23,6 @@ export function buildCalendarViewHtml(metrics = getLoanMetrics()) {
   return calendarHtml(calData, year, month, renewals);
 }
 
-export function renderCalendar(c) {
-  c.innerHTML = buildCalendarViewHtml();
-}
-
 // Renewals due (NPA date) in the month currently shown on the calendar,
 // respecting the active officer/branch/status filters — used by the export button.
 export function getCalendarMonthExport(metrics = getLoanMetrics()) {

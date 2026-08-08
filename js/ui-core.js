@@ -89,16 +89,6 @@ window.cycleTheme = function () {
   setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
 };
 
-window.toggleDark = function () {
-  document.body.classList.remove('theme-neo-brutalist');
-  document.body.classList.remove('theme-sketchnote');
-  localStorage.setItem('lpTheme', 'default');
-  S.dark = !S.dark;
-  document.body.classList.toggle('dark', S.dark);
-  localStorage.setItem('lpDark', S.dark ? '1' : '0');
-  updateThemeColor();
-};
-
 function updateThemeColor() {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (!meta) return;
@@ -111,30 +101,36 @@ function updateThemeColor() {
   }
 }
 
+function _setUserMenuOpen(open) {
+  const menu = document.getElementById('userMenu');
+  const trigger = document.querySelector('.user-pill');
+  if (menu) menu.style.display = open ? 'block' : 'none';
+  trigger?.setAttribute('aria-expanded', String(open));
+}
+
 window.toggleUserMenu = function () {
   const menu = document.getElementById('userMenu');
   if (menu.style.display === 'none') {
     menu.innerHTML = `
-      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
-      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who\'s Online</button>` : ''}
-      ${!S.isAdmin && S.user ? `<button class="udrop-item" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
-      <button class="udrop-item" id="themeToggleBtn" onclick="cycleTheme()">${_themeLabel()}</button>
-      <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
-    menu.style.display = 'block';
+      ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
+      ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who\'s Online</button>` : ''}
+      ${!S.isAdmin && S.user ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
+      <button class="udrop-item" role="menuitem" id="themeToggleBtn" onclick="cycleTheme()">${_themeLabel()}</button>
+      <button class="udrop-item" role="menuitem" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
+    _setUserMenuOpen(true);
     setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
   } else {
-    menu.style.display = 'none';
+    _setUserMenuOpen(false);
   }
 };
 
 window.closeUserMenu = () => {
-  const menu = document.getElementById('userMenu');
-  if (menu) menu.style.display = 'none';
+  _setUserMenuOpen(false);
 };
 
 function _closeMenuOutside(e) {
   const menu = document.getElementById('userMenu');
-  if (menu && !menu.contains(e.target)) menu.style.display = 'none';
+  if (menu && !menu.contains(e.target)) _setUserMenuOpen(false);
 }
 
 window.showNotifOverlay = function () {
@@ -152,8 +148,19 @@ window.showPerfOverlay = async function () {
   document.body.style.overflow = 'hidden';
   const target = document.getElementById('perfOverlayContent');
   if (target) target.innerHTML = '<div class="skeleton-wrap"><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div><div class="skeleton-row"><div class="skel-circle"></div><div class="skel-bar skel-bar--md"></div><div class="skel-bar skel-bar--lg skel-bar--right"></div></div></div>';
-  await import(`./performance.js?t=${Date.now()}`);
-  if (typeof window.showDailySnapshot === 'function') window.showDailySnapshot();
+  try {
+    await import('./performance.js');
+    if (typeof window.showDailySnapshot !== 'function') {
+      throw new Error('Performance module did not register showDailySnapshot');
+    }
+    window.showDailySnapshot();
+  } catch (error) {
+    console.error('[Performance] Failed to load', error);
+    if (target) {
+      target.innerHTML = '<div class="empty-state" style="padding:32px 20px;">Could not load Performance.<br><button class="btn btn-primary-full" style="margin-top:12px;" onclick="showPerfOverlay()">Retry</button></div>';
+    }
+    toast('Could not load Performance');
+  }
 };
 
 window.closePerfOverlay = function () {

@@ -1,10 +1,6 @@
 ﻿import { S } from "./state.js";
-import { updateLoan, createLoan, removeLoan } from "./db.js";
-import { createNotification } from "./notifications.js";
-import { todayStr, showUndoToast, toast, esc, branchCode, fmtAmt, fmtDate, catCls, isFreshCC } from "./utils.js";
-import { db } from "./config.js";
+import { todayStr, esc, branchCode, fmtAmt, fmtDate, catCls, isFreshCC } from "./utils.js";
 import { openOverlay, closeOverlay } from "./animate.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { effectiveOfficer } from "./derived.js";
 
 const RECENT_BRANCHES_KEY = 'lpRecentBranches';
@@ -494,18 +490,21 @@ window.openForm = function(loan = null, mode = null, options = {}) {
     document.getElementById('fSanctionGroup').style.display = isEdit && loan.status === 'sanctioned' ? 'block' : 'none';
   }
 
-  if (entryMode === 'quick' && !prefills) {
-    document.getElementById('categoryChips')?.querySelector('button')?.focus();
-  } else if (mode === 'renewal') {
-    const renewalInput = document.getElementById('fRenewalDue');
-    if (renewalInput) {
-      renewalInput.focus();
-      renewalInput.classList.add('form-highlight');
-      setTimeout(() => renewalInput.classList.remove('form-highlight'), 2000);
-    }
-  }
-
   openOverlay('formModal');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (entryMode === 'quick' && !prefills) {
+      document.getElementById('categoryChips')?.querySelector('button')?.focus();
+    } else if (mode === 'renewal') {
+      const renewalInput = document.getElementById('fRenewalDue');
+      if (renewalInput) {
+        renewalInput.focus();
+        renewalInput.classList.add('form-highlight');
+        setTimeout(() => renewalInput.classList.remove('form-highlight'), 2000);
+      }
+    } else {
+      document.getElementById('fOfficer')?.focus();
+    }
+  }));
 };
 
 window.openQuickAdd = function(sourceId = null) {
