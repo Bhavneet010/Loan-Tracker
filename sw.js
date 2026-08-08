@@ -110,7 +110,7 @@ self.addEventListener('fetch', e => {
         const clone = res.clone();
         return caches.open(CACHE)
           .then(c => c.put(e.request, clone))
-          .then(() => res);
+          .then(() => res, () => res);
       }
       return res;
     }).catch(() => caches.match(e.request))

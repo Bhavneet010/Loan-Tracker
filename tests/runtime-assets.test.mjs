@@ -200,3 +200,33 @@ test("a cacheable runtime response waits for its cache write before settling", a
 
   assert.equal(await responsePromise, networkResponse);
 });
+
+test("a failed runtime cache write does not replace a successful network response", async () => {
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const request = { url: `${origin}/js/performance.js`, method: "GET" };
+  const networkResponse = {
+    status: 200,
+    clone() { return { body: "cached report module" }; },
+  };
+  const cacheWriteError = new Error("cache storage unavailable");
+  const caches = {
+    async open() {
+      return {
+        async put() { throw cacheWriteError; },
+      };
+    },
+    async match() { return undefined; },
+  };
+  const { listeners } = executeWorkerContract(workerSource, {
+    caches,
+    fetch: async () => networkResponse,
+  });
+  let responsePromise;
+
+  listeners.get("fetch")({
+    request,
+    respondWith(promise) { responsePromise = promise; },
+  });
+
+  assert.equal(await responsePromise, networkResponse);
+});
