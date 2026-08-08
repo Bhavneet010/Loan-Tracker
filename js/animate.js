@@ -11,9 +11,12 @@ const CLOSE_MS = 260;
 export function openOverlay(id, displayMode = 'flex') {
   const el = typeof id === 'string' ? document.getElementById(id) : id;
   if (!el) return;
-  const active = document.activeElement;
-  if (active && typeof active.focus === 'function') {
-    overlayReturnFocus.set(el, active);
+  const wasOpen = el.getAttribute('aria-hidden') === 'false';
+  if (!wasOpen) {
+    const active = document.activeElement;
+    if (active && typeof active.focus === 'function') {
+      overlayReturnFocus.set(el, active);
+    }
   }
   el.setAttribute('aria-hidden', 'false');
   el.classList.remove('is-closing');

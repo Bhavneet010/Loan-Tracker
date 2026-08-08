@@ -38,7 +38,7 @@ function executeWorkerContract(workerSource, overrides = {}) {
   const sandbox = {
     URL,
     console,
-    fetch,
+    fetch: overrides.fetch || fetch,
     importScripts() {},
     firebase: {
       initializeApp() {},
@@ -150,4 +150,53 @@ test("activation waits for client claim and deletes only obsolete Nirnay caches"
 
   resolveClaim();
   await lifetime;
+});
+
+test("a cacheable runtime response waits for its cache write before settling", async () => {
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const request = { url: `${origin}/js/performance.js`, method: "GET" };
+  const cachedResponse = { body: "cached report module" };
+  const networkResponse = {
+    status: 200,
+    clone() { return cachedResponse; },
+  };
+  let resolvePut;
+  const putGate = new Promise(resolve => { resolvePut = resolve; });
+  const caches = {
+    async open() {
+      return {
+        put(receivedRequest, receivedResponse) {
+          assert.equal(receivedRequest, request);
+          assert.equal(receivedResponse, cachedResponse);
+          return putGate;
+        },
+      };
+    },
+    async match() { throw new Error("offline fallback should not run"); },
+  };
+  const { listeners } = executeWorkerContract(workerSource, {
+    caches,
+    fetch: async receivedRequest => {
+      assert.equal(receivedRequest, request);
+      return networkResponse;
+    },
+  });
+  let responsePromise;
+
+  listeners.get("fetch")({
+    request,
+    respondWith(promise) { responsePromise = promise; },
+  });
+
+  try {
+    const stateBeforePut = await Promise.race([
+      responsePromise.then(() => "settled"),
+      new Promise(resolve => setTimeout(() => resolve("pending"), 20)),
+    ]);
+    assert.equal(stateBeforePut, "pending", "response settled before cache.put()");
+  } finally {
+    resolvePut();
+  }
+
+  assert.equal(await responsePromise, networkResponse);
 });

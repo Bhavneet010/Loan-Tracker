@@ -108,7 +108,9 @@ self.addEventListener('fetch', e => {
     fetch(e.request).then(res => {
       if (res && res.status === 200 && e.request.method === 'GET') {
         const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return caches.open(CACHE)
+          .then(c => c.put(e.request, clone))
+          .then(() => res);
       }
       return res;
     }).catch(() => caches.match(e.request))
