@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#7c3aed">
 <title>Nirnay</title>
 <link rel="manifest" href="manifest.json">
@@ -66,7 +66,7 @@
   <!-- HEADER -->
   <div class="header">
     <div class="header-top">
-      <div class="brand" onclick="toggleTasksMode()" title="Today's Tasks" style="cursor:pointer;">
+      <button type="button" class="brand" onclick="toggleTasksMode()" aria-label="Open today's tasks" title="Today's Tasks">
         <div class="brand-av-wrap">
           <div class="brand-av">
             <img src="icon-192.png" alt="" width="38" height="38">
@@ -77,23 +77,23 @@
           <div class="brand-name">निर्णय</div>
           <div class="brand-sub">AMCC Paonta Sahib</div>
         </div>
-      </div>
+      </button>
       <div class="header-right">
-        <div class="hbtn notif-hbtn" onclick="showNotifOverlay()" title="Notifications">
+        <button type="button" class="hbtn notif-hbtn" onclick="showNotifOverlay()" aria-label="Notifications" title="Notifications">
           🔔<span class="hbtn-badge" id="b-notifs"></span>
-        </div>
-        <div class="hbtn tasklist-hbtn" onclick="showTaskListOverlay()" title="Task List">
+        </button>
+        <button type="button" class="hbtn tasklist-hbtn" onclick="showTaskListOverlay()" aria-label="Task List" title="Task List">
           📝<span class="hbtn-badge" id="b-tasklist"></span>
-        </div>
-        <div class="hbtn" onclick="showPerfOverlay()" title="Performance">
+        </button>
+        <button type="button" class="hbtn performance-hbtn" onclick="showPerfOverlay()" aria-label="Performance" title="Performance">
           📊
-        </div>
+        </button>
         <div class="user-pill-wrap">
-          <div class="user-pill" onclick="toggleUserMenu()">
+          <button type="button" class="user-pill" onclick="toggleUserMenu()" aria-label="Open user menu" aria-haspopup="menu" aria-expanded="false">
             <span class="sync-dot" id="syncDot"></span>
             <div class="uav" id="userAv">?</div>
-          </div>
-          <div id="userMenu" class="user-dropdown" style="display:none;"></div>
+          </button>
+          <div id="userMenu" class="user-dropdown" role="menu" style="display:none;"></div>
         </div>
       </div>
     </div>
@@ -206,7 +206,7 @@
 </div>
 
 <!-- FAB -->
-<button class="fab" id="mainFab" onclick="openContextualAdd()">+</button>
+<button class="fab" id="mainFab" onclick="openContextualAdd()" aria-label="Add loan">+</button>
 
 <!-- USER SELECT -->
 <div class="overlay center" id="userModal" style="display:none;">
@@ -237,7 +237,7 @@
 </div>
 
 <!-- ADD/EDIT FORM -->
-<div class="overlay" id="formModal" style="display:none;">
+<div class="overlay" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-hidden="true" style="display:none;">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h2 id="formTitle">Add New Loan</h2>
@@ -247,12 +247,12 @@
       <input type="hidden" id="entryMode" value="full">
       <div id="formIntro" class="form-intro" style="display:none;"></div>
       <div class="form-group" id="fOfficerGroup">
-        <label>Allocated To *</label>
+        <label for="fOfficer">Allocated To *</label>
         <select id="fOfficer"><option value="">Select officer</option></select>
       </div>
       <div class="form-group">
-        <label>Category *</label>
-        <div id="categoryChips" class="category-chips"></div>
+        <span class="form-label" id="categoryLabel">Category *</span>
+        <div id="categoryChips" class="category-chips" role="group" aria-labelledby="categoryLabel"></div>
         <select id="fCategory" style="display:none;" onchange="toggleTermLoan(this.value)">
           <option value="">Select category</option>
           <option value="Agriculture">Agriculture</option>
@@ -262,8 +262,8 @@
       </div>
       <div id="categoryHint" class="branch-match-hint warn" style="display:none;"></div>
       <div class="form-group" id="fLoanTypeGroup" style="display:none;margin-top:4px;">
-        <label style="font-weight:600;margin:0 0 6px;">Loan Facility *</label>
-        <div class="loan-type-options" style="display:flex;gap:16px;flex-wrap:wrap;">
+        <span class="form-label" id="loanTypeLabel" style="font-weight:600;margin:0 0 6px;">Loan Facility *</span>
+        <div class="loan-type-options" role="radiogroup" aria-labelledby="loanTypeLabel" style="display:flex;gap:16px;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;margin:0;">
             <input type="radio" name="fLoanType" id="fLoanTypeCC" value="CC" checked style="width:16px;height:16px;margin:0;">
             CC
@@ -286,7 +286,7 @@
         </label>
       </div>
       <div class="form-group">
-        <label>Branch *</label>
+        <label for="fBranchSearch">Branch *</label>
         <input type="text" id="fBranchSearch" list="branchOptions" required placeholder="Type branch code or name" autocomplete="off" oninput="handleBranchSearch(this.value)" onchange="handleBranchSearch(this.value)">
         <input type="hidden" id="fBranch">
         <datalist id="branchOptions"></datalist>
@@ -295,11 +295,11 @@
       <div id="branchMatchHint" class="branch-match-hint" style="display:none;"></div>
       <div id="assignedOfficerHint" class="assigned-hint" style="display:none;"></div>
       <div class="form-group">
-        <label>Customer Name *</label>
+        <label for="fName">Customer Name *</label>
         <input type="text" id="fName" required placeholder="e.g. SUNIL SHARMA INDUSTRY">
       </div>
       <div class="form-group">
-        <label>Amount (in Lakhs) *</label>
+        <label for="fAmount">Amount (in Lakhs) *</label>
         <input type="number" id="fAmount" step="0.01" min="0" required placeholder="e.g. 35" oninput="window.updateBreCheckbox()">
       </div>
       <button type="button" id="toggleAdvancedBtn" class="btn btn-cancel-full form-toggle-btn" onclick="toggleAdvancedFields()">
@@ -307,31 +307,31 @@
       </button>
       <div id="advancedFields" style="display:none;">
       <div class="form-group" id="fReceiveGroup">
-        <label>Receive Date *</label>
+        <label for="fReceive">Receive Date *</label>
         <input type="date" id="fReceive" required>
       </div>
       <div class="form-group" id="fSanctionGroup" style="display:none;">
-        <label>Sanction Date</label>
+        <label for="fSanction">Sanction Date</label>
         <input type="date" id="fSanction">
       </div>
       <div class="form-group" id="fRenewalGroup" style="display:none;">
-        <label>Renewal Due Date</label>
+        <label for="fRenewalDue">Renewal Due Date</label>
         <input type="date" id="fRenewalDue">
       </div>
       <div class="form-group" id="fLimitExpiryGroup" style="display:none;">
-        <label>Limit Expiry Date</label>
+        <label for="fLimitExpiry">Limit Expiry Date</label>
         <input type="date" id="fLimitExpiry">
       </div>
       <div class="form-group" id="fDocumentationGroup" style="display:none;">
-        <label>Documentation Date</label>
+        <label for="fDocumentation">Documentation Date</label>
         <input type="date" id="fDocumentation">
       </div>
       <div class="form-group" id="fDisbursementGroup" style="display:none;">
-        <label>Disbursement Date</label>
+        <label for="fDisbursement">Disbursement Date</label>
         <input type="date" id="fDisbursement">
       </div>
       <div class="form-group">
-        <label>Remarks</label>
+        <label for="fRemarks">Remarks</label>
         <textarea id="fRemarks" placeholder="Additional notes…"></textarea>
       </div>
       </div>

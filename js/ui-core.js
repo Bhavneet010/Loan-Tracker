@@ -101,30 +101,36 @@ function updateThemeColor() {
   }
 }
 
+function _setUserMenuOpen(open) {
+  const menu = document.getElementById('userMenu');
+  const trigger = document.querySelector('.user-pill');
+  if (menu) menu.style.display = open ? 'block' : 'none';
+  trigger?.setAttribute('aria-expanded', String(open));
+}
+
 window.toggleUserMenu = function () {
   const menu = document.getElementById('userMenu');
   if (menu.style.display === 'none') {
     menu.innerHTML = `
-      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
-      ${S.isAdmin ? `<button class="udrop-item" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who\'s Online</button>` : ''}
-      ${!S.isAdmin && S.user ? `<button class="udrop-item" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
-      <button class="udrop-item" id="themeToggleBtn" onclick="cycleTheme()">${_themeLabel()}</button>
-      <button class="udrop-item" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
-    menu.style.display = 'block';
+      ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
+      ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who\'s Online</button>` : ''}
+      ${!S.isAdmin && S.user ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
+      <button class="udrop-item" role="menuitem" id="themeToggleBtn" onclick="cycleTheme()">${_themeLabel()}</button>
+      <button class="udrop-item" role="menuitem" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
+    _setUserMenuOpen(true);
     setTimeout(() => document.addEventListener('click', _closeMenuOutside, { once: true }), 0);
   } else {
-    menu.style.display = 'none';
+    _setUserMenuOpen(false);
   }
 };
 
 window.closeUserMenu = () => {
-  const menu = document.getElementById('userMenu');
-  if (menu) menu.style.display = 'none';
+  _setUserMenuOpen(false);
 };
 
 function _closeMenuOutside(e) {
   const menu = document.getElementById('userMenu');
-  if (menu && !menu.contains(e.target)) menu.style.display = 'none';
+  if (menu && !menu.contains(e.target)) _setUserMenuOpen(false);
 }
 
 window.showNotifOverlay = function () {

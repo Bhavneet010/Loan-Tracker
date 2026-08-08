@@ -490,18 +490,21 @@ window.openForm = function(loan = null, mode = null, options = {}) {
     document.getElementById('fSanctionGroup').style.display = isEdit && loan.status === 'sanctioned' ? 'block' : 'none';
   }
 
-  if (entryMode === 'quick' && !prefills) {
-    document.getElementById('categoryChips')?.querySelector('button')?.focus();
-  } else if (mode === 'renewal') {
-    const renewalInput = document.getElementById('fRenewalDue');
-    if (renewalInput) {
-      renewalInput.focus();
-      renewalInput.classList.add('form-highlight');
-      setTimeout(() => renewalInput.classList.remove('form-highlight'), 2000);
-    }
-  }
-
   openOverlay('formModal');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (entryMode === 'quick' && !prefills) {
+      document.getElementById('categoryChips')?.querySelector('button')?.focus();
+    } else if (mode === 'renewal') {
+      const renewalInput = document.getElementById('fRenewalDue');
+      if (renewalInput) {
+        renewalInput.focus();
+        renewalInput.classList.add('form-highlight');
+        setTimeout(() => renewalInput.classList.remove('form-highlight'), 2000);
+      }
+    } else {
+      document.getElementById('fOfficer')?.focus();
+    }
+  }));
 };
 
 window.openQuickAdd = function(sourceId = null) {
