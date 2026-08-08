@@ -108,6 +108,14 @@ test("report-only resources are deferred from install-time precaching", async ()
   }
 });
 
+test("the calendar export model is precached with the core calendar", async () => {
+  const workerSource = await (await fetchOk("/sw.js")).text();
+  const { assets } = executeWorkerContract(workerSource);
+
+  assert.equal(assets.includes("./js/calendar-export-model.js"), true);
+  assert.equal(assets.includes("./js/calendar-export-layout.js"), false, "report layout should remain lazy");
+});
+
 test("install-time precache failures reject the worker lifetime", async () => {
   const workerSource = await (await fetchOk("/sw.js")).text();
   const precacheError = new Error("asset unavailable");
@@ -129,7 +137,7 @@ test("activation waits for client claim and deletes only obsolete Nirnay caches"
   const deleted = [];
   const caches = {
     async keys() {
-      return ["nirnay-v201", "nirnay-v202", "nirnay-v203", "third-party-cache"];
+      return ["nirnay-v201", "nirnay-v202", "nirnay-v203", "nirnay-v204", "third-party-cache"];
     },
     async delete(key) { deleted.push(key); },
   };
@@ -146,7 +154,7 @@ test("activation waits for client claim and deletes only obsolete Nirnay caches"
     new Promise(resolve => setTimeout(() => resolve("pending"), 20)),
   ]);
   assert.equal(stateBeforeClaim, "pending", "activation settled before clients.claim()");
-  assert.deepEqual(deleted, ["nirnay-v201", "nirnay-v202"]);
+  assert.deepEqual(deleted, ["nirnay-v201", "nirnay-v202", "nirnay-v203"]);
 
   resolveClaim();
   await lifetime;

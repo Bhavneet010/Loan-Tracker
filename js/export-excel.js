@@ -1,26 +1,22 @@
 import { S } from "./state.js";
 import { effectiveOfficer, getLoanMetrics } from "./derived.js";
 import { isFreshCC, toast, branchCode } from "./utils.js";
-import { getCalendarMonthExport } from "./ui-calendar.js";
+import { getCalendarMonthExport, getCalendarMonthsExport } from "./ui-calendar.js";
 import { ensureJsPdf } from "./performance-snapshot.js";
+import { buildMultiMonthExportFilename } from "./calendar-export-model.js";
+import { buildMultiMonthTabularLayout } from "./calendar-export-layout.js";
+import { createRetryableScriptLoader } from "./script-loader.js";
 
 // xlsx-js-style is API-compatible with SheetJS but can also write cell styles
 // (used to grey out "renewal not possible" rows in the calendar export).
 const XLSX_CDN = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js";
 
-let xlsxLoadPromise = null;
-function ensureXlsx() {
-  if (window.XLSX) return Promise.resolve();
-  if (xlsxLoadPromise) return xlsxLoadPromise;
-  xlsxLoadPromise = new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = XLSX_CDN;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error("Failed to load SheetJS"));
-    document.head.appendChild(s);
-  });
-  return xlsxLoadPromise;
-}
+const ensureXlsx = createRetryableScriptLoader({
+  documentRef: document,
+  isReady: () => !!window.XLSX,
+  src: XLSX_CDN,
+  errorMessage: "Failed to load SheetJS",
+});
 
 const CAT_ORDER = { Agriculture: 0, SME: 1, Education: 2 };
 
@@ -190,6 +186,81 @@ function renewalDueRow(l) {
 
 const RENEWAL_DUE_HEADERS = ["Officer", "Customer Name", "A/C Number", "Branch", "Limit (₹ Lakhs)", "Renewal Due Date", "NPA Date", "Remarks"];
 
+function createMultiMonthRenewalSheet(sections) {
+  const XLSX = window.XLSX;
+  const layout = buildMultiMonthTabularLayout(sections, RENEWAL_DUE_HEADERS, renewalDueRow);
+  const ws = XLSX.utils.aoa_to_sheet(layout.rows);
+  ws["!merges"] = layout.merges;
+
+  ws["!cols"] = RENEWAL_DUE_HEADERS.map((header, column) => ({
+    wch: Math.max(
+      header.length,
+      ...layout.dataRows.map(({ row }) => String(layout.rows[row][column] ?? "").length),
+    ) + 2,
+  }));
+  const remarksColumn = RENEWAL_DUE_HEADERS.indexOf("Remarks");
+  const remarksWidth = 40;
+  ws["!cols"][remarksColumn] = { wch: Math.min(ws["!cols"][remarksColumn].wch, remarksWidth) };
+  ws["!rows"] = Array.from({ length: layout.rows.length }, () => ({}));
+
+  layout.headingRows.forEach(row => {
+    ws["!rows"][row] = { hpt: 24 };
+    const cell = ws[XLSX.utils.encode_cell({ r: row, c: 0 })];
+    if (cell) {
+      cell.s = {
+        fill: { patternType: "solid", fgColor: { rgb: "6B5FBF" } },
+        font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+        alignment: { vertical: "center" },
+      };
+    }
+  });
+
+  layout.headerRows.forEach(row => {
+    for (let column = 0; column < RENEWAL_DUE_HEADERS.length; column++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: row, c: column })];
+      if (cell) {
+        cell.s = {
+          fill: { patternType: "solid", fgColor: { rgb: "E9E5F7" } },
+          font: { bold: true, color: { rgb: "3D3480" } },
+          alignment: { vertical: "center" },
+        };
+      }
+    }
+  });
+
+  layout.dataRows.forEach(({ row, rnp }) => {
+    const remarks = String(layout.rows[row][remarksColumn] || "");
+    const lines = Math.max(1, Math.ceil(remarks.length / remarksWidth));
+    ws["!rows"][row] = lines > 1 ? { hpt: 13 * lines + 4 } : {};
+    for (let column = 0; column < RENEWAL_DUE_HEADERS.length; column++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: row, c: column })];
+      if (!cell) continue;
+      const existing = cell.s || {};
+      cell.s = {
+        ...existing,
+        ...(rnp ? { fill: { patternType: "solid", fgColor: { rgb: "E2E8F0" } } } : {}),
+        alignment: {
+          ...(existing.alignment || {}),
+          vertical: "top",
+          ...(column === remarksColumn ? { wrapText: true } : {}),
+        },
+      };
+    }
+  });
+
+  layout.emptyRows.forEach(row => {
+    const cell = ws[XLSX.utils.encode_cell({ r: row, c: 0 })];
+    if (cell) {
+      cell.s = {
+        font: { italic: true, color: { rgb: "64748B" } },
+        alignment: { vertical: "center" },
+      };
+    }
+  });
+
+  return ws;
+}
+
 window.exportCalendarRenewalsExcel = async function () {
   try {
     const { year, monthName, loans, rnpLoans } = getCalendarMonthExport();
@@ -241,6 +312,25 @@ window.exportCalendarRenewalsExcel = async function () {
   } catch (err) {
     console.error("[Calendar export]", err);
     toast("Export failed. Please try again.");
+  }
+};
+
+window.exportCalendarRenewalsMultiExcel = async function (monthKeys) {
+  try {
+    const sections = getCalendarMonthsExport(monthKeys);
+    if (!sections.length) throw new TypeError("Select at least one month");
+    toast("Preparing multi-month Excel export…");
+    await ensureXlsx();
+    const XLSX = window.XLSX;
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, createMultiMonthRenewalSheet(sections), "Pending Renewals");
+    XLSX.writeFile(wb, buildMultiMonthExportFilename(monthKeys, "xlsx"));
+    toast(`${sections.length} month${sections.length === 1 ? "" : "s"} exported!`);
+    return true;
+  } catch (err) {
+    console.error("[Multi-month calendar Excel export]", err);
+    toast("Export failed. Please try again.");
+    return false;
   }
 };
 

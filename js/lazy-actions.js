@@ -32,6 +32,8 @@ for (const name of [
   "closeCalExportMenu",
   "exportCalendarRenewalsExcel",
   "exportCalendarRenewalsPdf",
+  "exportCalendarRenewalsMultiExcel",
+  "exportCalendarRenewalsMultiPdf",
 ]) {
   registerLazyAction(name, "./export-excel.js", "export tools");
 }

@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v203';
+const CACHE = 'nirnay-v204';
 const ASSETS = [
   './',
   './index.html',
@@ -53,6 +53,7 @@ const ASSETS = [
   './js/app.js',
   './js/bank-holidays.js',
   './js/biometric.js',
+  './js/calendar-export-model.js',
   './js/config.js',
   './js/db.js',
   './js/derived.js',
