@@ -451,6 +451,77 @@ function renderEditorialOfficerCard(card, index) {
   </article>`;
 }
 
+function sumOfficerMetric(officerCards, metricOf) {
+  return officerCards.reduce((total, card) => {
+    const metric = metricOf(card);
+    total.count += metric.count || 0;
+    total.amount += metric.amount || 0;
+    return total;
+  }, { count: 0, amount: 0 });
+}
+
+function renderMobileGlanceMetric(label, metric, tone) {
+  return `<div class="editorial-mobile-glance-metric ${tone}">
+    <span>${esc(label)}</span>
+    <strong>${esc(metric.count || 0)}</strong>
+    <small>${metric.count ? `Rs ${esc(fmtAmt(metric.amount))}L` : "None"}</small>
+  </div>`;
+}
+
+function renderEditorialMobileView(report, topFresh) {
+  const freshMtd = report.summaryTiles[0];
+  const pending = report.summaryTiles[1];
+  const freshToday = report.summaryTiles[3];
+  const renewalToday = sumOfficerMetric(report.officerCards, card => card.renewals.todayDone);
+  const renewalQueue = sumOfficerMetric(report.officerCards, card => card.renewals.queue);
+
+  return `<section class="editorial-mobile-view" aria-label="Daily performance dashboard">
+    <div class="editorial-mobile-summary">
+      <div class="editorial-mobile-brand">
+        <div class="editorial-brand-mark"><img src="icon-192.png" alt="Nirnay logo"></div>
+        <div>
+          <strong><span>à¤¨à¤¿à¤°à¥à¤£à¤¯</span></strong>
+          <small>Decisions | Delivered</small>
+        </div>
+      </div>
+      <div class="editorial-mobile-mtd">
+        <span>Fresh MTD</span>
+        <strong>Rs ${esc(fmtAmt(freshMtd.amount))}L</strong>
+        <small>${esc(freshMtd.count)} sanctioned</small>
+      </div>
+    </div>
+    <div class="editorial-mobile-date">${esc(report.dateLabel)}</div>
+    <section class="editorial-mobile-top-performer">
+      <div>
+        <span>Top Fresh Performer</span>
+        <strong>${esc(topFresh ? topFresh.name : "â€”")}</strong>
+      </div>
+      <div class="editorial-mobile-top-metric">
+        <strong>${topFresh ? `Rs ${esc(fmtAmt(topFresh.sanctioned.total.amount))}L` : "No data"}</strong>
+        <span>${topFresh ? `${esc(topFresh.sanctioned.total.count)} cases` : ""}</span>
+      </div>
+    </section>
+    <section class="editorial-mobile-glance">
+      <h2>Today at a Glance</h2>
+      <div class="editorial-mobile-glance-grid">
+        ${renderMobileGlanceMetric("Pending Pipeline", pending, "pipeline")}
+        ${renderMobileGlanceMetric("Fresh Today", freshToday, "fresh")}
+        ${renderMobileGlanceMetric("Renewal Done Today", renewalToday, "renewal")}
+        ${renderMobileGlanceMetric("Renewal Overdue", renewalQueue, "overdue")}
+      </div>
+    </section>
+    <section class="editorial-mobile-officers">
+      <div class="editorial-mobile-section-title">
+        <h2>Officers This Month</h2>
+        <span>MTD Ranking</span>
+      </div>
+      <div class="editorial-mobile-officer-list">
+        ${report.officerCards.map((card, index) => renderEditorialOfficerCard(card, index)).join("")}
+      </div>
+    </section>
+  </section>`;
+}
+
 function buildEditorialShareMockupHtml(mockup, report) {
   const freshLeaders = [...report.officerCards]
     .sort((a, b) => b.sanctioned.total.amount - a.sanctioned.total.amount || a.name.localeCompare(b.name))
@@ -461,6 +532,7 @@ function buildEditorialShareMockupHtml(mockup, report) {
   const topFresh = freshLeaders[0];
 
   return `<div class="report-mockup report-mockup-a editorial-phone-report">
+    ${renderEditorialMobileView(report, topFresh)}
     <header class="editorial-top">
       <div class="editorial-brand-row">
         <div class="editorial-brand-lock">
