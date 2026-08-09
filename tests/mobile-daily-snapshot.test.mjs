@@ -26,7 +26,7 @@ test("mobile renderer preserves the brand and empty-performer labels", () => {
 });
 
 test("mobile presentation is isolated from desktop and export layouts", () => {
-  assert.match(compactCss, /\.editorial-mobile-view\{display:none;\}/);
+  assert.match(compactCss, /\.editorial-mobile-view\{display:none;/);
   assert.match(
     compactCss,
     /\.editorial-phone-report\.snapshot-export\.editorial-mobile-view,\.editorial-phone-report\.daily-jpeg-export\.editorial-mobile-view\{display:none!important;\}/,
@@ -44,4 +44,20 @@ test("daily export dimensions and clone classes remain unchanged", () => {
   assert.match(performanceSource, /exportCard\.classList\.add\("snapshot-export", "daily-jpeg-export"\)/);
   assert.match(performanceSource, /width: exportWidth,/);
   assert.match(performanceSource, /windowWidth: exportWidth,/);
+});
+
+test("mobile summary follows the approved readable phone scale", () => {
+  assert.match(compactCss, /\.editorial-mobile-summary\{[^}]*padding:24px16px18px/);
+  assert.match(compactCss, /\.editorial-mobile-mtd>strong\{[^}]*font-size:28px/);
+  assert.match(compactCss, /\.editorial-mobile-top-performer\{[^}]*min-height:88px/);
+  assert.match(compactCss, /\.editorial-mobile-glance-grid\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(compactCss, /\.editorial-mobile-officer-list\{[^}]*gap:12px/);
+});
+
+test("mobile officers keep the original granular renderer and three-column groups", () => {
+  assert.match(snapshotSource, /<div class="editorial-pills-grid">/);
+  assert.match(snapshotSource, /<div class="editorial-status-strip">/);
+  assert.match(snapshotSource, /<div class="editorial-renewal-row">/);
+  assert.doesNotMatch(snapshotSource, /Status Summary/);
+  assert.doesNotMatch(snapshotSource, /editorial-mobile-officer-card/);
 });
