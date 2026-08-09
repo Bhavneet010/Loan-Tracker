@@ -57,6 +57,55 @@ test("mobile summary follows the approved readable phone scale", () => {
   assert.match(compactCss, /\.editorial-mobile-officer-list\{[^}]*gap:12px/);
 });
 
+test("narrow phones reflow summary metrics before text can intersect", () => {
+  assert.match(
+    compactCss,
+    /@media\(max-width:361px\).*\.editorial-mobile-brandsmall\{[^}]*white-space:normal/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:361px\).*\.editorial-mobile-top-metric\{[^}]*grid-template-columns:1fr/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:361px\).*\.editorial-mobile-top-metricspan\{[^}]*border-left:0/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:361px\).*\.editorial-mobile-glance-grid\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/,
+  );
+});
+
+test("approved phone composition reserves label room at 391px", () => {
+  assert.match(
+    compactCss,
+    /@media\(max-width:430px\).*\.editorial-mobile-summary\{[^}]*gap:10px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:430px\).*\.editorial-mobile-brand\{[^}]*gap:8px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:430px\).*\.editorial-mobile-top-metric\{[^}]*column-gap:6px[^}]*padding:4px28px4px8px/,
+  );
+});
+
+test("very narrow phones give original renewal metrics full card width", () => {
+  assert.match(
+    compactCss,
+    /@media\(max-width:340px\).*\.editorial-mobile-top-performer>div:first-childspan\{[^}]*white-space:normal/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:340px\).*\.editorial-mobile-view\.editorial-renewal-row\{[^}]*grid-template-columns:1fr/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:340px\).*\.editorial-mobile-view\.editorial-renewal-metrics\{[^}]*grid-column:1/,
+  );
+});
+
 test("mobile officers keep the original granular renderer and three-column groups", () => {
   assert.match(snapshotSource, /<div class="editorial-pills-grid">/);
   assert.match(snapshotSource, /<div class="editorial-status-strip">/);
