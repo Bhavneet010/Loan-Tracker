@@ -57,22 +57,82 @@ test("mobile summary follows the approved readable phone scale", () => {
   assert.match(compactCss, /\.editorial-mobile-officer-list\{[^}]*gap:12px/);
 });
 
-test("narrow phones reflow summary metrics before text can intersect", () => {
+test("all in-app mobile widths compact summary text before it can intersect", () => {
   assert.match(
     compactCss,
-    /@media\(max-width:361px\).*\.editorial-mobile-brandsmall\{[^}]*white-space:normal/,
+    /@media\(max-width:560px\).*\.editorial-mobile-brandsmall\{[^}]*white-space:normal/,
   );
   assert.match(
     compactCss,
-    /@media\(max-width:361px\).*\.editorial-mobile-top-metric\{[^}]*grid-template-columns:1fr/,
+    /@media\(max-width:560px\).*\.editorial-mobile-top-metric\{[^}]*grid-template-columns:autoauto/,
   );
   assert.match(
     compactCss,
-    /@media\(max-width:361px\).*\.editorial-mobile-top-metricspan\{[^}]*border-left:0/,
+    /@media\(max-width:560px\).*\.editorial-mobile-top-metricspan\{[^}]*font-size:8px/,
   );
   assert.match(
     compactCss,
-    /@media\(max-width:361px\).*\.editorial-mobile-glance-grid\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/,
+    /@media\(max-width:560px\).*\.editorial-mobile-glance-metricspan\{[^}]*font-size:8px/,
+  );
+});
+
+test("in-app mobile daily snapshot keeps the approved compact one-screen hierarchy", () => {
+  const compactHeaderStart = compactCss.indexOf(
+    "#perfOverlay:has(#perfOverlayContent.editorial-phone-report",
+  );
+  const compactMediaStart = compactCss.lastIndexOf("@media(", compactHeaderStart);
+  assert.doesNotMatch(compactCss, /@media\(max-width:361px\)/);
+  assert.equal(
+    compactCss.slice(compactMediaStart, compactHeaderStart),
+    "@media(max-width:560px){",
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*#perfOverlayContent:has\(\.editorial-phone-report:not\(\.snapshot-export\):not\(\.daily-jpeg-export\)\)\{[^}]*padding:6px0\s*0!important/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*#perfOverlay:has\(#perfOverlayContent\.editorial-phone-report:not\(\.snapshot-export\):not\(\.daily-jpeg-export\)\)>\.perf-overlay-header\.snapshot-mode\{[^}]*gap:5px[^}]*padding:6px10px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*#perfOverlay:has\(#perfOverlayContent\.editorial-phone-report:not\(\.snapshot-export\):not\(\.daily-jpeg-export\)\)\.perf-period-option\{[^}]*min-height:22px[^}]*padding:4px8px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-summary\{[^}]*padding:8px12px6px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-mtd>span\{[^}]*display:block[^}]*line-height:1/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-date\{[^}]*padding:4px12px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-top-performer\{[^}]*min-height:48px[^}]*margin-bottom:6px[^}]*padding:7px12px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-glance-grid\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-glance-metric\{[^}]*padding:6px3px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-glance-metricspan\{[^}]*min-height:20px/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-glance-metricsmall\{[^}]*line-height:1\.2/,
+  );
+  assert.match(
+    compactCss,
+    /@media\(max-width:560px\).*\.editorial-mobile-officers\{[^}]*padding:6px12px10px/,
   );
 });
 

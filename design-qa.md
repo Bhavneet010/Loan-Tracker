@@ -1,5 +1,32 @@
 # Mobile Daily Snapshot Design QA
 
+## Current QA — Real-phone density follow-up (9 August 2026)
+
+This pass supersedes the earlier 361 px / 2 x 2 glance-grid notes below. The compact approved composition now applies to the complete in-app mobile range through 560 CSS px; export-only layouts remain excluded.
+
+**Matched-state comparison**
+
+- Approved visual target: `C:\Users\bhavn\.codex\generated_images\019fe536-7733-7b53-a46a-252e5e93f49f\exec-96d25c61-4f5b-475b-8a2d-7cbe7ca84bd2.png`.
+- Reported phone result before this fix: `C:\Users\bhavn\Downloads\Mobile Devices\Screenshot_2026-08-09-14-25-19-77_40deb401b9ffe8e1df2f1cc5ba480b12.jpg`.
+- Final in-app Browser capture: `C:\Users\bhavn\.codex\visualizations\2026\08\09\019fe536-7733-7b53-a46a-252e5e93f49f\mobile-density-final-391-v2.png` (391 x 844 CSS px).
+- Required combined comparison input: `C:\Users\bhavn\.codex\visualizations\2026\08\09\019fe536-7733-7b53-a46a-252e5e93f49f\mobile-density-comparison-v2.png` (approved target | reported phone result | final implementation).
+- State: light theme, Performance -> Daily Snapshot, Daily selected, live 9 August 2026 data.
+- Browser: Codex in-app Browser, explicit 320 / 391 / 430 / 480 / 560 / 562 CSS-px viewport checks.
+
+**Visible result and measurements**
+
+- At 391 px the summary is 67.8 px high, date 22.4 px, Top Fresh Performer 48 px, and Today at a Glance 104.8 px. Officers begin at y=331.4 and the first original granular card at y=364.0.
+- The reported over-spaced state had a 121.3 px summary, 70.5 px performer strip, 156.4 px glance section, and officers beginning around y=500. The excess vertical space is removed.
+- The four glance metrics remain in one row at every tested mobile width. Grid cell widths are 70.2 px at 320, 88 px at 391, 97.8 px at 430, 110.2 px at 480, and 130.2 px at 560.
+- At 320, 391, 430, 480, and 560 px, page overflow is zero and the mobile descendant overflow list is empty. At 562 px, the mobile view is hidden and the original desktop top, leaders, officer stack, and footer return.
+- The original officer-card renderer, field order, category/status tiles, Renewal Book metrics, and live data are unchanged. The export renderer and export JavaScript were not modified; all density selectors exclude `.snapshot-export` and `.daily-jpeg-export`.
+
+**Interaction and runtime evidence**
+
+- Daily, Weekly, and Monthly tabs each selected and rendered their existing reports; the test returned to Daily successfully.
+- Browser logs contained no errors. Only the pre-existing Firebase warning about future `enableIndexedDbPersistence()` deprecation appeared.
+- Combined-image inspection found no remaining P0, P1, or P2 fidelity issue. Live overdue totals differ from the approved mock because the app is displaying current records, not mock data.
+
 **Findings**
 
 - No actionable P0, P1, or P2 findings remain after the narrow-width iteration.
@@ -63,6 +90,8 @@ Chrome initially reported `innerWidth: 360` while `(max-width:360px)` was false 
 5. The first true 360 px pass found the DPR media-query boundary described above. A failing test changed the guarded contract to 361 px; the 360 px recheck passed with zero overflow and a 2 x 2 glance grid.
 6. Exact text bounds at 391 px then exposed a 4 px brand-tag clip and about 9 px of performer-label/metric overlap that earlier box-level checks missed. A third failing test added <=430 px gap and metric-padding compaction. The final pass records brand 122/122 px and an 11.2 px label-to-metric gap, with the approved 391 px layout otherwise unchanged.
 7. Final combined and focused comparisons found no remaining P0/P1/P2 issue.
+8. The user then supplied a real-phone capture showing the 391–430 px composition still used the older large vertical spacing. A failing regression assertion broadened the compact contract beyond the former 361 px guard.
+9. The final pass applies the approved density through the full 560 px in-app mobile range. The combined approved/before/after comparison and 320/391/430/480/560/562 browser measurements found no remaining P0/P1/P2 issue.
 
 **Primary Interactions Tested**
 
