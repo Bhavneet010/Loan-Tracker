@@ -49,7 +49,10 @@ test("daily export dimensions and clone classes remain unchanged", () => {
 test("mobile summary follows the approved readable phone scale", () => {
   assert.match(compactCss, /\.editorial-mobile-summary\{[^}]*padding:24px16px18px/);
   assert.match(compactCss, /\.editorial-mobile-mtd>strong\{[^}]*font-size:28px/);
-  assert.match(compactCss, /\.editorial-mobile-top-performer\{[^}]*min-height:88px/);
+  assert.match(compactCss, /\.editorial-mobile-top-performer\{[^}]*min-height:64px/);
+  assert.match(compactCss, /\.editorial-mobile-top-performer\{[^}]*background-size:auto100%/);
+  assert.match(compactCss, /\.editorial-mobile-top-performer>div:first-childspan\{[^}]*white-space:nowrap/);
+  assert.match(compactCss, /\.editorial-mobile-top-metric\{[^}]*grid-template-columns:autoauto/);
   assert.match(compactCss, /\.editorial-mobile-glance-grid\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(compactCss, /\.editorial-mobile-officer-list\{[^}]*gap:12px/);
 });
