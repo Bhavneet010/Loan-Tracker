@@ -480,7 +480,7 @@ function renderEditorialMobileView(report, topFresh) {
       <div class="editorial-mobile-brand">
         <div class="editorial-brand-mark"><img src="icon-192.png" alt="Nirnay logo"></div>
         <div>
-          <strong><span>à¤¨à¤¿à¤°à¥à¤£à¤¯</span></strong>
+          <strong><span>निर्णय</span></strong>
           <small>Decisions | Delivered</small>
         </div>
       </div>
@@ -494,7 +494,7 @@ function renderEditorialMobileView(report, topFresh) {
     <section class="editorial-mobile-top-performer">
       <div>
         <span>Top Fresh Performer</span>
-        <strong>${esc(topFresh ? topFresh.name : "â€”")}</strong>
+        <strong>${esc(topFresh ? topFresh.name : "—")}</strong>
       </div>
       <div class="editorial-mobile-top-metric">
         <strong>${topFresh ? `Rs ${esc(fmtAmt(topFresh.sanctioned.total.amount))}L` : "No data"}</strong>

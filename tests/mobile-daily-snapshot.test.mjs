@@ -6,12 +6,23 @@ const snapshotSource = await readFile(new URL("../js/performance-snapshot.js", i
 const snapshotCss = await readFile(new URL("../css/snapshot-report.css", import.meta.url), "utf8");
 const performanceSource = await readFile(new URL("../js/performance.js", import.meta.url), "utf8");
 const compactCss = snapshotCss.replace(/\s+/g, "");
+const mobileRendererSource = snapshotSource.slice(
+  snapshotSource.indexOf("function renderEditorialMobileView"),
+  snapshotSource.indexOf("function buildEditorialShareMockupHtml"),
+);
 
 test("daily snapshot renders a dedicated mobile presentation from the same report", () => {
   assert.match(snapshotSource, /function renderEditorialMobileView\(report, topFresh\)/);
   assert.match(snapshotSource, /class="editorial-mobile-view"/);
   assert.match(snapshotSource, /renderEditorialMobileView\(report, topFresh\)/);
   assert.match(snapshotSource, /report\.officerCards\.map\(\(card, index\) => renderEditorialOfficerCard\(card, index\)\)/);
+});
+
+test("mobile renderer preserves the brand and empty-performer labels", () => {
+  assert.match(mobileRendererSource, /<strong><span>निर्णय<\/span><\/strong>/);
+  assert.match(mobileRendererSource, /topFresh \? topFresh\.name : "—"/);
+  assert.doesNotMatch(mobileRendererSource, /à¤¨à¤¿à¤°à¥à¤£à¤¯/);
+  assert.doesNotMatch(mobileRendererSource, /â€”/);
 });
 
 test("mobile presentation is isolated from desktop and export layouts", () => {
