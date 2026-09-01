@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, todayStr } from "./utils.js";
+import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, monthOf, todayStr } from "./utils.js";
 
 function currentMonthKey() {
   const d = new Date();
@@ -70,12 +70,19 @@ function buildLoanMetricsForMonth(thisMonth, day) {
     loan => (loan.renewedDate || "").startsWith(thisMonth) && !isFreshCC(loan)
   );
   const renewalDoneToday = renewalDoneThisMonth.filter(loan => loan.renewedDate === day);
-  // Month-end cleanup clears renewedDate, so any renewal still carrying one is
-  // work that has not been swept yet - including last month's renewals when the
-  // export runs before cleanup. Mirrors how sanctioned/returned loans stay in
-  // the live data set until cleanup deletes them.
+  // Renewals done that month-end cleanup has not swept yet, so an export taken
+  // before cleanup still carries last month's work. A renewedDate alone is not
+  // enough: cleanup clears it only for the accounts it sweeps, and the ones it
+  // deliberately skips (integration or documentation pending) keep theirs for
+  // good, which would drag long-cleaned months back into the count. Cleanup
+  // stamps the month it ran for onto every loan it touches, so anything renewed
+  // after the latest cleaned month is what is genuinely still awaiting cleanup.
+  const lastCleanedMonth = lastMonthEndCleanedMonth();
   const renewalDonePendingCleanup = renewals.filter(
-    loan => loan.renewedDate && !isFreshCC(loan)
+    loan =>
+      loan.renewedDate &&
+      !isFreshCC(loan) &&
+      (monthOf(loan.renewedDate) > lastCleanedMonth || monthOf(loan.renewedDate) === thisMonth)
   );
   const docPendingRenewals = renewals.filter(
     loan => !isFreshCC(loan) && loan.renewedDate && isStageTracked(loan.renewedDate) && !loan.documentationDate
@@ -118,6 +125,17 @@ function buildLoanMetricsForMonth(thisMonth, day) {
     urgentRenewals,
     renewalOfficerSummary,
   };
+}
+
+// Cleanup writes the month it ran for onto the renewals it clears
+// (monthEndClearedMonth) and onto the sanctions it carries forward
+// (monthEndCleared), so the newest of those markers is the last month that was
+// actually cleaned up.
+function lastMonthEndCleanedMonth() {
+  return S.loans.reduce((latest, loan) => {
+    const marker = loan.monthEndClearedMonth || loan.monthEndCleared || "";
+    return marker > latest ? marker : latest;
+  }, "");
 }
 
 function buildRenewalOfficerRows(renewals, dueSoon, overdue) {
