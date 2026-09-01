@@ -81,8 +81,11 @@ function returnedRows(loans) {
     }));
 }
 
+// Uses every renewal still flagged done (not just the current month) so an
+// export taken before month-end cleanup carries last month's renewals, matching
+// how the sanctioned/returned sheets keep rows until cleanup removes them.
 function renewalsDoneRows() {
-  return getLoanMetrics().renewalDoneThisMonth
+  return getLoanMetrics().renewalDonePendingCleanup
     .slice()
     .sort((a, b) => (b.renewedDate || "").localeCompare(a.renewedDate || ""))
     .map(l => ({

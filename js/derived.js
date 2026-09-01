@@ -70,6 +70,13 @@ function buildLoanMetricsForMonth(thisMonth, day) {
     loan => (loan.renewedDate || "").startsWith(thisMonth) && !isFreshCC(loan)
   );
   const renewalDoneToday = renewalDoneThisMonth.filter(loan => loan.renewedDate === day);
+  // Month-end cleanup clears renewedDate, so any renewal still carrying one is
+  // work that has not been swept yet - including last month's renewals when the
+  // export runs before cleanup. Mirrors how sanctioned/returned loans stay in
+  // the live data set until cleanup deletes them.
+  const renewalDonePendingCleanup = renewals.filter(
+    loan => loan.renewedDate && !isFreshCC(loan)
+  );
   const docPendingRenewals = renewals.filter(
     loan => !isFreshCC(loan) && loan.renewedDate && isStageTracked(loan.renewedDate) && !loan.documentationDate
   );
@@ -104,6 +111,7 @@ function buildLoanMetricsForMonth(thisMonth, day) {
     renewals,
     renewalDoneThisMonth,
     renewalDoneToday,
+    renewalDonePendingCleanup,
     renewalDatesMissing,
     renewalDueSoon,
     renewalOverdue,
