@@ -235,20 +235,42 @@ function buildVisibleRenewalOfficerSummary(metrics) {
 
   const summaryOfficers = S.isAdmin ? S.officers : [S.user].filter(Boolean);
   summaryOfficers.forEach(officer => {
-    rowsByOfficer.set(officer, { officer, total: 0, od: 0, due: 0 });
+    rowsByOfficer.set(officer, { officer, total: 0, od: 0, due: 0, branches: new Map() });
   });
 
   const ensure = officer => {
     const key = officer || 'Unassigned';
-    if (!rowsByOfficer.has(key)) rowsByOfficer.set(key, { officer: key, total: 0, od: 0, due: 0 });
+    if (!rowsByOfficer.has(key)) rowsByOfficer.set(key, { officer: key, total: 0, od: 0, due: 0, branches: new Map() });
     return rowsByOfficer.get(key);
   };
 
-  renewals.forEach(loan => ensure(effectiveOfficer(loan)).total++);
-  dueSoon.forEach(loan => ensure(effectiveOfficer(loan)).due++);
-  overdue.forEach(loan => ensure(effectiveOfficer(loan)).od++);
+  const knownBranchByCode = new Map(S.branches.map(b => [branchCode(b), b]));
+  const ensureBranch = (row, loan) => {
+    const code = branchCode(loan.branch);
+    const key = code || (loan.branch || '').trim() || 'Unassigned';
+    if (!row.branches.has(key)) {
+      const label = knownBranchByCode.get(code) || (loan.branch || '').trim() || 'Unassigned';
+      row.branches.set(key, { key, label, ...splitBranchLabel(label), total: 0, od: 0, due: 0 });
+    }
+    return row.branches.get(key);
+  };
 
-  const rows = Array.from(rowsByOfficer.values()).sort((a, b) =>
+  const tally = (loans, field) => loans.forEach(loan => {
+    const row = ensure(effectiveOfficer(loan));
+    row[field]++;
+    ensureBranch(row, loan)[field]++;
+  });
+
+  tally(renewals, 'total');
+  tally(dueSoon, 'due');
+  tally(overdue, 'od');
+
+  const rows = Array.from(rowsByOfficer.values()).map(row => ({
+    ...row,
+    branches: Array.from(row.branches.values()).sort((a, b) =>
+      (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.label.localeCompare(b.label)
+    ),
+  })).sort((a, b) =>
     (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.officer.localeCompare(b.officer)
   );
 
@@ -261,21 +283,56 @@ function buildVisibleRenewalOfficerSummary(metrics) {
   };
 }
 
+function splitBranchLabel(label) {
+  const text = String(label == null ? '' : label).trim();
+  const sep = text.indexOf(':');
+  if (sep === -1) return { code: '', name: text };
+  return { code: text.slice(0, sep).trim(), name: text.slice(sep + 1).trim() };
+}
+
+function renewalBranchRowsHtml(row) {
+  if (!row.branches || !row.branches.length) {
+    return `<div class="rnw-branch-list"><div class="rnw-branch-empty">No branch data</div></div>`;
+  }
+  const selectedBranchCode = S.renewalFilter.branch === 'All' ? '' : branchCode(S.renewalFilter.branch);
+  const items = row.branches.map(branch => {
+    const active = S.renewalFilter.officer === row.officer && !!branch.code && selectedBranchCode === branch.code;
+    return `<button class="rnw-branch-row${active ? ' active' : ''}" type="button" onclick="setRenewalOfficerBranch('${esc(row.officer)}','${esc(branch.label)}')">
+      <span class="rnw-branch-name">${branch.code ? `<i class="rnw-branch-code">${esc(branch.code)}</i>` : ''}<span>${esc(branch.name || branch.label)}</span></span>
+      <span${branch.total ? '' : ' class="rnw-branch-zero"'}>${branch.total}</span>
+      <span class="rnw-officer-od${branch.od ? '' : ' rnw-branch-zero'}">${branch.od}</span>
+      <span class="rnw-officer-due${branch.due ? '' : ' rnw-branch-zero'}">${branch.due}</span>
+      <span aria-hidden="true"></span>
+    </button>`;
+  }).join('');
+  return `<div class="rnw-branch-list">${items}</div>`;
+}
+
+function renewalOfficerRowHtml(row, selected) {
+  const active = selected === row.officer;
+  const open = !!(S.renewalOfficerBranches || {})[row.officer];
+  return `<div class="rnw-officer-rowwrap${open ? ' open' : ''}">
+    <div class="rnw-officer-rowline">
+      <button class="rnw-officer-row ${active ? 'active' : ''}" onclick="setRenewalOfficer('${esc(row.officer)}')" type="button">
+        <span class="rnw-officer-name">
+          <span class="rnw-officer-av" style="background:${officerColor(row.officer).bg};">${initials(row.officer)}</span>
+          <span>${esc(row.officer)}</span>
+        </span>
+        <span>${row.total}</span>
+        <span class="rnw-officer-od">${row.od}</span>
+        <span class="rnw-officer-due">${row.due}</span>
+        <span aria-hidden="true"></span>
+      </button>
+      <button class="rnw-officer-branch-toggle${open ? ' open' : ''}" type="button" aria-expanded="${open}" title="Branch-wise breakdown" aria-label="${open ? 'Hide' : 'Show'} branch-wise breakdown for ${esc(row.officer)}" onclick="event.stopPropagation();toggleRenewalOfficerBranches('${esc(row.officer)}')">${open ? '&#9650;' : '&#9660;'}</button>
+    </div>
+    ${open ? renewalBranchRowsHtml(row) : ''}
+  </div>`;
+}
+
 function renewalOfficerViewerHtml(summary) {
   const selected = S.renewalFilter.officer;
   const expanded = S.renewalOfficersExpanded;
-  const rows = expanded ? summary.rows.map(row => {
-    const active = selected === row.officer;
-    return `<button class="rnw-officer-row ${active ? 'active' : ''}" onclick="setRenewalOfficer('${esc(row.officer)}')" type="button">
-      <span class="rnw-officer-name">
-        <span class="rnw-officer-av" style="background:${officerColor(row.officer).bg};">${initials(row.officer)}</span>
-        <span>${esc(row.officer)}</span>
-      </span>
-      <span>${row.total}</span>
-      <span class="rnw-officer-od">${row.od}</span>
-      <span class="rnw-officer-due">${row.due}</span>
-    </button>`;
-  }).join('') : '';
+  const rows = expanded ? summary.rows.map(row => renewalOfficerRowHtml(row, selected)).join('') : '';
 
   return `<section class="rnw-officer-card ${expanded ? '' : 'collapsed'}" aria-label="Renewal officer summary">
     <button class="rnw-officer-summary" onclick="toggleRenewalOfficers()" type="button" aria-expanded="${expanded}">
@@ -286,7 +343,7 @@ function renewalOfficerViewerHtml(summary) {
       <div class="rnw-officer-caret">${expanded ? '&#9650;' : '&#9660;'}</div>
     </button>
     ${expanded ? `<div class="rnw-officer-table">
-      <div class="rnw-officer-head"><span>Officer</span><span>Total</span><span>OD</span><span>Due</span></div>
+      <div class="rnw-officer-head"><span>Officer</span><span>Total</span><span>OD</span><span>Due</span><span aria-hidden="true"></span></div>
       ${rows}
     </div>` : ''}
   </section>`;

@@ -1,6 +1,7 @@
 import { S, saveSettings } from "./state.js";
 
 import { nextFreshGroupCollapsed } from "./fresh-group-state.js";
+import { branchCode } from "./utils.js";
 
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
@@ -104,6 +105,29 @@ window.setRenewalOfficer = function(officer) {
 
 window.toggleRenewalOfficers = function() {
   S.renewalOfficersExpanded = !S.renewalOfficersExpanded;
+  render();
+};
+
+window.toggleRenewalOfficerBranches = function(officer) {
+  const open = { ...(S.renewalOfficerBranches || {}) };
+  if (open[officer]) delete open[officer];
+  else open[officer] = true;
+  S.renewalOfficerBranches = open;
+  S.renewalOfficersExpanded = true;
+  render();
+};
+
+window.setRenewalOfficerBranch = function(officer, branch) {
+  const sameOfficer = S.renewalFilter.officer === officer;
+  const sameBranch = branchCode(S.renewalFilter.branch) === branchCode(branch);
+  if (sameOfficer && sameBranch) {
+    S.renewalFilter.officer = 'All';
+    S.renewalFilter.branch = 'All';
+  } else {
+    S.renewalFilter.officer = officer;
+    S.renewalFilter.branch = branch;
+  }
+  S.openPop = null;
   render();
 };
 
