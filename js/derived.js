@@ -1,5 +1,6 @@
 import { S } from "./state.js";
 import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, monthOf, todayStr } from "./utils.js";
+import { renewalAccountOfficer as resolveRenewalAccountOfficer } from "./renewal-attribution.js";
 
 function currentMonthKey() {
   const d = new Date();
@@ -16,6 +17,14 @@ export function effectiveOfficer(loan, monthKey = currentMonthKey()) {
   }
   const code = branchCode(loan.branch || '').trim();
   return (code && S.branchOfficers?.[code]) || loan.allocatedTo || 'Unassigned';
+}
+
+// Who the account belongs to for its next renewal: the branch's officer, even
+// when another officer handled (and is credited with) the last renewal. Use
+// effectiveOfficer() instead wherever completed work is being credited.
+export function renewalAccountOfficer(loan, monthKey = currentMonthKey()) {
+  const code = branchCode(loan.branch || '').trim();
+  return resolveRenewalAccountOfficer(loan, (code && S.branchOfficers?.[code]) || '', monthKey);
 }
 
 let cache = null;
@@ -150,9 +159,9 @@ function buildRenewalOfficerRows(renewals, dueSoon, overdue) {
     return byOfficer.get(key);
   };
 
-  renewals.forEach(loan => ensure(effectiveOfficer(loan)).total++);
-  dueSoon.forEach(loan => ensure(effectiveOfficer(loan)).due++);
-  overdue.forEach(loan => ensure(effectiveOfficer(loan)).od++);
+  renewals.forEach(loan => ensure(renewalAccountOfficer(loan)).total++);
+  dueSoon.forEach(loan => ensure(renewalAccountOfficer(loan)).due++);
+  overdue.forEach(loan => ensure(renewalAccountOfficer(loan)).od++);
 
   return Array.from(byOfficer.values()).sort((a, b) =>
     (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.officer.localeCompare(b.officer)

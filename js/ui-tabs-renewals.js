@@ -1,5 +1,5 @@
 ﻿import { S } from "./state.js";
-import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
+import { getLoanMetrics, sumAmount, effectiveOfficer, renewalAccountOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, todayStr } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
@@ -22,7 +22,7 @@ export function renderRenewals(c) {
     let av, bv;
     if (S.renewalSort.field === 'daysFromSanction') { av = a._rs.daysSinceSanction; bv = b._rs.daysSinceSanction; }
     else if (S.renewalSort.field === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
-    else if (S.renewalSort.field === 'officer') { av = effectiveOfficer(a).toLowerCase(); bv = effectiveOfficer(b).toLowerCase(); }
+    else if (S.renewalSort.field === 'officer') { av = renewalListOfficer(a).toLowerCase(); bv = renewalListOfficer(b).toLowerCase(); }
     else if (S.renewalSort.field === 'branch') { av = (a.branch || '').toLowerCase(); bv = (b.branch || '').toLowerCase(); }
     if (av < bv) return -1 * dir;
     if (av > bv) return 1 * dir;
@@ -179,7 +179,7 @@ function buildRenewalListContent(metrics) {
     let av, bv;
     if (S.renewalSort.field === 'daysFromSanction') { av = a._rs.daysSinceSanction; bv = b._rs.daysSinceSanction; }
     else if (S.renewalSort.field === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
-    else if (S.renewalSort.field === 'officer') { av = effectiveOfficer(a).toLowerCase(); bv = effectiveOfficer(b).toLowerCase(); }
+    else if (S.renewalSort.field === 'officer') { av = renewalListOfficer(a).toLowerCase(); bv = renewalListOfficer(b).toLowerCase(); }
     else if (S.renewalSort.field === 'branch') { av = (a.branch || '').toLowerCase(); bv = (b.branch || '').toLowerCase(); }
     if (av < bv) return -1 * dir;
     if (av > bv) return 1 * dir;
@@ -209,8 +209,8 @@ export function applyRenewalFilters(enriched) {
   let out = enriched;
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon' && !l.renewedDate);
   if (S.renewalFilter.possibility === 'NotPossible') out = out.filter(l => l.renewalNotPossible === true && !l.renewedDate);
-  if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => effectiveOfficer(l) === S.user);
-  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.renewalFilter.officer);
+  if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => renewalListOfficer(l) === S.user);
+  else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => renewalListOfficer(l) === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') {
     const filterCode = branchCode(S.renewalFilter.branch);
     out = out.filter(l => branchCode(l.branch) === filterCode);
@@ -221,13 +221,27 @@ export function applyRenewalFilters(enriched) {
   return out;
 }
 
+// Views of finished work answer "who did this renewal", so they stay with the
+// officer who did it. Everywhere else the renewal is still to be done, and it
+// belongs to the officer the branch is allocated to.
+function isRenewalCreditView() {
+  return S.renewalTab === 'done'
+    || S.renewalTab === 'dates-missing'
+    || S.renewalFilter.today
+    || S.renewalFilter.completion !== 'All';
+}
+
+function renewalListOfficer(loan) {
+  return isRenewalCreditView() ? effectiveOfficer(loan) : renewalAccountOfficer(loan);
+}
+
 function hasMissingRenewalDates(loan) {
   return !!loan.renewedDate && (loan.renewalDatesPending === true || !loan.renewalDueDate || !loan.limitExpiryDate);
 }
 
 function buildVisibleRenewalOfficerSummary(metrics) {
   const includeLoan = loan => S.renewalShowNpa || loan._rs?.status !== 'npa';
-  const includeRoleLoan = loan => S.isAdmin || effectiveOfficer(loan) === S.user;
+  const includeRoleLoan = loan => S.isAdmin || renewalAccountOfficer(loan) === S.user;
   const renewals = metrics.renewals.filter(includeLoan).filter(includeRoleLoan);
   const dueSoon = metrics.renewalDueSoon.filter(includeLoan).filter(includeRoleLoan);
   const overdue = metrics.renewalOverdue.filter(includeLoan).filter(includeRoleLoan);
@@ -256,7 +270,7 @@ function buildVisibleRenewalOfficerSummary(metrics) {
   };
 
   const tally = (loans, field) => loans.forEach(loan => {
-    const row = ensure(effectiveOfficer(loan));
+    const row = ensure(renewalAccountOfficer(loan));
     row[field]++;
     ensureBranch(row, loan)[field]++;
   });
