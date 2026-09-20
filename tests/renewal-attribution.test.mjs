@@ -6,7 +6,7 @@ const helperSource = await readFile(
   new URL("../js/renewal-attribution.js", import.meta.url),
   "utf8",
 );
-const { renewalAccountOfficer } = await import(
+const { renewalAccountOfficer, renewalBranchOwner } = await import(
   `data:text/javascript;base64,${Buffer.from(helperSource).toString("base64")}`
 );
 
@@ -72,4 +72,20 @@ test("a spent override still names the officer when nothing else does", () => {
 test("an account with no officer at all reads as unassigned", () => {
   assert.equal(renewalAccountOfficer({}, "", MONTH), "Unassigned");
   assert.equal(renewalAccountOfficer(null, "", MONTH), "Unassigned");
+});
+
+test("the officer breakdown counts a covered renewal against its branch", () => {
+  const loan = {
+    allocatedTo: "Nikita",
+    manualOfficer: "Nikita",
+    manualOfficerMonth: MONTH,
+  };
+  assert.equal(renewalBranchOwner(loan, "Anil Kumar"), "Anil Kumar");
+});
+
+test("the officer breakdown falls back to the account when the branch has no officer", () => {
+  assert.equal(renewalBranchOwner({ allocatedTo: "Nikita" }, ""), "Nikita");
+  assert.equal(renewalBranchOwner({ manualOfficer: "Nikita" }, ""), "Nikita");
+  assert.equal(renewalBranchOwner({}, ""), "Unassigned");
+  assert.equal(renewalBranchOwner(null, ""), "Unassigned");
 });

@@ -1,6 +1,6 @@
 import { S } from "./state.js";
 import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, monthOf, todayStr } from "./utils.js";
-import { renewalAccountOfficer as resolveRenewalAccountOfficer } from "./renewal-attribution.js";
+import { renewalAccountOfficer as resolveRenewalAccountOfficer, renewalBranchOwner } from "./renewal-attribution.js";
 
 function currentMonthKey() {
   const d = new Date();
@@ -23,8 +23,18 @@ export function effectiveOfficer(loan, monthKey = currentMonthKey()) {
 // when another officer handled (and is credited with) the last renewal. Use
 // effectiveOfficer() instead wherever completed work is being credited.
 export function renewalAccountOfficer(loan, monthKey = currentMonthKey()) {
+  return resolveRenewalAccountOfficer(loan, branchOfficerFor(loan), monthKey);
+}
+
+// Who the officer breakdown counts the account against: the branch's officer,
+// whoever is covering a renewal on it this month.
+export function renewalBranchOfficer(loan) {
+  return renewalBranchOwner(loan, branchOfficerFor(loan));
+}
+
+function branchOfficerFor(loan) {
   const code = branchCode(loan.branch || '').trim();
-  return resolveRenewalAccountOfficer(loan, (code && S.branchOfficers?.[code]) || '', monthKey);
+  return (code && S.branchOfficers?.[code]) || '';
 }
 
 let cache = null;
@@ -159,9 +169,9 @@ function buildRenewalOfficerRows(renewals, dueSoon, overdue) {
     return byOfficer.get(key);
   };
 
-  renewals.forEach(loan => ensure(renewalAccountOfficer(loan)).total++);
-  dueSoon.forEach(loan => ensure(renewalAccountOfficer(loan)).due++);
-  overdue.forEach(loan => ensure(renewalAccountOfficer(loan)).od++);
+  renewals.forEach(loan => ensure(renewalBranchOfficer(loan)).total++);
+  dueSoon.forEach(loan => ensure(renewalBranchOfficer(loan)).due++);
+  overdue.forEach(loan => ensure(renewalBranchOfficer(loan)).od++);
 
   return Array.from(byOfficer.values()).sort((a, b) =>
     (b.od - a.od) || (b.due - a.due) || (b.total - a.total) || a.officer.localeCompare(b.officer)

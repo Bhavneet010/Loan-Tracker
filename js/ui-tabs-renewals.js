@@ -1,5 +1,5 @@
 ﻿import { S } from "./state.js";
-import { getLoanMetrics, sumAmount, effectiveOfficer, renewalAccountOfficer } from "./derived.js";
+import { getLoanMetrics, sumAmount, effectiveOfficer, renewalAccountOfficer, renewalBranchOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, todayStr } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch } from "./ui-logic.js";
@@ -241,7 +241,7 @@ function hasMissingRenewalDates(loan) {
 
 function buildVisibleRenewalOfficerSummary(metrics) {
   const includeLoan = loan => S.renewalShowNpa || loan._rs?.status !== 'npa';
-  const includeRoleLoan = loan => S.isAdmin || renewalAccountOfficer(loan) === S.user;
+  const includeRoleLoan = loan => S.isAdmin || renewalBranchOfficer(loan) === S.user;
   const renewals = metrics.renewals.filter(includeLoan).filter(includeRoleLoan);
   const dueSoon = metrics.renewalDueSoon.filter(includeLoan).filter(includeRoleLoan);
   const overdue = metrics.renewalOverdue.filter(includeLoan).filter(includeRoleLoan);
@@ -270,7 +270,7 @@ function buildVisibleRenewalOfficerSummary(metrics) {
   };
 
   const tally = (loans, field) => loans.forEach(loan => {
-    const row = ensure(renewalAccountOfficer(loan));
+    const row = ensure(renewalBranchOfficer(loan));
     row[field]++;
     ensureBranch(row, loan)[field]++;
   });

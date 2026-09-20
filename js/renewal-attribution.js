@@ -11,7 +11,15 @@ export function renewalAccountOfficer(loan, branchOfficer, monthKey) {
   const l = loan || {};
   const override = l.manualOfficer && l.manualOfficerMonth === monthKey ? l.manualOfficer : '';
   if (override && !isOverrideSpent(l)) return override;
-  return branchOfficer || l.allocatedTo || override || 'Unassigned';
+  return renewalBranchOwner(l, branchOfficer);
+}
+
+// The officer the branch itself is allocated to, ignoring any override: the
+// officer breakdown counts every account against its branch, whoever is
+// covering a renewal on it this month.
+export function renewalBranchOwner(loan, branchOfficer) {
+  const l = loan || {};
+  return branchOfficer || l.allocatedTo || l.manualOfficer || 'Unassigned';
 }
 
 // The override is spent once the renewal it was set for has been completed.
