@@ -3,6 +3,7 @@ import { getLoanMetrics, sumAmount, effectiveOfficer, renewalAccountOfficer, ren
 import { esc, fmtAmt, initials, officerColor, branchCode, todayStr } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
 import { searchMatch, applyNpaMode, matchesNpaMode } from "./ui-logic.js";
+import { amountFilterActive, amountFilterLabel, matchesAmountFilter, normalizeAmountOp, parseAmountInput } from "./amount-filter.js";
 import { buildCalendarViewHtml } from "./ui-calendar.js";
 
 export function renderRenewals(c) {
@@ -30,19 +31,7 @@ export function renderRenewals(c) {
   }).filter(searchMatch);
 
   const total = sumAmount(sorted);
-  let tabMeta = {
-    'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
-    'done': { title: 'Done This Month', empty: '&#9850;', msg: 'No SME renewals completed this month' },
-    'due-soon': { title: 'Due for Renewal Soon', empty: '&#9200;', msg: 'No accounts due within 30 days' },
-    'overdue': { title: 'Renewal Overdue', empty: '!', msg: 'No overdue renewal accounts' },
-    'all': { title: 'All CC Accounts', empty: '&#128203;', msg: 'No CC accounts found' },
-  }[S.renewalTab] || { title: 'SME CC Renewals', empty: '&#9850;', msg: 'No renewals found' };
-  if (S.renewalFilter.status === 'DueSoon') {
-    tabMeta = { title: 'Due Soon Accounts', empty: '&#9200;', msg: 'No accounts due within 30 days' };
-  }
-  if (S.renewalFilter.possibility === 'NotPossible') {
-    tabMeta = { title: 'Renewal Not Possible', empty: '&#9888;', msg: 'No accounts marked renewal not possible' };
-  }
+  const tabMeta = renewalTabMeta();
 
   const fc = (S.renewalFilter.officer !== 'All' ? 1 : 0) +
     (S.renewalFilter.branch !== 'All' ? 1 : 0) +
@@ -59,6 +48,13 @@ export function renderRenewals(c) {
 
   const filterIcon = `<svg class="rnw-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h11l-4.25 5.1v4.4l-2.5 1.25V8.1z"/></svg>`;
   const sortIcon = `<svg class="rnw-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13V3M5 3 2.5 5.5M5 3l2.5 2.5"/><path d="M11 3v10m0 0 2.5-2.5M11 13l-2.5-2.5"/></svg>`;
+
+  const amountOp = normalizeAmountOp(S.renewalFilter.amountOp);
+  const amountRow = S.renewalFilter.status !== 'Amount' ? '' : `<div class="fs-pop-sub">
+      <label><input type="radio" name="rnw_amountOp" value="gt" ${amountOp === 'gt' ? 'checked' : ''} onchange="setRenewalAmountOp('gt')">Greater than</label>
+      <label><input type="radio" name="rnw_amountOp" value="lt" ${amountOp === 'lt' ? 'checked' : ''} onchange="setRenewalAmountOp('lt')">Smaller than</label>
+      <input type="number" class="fs-pop-inp" inputmode="decimal" min="0" step="any" placeholder="Amount in &#8377; lakh" value="${esc(S.renewalFilter.amountValue)}" oninput="handleRenewalAmountInput(this.value)">
+    </div>`;
 
   const npaBtnClass = S.renewalNpaMode === 'only' ? ' active rnw-tbtn--npa-only'
     : S.renewalNpaMode === 'all' ? ' active' : '';
@@ -83,7 +79,7 @@ export function renderRenewals(c) {
       <button class="rnw-tbtn${S.calendarBarExpanded ? ' active' : ''}" onclick="event.stopPropagation();toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>` : ''}
     </div>
     <div class="fs-pop" style="${filterStyle}">
-      <h4>Status</h4>${radio('status', [{ v: 'All', label: 'All statuses' }, { v: 'DueSoon', label: 'Due soon accounts' }], S.renewalFilter.status || 'All')}
+      <h4>Status</h4>${radio('status', [{ v: 'All', label: 'All statuses' }, { v: 'DueSoon', label: 'Due soon accounts' }, { v: 'Amount', label: 'Amount' }], S.renewalFilter.status || 'All')}${amountRow}
       <hr>
       <h4>Renewal Possibility</h4>${radio('possibility', [{ v: 'All', label: 'All accounts' }, { v: 'NotPossible', label: 'Renewal not possible' }], S.renewalFilter.possibility || 'All')}
       <hr>
@@ -154,6 +150,18 @@ function syncRenewalChromeState() {
   });
 }
 
+// Typing the figure only refreshes the list, so the dropdown stays open and
+// the input keeps focus between keystrokes.
+window.handleRenewalAmountInput = function(v) {
+  S.renewalFilter.amountValue = v;
+  const content = document.querySelector('.rnw-content');
+  if (S.appMode !== 'renewals' || !content) {
+    window.render();
+    return;
+  }
+  content.innerHTML = buildRenewalMainContent();
+};
+
 window.handleRenewalSearch = function(v) {
   S.search = v.toLowerCase().trim();
   const content = document.querySelector('.rnw-content');
@@ -192,6 +200,13 @@ function buildRenewalListContent(metrics) {
   }).filter(searchMatch);
 
   const total = sumAmount(sorted);
+  const tabMeta = renewalTabMeta();
+
+  const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
+  return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
+}
+
+function renewalTabMeta() {
   let tabMeta = {
     'dates-missing': { title: 'Integration Pending', empty: '!', msg: 'No completed renewals need integration updates' },
     'done': { title: 'Done This Month', empty: '&#9850;', msg: 'No SME renewals completed this month' },
@@ -202,17 +217,25 @@ function buildRenewalListContent(metrics) {
   if (S.renewalFilter.status === 'DueSoon') {
     tabMeta = { title: 'Due Soon Accounts', empty: '&#9200;', msg: 'No accounts due within 30 days' };
   }
+  if (amountFilterActive(S.renewalFilter)) {
+    const side = amountFilterLabel(S.renewalFilter);
+    const limit = `<span class="rs">&#8377;</span>${fmtAmt(parseAmountInput(S.renewalFilter.amountValue))} L`;
+    tabMeta = {
+      title: `Accounts ${side} ${limit}`,
+      empty: '&#8377;',
+      msg: `No accounts ${side} ${limit}`,
+    };
+  }
   if (S.renewalFilter.possibility === 'NotPossible') {
     tabMeta = { title: 'Renewal Not Possible', empty: '&#9888;', msg: 'No accounts marked renewal not possible' };
   }
-
-  const list = sorted.length === 0 ? emptyState(tabMeta.empty, tabMeta.title, tabMeta.msg) : sorted.map((l, i) => renewalItemHtml(l, l._rs, i)).join('');
-  return `<div class="sec-head rnw-list-head"><div class="sec-title">${tabMeta.title}</div><div class="sec-right"><div class="sec-count">${sorted.length} · <span class="rs">&#8377;</span>${fmtAmt(total)} L</div><button class="sec-collapse-btn" onclick="collapseAll()" style="display:none">&#9650; collapse all</button></div></div>${list}`;
+  return tabMeta;
 }
 
 export function applyRenewalFilters(enriched) {
   let out = enriched;
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon' && !l.renewedDate);
+  else if (S.renewalFilter.status === 'Amount') out = out.filter(l => matchesAmountFilter(l.amount, S.renewalFilter));
   if (S.renewalFilter.possibility === 'NotPossible') out = out.filter(l => l.renewalNotPossible === true && !l.renewedDate);
   if (S.renewalFilter.officer === 'Mine' && S.user) out = out.filter(l => renewalListOfficer(l) === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => renewalListOfficer(l) === S.renewalFilter.officer);

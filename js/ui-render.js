@@ -3,6 +3,7 @@ import { S, saveSettings } from "./state.js";
 import { nextFreshGroupCollapsed } from "./fresh-group-state.js";
 import { branchCode } from "./utils.js";
 import { normalizeNpaMode, nextNpaMode } from "./npa-mode.js";
+import { normalizeAmountOp } from "./amount-filter.js";
 
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
@@ -88,6 +89,11 @@ window.setRenewalFilter = function(k, v) {
   }
   render();
 };
+window.setRenewalAmountOp = function(op) {
+  S.renewalFilter.amountOp = normalizeAmountOp(op);
+  updateRenewalMainContent({ transition: false });
+};
+
 window.setRenewalSort = function(f, d) { if (f) S.renewalSort.field = f; if (d) S.renewalSort.dir = d; render(); };
 window.setRenewalTab = function(t) {
   if (S.renewalTab === t && S.renewalView === 'list') return;

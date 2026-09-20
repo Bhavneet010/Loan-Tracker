@@ -2,6 +2,7 @@
 import { getLoanMetrics, effectiveOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, toast } from "./utils.js";
 import { searchMatch, applyNpaMode } from "./ui-logic.js";
+import { matchesAmountFilter } from "./amount-filter.js";
 import { holidayReason, findCustomHoliday, countWorkingDaysLeft } from "./bank-holidays.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
@@ -53,6 +54,7 @@ export function getCalendarMonthsExport(monthKeys, metrics = getLoanMetrics()) {
 function getFilteredRenewals(metrics) {
   let out = metrics.renewals.filter(l => !l.renewedDate);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
+  else if (S.renewalFilter.status === 'Amount') out = out.filter(l => matchesAmountFilter(l.amount, S.renewalFilter));
   if (!S.isAdmin) out = out.filter(l => effectiveOfficer(l) === S.user);
   else if (S.renewalFilter.officer !== 'All' && S.renewalFilter.officer !== 'Mine') out = out.filter(l => effectiveOfficer(l) === S.renewalFilter.officer);
   if (S.renewalFilter.branch !== 'All') {
@@ -68,6 +70,7 @@ function getFilteredRenewals(metrics) {
 function getAllOfficerRenewals(metrics) {
   let out = metrics.renewals.filter(l => !l.renewedDate);
   if (S.renewalFilter.status === 'DueSoon') out = out.filter(l => l._rs?.status === 'due-soon');
+  else if (S.renewalFilter.status === 'Amount') out = out.filter(l => matchesAmountFilter(l.amount, S.renewalFilter));
   if (S.renewalFilter.branch !== 'All') {
     const filterCode = branchCode(S.renewalFilter.branch);
     out = out.filter(l => branchCode(l.branch) === filterCode);

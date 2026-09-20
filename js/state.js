@@ -17,7 +17,7 @@ export const S = {
   freshGroupMode: 'officer',
   freshGroupCollapsed: {},
   renewalTab: 'done',
-  renewalFilter: { officer: 'All', branch: 'All', completion: 'All', status: 'All', possibility: 'All', today: false },
+  renewalFilter: { officer: 'All', branch: 'All', completion: 'All', status: 'All', possibility: 'All', today: false, amountOp: 'gt', amountValue: '' },
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },
   // 'off' hides NPA accounts, 'all' shows them with the rest, 'only' shows NPA alone
   renewalNpaMode: 'off',

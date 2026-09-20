@@ -265,6 +265,15 @@ body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}
 .fs-pop label{display:flex;align-items:center;gap:var(--space-sm);padding:6px 4px;font-size:var(--fs-md);color:var(--text1);cursor:pointer;border-radius:var(--radius-xs);}
 .fs-pop label:hover{background:rgba(107,95,191,0.06);}
 .fs-pop input[type=radio]{accent-color:var(--p1);}
+/* Sub-controls for a filter option that needs more input, e.g. the amount limit */
+.fs-pop-sub{margin:2px 0 6px;padding-left:10px;border-left:2px solid rgba(107,95,191,0.18);}
+.fs-pop-inp{
+  width:100%;margin-top:4px;padding:7px 9px;
+  border:1px solid rgba(107,95,191,0.25);border-radius:var(--radius-xs);
+  background:rgba(255,255,255,0.8);color:var(--text1);
+  font-family:inherit;font-size:var(--fs-sm);outline:none;
+}
+.fs-pop-inp:focus{border-color:var(--p2);box-shadow:0 0 0 3px rgba(107,95,191,0.15);}
 
 .fs-bar.fl-toolbar{
   position:relative;
@@ -894,6 +903,8 @@ body.dark .panel{background:#1A1835;}
 body.dark .tab{background:var(--dark-glass);color:var(--p3);border-color:rgba(107,95,191,0.25);}
 body.dark .rnw-npa-toggle{background:var(--dark-glass);color:var(--p3);border-color:rgba(107,95,191,0.25);}
 body.dark .fs-pop{background:rgba(30,28,58,0.97);border-color:rgba(80,70,130,0.3);}
+body.dark .fs-pop-sub{border-left-color:rgba(155,143,228,0.25);}
+body.dark .fs-pop-inp{background:var(--dark-glass);color:var(--text1);border-color:rgba(155,143,228,0.35);}
 body.dark .loan-item.cat-agri > .loan-row{background:rgba(16,185,129,0.14);}
 body.dark .loan-item.cat-sme  > .loan-row{background:rgba(107,95,191,0.20);}
 body.dark .loan-item.cat-edu  > .loan-row{background:rgba(245,158,11,0.14);}
