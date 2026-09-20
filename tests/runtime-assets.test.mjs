@@ -137,7 +137,7 @@ test("activation waits for client claim and deletes only obsolete Nirnay caches"
   const deleted = [];
   const caches = {
     async keys() {
-      return ["nirnay-v201", "nirnay-v202", "nirnay-v203", "nirnay-v204", "third-party-cache"];
+      return ["nirnay-v202", "nirnay-v203", "nirnay-v204", "nirnay-v205", "third-party-cache"];
     },
     async delete(key) { deleted.push(key); },
   };
@@ -154,7 +154,7 @@ test("activation waits for client claim and deletes only obsolete Nirnay caches"
     new Promise(resolve => setTimeout(() => resolve("pending"), 20)),
   ]);
   assert.equal(stateBeforeClaim, "pending", "activation settled before clients.claim()");
-  assert.deepEqual(deleted, ["nirnay-v201", "nirnay-v202", "nirnay-v203"]);
+  assert.deepEqual(deleted, ["nirnay-v202", "nirnay-v203", "nirnay-v204"]);
 
   resolveClaim();
   await lifetime;

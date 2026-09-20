@@ -2,6 +2,7 @@ import { S, saveSettings } from "./state.js";
 
 import { nextFreshGroupCollapsed } from "./fresh-group-state.js";
 import { branchCode } from "./utils.js";
+import { normalizeNpaMode, nextNpaMode } from "./npa-mode.js";
 
 // Import from new specialized modules
 import { updateBadges, updateHero } from "./ui-stats.js";
@@ -131,8 +132,13 @@ window.setRenewalOfficerBranch = function(officer, branch) {
   render();
 };
 
-window.toggleRenewalNpa = function(show) {
-  S.renewalShowNpa = !!show;
+window.setRenewalNpaMode = function(mode) {
+  S.renewalNpaMode = normalizeNpaMode(mode);
+  render();
+};
+
+window.cycleRenewalNpa = function() {
+  S.renewalNpaMode = nextNpaMode(S.renewalNpaMode);
   render();
 };
 

@@ -1,7 +1,7 @@
 ﻿import { S } from "./state.js";
 import { getLoanMetrics, effectiveOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, toast } from "./utils.js";
-import { searchMatch } from "./ui-logic.js";
+import { searchMatch, applyNpaMode } from "./ui-logic.js";
 import { holidayReason, findCustomHoliday, countWorkingDaysLeft } from "./bank-holidays.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
@@ -59,7 +59,7 @@ function getFilteredRenewals(metrics) {
     const filterCode = branchCode(S.renewalFilter.branch);
     out = out.filter(l => branchCode(l.branch) === filterCode);
   }
-  if (!S.renewalShowNpa) out = out.filter(l => l._rs?.status !== 'npa');
+  out = applyNpaMode(out);
   out = out.filter(searchMatch);
   return out;
 }
@@ -72,7 +72,7 @@ function getAllOfficerRenewals(metrics) {
     const filterCode = branchCode(S.renewalFilter.branch);
     out = out.filter(l => branchCode(l.branch) === filterCode);
   }
-  if (!S.renewalShowNpa) out = out.filter(l => l._rs?.status !== 'npa');
+  out = applyNpaMode(out);
   return out;
 }
 

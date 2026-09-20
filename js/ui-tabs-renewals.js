@@ -2,7 +2,7 @@
 import { getLoanMetrics, sumAmount, effectiveOfficer, renewalAccountOfficer, renewalBranchOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, todayStr } from "./utils.js";
 import { emptyState, renewalItemHtml } from "./ui-components.js";
-import { searchMatch } from "./ui-logic.js";
+import { searchMatch, applyNpaMode, matchesNpaMode } from "./ui-logic.js";
 import { buildCalendarViewHtml } from "./ui-calendar.js";
 
 export function renderRenewals(c) {
@@ -14,7 +14,7 @@ export function renderRenewals(c) {
   else if (S.renewalTab === 'due-soon') tabFiltered = metrics.renewalDueSoon;
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
   const canToggleNpa = ['due-soon', 'overdue', 'all', 'done'].includes(S.renewalTab) || S.renewalView === 'calendar';
-  if (canToggleNpa && !S.renewalShowNpa && S.renewalFilter.possibility !== 'NotPossible') tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
+  if (canToggleNpa && S.renewalFilter.possibility !== 'NotPossible') tabFiltered = applyNpaMode(tabFiltered);
 
   const sl = { daysFromSanction: 'Days', amount: 'Amount', officer: 'Officer', branch: 'Branch' };
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
@@ -60,6 +60,11 @@ export function renderRenewals(c) {
   const filterIcon = `<svg class="rnw-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h11l-4.25 5.1v4.4l-2.5 1.25V8.1z"/></svg>`;
   const sortIcon = `<svg class="rnw-tbicon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13V3M5 3 2.5 5.5M5 3l2.5 2.5"/><path d="M11 3v10m0 0 2.5-2.5M11 13l-2.5-2.5"/></svg>`;
 
+  const npaBtnClass = S.renewalNpaMode === 'only' ? ' active rnw-tbtn--npa-only'
+    : S.renewalNpaMode === 'all' ? ' active' : '';
+  const npaBtnTitle = S.renewalNpaMode === 'only' ? 'Hide NPA accounts'
+    : S.renewalNpaMode === 'all' ? 'Show only NPA accounts' : 'Show NPA accounts';
+
   const fsBar = `<div class="fs-bar rnw-toolbar" onclick="event.stopPropagation();">
     <div class="rnw-tb-scroll">
       <div class="rnw-tb-group">
@@ -73,7 +78,7 @@ export function renderRenewals(c) {
       <span class="rnw-tb-sep"></span>
       <button class="rnw-tbtn rnw-tbtn--text${S.renewalFilter.today ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalToday()">Today</button>
       ${canToggleNpa ? `<span class="rnw-tb-sep"></span>
-      <button class="rnw-tbtn${S.renewalShowNpa ? ' active' : ''}" onclick="event.stopPropagation();toggleRenewalNpa(${!S.renewalShowNpa})" title="Show NPA accounts">NPA</button>` : ''}
+      <button class="rnw-tbtn${npaBtnClass}" onclick="event.stopPropagation();cycleRenewalNpa()" title="${npaBtnTitle}">NPA</button>` : ''}
       ${S.isAdmin && S.renewalView === 'calendar' ? `<span class="rnw-tb-sep"></span>
       <button class="rnw-tbtn${S.calendarBarExpanded ? ' active' : ''}" onclick="event.stopPropagation();toggleCalMbarExpand()" title="${S.calendarBarExpanded ? 'Combined view' : 'View by officer'}">&#8801;</button>` : ''}
     </div>
@@ -172,7 +177,7 @@ function buildRenewalListContent(metrics) {
   else if (S.renewalTab === 'overdue') tabFiltered = metrics.renewalOverdue;
 
   const canToggleNpa = ['due-soon', 'overdue', 'all', 'done'].includes(S.renewalTab) || S.renewalView === 'calendar';
-  if (canToggleNpa && !S.renewalShowNpa && S.renewalFilter.possibility !== 'NotPossible') tabFiltered = tabFiltered.filter(l => l._rs?.status !== 'npa');
+  if (canToggleNpa && S.renewalFilter.possibility !== 'NotPossible') tabFiltered = applyNpaMode(tabFiltered);
 
   const dir = S.renewalSort.dir === 'asc' ? 1 : -1;
   const sorted = [...applyRenewalFilters(tabFiltered)].sort((a, b) => {
@@ -240,7 +245,7 @@ function hasMissingRenewalDates(loan) {
 }
 
 function buildVisibleRenewalOfficerSummary(metrics) {
-  const includeLoan = loan => S.renewalShowNpa || loan._rs?.status !== 'npa';
+  const includeLoan = matchesNpaMode;
   const includeRoleLoan = loan => S.isAdmin || renewalBranchOfficer(loan) === S.user;
   const renewals = metrics.renewals.filter(includeLoan).filter(includeRoleLoan);
   const dueSoon = metrics.renewalDueSoon.filter(includeLoan).filter(includeRoleLoan);

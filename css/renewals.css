@@ -509,6 +509,11 @@ body.dark .rnw-branch-code{background:rgba(155,143,228,0.20);color:#C9C0F5;}
   background:var(--p2);
   color:#fff;
 }
+/* Third NPA state: only NPA accounts are listed */
+.rnw-tbtn.rnw-tbtn--npa-only{
+  background:var(--red-vivid);
+  color:#fff;
+}
 .rnw-tbtn-dir{font-size:10px;}
 .rnw-tbtn-badge{
   position:absolute;

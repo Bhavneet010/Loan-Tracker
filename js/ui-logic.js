@@ -1,6 +1,7 @@
 import { S } from "./state.js";
 import { esc, todayStr } from "./utils.js";
 import { effectiveOfficer } from "./derived.js";
+import { npaModeAllows } from "./npa-mode.js";
 
 /* ── SHARED UI UTILITIES ── */
 export function searchMatch(l) {
@@ -8,6 +9,15 @@ export function searchMatch(l) {
   return (l.customerName || '').toLowerCase().includes(S.search)
     || (l.branch || '').toLowerCase().includes(S.search)
     || effectiveOfficer(l).toLowerCase().includes(S.search);
+}
+
+// Every renewal view narrows its list through the same NPA button state.
+export function matchesNpaMode(loan) {
+  return npaModeAllows(S.renewalNpaMode, loan._rs?.status === 'npa');
+}
+
+export function applyNpaMode(loans) {
+  return S.renewalNpaMode === 'all' ? loans : loans.filter(matchesNpaMode);
 }
 
 export function applyFilters(loans) {

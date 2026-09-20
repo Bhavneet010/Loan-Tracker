@@ -19,7 +19,8 @@ export const S = {
   renewalTab: 'done',
   renewalFilter: { officer: 'All', branch: 'All', completion: 'All', status: 'All', possibility: 'All', today: false },
   renewalSort: { field: 'daysFromSanction', dir: 'desc' },
-  renewalShowNpa: false,
+  // 'off' hides NPA accounts, 'all' shows them with the rest, 'only' shows NPA alone
+  renewalNpaMode: 'off',
   renewalOfficersExpanded: false,
   renewalOfficerBranches: {},
   renewalView: 'calendar',
