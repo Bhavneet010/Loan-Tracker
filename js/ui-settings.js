@@ -2,6 +2,7 @@ import { S, saveSettings } from "./state.js";
 import { esc, toast, initials, officerColor, timeAgo, branchCode } from "./utils.js";
 import { isBiometricAvailable, isBiometricRegistered, registerBiometric, removeBiometric } from "./biometric.js";
 import { AVAILABILITY_TYPES, availabilityLabel, normalizeAvailability } from "./officer-availability.js";
+import { istDateStr, istMonthStr } from "./ist-date.js";
 
 /* ── PRESENCE TAB STATE ── */
 let _presenceUnsub = null;
@@ -66,9 +67,7 @@ export function renderSettingsList() {
       </div>
       <button type="button" class="btn btn-primary-full" style="width:100%;padding:13px;border-radius:13px;" onclick="saveRenewalTargets()">Save Targets</button>`;
   } else if (S.settingsTab === 'availability') {
-    const today = new Date();
-    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
-    const todayStr = today.toISOString().slice(0, 10);
+    const todayStr = istDateStr();
     const records = (S.officerAvailability || [])
       .map(normalizeAvailability)
       .filter(Boolean)
@@ -155,11 +154,7 @@ export function renderSettingsList() {
   }
 }
 
-function currentMonthKey() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 7);
-}
+const currentMonthKey = () => istMonthStr();
 
 window.renderSettingsList = renderSettingsList;
 

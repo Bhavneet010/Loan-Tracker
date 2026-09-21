@@ -3,6 +3,7 @@ import { updateLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
 import { esc, toast } from "./utils.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
+import { istDateTimeStr } from "./ist-date.js";
 
 /* Reminder mail tracking for pending / returned loans.
    Each loan carries `reminderMails`: [{ id, sentTo, sentAt, remarks, by, loggedAt }].
@@ -41,11 +42,7 @@ export function canTrackReminders(loan) {
   return status === 'pending' || status === 'returned';
 }
 
-function nowLocalDatetime() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
-}
+const nowLocalDatetime = () => istDateTimeStr();
 
 function notifyReminderChange(id) {
   document.dispatchEvent(new CustomEvent('remindermailschange', { detail: { id } }));

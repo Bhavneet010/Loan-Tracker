@@ -4,6 +4,7 @@ import { esc, fmtAmt, initials, officerColor, branchCode, toast } from "./utils.
 import { searchMatch, applyNpaMode } from "./ui-logic.js";
 import { matchesAmountFilter } from "./amount-filter.js";
 import { holidayReason, findCustomHoliday, countWorkingDaysLeft } from "./bank-holidays.js";
+import { istDateParts, istDateStr, istMonthStr } from "./ist-date.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
   buildRenewalMonthSections,
@@ -25,8 +26,8 @@ const isRnpDeferred = l => l.renewalNotPossible === true && l._rs?.status !== 'n
 export function buildCalendarViewHtml(metrics = getLoanMetrics()) {
   const renewals = getFilteredRenewals(metrics);
   if (!S.calendarState) {
-    const now = new Date();
-    S.calendarState = findFirstRenewalMonth(renewals) || { year: now.getFullYear(), month: now.getMonth() };
+    const now = istDateParts();
+    S.calendarState = findFirstRenewalMonth(renewals) || { year: now.year, month: now.month };
   }
   const { year, month } = S.calendarState;
   const calData = buildCalendarData(renewals, year, month);
@@ -38,8 +39,8 @@ export function buildCalendarViewHtml(metrics = getLoanMetrics()) {
 export function getCalendarMonthExport(metrics = getLoanMetrics()) {
   if (!S.calendarState) {
     const renewals = getFilteredRenewals(metrics);
-    const now = new Date();
-    S.calendarState = findFirstRenewalMonth(renewals) || { year: now.getFullYear(), month: now.getMonth() };
+    const now = istDateParts();
+    S.calendarState = findFirstRenewalMonth(renewals) || { year: now.year, month: now.month };
   }
   const { year, month } = S.calendarState;
   const key = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -80,8 +81,7 @@ function getAllOfficerRenewals(metrics) {
 }
 
 function findFirstRenewalMonth(renewals) {
-  const now = new Date();
-  const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentKey = istMonthStr();
   const months = new Set();
   renewals.forEach(loan => {
     if (isRnpDeferred(loan)) return;
@@ -192,7 +192,7 @@ function buildCalendarData(renewals, year, month) {
 }
 
 function calendarHtml(calData, year, month, renewals) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = istDateStr();
   const firstDay = new Date(year, month, 1).getDay();
   // Convert Sunday=0 to Monday=0 offset
   const offset = (firstDay + 6) % 7;
@@ -360,7 +360,7 @@ function dayDetailHtml(dateStr, entry) {
   </div>`;
 }
 
-let calMultiExportYearValue = new Date().getFullYear();
+let calMultiExportYearValue = istDateParts().year;
 let calMultiExportSelection = [];
 let calMultiExportBusy = null;
 
@@ -397,9 +397,9 @@ function renderCalMultiExportDialog() {
 }
 
 window.openCalMultiExport = function () {
-  const now = new Date();
-  const year = S.calendarState?.year ?? now.getFullYear();
-  const month = S.calendarState?.month ?? now.getMonth();
+  const now = istDateParts();
+  const year = S.calendarState?.year ?? now.year;
+  const month = S.calendarState?.month ?? now.month;
   const key = `${year}-${String(month + 1).padStart(2, '0')}`;
   calMultiExportYearValue = year;
   calMultiExportSelection = [key];

@@ -5,6 +5,7 @@ import { metricHtml, CATS, amountOf } from "./performance-utils.js";
 import { holidayReason, findCustomHoliday } from "./bank-holidays.js";
 import { availabilityLabel, availabilityShortLabel, officerAvailabilityForDate } from "./officer-availability.js";
 import { createRetryableScriptLoader } from "./script-loader.js";
+import { addDays, dateParts, dateStrOf, daysInMonth, formatDateStr, istDateParts, istDateStr, toDateStr } from "./ist-date.js";
 
 let localHtml2CanvasPromise = null;
 
@@ -637,23 +638,18 @@ function buildDailySnapshotPageHtml() {
   </div>`;
 }
 
-function isoDate(date) {
-  const d = new Date(date);
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
+// Weeks run Monday to Sunday and are built by walking calendar dates, so a
+// week never shifts a day with the device timezone.
+const weekDatesFrom = mondayStr => Array.from({ length: 7 }, (_, i) => addDays(mondayStr, i));
+
+function mondayOf(dateStr) {
+  const parts = dateParts(dateStr);
+  if (!parts) return '';
+  return addDays(dateStr, 1 - (parts.weekday || 7));
 }
 
 function currentWeekDates() {
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-  const day = today.getDay() || 7;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - day + 1);
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + index);
-    return isoDate(date);
-  });
+  return weekDatesFrom(mondayOf(istDateStr()));
 }
 
 function weeklyDateLabel(dates) {
@@ -663,25 +659,13 @@ function weeklyDateLabel(dates) {
 }
 
 function getWeeksInCurrentMonth() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const firstOfMonth = new Date(year, month, 1, 12, 0, 0);
-  const dow = firstOfMonth.getDay() || 7;
-  const firstMonday = new Date(firstOfMonth);
-  firstMonday.setDate(1 - (dow - 1));
-  firstMonday.setHours(12, 0, 0, 0);
-  const lastOfMonth = new Date(year, month + 1, 0, 12, 0, 0);
+  const { year, month } = istDateParts();
+  const lastOfMonth = dateStrOf(year, month, daysInMonth(year, month));
   const weeks = [];
-  const cursor = new Date(firstMonday);
-  while (cursor <= lastOfMonth) {
-    const weekDates = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(cursor);
-      d.setDate(cursor.getDate() + i);
-      return isoDate(d);
-    });
-    weeks.push(weekDates);
-    cursor.setDate(cursor.getDate() + 7);
+  let cursor = mondayOf(dateStrOf(year, month, 1));
+  while (cursor && cursor <= lastOfMonth) {
+    weeks.push(weekDatesFrom(cursor));
+    cursor = addDays(cursor, 7);
   }
   return weeks;
 }
@@ -692,30 +676,17 @@ function getDefaultWeekDates(weeks) {
 }
 
 function getWeekDatesFromMonday(mondayISO) {
-  const monday = new Date(mondayISO);
-  monday.setHours(12, 0, 0, 0);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return isoDate(d);
-  });
+  return weekDatesFrom(toDateStr(mondayISO));
 }
 
 function getPrevWeekDates(dates) {
-  const prevMonday = new Date(dates[0]);
-  prevMonday.setHours(12, 0, 0, 0);
-  prevMonday.setDate(prevMonday.getDate() - 7);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(prevMonday);
-    d.setDate(prevMonday.getDate() + i);
-    return isoDate(d);
-  });
+  return weekDatesFrom(addDays(dates[0], -7));
 }
 
 function renderWeekSelectorHtml(weeks, selectedDates) {
   const selectedMonday = selectedDates[0];
-  const now = new Date();
-  const monthName = now.toLocaleString("en-IN", { month: "long", year: "numeric" });
+  const { year, month } = istDateParts();
+  const monthName = formatDateStr(dateStrOf(year, month, 1), { month: "long", year: "numeric" });
   return `<div class="weekly-week-selector">
     <span class="weekly-week-selector-label">${esc(monthName)}</span>
     <select class="weekly-week-selector-select" onchange="selectWeekForPerformance(this.value)">
@@ -1084,9 +1055,8 @@ function buildWeeklyPerformancePageHtml(targetDates) {
 }
 
 function buildMonthlyPerformancePageHtml() {
-  const d = new Date();
-  const label = new Date(d.getFullYear(), d.getMonth() - 1, 1)
-    .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const { year, month } = istDateParts();
+  const label = formatDateStr(addDays(dateStrOf(year, month, 1), -1), { month: 'long', year: 'numeric' });
   return `<div class="perf-period-placeholder monthly" style="text-align:left;">
     <div class="perf-period-placeholder-kicker" style="text-align:center;font-size:16px;letter-spacing:0.1em;white-space:nowrap;">Monthly Performance</div>
     <div style="display:flex;gap:8px;margin:14px 0 10px;">

@@ -17,6 +17,7 @@ import {
   ensureJsPdf,
 } from "./performance-snapshot.js";
 import { purgeOfficerTasks } from "./officer-tasks.js";
+import { istDateParts } from "./ist-date.js";
 import {
   PDF_PAGE_HEIGHT,
   PDF_PAGE_WIDTH,
@@ -53,10 +54,8 @@ function sortByOfficerThenDate(loans, dateKey, month) {
 }
 
 function previousMonthKey() {
-  const date = new Date();
-  date.setDate(1);
-  date.setMonth(date.getMonth() - 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  const { year, month } = istDateParts();
+  return `${month === 0 ? year - 1 : year}-${String(month === 0 ? 12 : month).padStart(2, "0")}`;
 }
 
 function monthLabel(month) {

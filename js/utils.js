@@ -1,11 +1,9 @@
 import { countWorkingDaysBetween } from "./bank-holidays.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
+import { addDays, dayDiff, istDateStr, toDateStr } from "./ist-date.js";
 
-export const todayStr = () => {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-};
+// The branch's day, not the device's: see js/ist-date.js.
+export const todayStr = () => istDateStr();
 
 export const fmtDate = s => { 
   if (!s) return ''; 
@@ -107,7 +105,7 @@ export function appConfirm({ title = 'Are you sure?', message = '', confirmLabel
   });
 }
 
-export const daysPending = d => !d ? 0 : Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+export const daysPending = d => !d ? 0 : dayDiff(d, todayStr());
 
 export function isFreshCC(loan) {
   if (loan.isFreshCC === true) return true;
@@ -119,32 +117,34 @@ export function isFreshCC(loan) {
 
 export function computeRenewalStatus(loan) {
   if (!loan.sanctionDate && !loan.limitExpiryDate) return null;
-  const now = Date.now();
-  let msDue, msStart;
+
+  // Everything below is calendar-date arithmetic against the IST date, never a
+  // timestamp difference against the device clock. That is what keeps the
+  // status, the overdue count and the NPA countdown turning over together at
+  // 00:00 IST: mixing the two made the countdown drop at local midnight while
+  // the status waited until 05:30 IST (00:00 UTC) to follow.
+  const today = todayStr();
+  let dueDateStr, startDateStr;
 
   if (loan.renewalDueDate) {
-    msDue = new Date(loan.renewalDueDate).getTime();
-    msStart = msDue - 365 * 86400000;
+    dueDateStr = toDateStr(loan.renewalDueDate);
+    startDateStr = addDays(dueDateStr, -365);
   } else if (loan.limitExpiryDate) {
-    msDue = new Date(loan.limitExpiryDate).getTime();
-    msStart = msDue - 365 * 86400000;
-  } else if (loan.sanctionDate) {
-    msStart = new Date(loan.sanctionDate).getTime();
-    msDue = msStart + 365 * 86400000;
+    dueDateStr = toDateStr(loan.limitExpiryDate);
+    startDateStr = addDays(dueDateStr, -365);
   } else {
-    return null;
+    startDateStr = toDateStr(loan.sanctionDate);
+    dueDateStr = addDays(startDateStr, 365);
   }
 
-  if (isNaN(msDue) || isNaN(msStart)) return null;
+  if (!dueDateStr || !startDateStr) return null;
 
-  const daysSinceSanction = Math.floor((now - msStart) / 86400000);
-  const msNpa = msDue + 181 * 86400000;
-  const dueDateStr = new Date(msDue).toISOString().slice(0, 10);
-  const npaDateStr = new Date(msNpa).toISOString().slice(0, 10);
-  const daysToDue = Math.floor((msDue - now) / 86400000);
+  const npaDateStr = addDays(dueDateStr, 181);
+  const daysSinceSanction = dayDiff(startDateStr, today);
+  const daysToDue = dayDiff(today, dueDateStr);
   // Working days from today (exclusive) to NPA date (inclusive). Skips Sundays,
   // 2nd/4th Saturdays, and admin-marked bank holidays.
-  const npaCountdown = countWorkingDaysBetween(todayStr(), npaDateStr);
+  const npaCountdown = countWorkingDaysBetween(today, npaDateStr);
 
   let status, daysUntilDue = 0, daysOverdue = 0, daysUntilNpa = 0;
 
@@ -152,9 +152,9 @@ export function computeRenewalStatus(loan) {
     status = 'active'; daysUntilDue = daysToDue; daysUntilNpa = npaCountdown;
   } else if (daysToDue >= 0) {
     status = 'due-soon'; daysUntilDue = daysToDue; daysUntilNpa = npaCountdown;
-  } else if (now < msNpa) {
-    // Use timestamp comparison, not daysToDue > -181, so Math.floor can't
-    // prematurely flip status to npa on the last partial day before NPA.
+  } else if (today < npaDateStr) {
+    // The account turns NPA at the start of the NPA date, so it stays pending
+    // for every day before it and for none of it.
     status = 'pending-renewal'; daysOverdue = -daysToDue; daysUntilNpa = npaCountdown;
   } else {
     status = 'npa'; daysOverdue = -daysToDue;

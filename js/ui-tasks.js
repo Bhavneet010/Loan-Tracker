@@ -2,6 +2,7 @@
 import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { esc, fmtAmt, initials, officerColor, branchCode, daysPending, isFreshCC } from "./utils.js";
 import { countWorkingDaysLeft } from "./bank-holidays.js";
+import { dateStrOf, formatDateStr, istDateParts } from "./ist-date.js";
 
 const CATEGORY_META = {
   overdueLoans:    { title: 'Overdue Pending',    icon: '&#8987;', urgency: 'amber', type: 'loan' },
@@ -282,9 +283,11 @@ function renewalTargetsHtml(metrics) {
     return { officer, done, target, pct, color: bg, solid };
   });
 
-  const monthDate = metrics.thisMonth ? new Date(`${metrics.thisMonth}-01T00:00:00`) : new Date();
-  const monthName = monthDate.toLocaleString('en-US', { month: 'long' });
-  const daysLeft = countWorkingDaysLeft(monthDate.getFullYear(), monthDate.getMonth());
+  const { year, month } = metrics.thisMonth
+    ? { year: Number(metrics.thisMonth.slice(0, 4)), month: Number(metrics.thisMonth.slice(5, 7)) - 1 }
+    : istDateParts();
+  const monthName = formatDateStr(dateStrOf(year, month, 1), { month: 'long' }, 'en-US');
+  const daysLeft = countWorkingDaysLeft(year, month);
 
   const leader = [...officers]
     .filter(o => o.done > 0 && o.target > 0)

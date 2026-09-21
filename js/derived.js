@@ -1,12 +1,11 @@
 import { S } from "./state.js";
 import { branchCode, computeRenewalStatus, isFreshCC, isRenewalDatesMissing, isStageTracked, monthOf, todayStr } from "./utils.js";
 import { renewalAccountOfficer as resolveRenewalAccountOfficer, renewalBranchOwner } from "./renewal-attribution.js";
+import { istMonthStr } from "./ist-date.js";
 
-function currentMonthKey() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 7);
-}
+// The month the branch is in, so a month-scoped override expires at the same
+// IST midnight that rolls the rest of the figures over.
+const currentMonthKey = () => istMonthStr();
 
 // Manual allocations are month-scoped: pass a monthKey to resolve the officer
 // as of that month (e.g. month-end snapshots), otherwise the current month is

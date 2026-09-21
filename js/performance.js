@@ -15,6 +15,7 @@ import {
 } from "./performance-snapshot.js";
 import { AVAILABILITY_TYPES, availabilityLabel, normalizeAvailability, officerAvailabilityForDate } from "./officer-availability.js";
 import { renderSmeDailyReportView } from "./sme-daily-report.js";
+import { addDays, formatDateStr, istDateStr } from "./ist-date.js";
 
 const PERFORMANCE_PERIODS = {
   daily: {
@@ -95,7 +96,7 @@ window.exportPerformanceSnapshot = async function () {
       await navigator.share({
         files: [file],
         title: "Detailed Snapshot",
-        text: `Detailed Performance Snapshot ${formatShareDate(new Date())}`,
+        text: `Detailed Performance Snapshot ${formatShareDate()}`,
       });
       return;
     }
@@ -314,7 +315,7 @@ window.shareDailySnapshotJpeg = async function () {
       await navigator.share({
         files: [file],
         title: "Daily Snapshot",
-        text: `Daily Performance Update ${formatShareDate(new Date())}`,
+        text: `Daily Performance Update ${formatShareDate()}`,
       });
       return;
     }
@@ -388,7 +389,7 @@ window.shareWeeklyPerformanceJpeg = async function () {
       await navigator.share({
         files: [file],
         title: "Weekly Performance",
-        text: `Weekly Performance Update ${formatShareDate(new Date())}`,
+        text: `Weekly Performance Update ${formatShareDate()}`,
       });
       return;
     }
@@ -483,15 +484,12 @@ window.removeWeeklyOfficerAvailability = async function (officer, date) {
 };
 
 function todayFileName() {
-  return new Date().toISOString().slice(0, 10);
+  return istDateStr();
 }
 
-function formatShareDate(date) {
-  return date.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+// Today's date in words, on the branch's day rather than the device's.
+function formatShareDate() {
+  return formatDateStr(istDateStr(), { day: "numeric", month: "long", year: "numeric" });
 }
 
 function showWeeklyAvailabilitySheet(officer, date, existing) {
@@ -548,19 +546,9 @@ function renderPerformancePeriodToggle(currentPeriod = activePerformancePeriod) 
 
 async function logSnapshot() {
   try {
-    const today = new Date();
-    today.setHours(today.getHours() + 5, today.getMinutes() + 30);
-    const dateStr = today.toISOString().split("T")[0];
+    const dateStr = istDateStr();
     await setDoc(doc(db, "snapshotLogs", dateStr), { sharedAt: new Date().toISOString() }, { merge: true });
   } catch(e) {}
-}
-
-function addDays(dateStr, days) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d, 12, 0, 0, 0);
-  date.setDate(date.getDate() + days);
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-  return date.toISOString().slice(0, 10);
 }
 
 function cloneAvailabilityRange(item, startDate, endDate, suffix) {

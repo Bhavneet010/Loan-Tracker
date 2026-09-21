@@ -7,6 +7,7 @@ import { buildMultiMonthExportFilename } from "./calendar-export-model.js";
 import { buildMultiMonthTabularLayout } from "./calendar-export-layout.js";
 import { renderMultiMonthRenewalPdf } from "./calendar-export-pdf.js";
 import { createRetryableScriptLoader } from "./script-loader.js";
+import { formatDateStr, istDateStr } from "./ist-date.js";
 
 // xlsx-js-style is API-compatible with SheetJS but can also write cell styles
 // (used to grey out "renewal not possible" rows in the calendar export).
@@ -142,9 +143,7 @@ window.exportLoansExcel = async function () {
       "Renewals Done"
     );
 
-    const today = new Date();
-    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
-    XLSX.writeFile(wb, `nirnay-loans-${today.toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `nirnay-loans-${istDateStr()}.xlsx`);
     toast("Excel exported!");
   } catch (err) {
     console.error("[Excel export]", err);
@@ -411,7 +410,7 @@ window.exportCalendarRenewalsPdf = async function () {
       doc.setTextColor(110, 110, 125);
       const parts = [`${loans.length} renewal${loans.length !== 1 ? "s" : ""} due`];
       if (rnpLoans.length) parts.push(`${rnpLoans.length} not possible (grey rows)`);
-      parts.push(`generated ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`);
+      parts.push(`generated ${formatDateStr(istDateStr(), { day: "numeric", month: "short", year: "numeric" })}`);
       doc.text(parts.join("  ·  "), M, y + 8.6);
       y += 12.5;
       drawHeaderRow();

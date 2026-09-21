@@ -4,6 +4,8 @@ import { subscribeNotifications } from "./notifications.js";
 import { subscribeOfficerTasks } from "./officer-tasks.js";
 import { render } from "./ui-render.js";
 import { initPresence } from "./presence.js";
+import { msUntilNextIstMidnight } from "./ist-date.js";
+import { todayStr } from "./utils.js";
 
 // Import modules to register window actions and side effects
 import { updateUserAvatar } from "./ui-core.js";
@@ -35,6 +37,33 @@ document.addEventListener('click', e => {
   S.openPop = null;
   render();
 });
+
+/* ── IST DAY ROLLOVER ──
+   Every countdown in the app is keyed to the IST calendar date, so a tab left
+   open overnight would otherwise keep showing the previous day's figures until
+   something else happened to trigger a render. A timer to the next IST midnight
+   handles the ordinary case; the visibility and focus checks cover a phone that
+   slept through it, since a suspended device fires its timers late. */
+function watchIstDayRollover() {
+  let shownDay = todayStr();
+  const refreshIfDayChanged = () => {
+    const day = todayStr();
+    if (day === shownDay) return;
+    shownDay = day;
+    render();
+  };
+  const scheduleMidnight = () => {
+    setTimeout(() => {
+      refreshIfDayChanged();
+      scheduleMidnight();
+    }, msUntilNextIstMidnight() + 1000);
+  };
+  scheduleMidnight();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshIfDayChanged();
+  });
+  window.addEventListener('focus', refreshIfDayChanged);
+}
 
 /* ── INIT ── */
 async function init() {
@@ -120,6 +149,7 @@ async function init() {
   
   // Initial render replaces skeleton with real content
   render();
+  watchIstDayRollover();
 }
 
 // Service Worker Registration

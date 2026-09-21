@@ -5,17 +5,6 @@ export const AVAILABILITY_TYPES = {
   deputation: "Deputation",
 };
 
-function parseDate(dateStr) {
-  const [y, m, d] = String(dateStr || "").split("-").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1, 12, 0, 0, 0);
-}
-
-function isoDate(date) {
-  const d = new Date(date);
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-}
-
 export function normalizeAvailability(item) {
   if (!item || !item.officer || !item.startDate) return null;
   const type = AVAILABILITY_TYPES[item.type] ? item.type : "holiday";

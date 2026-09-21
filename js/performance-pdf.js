@@ -1,6 +1,7 @@
 import { S } from "./state.js";
 import { getLoanMetrics, sumAmount, effectiveOfficer } from "./derived.js";
 import { esc, fmtAmt, fmtDate } from "./utils.js";
+import { IST_TIME_ZONE } from "./ist-date.js";
 import {
   totalMetric,
   metricHtml,
@@ -254,7 +255,7 @@ function coverOfficerRowV2(row) {
 async function buildDetailedSnapshotPdfHtml() {
   const metrics = getLoanMetrics();
   const rows = officerPdfData(metrics);
-  const generatedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  const generatedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: IST_TIME_ZONE });
   const dateLabel = new Date(`${metrics.day}T12:00:00`).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "long",

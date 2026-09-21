@@ -47,6 +47,7 @@ $syntaxFailed = $false; Get-ChildItem js -Filter *.js | ForEach-Object { node --
 ├── css/                       Feature and theme stylesheets
 ├── js/                        Browser ES modules
 │   ├── app.js                 Application startup and subscriptions
+│   ├── ist-date.js            IST business day: today, day rollover, date maths
 │   ├── state.js               In-memory state and persisted settings
 │   ├── db.js                  Firestore loan subscription and writes
 │   ├── ui-*.js                Rendering, forms, navigation, and UI actions

@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/f
 import { getLoanMetrics, sumAmount } from "./derived.js";
 import { esc, fmtAmt, fmtDate, toast, todayStr } from "./utils.js";
 import { ensureHtml2Canvas, ensureImageLoaded } from "./performance-snapshot.js";
+import { addDays } from "./ist-date.js";
 
 const SME_BRANCH_CODE = "63494";
 const SME_CENTRE_TYPE = "AMCC";
@@ -39,13 +40,7 @@ function cachedDisbursement(dateStr) {
   }
 }
 
-function prevDayStr(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d, 12, 0, 0, 0);
-  date.setDate(date.getDate() - 1);
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-  return date.toISOString().slice(0, 10);
-}
+const prevDayStr = dateStr => addDays(dateStr, -1);
 
 function sameMonth(a, b) {
   return a.slice(0, 7) === b.slice(0, 7);
@@ -179,12 +174,8 @@ function fmtDotDate(dateStr) {
   return y && m && d ? `${d}.${m}.${y}` : dateStr || "";
 }
 
-function prevMonthEndStr(dateStr) {
-  const [y, m] = dateStr.split("-").map(Number);
-  const end = new Date(y, m - 1, 0, 12, 0, 0, 0);
-  end.setMinutes(end.getMinutes() - end.getTimezoneOffset());
-  return end.toISOString().slice(0, 10);
-}
+// The day before the 1st of this date's month.
+const prevMonthEndStr = dateStr => addDays(`${dateStr.slice(0, 7)}-01`, -1);
 
 /* Format 2 amounts are reported in ₹ Crore (loan.amount is in lacs). */
 function crAmt(lacs) {

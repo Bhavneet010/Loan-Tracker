@@ -2,6 +2,7 @@ import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
 import { todayStr, showUndoToast, toast, isFreshCC, appConfirm } from "./utils.js";
+import { istMonthStr } from "./ist-date.js";
 import { db } from "./config.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import {
@@ -83,7 +84,7 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   }
 
   const isManualOverride = assignedOfficer && selectedOfficer !== assignedOfficer;
-  const monthKey = (() => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 7); })();
+  const monthKey = istMonthStr();
 
   const data = {
     allocatedTo: selectedOfficer,
@@ -261,7 +262,7 @@ window.saveLoan = async function(e) {
   }
 
   const isManualOverride = assignedOfficer && selectedOfficer !== assignedOfficer;
-  const monthKey = (() => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 7); })();
+  const monthKey = istMonthStr();
   const data = {
     allocatedTo: selectedOfficer,
     manualOfficer: isManualOverride ? selectedOfficer : "",
