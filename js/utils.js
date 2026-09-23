@@ -144,9 +144,10 @@ export function computeRenewalStatus(loan) {
   const npaDateStr = addDays(dueDateStr, 182);
   const daysSinceSanction = dayDiff(startDateStr, today);
   const daysToDue = dayDiff(today, dueDateStr);
-  // Working days from today (exclusive) to NPA date (inclusive). Skips Sundays,
+  // Working days from today (exclusive) to the last pending day, the 181st day
+  // overdue (inclusive), so the countdown reads 0 on that day. Skips Sundays,
   // 2nd/4th Saturdays, and admin-marked bank holidays.
-  const npaCountdown = countWorkingDaysBetween(today, npaDateStr);
+  const npaCountdown = countWorkingDaysBetween(today, addDays(npaDateStr, -1));
 
   let status, daysUntilDue = 0, daysOverdue = 0, daysUntilNpa = 0;
 

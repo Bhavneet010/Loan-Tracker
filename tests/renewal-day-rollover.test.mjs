@@ -136,7 +136,8 @@ test("the NPA countdown falls by a day at a time and never goes backwards", () =
     assert.ok(daysUntilNpa >= 0, `${day}: countdown went negative`);
     previous = daysUntilNpa;
   }
-  assert.equal(statusAt(ist("2027-03-21", 9)).daysUntilNpa, 1, "the NPA date is the next working day");
+  assert.equal(statusAt(ist("2027-03-21", 9)).daysUntilNpa, 0, "day 181 is the last pending day");
+  assert.equal(statusAt(ist("2027-03-19", 9)).daysUntilNpa, 1, "day 180 has one working day left");
 });
 
 test("the same instant reads the same on a device set to any timezone", () => {
