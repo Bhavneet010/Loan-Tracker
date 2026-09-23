@@ -30,7 +30,7 @@ async function moduleUrl(file) {
 const { computeRenewalStatus, todayStr } = await import(await moduleUrl("utils.js"));
 
 const DUE = "2026-09-21";
-const NPA = "2027-03-21"; // 181 days after the due date
+const NPA = "2027-03-22"; // 182 days after the due date
 const LOAN = { sanctionDate: "2025-09-21", renewalDueDate: DUE };
 
 // An instant expressed as IST wall-clock time.
@@ -83,7 +83,7 @@ test("an account reads the same all day and changes only at midnight IST", () =>
   // Before the fix each of these days read three different ways: the status
   // and the overdue count stepped at 05:30 IST (00:00 UTC) while the countdown
   // had already stepped at midnight.
-  for (const day of ["2026-09-20", DUE, "2026-09-22", "2027-03-20", NPA]) {
+  for (const day of ["2026-09-20", DUE, "2026-09-22", "2027-03-21", NPA]) {
     assert.deepEqual(resultsAcrossDay(day).length, 1, `${day} changed mid-day`);
   }
 
@@ -112,8 +112,10 @@ test("an account is due for the whole due date and overdue from the next day", (
 test("an account turns NPA at the start of its NPA date", () => {
   assert.equal(statusAt(ist(DUE, 12)).npaDateStr, NPA);
 
-  const dayBefore = statusAt(ist("2027-03-20", 23, 59));
+  // Day 181 past the due date is still pending renewal; NPA starts on day 182.
+  const dayBefore = statusAt(ist("2027-03-21", 23, 59));
   assert.equal(dayBefore.status, "pending-renewal");
+  assert.equal(dayBefore.daysOverdue, 181);
 
   for (const hour of [0, 5, 6, 23]) {
     assert.equal(statusAt(ist(NPA, hour)).status, "npa", `${hour}:00 on the NPA date`);
@@ -125,7 +127,7 @@ test("the NPA countdown falls by a day at a time and never goes backwards", () =
   // working-day count flat on some days but never rising.
   let previous = Infinity;
   for (let offset = 14; offset >= 1; offset--) {
-    const day = new Date(Date.UTC(2027, 2, 21) - offset * 86400000)
+    const day = new Date(Date.UTC(2027, 2, 22) - offset * 86400000)
       .toISOString()
       .slice(0, 10);
     const { status, daysUntilNpa } = statusAt(ist(day, 9));
@@ -134,11 +136,11 @@ test("the NPA countdown falls by a day at a time and never goes backwards", () =
     assert.ok(daysUntilNpa >= 0, `${day}: countdown went negative`);
     previous = daysUntilNpa;
   }
-  assert.equal(statusAt(ist("2027-03-20", 9)).daysUntilNpa, 0, "the NPA date is a Sunday");
+  assert.equal(statusAt(ist("2027-03-21", 9)).daysUntilNpa, 1, "the NPA date is the next working day");
 });
 
 test("the same instant reads the same on a device set to any timezone", () => {
-  const instants = [ist(DUE, 2), ist(DUE, 12), ist(DUE, 23, 30), ist("2027-03-20", 21)];
+  const instants = [ist(DUE, 2), ist(DUE, 12), ist(DUE, 23, 30), ist("2027-03-21", 21)];
   const expected = instants.map(now => statusAt(now));
   for (const zone of ["UTC", "America/Los_Angeles", "Pacific/Auckland", "Asia/Kolkata"]) {
     withTimeZone(zone, () => {

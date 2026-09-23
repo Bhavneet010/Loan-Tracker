@@ -139,7 +139,9 @@ export function computeRenewalStatus(loan) {
 
   if (!dueDateStr || !startDateStr) return null;
 
-  const npaDateStr = addDays(dueDateStr, 181);
+  // Overdue days 1-181 are still pending renewal; the account turns NPA on the
+  // 182nd day past the due date.
+  const npaDateStr = addDays(dueDateStr, 182);
   const daysSinceSanction = dayDiff(startDateStr, today);
   const daysToDue = dayDiff(today, dueDateStr);
   // Working days from today (exclusive) to NPA date (inclusive). Skips Sundays,
