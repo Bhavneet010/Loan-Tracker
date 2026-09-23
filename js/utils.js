@@ -144,10 +144,12 @@ export function computeRenewalStatus(loan) {
   const npaDateStr = addDays(dueDateStr, 182);
   const daysSinceSanction = dayDiff(startDateStr, today);
   const daysToDue = dayDiff(today, dueDateStr);
-  // Working days from today (exclusive) to the last pending day, the 181st day
-  // overdue (inclusive), so the countdown reads 0 on that day. Skips Sundays,
+  // The 181st day overdue is the last day the account is still pending; the
+  // calendar lists the account on that day. Working days from today (exclusive)
+  // to it (inclusive), so the countdown reads 0 on that day. Skips Sundays,
   // 2nd/4th Saturdays, and admin-marked bank holidays.
-  const npaCountdown = countWorkingDaysBetween(today, addDays(npaDateStr, -1));
+  const lastPendingDateStr = addDays(npaDateStr, -1);
+  const npaCountdown = countWorkingDaysBetween(today, lastPendingDateStr);
 
   let status, daysUntilDue = 0, daysOverdue = 0, daysUntilNpa = 0;
 
@@ -162,7 +164,7 @@ export function computeRenewalStatus(loan) {
   } else {
     status = 'npa'; daysOverdue = -daysToDue;
   }
-  return { status, daysSinceSanction, daysUntilDue, daysOverdue, daysUntilNpa, dueDateStr, npaDateStr };
+  return { status, daysSinceSanction, daysUntilDue, daysOverdue, daysUntilNpa, dueDateStr, npaDateStr, lastPendingDateStr };
 }
 
 export function isRenewalDatesMissing(loan) {

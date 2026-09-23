@@ -182,7 +182,7 @@ function renewalDueRow(l) {
     "Branch": up(branchCode(l.branch)),
     "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
     "Renewal Due Date": fmt(rs.dueDateStr),
-    "NPA Date": fmt(rs.npaDateStr),
+    "NPA Date": fmt(rs.lastPendingDateStr),
     "Remarks": up(l.renewalNotPossible ? (l.renewalNotPossibleRemarks || l.remarks) : l.remarks),
   };
 }

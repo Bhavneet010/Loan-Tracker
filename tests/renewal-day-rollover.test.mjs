@@ -111,6 +111,7 @@ test("an account is due for the whole due date and overdue from the next day", (
 
 test("an account turns NPA at the start of its NPA date", () => {
   assert.equal(statusAt(ist(DUE, 12)).npaDateStr, NPA);
+  assert.equal(statusAt(ist(DUE, 12)).lastPendingDateStr, "2027-03-21", "day 181 on the calendar");
 
   // Day 181 past the due date is still pending renewal; NPA starts on day 182.
   const dayBefore = statusAt(ist("2027-03-21", 23, 59));

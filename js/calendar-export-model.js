@@ -44,14 +44,14 @@ export function buildRenewalMonthSections(renewals, monthKeys) {
   const sectionsByKey = new Map(sections.map(section => [section.key, section]));
 
   (Array.isArray(renewals) ? renewals : []).forEach(loan => {
-    const key = loan?._rs?.npaDateStr?.slice(0, 7);
+    const key = loan?._rs?.lastPendingDateStr?.slice(0, 7);
     const section = sectionsByKey.get(key);
     if (!section) return;
     const deferred = loan.renewalNotPossible === true && loan._rs?.status !== "npa";
     (deferred ? section.rnpLoans : section.loans).push(loan);
   });
 
-  const byNpaDate = (a, b) => (a?._rs?.npaDateStr || "").localeCompare(b?._rs?.npaDateStr || "");
+  const byNpaDate = (a, b) => (a?._rs?.lastPendingDateStr || "").localeCompare(b?._rs?.lastPendingDateStr || "");
   sections.forEach(section => {
     section.loans.sort(byNpaDate);
     section.rnpLoans.sort(byNpaDate);

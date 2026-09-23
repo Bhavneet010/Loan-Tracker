@@ -23,11 +23,11 @@ test("month keys are validated, deduplicated, and sorted chronologically", () =>
 
 test("selected months become chronological sections including empty months", () => {
   const sections = buildRenewalMonthSections([
-    { id: "later", _rs: { npaDateStr: "2026-10-20", status: "pending-renewal" } },
-    { id: "normal", _rs: { npaDateStr: "2026-10-03", status: "pending-renewal" } },
-    { id: "rnp", renewalNotPossible: true, _rs: { npaDateStr: "2026-10-01", status: "due-soon" } },
-    { id: "npa", renewalNotPossible: true, _rs: { npaDateStr: "2026-12-01", status: "npa" } },
-    { id: "outside", _rs: { npaDateStr: "2027-01-01", status: "active" } },
+    { id: "later", _rs: { lastPendingDateStr: "2026-10-20", status: "pending-renewal" } },
+    { id: "normal", _rs: { lastPendingDateStr: "2026-10-03", status: "pending-renewal" } },
+    { id: "rnp", renewalNotPossible: true, _rs: { lastPendingDateStr: "2026-10-01", status: "due-soon" } },
+    { id: "npa", renewalNotPossible: true, _rs: { lastPendingDateStr: "2026-12-01", status: "npa" } },
+    { id: "outside", _rs: { lastPendingDateStr: "2027-01-01", status: "active" } },
   ], ["2026-12", "2026-11", "2026-10"]);
 
   assert.deepEqual(sections.map(section => section.key), ["2026-10", "2026-11", "2026-12"]);

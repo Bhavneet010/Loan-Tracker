@@ -86,7 +86,7 @@ function findFirstRenewalMonth(renewals) {
   renewals.forEach(loan => {
     if (isRnpDeferred(loan)) return;
     const rs = loan._rs;
-    if (rs?.npaDateStr && rs.status !== 'active') months.add(rs.npaDateStr.slice(0, 7));
+    if (rs?.lastPendingDateStr && rs.status !== 'active') months.add(rs.lastPendingDateStr.slice(0, 7));
   });
   if (!months.size) return null;
   const sorted = Array.from(months).sort();
@@ -101,8 +101,8 @@ function buildMonthBarHtml(renewals, currentYear, currentMonth) {
   renewals.forEach(loan => {
     if (isRnpDeferred(loan)) return;
     const rs = loan._rs;
-    if (!rs?.npaDateStr || rs.status === 'active') return;
-    const key = rs.npaDateStr.slice(0, 7);
+    if (!rs?.lastPendingDateStr || rs.status === 'active') return;
+    const key = rs.lastPendingDateStr.slice(0, 7);
     monthMap.set(key, (monthMap.get(key) || 0) + 1);
   });
   if (!monthMap.size) return '';
@@ -144,9 +144,9 @@ function buildOfficerPillsHtml(renewals, currentKey, currentOfficer) {
   renewals.forEach(loan => {
     if (isRnpDeferred(loan)) return;
     const rs = loan._rs;
-    if (!rs?.npaDateStr || rs.status === 'active') return;
+    if (!rs?.lastPendingDateStr || rs.status === 'active') return;
     const officer = effectiveOfficer(loan);
-    const key = rs.npaDateStr.slice(0, 7);
+    const key = rs.lastPendingDateStr.slice(0, 7);
     if (!officerMap.has(officer)) officerMap.set(officer, new Map());
     officerMap.get(officer).set(key, (officerMap.get(officer).get(key) || 0) + 1);
   });
@@ -179,10 +179,10 @@ function buildCalendarData(renewals, year, month) {
   const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
   renewals.forEach(loan => {
     const rs = loan._rs;
-    if (!rs || !rs.npaDateStr) return;
-    if (!rs.npaDateStr.startsWith(monthStr)) return;
-    if (!map.has(rs.npaDateStr)) map.set(rs.npaDateStr, { loans: [], rnpLoans: [], urgency: 'active' });
-    const entry = map.get(rs.npaDateStr);
+    if (!rs || !rs.lastPendingDateStr) return;
+    if (!rs.lastPendingDateStr.startsWith(monthStr)) return;
+    if (!map.has(rs.lastPendingDateStr)) map.set(rs.lastPendingDateStr, { loans: [], rnpLoans: [], urgency: 'active' });
+    const entry = map.get(rs.lastPendingDateStr);
     if (isRnpDeferred(loan)) { entry.rnpLoans.push(loan); return; }
     entry.loans.push(loan);
     if (rs.status === 'npa') entry.urgency = 'overdue';
