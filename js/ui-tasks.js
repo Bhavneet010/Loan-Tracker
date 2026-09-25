@@ -89,6 +89,20 @@ function renderTaskOverview(c, metrics) {
   `;
 }
 
+// Feeds the per-bucket Excel/PDF downloads with the same accounts, in the
+// same order, as the Critical Care panel shows them.
+export function getCriticalCareExport(key) {
+  const meta = CRITICAL_META[key];
+  if (!meta) throw new TypeError(`Unknown Critical Care bucket: ${key}`);
+  const items = sortCriticalItems(key, buildCriticalCare(getLoanMetrics())[key] || []);
+  return {
+    key,
+    title: meta.title,
+    loans: items.filter(l => !isRnpDeferred(l)),
+    rnpLoans: items.filter(isRnpDeferred),
+  };
+}
+
 function buildCriticalCare(metrics) {
   const visible = l => S.isAdmin || effectiveOfficer(l) === S.user;
   return {
@@ -128,6 +142,7 @@ function criticalRowsHtml(key, items) {
     <div class="task-critical-sort">
       <span>Sorted by ${criticalSortLabel(key, sort.field)}</span>
       <span class="task-sort-icon">&#8645;</span>
+      ${criticalExportHtml(key)}
     </div>
     <div class="task-critical-table-head">
       ${criticalHeadCell(key, 'branch', 'Branch', sort)}
@@ -141,6 +156,14 @@ function criticalRowsHtml(key, items) {
     ${items.length > 5 && !expanded ? `<button type="button" class="task-critical-more" onclick="expandCriticalCare('${key}')">View all ${total} accounts &#8250;</button>` : ''}
     ${items.length > 5 && expanded ? `<button type="button" class="task-critical-more task-critical-collapse" onclick="collapseCriticalCare('${key}')">Collapse to 5 accounts &#8963;</button>` : ''}
   </div>`;
+}
+
+function criticalExportHtml(key) {
+  const title = esc(CRITICAL_META[key].title);
+  return `<span class="task-critical-export" role="group" aria-label="Download ${title}">
+      <button type="button" class="task-critical-export-btn" onclick="exportCriticalCareExcel('${key}')" title="Download ${title} as Excel">&#8681; Excel</button>
+      <button type="button" class="task-critical-export-btn" onclick="exportCriticalCarePdf('${key}')" title="Download ${title} as PDF">&#8681; PDF</button>
+    </span>`;
 }
 
 function criticalSortLabel(key, field) {

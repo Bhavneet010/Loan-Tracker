@@ -1,7 +1,8 @@
 import { S } from "./state.js";
 import { effectiveOfficer, getLoanMetrics } from "./derived.js";
-import { isFreshCC, toast, branchCode } from "./utils.js";
+import { isFreshCC, toast, branchCode, daysPending } from "./utils.js";
 import { getCalendarMonthExport, getCalendarMonthsExport } from "./ui-calendar.js";
+import { getCriticalCareExport } from "./ui-tasks.js";
 import { ensureJsPdf } from "./performance-snapshot.js";
 import { buildMultiMonthExportFilename } from "./calendar-export-model.js";
 import { buildMultiMonthTabularLayout } from "./calendar-export-layout.js";
@@ -493,5 +494,251 @@ window.exportCalendarRenewalsMultiPdf = async function (monthKeys) {
     console.error("[Multi-month calendar PDF export]", err);
     toast("Export failed. Please try again.");
     return false;
+  }
+};
+
+/* ── Critical Care: one download per bucket ── */
+
+const isStageBucket = key => key === "docPending" || key === "disbPending";
+
+function criticalRemarks(l) {
+  return up(l.renewalNotPossible ? (l.renewalNotPossibleRemarks || l.remarks) : l.remarks);
+}
+
+function criticalCareRow(key, l) {
+  const base = {
+    "Officer": up(effectiveOfficer(l)),
+    "Customer Name": up(l.customerName),
+    "A/C Number": up(l.acNumber),
+    "Branch": up(branchCode(l.branch)),
+  };
+  if (key === "npa15") {
+    return {
+      ...base,
+      "Limit (₹ Lakhs)": parseFloat(l.amount) || 0,
+      "Renewal Due Date": fmt(l._rs?.dueDateStr),
+      "NPA Date": fmt(l._rs?.lastPendingDateStr),
+      "Days to NPA": l._rs?.daysUntilNpa ?? "",
+      "Remarks": criticalRemarks(l),
+    };
+  }
+  if (isStageBucket(key)) {
+    const fresh = isFreshCC(l);
+    const stageDate = fresh ? l.sanctionDate : l.renewedDate;
+    return {
+      "Type": fresh ? "FRESH" : "RENEWAL",
+      ...base,
+      "Amount (₹ Lakhs)": parseFloat(l.amount) || 0,
+      "Sanctioned / Renewed": fmt(stageDate),
+      "Days Since": stageDate ? daysPending(stageDate) : "",
+      "Remarks": criticalRemarks(l),
+    };
+  }
+  return { ...base, "Limit (₹ Lakhs)": parseFloat(l.amount) || 0, "Remarks": criticalRemarks(l) };
+}
+
+const CRITICAL_HEADERS = {
+  npa15: ["Officer", "Customer Name", "A/C Number", "Branch", "Limit (₹ Lakhs)", "Renewal Due Date", "NPA Date", "Days to NPA", "Remarks"],
+  datesMissing: ["Officer", "Customer Name", "A/C Number", "Branch", "Limit (₹ Lakhs)", "Remarks"],
+  docPending: ["Type", "Officer", "Customer Name", "A/C Number", "Branch", "Amount (₹ Lakhs)", "Sanctioned / Renewed", "Days Since", "Remarks"],
+};
+CRITICAL_HEADERS.disbPending = CRITICAL_HEADERS.docPending;
+
+// Widths sum to 194mm = portrait A4 (210) minus 8mm margins.
+const CRITICAL_PDF_COLS = {
+  npa15: [
+    { header: "#", w: 7 },
+    { header: "Officer", w: 22, key: "Officer" },
+    { header: "Customer Name", w: 38, key: "Customer Name" },
+    { header: "A/C Number", w: 22, key: "A/C Number" },
+    { header: "Branch", w: 12, key: "Branch" },
+    { header: "Limit (Rs L)", w: 15, key: "Limit (₹ Lakhs)", align: "right" },
+    { header: "Renewal Due", w: 18, key: "Renewal Due Date" },
+    { header: "NPA Date", w: 18, key: "NPA Date" },
+    { header: "Days", w: 10, key: "Days to NPA", align: "right" },
+    { header: "Remarks", w: 32, key: "Remarks" },
+  ],
+  datesMissing: [
+    { header: "#", w: 7 },
+    { header: "Officer", w: 24, key: "Officer" },
+    { header: "Customer Name", w: 50, key: "Customer Name" },
+    { header: "A/C Number", w: 26, key: "A/C Number" },
+    { header: "Branch", w: 14, key: "Branch" },
+    { header: "Limit (Rs L)", w: 17, key: "Limit (₹ Lakhs)", align: "right" },
+    { header: "Remarks", w: 56, key: "Remarks" },
+  ],
+  docPending: [
+    { header: "#", w: 7 },
+    { header: "Type", w: 15, key: "Type" },
+    { header: "Officer", w: 22, key: "Officer" },
+    { header: "Customer Name", w: 36, key: "Customer Name" },
+    { header: "A/C Number", w: 22, key: "A/C Number" },
+    { header: "Branch", w: 12, key: "Branch" },
+    { header: "Amt (Rs L)", w: 15, key: "Amount (₹ Lakhs)", align: "right" },
+    { header: "Sanc./Renewed", w: 20, key: "Sanctioned / Renewed" },
+    { header: "Days", w: 10, key: "Days Since", align: "right" },
+    { header: "Remarks", w: 35, key: "Remarks" },
+  ],
+};
+CRITICAL_PDF_COLS.disbPending = CRITICAL_PDF_COLS.docPending;
+
+function criticalCareFilename(title, extension) {
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `nirnay-critical-care-${slug}-${istDateStr()}.${extension}`;
+}
+
+function loadCriticalCare(key) {
+  const data = getCriticalCareExport(key);
+  if (!data.loans.length && !data.rnpLoans.length) {
+    toast(`No accounts in ${data.title}`);
+    return null;
+  }
+  return data;
+}
+
+window.exportCriticalCareExcel = async function (key) {
+  try {
+    const data = loadCriticalCare(key);
+    if (!data) return;
+    toast("Preparing Excel export…");
+    await ensureXlsx();
+    const XLSX = window.XLSX;
+    const headers = CRITICAL_HEADERS[key];
+    const rows = [...data.loans, ...data.rnpLoans].map(l => criticalCareRow(key, l));
+    const ws = makeSheet(rows, headers);
+
+    // Same treatment as the calendar export: wrap long remarks and grey out
+    // "renewal not possible" rows (they sit last; +1 skips the header row).
+    const REMARKS_COL = headers.indexOf("Remarks");
+    const REMARKS_WCH = 40;
+    if (ws["!cols"]?.[REMARKS_COL]?.wch > REMARKS_WCH) ws["!cols"][REMARKS_COL] = { wch: REMARKS_WCH };
+    ws["!rows"] = [{}];
+    rows.forEach((row, i) => {
+      const lines = Math.max(1, Math.ceil(String(row["Remarks"] || "").length / REMARKS_WCH));
+      ws["!rows"][i + 1] = lines > 1 ? { hpt: 13 * lines + 4 } : {};
+      const cell = ws[XLSX.utils.encode_cell({ r: i + 1, c: REMARKS_COL })];
+      if (cell) cell.s = { alignment: { wrapText: true, vertical: "top" } };
+    });
+    for (let i = 0; i < data.rnpLoans.length; i++) {
+      const r = data.loans.length + i + 1;
+      for (let c = 0; c < headers.length; c++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c })];
+        if (cell) cell.s = { ...(cell.s || {}), fill: { patternType: "solid", fgColor: { rgb: "E2E8F0" } } };
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, data.title.slice(0, 31));
+    XLSX.writeFile(wb, criticalCareFilename(data.title, "xlsx"));
+    toast(`${data.title} exported!`);
+  } catch (err) {
+    console.error("[Critical Care Excel export]", err);
+    toast("Export failed. Please try again.");
+  }
+};
+
+window.exportCriticalCarePdf = async function (key) {
+  try {
+    const data = loadCriticalCare(key);
+    if (!data) return;
+    toast("Preparing PDF export…");
+    await ensureJsPdf();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const cols = CRITICAL_PDF_COLS[key];
+    const rows = [
+      ...data.loans.map(l => ({ r: criticalCareRow(key, l), rnp: false })),
+      ...data.rnpLoans.map(l => ({ r: criticalCareRow(key, l), rnp: true })),
+    ];
+    const total = data.loans.reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0);
+
+    const M = 8;
+    const pageH = doc.internal.pageSize.getHeight();
+    const rowH = 5.4;
+    const cellPad = 1.2;
+    const lineH = 3.1;
+    let y;
+
+    const colX = [];
+    let x = M;
+    cols.forEach(c => { colX.push(x); x += c.w; });
+    const tableW = x - M;
+    const textX = (c, i) => (c.align === "right" ? colX[i] + c.w - cellPad : colX[i] + cellPad);
+    const textOpts = c => ({ align: c.align === "right" ? "right" : "left" });
+
+    const startPage = () => {
+      y = M;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12.5);
+      doc.setTextColor(40, 35, 70);
+      doc.text(`Critical Care — ${data.title}`, M, y + 4);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.8);
+      doc.setTextColor(110, 110, 125);
+      const parts = [`${data.loans.length} account${data.loans.length !== 1 ? "s" : ""}`, `Rs ${Math.round(total * 100) / 100}L`];
+      if (data.rnpLoans.length) parts.push(`${data.rnpLoans.length} not possible (grey rows)`);
+      parts.push(`generated ${formatDateStr(istDateStr(), { day: "numeric", month: "short", year: "numeric" })}`);
+      doc.text(parts.join("  ·  "), M, y + 8.6);
+      y += 12.5;
+      doc.setFillColor(107, 95, 191);
+      doc.rect(M, y, tableW, rowH, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.2);
+      doc.setTextColor(255, 255, 255);
+      cols.forEach((c, i) => doc.text(c.header, textX(c, i), y + rowH - 1.7, textOpts(c)));
+      y += rowH;
+    };
+
+    startPage();
+    const remarksCol = cols[cols.length - 1];
+    const remarksW = remarksCol.w - cellPad * 2;
+    rows.forEach(({ r, rnp }, idx) => {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.2);
+      const remarkLines = doc.splitTextToSize(String(r["Remarks"] ?? ""), remarksW);
+      const h = Math.max(rowH, remarkLines.length * lineH + (rowH - lineH));
+      if (y + h > pageH - M) {
+        doc.addPage("a4", "portrait");
+        startPage();
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.2);
+      }
+      if (rnp) {
+        doc.setFillColor(226, 232, 240);
+        doc.rect(M, y, tableW, h, "F");
+      } else if (idx % 2 === 1) {
+        doc.setFillColor(244, 242, 250);
+        doc.rect(M, y, tableW, h, "F");
+      }
+      doc.setTextColor(...(rnp ? [100, 116, 139] : [45, 45, 55]));
+      const baseY = y + rowH - 1.7;
+      cols.forEach((c, i) => {
+        if (c.key === "Remarks") {
+          remarkLines.forEach((ln, li) => doc.text(ln, textX(c, i), baseY + li * lineH));
+          return;
+        }
+        const raw = c.key ? r[c.key] : idx + 1;
+        doc.text(pdfFitText(doc, raw, c.w - cellPad * 2), textX(c, i), baseY, textOpts(c));
+      });
+      doc.setDrawColor(225, 222, 238);
+      doc.setLineWidth(0.15);
+      doc.line(M, y + h, M + tableW, y + h);
+      y += h;
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 160);
+      doc.text(`Page ${p} of ${pageCount}`, doc.internal.pageSize.getWidth() - M, pageH - 4, { align: "right" });
+    }
+
+    doc.save(criticalCareFilename(data.title, "pdf"));
+    toast(`${data.title} PDF exported!`);
+  } catch (err) {
+    console.error("[Critical Care PDF export]", err);
+    toast("Export failed. Please try again.");
   }
 };

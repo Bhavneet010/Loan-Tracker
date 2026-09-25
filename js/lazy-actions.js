@@ -34,6 +34,8 @@ for (const name of [
   "exportCalendarRenewalsPdf",
   "exportCalendarRenewalsMultiExcel",
   "exportCalendarRenewalsMultiPdf",
+  "exportCriticalCareExcel",
+  "exportCriticalCarePdf",
 ]) {
   registerLazyAction(name, "./export-excel.js", "export tools");
 }
