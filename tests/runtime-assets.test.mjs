@@ -137,7 +137,7 @@ test("activation waits for client claim and deletes only obsolete Nirnay caches"
   const deleted = [];
   const caches = {
     async keys() {
-      return ["nirnay-v205", "nirnay-v206", "nirnay-v207", "nirnay-v208", "nirnay-v209", "nirnay-v210", "third-party-cache"];
+      return ["nirnay-v205", "nirnay-v206", "nirnay-v207", "nirnay-v208", "nirnay-v209", "nirnay-v211", "third-party-cache"];
     },
     async delete(key) { deleted.push(key); },
   };
