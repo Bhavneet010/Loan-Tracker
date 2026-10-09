@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+// iOS Safari auto-zooms when focusing inputs with font-size < 16px. maximum-scale=1
+// stops that on iOS (pinch-zoom still works there); applied only on iOS so Android keeps pinch-zoom.
+(function(){var ua=navigator.userAgent;if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)){var m=document.querySelector('meta[name=viewport]');if(m)m.setAttribute('content','width=device-width, initial-scale=1.0, maximum-scale=1.0');}})();
+</script>
 <meta name="theme-color" content="#7c3aed">
 <title>Nirnay</title>
 <link rel="manifest" href="manifest.json">
