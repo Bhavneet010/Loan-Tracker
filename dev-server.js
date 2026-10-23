@@ -20,6 +20,7 @@ const mime = {
 };
 
 http.createServer((req, res) => {
+  if ((req.url||'').startsWith('/api/agri?')) {const url=new URL(req.url,`http://${req.headers.host}`);req.query=Object.fromEntries(url.searchParams);return require('./api/agri.js')(req,res);}
   const rawPath = decodeURIComponent((req.url || '/').split('?')[0]);
   const relativePath = rawPath === '/' ? 'index.html' : rawPath.replace(/^\/+/, '');
   const fullPath = path.resolve(root, relativePath);

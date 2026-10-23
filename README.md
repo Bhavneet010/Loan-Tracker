@@ -65,3 +65,13 @@ Firebase project configuration is defined in `js/config.js`. The client configur
 The current Admin mode is client-managed and must not be treated as a security boundary. A separate security migration is required before exposing sensitive production data to untrusted users.
 
 The cached application shell can launch offline, but uncached Firebase operations and first-time report-library downloads still require network access.
+
+## Shared Agriculture workspace
+
+Current pending fresh Agriculture applications and future fresh Agriculture additions share a canonical Supabase record with the [Agri tracker](https://amcc-agri-loan-tracker.vercel.app). The activation links three existing Firebase applications and displays one additional Agri application. Existing Firebase documents, sanctioned/returned history, SME renewals and other categories stay in Firestore. The client overlays linked Firebase identities once; it does not copy shared applications into Firestore.
+
+Branch, borrower, exact amount and remarks are shared. Officer assignments, workflow dates and status remain specific to Nirnay. ATS is optional and omitted from Nirnay's forms. Changing shared remarks prompts for the **existing Agri admin password**, then uses an HttpOnly session through `api/agri.js`. Shared history survives sanction. Deleting or month-end clearing a shared record archives its Nirnay view; undo restores the same identity.
+
+Shared reads use Realtime signals with polling/reconnect fallback; shared writes require a connection and reject stale editor versions. Possible duplicate borrowers require choosing the existing application or explicitly confirming a distinct loan. Loading failures block unresolved Agriculture edits rather than writing a disconnected Firebase copy. Other Firestore workflows retain their existing behavior.
+
+The server gateway uses only the public application key in `server/agri-config.cjs`; the Supabase service role remains confined to the Edge Function. API routes and shared service responses are excluded from the service worker cache. Local development uses the same live service, so test records are real records and must be cleaned up.

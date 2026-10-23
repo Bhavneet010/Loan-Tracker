@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE = 'nirnay-v211';
+const CACHE = 'nirnay-v212';
 const ASSETS = [
   './',
   './index.html',
@@ -57,6 +57,10 @@ const ASSETS = [
   './js/calendar-export-model.js',
   './js/config.js',
   './js/db.js',
+  './js/agri-link.js',
+  './js/agri-link-model.js',
+  './js/agri-link-dialog.js',
+  './js/agri-public-config.js',
   './js/derived.js',
   './js/fresh-group-state.js',
   './js/importers.js',
@@ -107,6 +111,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+  if(url.pathname.startsWith('/api/')||url.hostname.endsWith('supabase.co')||url.hostname==='esm.sh')return;
   if (url.hostname.includes('firebase') || url.hostname.includes('googleapis') || url.hostname.includes('gstatic')) return;
   e.respondWith(
     fetch(e.request).then(res => {

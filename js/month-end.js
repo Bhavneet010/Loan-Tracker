@@ -9,7 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S } from "./state.js";
-import { ts } from "./db.js";
+import { ts,removeLoan,updateLoan,assertLoanResolved } from "./db.js";
 import { effectiveOfficer, getLoanMetricsForMonth, sumAmount } from "./derived.js";
 import { STAGE_TRACKING_START_MONTH, esc, fmtAmt, fmtDate, isFreshCC, isRenewalDatesMissing, monthOf, toast } from "./utils.js";
 import {
@@ -669,9 +669,16 @@ async function commitCleanup(data) {
     })),
   ];
 
-  for (let start = 0; start < operations.length; start += 450) {
+  const firebaseOperations=[];
+  for(const operation of operations){
+    const loan=S.loanMap.get(operation.id);
+    assertLoanResolved(loan);
+    if(loan?._sharedId){if(operation.type==='delete')await removeLoan(operation.id);else await updateLoan(operation.id,operation.data);}
+    else firebaseOperations.push(operation);
+  }
+  for (let start = 0; start < firebaseOperations.length; start += 450) {
     const batch = writeBatch(db);
-    operations.slice(start, start + 450).forEach(op => {
+    firebaseOperations.slice(start, start + 450).forEach(op => {
       const ref = doc(db, "loans", op.id);
       if (op.type === "delete") batch.delete(ref);
       else batch.update(ref, op.data);

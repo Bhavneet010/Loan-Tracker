@@ -1,5 +1,5 @@
 import { S } from "./state.js";
-import { updateLoan, createLoan, removeLoan } from "./db.js";
+import { updateLoan, createLoan, removeLoan,restoreLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
 import { todayStr, showUndoToast, toast, isFreshCC, appConfirm } from "./utils.js";
 import { istMonthStr } from "./ist-date.js";
@@ -181,18 +181,18 @@ export async function saveInlineLoan(base, draft, status, opts = {}) {
   }
   if (!await confirmPotentialDuplicate(built.duplicateCheck)) return false;
   try {
-    await updateLoan(base.id, built.data);
+    const sharedSaved=await updateLoan(base.id, built.data, base);
     createNotification('edited', { ...built.data, id: base.id }).catch(() => {});
     if (status && status !== base.status) {
       if (status === 'sanctioned') createNotification('sanctioned', { ...base, ...built.data }).catch(() => {});
       if (status === 'returned') createNotification('returned', { ...base, ...built.data }).catch(() => {});
     }
-    Object.assign(base, built.data);
+    Object.assign(base, sharedSaved||built.data);
     saveRecentBranch(built.data.branch);
     toast('Loan updated ✓');
     return true;
   } catch (e) {
-    toast('Error saving');
+    toast(e.message||'Error saving');
     console.error(e);
     return false;
   }
@@ -211,7 +211,7 @@ window.deleteLoan = async function(id) {
     const snapshot = { ...l, id };
     await removeLoan(id);
     showUndoToast(`Deleted ${l.customerName}`, async () => {
-      await setDoc(doc(db, 'loans', snapshot.id), snapshot);
+      await restoreLoan(snapshot);
       toast('Loan restored ✓');
     });
   } catch (e) { toast('Error'); }
@@ -254,7 +254,7 @@ window.saveLoan = async function(e) {
     return;
   }
 
-  if (!await confirmPotentialDuplicate({ id, customerName, branch })) return;
+  if (cat!=='Agriculture'&&!await confirmPotentialDuplicate({ id, customerName, branch })) return;
 
   let loanType = 'CC';
   if (cat === 'SME') {
@@ -354,7 +354,7 @@ window.saveLoan = async function(e) {
 
   try {
     if (id) {
-      await updateLoan(id, data);
+      await updateLoan(id, data, S.agriEditBase);
       createNotification('edited', { ...data, id }).catch(() => {});
       toast('Loan updated ✓');
     } else {
@@ -365,7 +365,7 @@ window.saveLoan = async function(e) {
     saveRecentBranch(branch);
     window.closeForm();
   } catch (err) {
-    toast('Error saving');
+    toast(err.message||'Error saving');
     console.error(err);
   }
 };

@@ -307,6 +307,7 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
 
   document.getElementById('fName').value = loan.customerName || '';
   document.getElementById('fAmount').value = loan.amount || '';
+  document.getElementById('fAmount').step = loan._sharedId ? 'any' : '0.01';
   const breCheckbox = document.getElementById('fBre');
   if (breCheckbox) breCheckbox.checked = !!loan.isBre;
   window.updateBreCheckbox();
@@ -315,6 +316,13 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
     ? (mode === 'renewal-done' ? todayStr() : (loan.sanctionDate || loan.renewedDate || ''))
     : '';
   document.getElementById('fRemarks').value = loan.remarks || '';
+  document.getElementById('sharedRemarkHistory')?.remove();
+  if(loan._sharedId){
+    const history=document.createElement('div');history.id='sharedRemarkHistory';history.className='form-group';
+    const label=document.createElement('strong');label.textContent='Shared remarks history';history.append(label);
+    for(const entry of loan._sharedHistory||[]){const item=document.createElement('p');item.textContent=`${entry.body||'Remark cleared'} — ${entry.sourceApp==='nirnay'?'Nirnay':'Agri'} · ${entry.author} · ${new Date(entry.createdAt).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'})}`;item.style.cssText='font-size:12px;margin-top:8px;line-height:1.5';history.append(item);}
+    document.getElementById('fRemarks').parentElement.after(history);
+  }
 
   const renewalGroup = document.getElementById('fRenewalGroup');
   const limitExpiryGroup = document.getElementById('fLimitExpiryGroup');
@@ -419,11 +427,14 @@ window.openForm = function(loan = null, mode = null, options = {}) {
 
   const prefills = options.prefillLoan || null;
   const isEdit = !!loan && !prefills;
+  S.agriEditBase=isEdit?{...loan}:null;
+  S.agriCreateRequestId=crypto.randomUUID();
   const entryMode = options.entryMode || (isEdit || mode === 'renewal-done' ? 'full' : 'quick');
 
   const modeInput = document.getElementById('formMode');
   const form = document.getElementById('loanForm');
   if (form) form.reset();
+  document.getElementById('sharedRemarkHistory')?.remove();
   populateFormOptions();
   renderBranchQuickPicks('');
   setFormEntryMode(entryMode, { duplicateSource: !!prefills });
