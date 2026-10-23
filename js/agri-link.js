@@ -26,11 +26,12 @@ export async function createShared(data,requestId){
  const input={branchId:await sharedBranch(data.branch),borrowerName:data.customerName,amountPaise:amountPaiseForEdit(null,data.amount),requestId,author:S.user||'Nirnay user',remarks:data.remarks||'',nirnayData:{...data}};
  for(;;){
   try{return await sharedRequest('/api/linkage/loans','POST',input);}
-  catch(error){if(!error.candidates)throw error;const choice=await selectSharedDuplicate(error.candidates);if(!choice)throw new Error('Application save cancelled.');if(choice==='distinct'){input.allowDistinct=true;delete input.linkExistingId;}else{input.linkExistingId=choice;delete input.allowDistinct;}}
+  catch(error){if(!error.candidates)throw error;const choice=await selectSharedDuplicate(error.candidates);if(!choice)throw new Error('Application save cancelled.');if(choice.startsWith('nirnay:')){input.nirnayMatchId=choice.slice(7);delete input.allowDistinct;}else if(choice==='distinct'){input.allowDistinct=true;delete input.linkExistingId;delete input.nirnayMatchId;}else{input.linkExistingId=choice;delete input.allowDistinct;}}
  }
 }
 export async function updateShared(loan,data,extra={}){
  const requestId=extra.requestId||crypto.randomUUID();
+ if(data.status==='returned'&&loan.status!=='returned')data={...data,returnReason:(data.remarks||'').trim()};
  const payload={version:loan._sharedVersion,nirnayVersion:loan._nirnayVersion,data:{...data},requestId,author:S.user||'Nirnay user',...(extra.archived!==undefined?{archived:extra.archived}:{})};
  if(data.amount!==undefined)payload.data.amount=amountPaiseForEdit(loan,data.amount)/10000000;
  return sharedRequest('/api/linkage/loans/'+encodeURIComponent(loan._sharedId),'PATCH',payload);

@@ -1,3 +1,4 @@
+import {returnDateForDecision} from './agri-link-model.js';
 import { S } from "./state.js";
 import { updateLoan, createLoan, removeLoan,restoreLoan } from "./db.js";
 import { createNotification } from "./notifications.js";
@@ -107,7 +108,7 @@ function buildInlineSaveData(base, draft, status, { renewalState = null } = {}) 
   }
   if (status === 'sanctioned') data.sanctionDate = draft.sanctionDate || base.sanctionDate || todayStr();
   else if (draft.sanctionDate) data.sanctionDate = draft.sanctionDate;
-  if (status === 'returned') data.returnedDate = draft.returnedDate || base.returnedDate || todayStr();
+  if (status === 'returned') data.returnedDate = returnDateForDecision(base,draft,todayStr());
 
   if (draft.category === 'SME') {
     const loanType = draft.loanType || 'CC';
@@ -179,7 +180,7 @@ export async function saveInlineLoan(base, draft, status, opts = {}) {
     toast(built.error);
     return false;
   }
-  if (!await confirmPotentialDuplicate(built.duplicateCheck)) return false;
+  if (!base._sharedId&&!await confirmPotentialDuplicate(built.duplicateCheck)) return false;
   try {
     const sharedSaved=await updateLoan(base.id, built.data, base);
     createNotification('edited', { ...built.data, id: base.id }).catch(() => {});

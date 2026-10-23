@@ -124,6 +124,7 @@ function loanDecisionLines(loan) {
   }
   if (loan.status === 'returned') {
     rows.push(accountLine('Return Date', fmtDate(loan.returnedDate), 'alert'));
+    if(loan._returnReason)rows.push(accountLine('Return reason',loan._returnReason,'alert'));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added', 'alert'));
   }
   rows.push(reminderMailLine(loan));
@@ -506,6 +507,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
   let stagedStatus = preferredStatus || current;
   let editMode = false;
   const draft = cloneLoanDraft(loan);
+  if(loan._sharedId&&loan.status!=='returned')draft.returnedDate='';
   const options = [
     { value: 'returned', label: 'Return' },
     { value: 'pending', label: 'Pending' },

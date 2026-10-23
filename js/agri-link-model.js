@@ -16,7 +16,7 @@ export function createSharedReader(read,changed,failed){
 export function toNirnayLoan(shared) {
   const local = shared.nirnay || { data: {}, version: 0, archived: false };
   const data = local.data || {};
-  return { ...data, id: local.firebaseId || `agri_${shared.id}`, category: 'Agriculture', branch: shared.branchName.replace(/\s*·\s*/, ' : '), customerName: shared.borrowerName, amount: shared.amountPaise / 10000000, remarks: shared.remarks || '', receiveDate: data.receiveDate || new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date(shared.createdAt)), status: data.status || 'pending', createdAt: shared.createdAt, _sharedId: shared.id, _sharedVersion: shared.version, _nirnayVersion: local.version || 0, _amountPaise: shared.amountPaise, _atsId: shared.atsId || '', _sharedHistory: shared.remarkHistory || [], _archived: !!local.archived };
+  return { ...data, id: local.firebaseId || `agri_${shared.id}`, category: 'Agriculture', branch: shared.branchName.replace(/\s*·\s*/, ' : '), customerName: shared.borrowerName, amount: shared.amountPaise / 10000000, remarks: shared.remarks || '', receiveDate: data.receiveDate || new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date(shared.createdAt)), status: shared.status || data.status || 'pending', returnedDate:shared.returnedDate||'', sanctionDate:shared.sanctionDate||data.sanctionDate||'', _returnReason:shared.returnReason||'', _statusHistory:shared.statusHistory||[], createdAt: shared.createdAt, _sharedId: shared.id, _sharedVersion: shared.version, _nirnayVersion: local.version || 0, _amountPaise: shared.amountPaise, _atsId: shared.atsId || '', _sharedHistory: shared.remarkHistory || [], _archived: !!local.archived };
 }
 export function mergeSharedLoans(firebaseRows, sharedRows) {
   const linked = new Set(sharedRows.map(row => row.nirnay?.firebaseId).filter(Boolean));
@@ -28,3 +28,5 @@ export function amountPaiseForEdit(loan, amountLakhs) {
   if (!Number.isSafeInteger(paise) || paise <= 0) throw new Error('Enter a valid positive amount.');
   return paise;
 }
+
+export const returnDateForDecision=(loan,draft,today)=>draft.returnedDate||(loan.status==='returned'?loan.returnedDate:'')||today;

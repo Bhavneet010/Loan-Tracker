@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { toNirnayLoan, mergeSharedLoans, amountPaiseForEdit, isEligibleFresh, createSharedReader, sharedEditBase, assertLinkageResolved } from '../js/agri-link-model.js';
+import { toNirnayLoan, mergeSharedLoans, amountPaiseForEdit, isEligibleFresh, createSharedReader, sharedEditBase, assertLinkageResolved,returnDateForDecision } from '../js/agri-link-model.js';
 const shared = { id: 'shared-1', branchName: '2413 · MAJRA', borrowerName: 'Borrower', amountPaise: 12345678, atsId: 'ATS 12345678', remarks: 'Note', version: 3, createdAt: '2026-10-23T00:00:00Z', nirnay: { firebaseId: 'firebase-1', version: 2, data: { status: 'pending', allocatedTo: 'Officer' }, archived: false } };
 test('a shared editor retains the versions it opened with',()=>{
  const original=toNirnayLoan(shared),latest={...original,_sharedVersion:4,_nirnayVersion:3};
@@ -27,4 +27,13 @@ test('opening and saving a displayed amount cannot round stored paise', () => {
 test('only pending fresh Agriculture is eligible for initial linking', () => {
   assert.equal(isEligibleFresh({category:'Agriculture',status:'pending'}),true);
   for(const row of [{category:'Agriculture',status:'sanctioned'},{category:'SME',status:'pending'},{category:'Agriculture',status:'pending',isFreshCC:false}])assert.equal(isEligibleFresh(row),false);
+});
+test('canonical returned status and decision dates override stale Nirnay metadata',()=>{
+ const row=toNirnayLoan({...shared,status:'returned',returnedDate:'2026-10-22',returnReason:'Documents missing',sanctionDate:null,statusHistory:[{id:'event',toStatus:'returned'}]});
+ assert.equal(row.status,'returned');assert.equal(row.returnedDate,'2026-10-22');assert.equal(row._returnReason,'Documents missing');assert.equal(row._statusHistory.length,1);
+ assert.equal(mergeSharedLoans([{id:'firebase-1',status:'returned'}],[{...shared,status:'returned'}]).length,1);
+});
+test('return decisions honor a selected date and do not reuse a prior cycle by default',()=>{
+ assert.equal(returnDateForDecision({status:'pending',returnedDate:'2026-10-01'},{returnedDate:'2026-10-22'},'2026-10-24'),'2026-10-22');
+ assert.equal(returnDateForDecision({status:'pending',returnedDate:'2026-10-01'},{},'2026-10-24'),'2026-10-24');
 });
