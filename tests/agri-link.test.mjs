@@ -21,6 +21,11 @@ test('a linked Firebase row is displayed once and unrelated historic records rem
   assert.equal(rows.length,3); assert.equal(rows.find(r=>r.id==='firebase-1').remarks,'Note');
   assert.equal(mergeSharedLoans([{id:'firebase-1'}],[{...shared,nirnay:{...shared.nirnay,archived:true}}]).length,0);
 });
+test('deletion from either app hides the shared row and its original Firebase copy',()=>{
+ assert.equal(mergeSharedLoans([{id:'firebase-1'}],[{...shared,agriArchived:true}]).length,0);
+ assert.equal(mergeSharedLoans([{id:'firebase-1'}],[{...shared,nirnay:{...shared.nirnay,archived:true}}]).length,0);
+ assert.equal(mergeSharedLoans([{id:'firebase-1'}],[{...shared,agriArchived:false,nirnay:{...shared.nirnay,archived:false}}]).length,1);
+});
 test('opening and saving a displayed amount cannot round stored paise', () => {
   const row=toNirnayLoan(shared); assert.equal(amountPaiseForEdit(row,1.2345678),12345678); assert.equal(amountPaiseForEdit(row,2.5),25000000);
 });

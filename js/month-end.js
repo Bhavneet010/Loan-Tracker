@@ -638,8 +638,9 @@ function cleanupSummaryText(data) {
   const heldRenewals = data.renewalsDone.filter(loan => !data.renewalsCleanupReady.includes(loan)).length;
   const skippedNote = heldRenewals ? ` (${heldRenewals} account${heldRenewals > 1 ? 's' : ''} with integration or documentation pending will be skipped)` : '';
   const carried = data.sanctionedToCarry.length;
+  const sharedNote=[...data.sanctionedDeletable,...data.returned].some(loan=>loan._sharedId)?' Deleting linked Agriculture applications removes them from both Nirnay and Agri.':'';
   const carryNote = carried ? ` ${carried} sanctioned loan${carried > 1 ? 's' : ''} awaiting documentation/disbursement will stay in Critical Care.` : '';
-  return `This will remove ${data.sanctionedDeletable.length} sanctions, ${data.returned.length} returns, and clear ${data.renewalsCleanupReady.length} renewal done flags for ${data.label}${skippedNote}.${carryNote} Continue?`;
+  return `This will remove ${data.sanctionedDeletable.length} sanctions, ${data.returned.length} returns, and clear ${data.renewalsCleanupReady.length} renewal done flags for ${data.label}${skippedNote}.${carryNote}${sharedNote} Continue?`;
 }
 
 async function commitCleanup(data) {

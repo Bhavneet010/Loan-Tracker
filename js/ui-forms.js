@@ -316,14 +316,6 @@ function fillFormFromLoan(loan, { isEdit = false, mode = '' } = {}) {
     ? (mode === 'renewal-done' ? todayStr() : (loan.sanctionDate || loan.renewedDate || ''))
     : '';
   document.getElementById('fRemarks').value = loan.remarks || '';
-  document.getElementById('sharedRemarkHistory')?.remove();
-  if(loan._sharedId){
-    const history=document.createElement('div');history.id='sharedRemarkHistory';history.className='form-group';
-    const label=document.createElement('strong');label.textContent='Shared status and remarks history';history.append(label);
-    for(const entry of loan._statusHistory||[]){const item=document.createElement('p');item.textContent=`${entry.fromStatus} → ${entry.toStatus}${entry.reason?' · '+entry.reason:''} — ${new Date(entry.createdAt).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'})}`;history.append(item);}
-    for(const entry of loan._sharedHistory||[]){const item=document.createElement('p');item.textContent=`${entry.body||'Remark cleared'} — ${entry.sourceApp==='nirnay'?'Nirnay':'Agri'} · ${entry.author} · ${new Date(entry.createdAt).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'})}`;item.style.cssText='font-size:12px;margin-top:8px;line-height:1.5';history.append(item);}
-    document.getElementById('fRemarks').parentElement.after(history);
-  }
 
   const renewalGroup = document.getElementById('fRenewalGroup');
   const limitExpiryGroup = document.getElementById('fLimitExpiryGroup');
@@ -435,7 +427,6 @@ window.openForm = function(loan = null, mode = null, options = {}) {
   const modeInput = document.getElementById('formMode');
   const form = document.getElementById('loanForm');
   if (form) form.reset();
-  document.getElementById('sharedRemarkHistory')?.remove();
   populateFormOptions();
   renderBranchQuickPicks('');
   setFormEntryMode(entryMode, { duplicateSource: !!prefills });
