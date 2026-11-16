@@ -40,6 +40,14 @@ for (const name of [
   registerLazyAction(name, "./export-excel.js", "export tools");
 }
 
+for (const name of [
+  "renderSanctionChecklistSettings",
+  "openSanctionChecklist",
+  "deleteSanctionChecklist",
+]) {
+  registerLazyAction(name, "./sanction-checklist.js", "checklist");
+}
+
 registerLazyAction(
   "toggleCalExportMenu",
   "./export-excel.js",
