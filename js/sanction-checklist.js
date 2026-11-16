@@ -9,9 +9,9 @@ import { S } from "./state.js";
 import { appConfirm, esc, toast, todayStr } from "./utils.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
-  AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, allowsNA, amountWarning, isProfileComplete,
-  itemLabel, itemStatus, newChecklist, parseAmountLakh, ruleLabel, sectionSummary,
-  summarize, visibleSections,
+  AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
+  financialRows, fyLabel, isProfileComplete, itemLabel, itemStatus, newChecklist, parseAmountLakh,
+  partDone, partProgress, ruleLabel, sectionSummary, summarize, visibleSections,
 } from "./sanction-checklist-model.js";
 
 const COLLECTION = "sanctionChecklists";
@@ -217,7 +217,7 @@ function render() {
   body.innerHTML = `
     ${detailsHtml(data)}
     ${!state.id ? createHtml(data, profileReady) : ""}
-    ${state.id && !profileReady ? `<div class="sc-hint">Answer constitution, facility and collateral to see the checklist.</div>` : ""}
+    ${state.id && !profileReady ? `<div class="sc-hint">Answer constitution, facility, collateral and CGTMSE to see the checklist.</div>` : ""}
     ${state.id && profileReady ? summaryHtml(data, sections) + sections.map(sectionHtml).join("") + hiddenNoteHtml(sections) : ""}`;
 }
 
@@ -228,10 +228,20 @@ function selectHtml(id, name, options, value, placeholder) {
   </select>`;
 }
 
+function yesNoHtml(id, label, action, value) {
+  const yes = value === true;
+  const no = value === false;
+  return `<div class="form-group sc-full">
+      <span class="form-label" id="${id}">${esc(label)}</span>
+      <div class="sc-seg" role="radiogroup" aria-labelledby="${id}">
+        <button type="button" role="radio" aria-checked="${yes}" class="${yes ? "on" : ""}" data-action="${action}" data-value="yes">Yes</button>
+        <button type="button" role="radio" aria-checked="${no}" class="${no ? "on" : ""}" data-action="${action}" data-value="no">No</button>
+      </div>
+    </div>`;
+}
+
 function detailsHtml(data) {
   const warning = amountWarning(data.amountLakh);
-  const yes = data.collateral === true;
-  const no = data.collateral === false;
   return `<div class="sc-card sc-details">
     <div class="form-group sc-full">
       <label for="scBorrower">Borrower Name</label>
@@ -254,19 +264,14 @@ function detailsHtml(data) {
       <label for="scConstitution">Constitution</label>
       ${selectHtml("scConstitution", "constitution", CONSTITUTIONS, data.constitution, "Select")}
     </div>
-    <div class="form-group sc-full">
-      <span class="form-label" id="scCollateralLabel">Collateral offered?</span>
-      <div class="sc-seg" role="radiogroup" aria-labelledby="scCollateralLabel">
-        <button type="button" role="radio" aria-checked="${yes}" class="${yes ? "on" : ""}" data-action="collateral" data-value="yes">Yes</button>
-        <button type="button" role="radio" aria-checked="${no}" class="${no ? "on" : ""}" data-action="collateral" data-value="no">No</button>
-      </div>
-    </div>
+    ${yesNoHtml("scCollateralLabel", "Collateral offered?", "collateral", data.collateral)}
+    ${data.collateral === false ? yesNoHtml("scCgtmseLabel", "Covered under CGTMSE?", "cgtmse", data.cgtmse) : ""}
   </div>`;
 }
 
 function createHtml(data, profileReady) {
   const ready = profileReady && data.borrowerName.trim();
-  return `<div class="sc-hint">${ready ? "Ready to start." : "Fill in the borrower name, facility, constitution and collateral to start."}</div>
+  return `<div class="sc-hint">${ready ? "Ready to start." : "Fill in the borrower name, facility, constitution and collateral (and CGTMSE if no collateral) to start."}</div>
     <button type="button" class="btn btn-primary-full sc-create" data-action="create" ${ready ? "" : "disabled"}>Create checklist</button>`;
 }
 
@@ -280,7 +285,7 @@ function summaryHtml(data, sections) {
     <div class="sc-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${sum.percent}" aria-label="Checklist completion"><span style="width:${sum.percent}%"></span></div>
     <div class="sc-counts">
       <span><b>${sum.applicable}</b> Applicable</span>
-      <span class="sc-c-received"><b>${sum.received}</b> Received</span>
+      <span class="sc-c-received"><b>${sum.received}</b> Done</span>
       <span class="sc-c-pending"><b>${sum.pending}</b> Pending</span>
       ${sum.na ? `<span><b>${sum.na}</b> N/A</span>` : ""}
     </div>
@@ -302,21 +307,22 @@ function sectionHtml(section) {
       <span class="sc-section-title">${section.id}. ${esc(section.title)}</span>
       <span class="sc-section-count${complete ? " done" : ""}">${complete ? "&#10003; " : ""}${sum.received}/${sum.applicable}</span>
     </button>
-    ${open ? `<div class="sc-items">${items.length ? items.map(itemHtml).join("") : `<div class="sc-empty">Nothing pending</div>`}</div>` : ""}
+    ${open ? `<div class="sc-items">${items.length ? items.map(item => itemHtml(item, section)).join("") : `<div class="sc-empty">Nothing pending</div>`}</div>` : ""}
   </section>`;
 }
 
-function itemHtml(item) {
+function itemHtml(item, section) {
   const data = state.data;
+  if (item.parts) return financialItemHtml(item);
   const status = itemStatus(data, item);
   const remark = data.items?.[item.key]?.remark || "";
-  const options = [["pending", "Pending"], ["received", "Received"]];
+  const options = [["pending", "Pending"], ["received", section.doneLabel || "Received"]];
   if (allowsNA(item)) options.push(["na", "N/A"]);
   const labelId = `scItem_${item.key}`;
   return `<div class="sc-item sc-item--${status}">
     <div class="sc-item-top">
       <span class="sc-sr">${item.sr}</span>
-      <span class="sc-item-label" id="${labelId}">${esc(itemLabel(item, data.applicationDate))}</span>
+      <span class="sc-item-label" id="${labelId}">${esc(itemLabel(item))}</span>
       ${item.rule === "all" ? "" : `<span class="sc-rule">${esc(ruleLabel(item.rule))}</span>`}
     </div>
     <div class="sc-item-controls">
@@ -328,10 +334,49 @@ function itemHtml(item) {
   </div>`;
 }
 
+// Year-wise grid: one row per FY, a tick button for the ITR and for the
+// balance sheet & P&L. The question is done when every button is ticked.
+function partButton(item, part, text) {
+  if (!part) return `<span class="sc-fin-none" aria-hidden="true">—</span>`;
+  const done = partDone(state.data, item, part.key);
+  return `<button type="button" class="sc-fin-cell${done ? " on" : ""}" aria-pressed="${done}" data-action="part" data-key="${item.key}" data-part="${part.key}">
+      <span class="sc-fin-tick" aria-hidden="true">${done ? "&#10003;" : ""}</span>${text}</button>`;
+}
+
+function financialItemHtml(item) {
+  const data = state.data;
+  const status = itemStatus(data, item);
+  const remark = data.items?.[item.key]?.remark || "";
+  const rows = financialRows(item, data.applicationDate);
+  const { done, total } = partProgress(data, item);
+  const grid = rows.length
+    ? `<div class="sc-fin" role="group" aria-label="${esc(itemLabel(item))}">
+        <span class="sc-fin-head">Financial year</span>
+        <span class="sc-fin-head">ITR with computation</span>
+        <span class="sc-fin-head">Balance Sheet &amp; P&amp;L</span>
+        ${rows.map(row => `
+          <span class="sc-fin-year">${esc(fyLabel(row.year))}</span>
+          ${partButton(item, row.itr, `<span class="sc-fin-sub">AY ${esc(fyLabel(row.year + 1).slice(3))}</span>`)}
+          ${partButton(item, row.bs, `<span class="sc-fin-sub">${esc(row.stage)}</span>`)}`).join("")}
+      </div>`
+    : `<div class="sc-hint">Enter the date of application to list the financial years.</div>`;
+  return `<div class="sc-item sc-item--${status}">
+    <div class="sc-item-top">
+      <span class="sc-sr">${item.sr}</span>
+      <span class="sc-item-label">${esc(itemLabel(item))}</span>
+      <span class="sc-fin-count${done === total && total ? " done" : ""}">${done}/${total}</span>
+    </div>
+    ${grid}
+    <div class="sc-item-controls">
+      <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.sr}">
+    </div>
+  </div>`;
+}
+
 // Tell the user which sections are hidden and why, so nothing looks missing.
 function hiddenNoteHtml(sections) {
   const shown = new Set(sections.map(section => section.id));
-  const reasons = { D: "no Term Loan", E: "no Cash Credit" };
+  const reasons = HIDDEN_SECTION_REASONS;
   const hidden = Object.keys(reasons).filter(id => !shown.has(id));
   if (!hidden.length) return "";
   return `<div class="sc-hint sc-hidden-note">Not applicable: ${hidden.map(id => `${id} (${reasons[id]})`).join(", ")}.</div>`;
@@ -346,10 +391,17 @@ function onClick(event) {
   const action = target.dataset.action;
   if (action === "close") closeSanctionChecklist();
   else if (action === "collateral") setField("collateral", target.dataset.value === "yes", true);
+  else if (action === "cgtmse") setField("cgtmse", target.dataset.value === "yes", true);
   else if (action === "create") createChecklist();
   else if (action === "toggleSection") {
     const id = target.dataset.section;
     if (state.collapsed.has(id)) state.collapsed.delete(id); else state.collapsed.add(id);
+    render();
+  } else if (action === "part") {
+    const { key, part } = target.dataset;
+    const parts = { ...(state.data.items[key]?.parts || {}) };
+    if (parts[part]) delete parts[part]; else parts[part] = true;
+    setItem(key, { parts });
     render();
   } else if (action === "status") {
     setItem(target.dataset.key, { status: target.dataset.value });

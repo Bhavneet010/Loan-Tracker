@@ -1,10 +1,12 @@
 // Pre-sanction checklist for SME loans (up to ₹50 lakh).
+// Template v2: items renumbered 1–30 after review (11 split into 11a–c,
+// ITR and financial statements merged into one year-wise question).
 //
 // Pure data + rules, no DOM or Firestore, so it can be unit-tested. The
 // screen lives in sanction-checklist.js. Item keys are stored in Firestore,
 // so never rename or reuse a key; add new ones and bump TEMPLATE_VERSION.
 
-export const TEMPLATE_VERSION = 1;
+export const TEMPLATE_VERSION = 2;
 export const AMOUNT_WARN_LAKH = 50;
 
 export const CONSTITUTIONS = [
@@ -27,6 +29,7 @@ export const STATUSES = ["pending", "received", "na"];
 const RULES = {
   all: { label: "All", applies: () => true },
   optional: { label: "If applicable", applies: () => true, allowNA: true },
+  rented: { label: "If rented", applies: () => true, allowNA: true },
   firmOrCompany: {
     label: "Firm / Company",
     applies: p => p.constitution === "partnership" || p.constitution === "llp" || p.constitution === "company",
@@ -35,91 +38,102 @@ const RULES = {
   tl: { label: "If TL", applies: p => p.facility === "TL" || p.facility === "CCTL" },
   cc: { label: "If CC", applies: p => p.facility === "CC" || p.facility === "CCTL" },
   collateral: { label: "If collateral", applies: p => p.collateral === true },
+  // Not needed for a collateral-free loan covered under CGTMSE.
+  notCgtmseClean: { label: "Unless CGTMSE", applies: p => !(p.collateral === false && p.cgtmse === true) },
 };
 
-// `label` may be a function of the financial-year context (see fyContext).
+// Section B documents are pulled and attached by the credit officer, not
+// received from the borrower, so its "done" state reads "Attached".
+//
+// An item with `parts` is a year-wise question: it is done when every part
+// is ticked. Parts are keyed by financial-year start so they survive a change
+// of application date.
 export const SECTIONS = [
   {
     id: "A",
     title: "Borrower & Constitution",
+    doneLabel: "Received",
     items: [
-      { sr: 1, key: "loanApplication", rule: "all", label: "Loan Application Form (duly filled & signed)" },
-      { sr: 2, key: "photographs", rule: "all", label: "Photographs of Proprietor / Partners / Directors / Guarantors" },
-      { sr: 3, key: "panEntity", rule: "all", label: "PAN of Entity" },
-      { sr: 4, key: "panAadhaarPromoters", rule: "all", label: "PAN & Aadhaar of Proprietor / Partners / Directors / Guarantors (self-attested & OSV)" },
-      { sr: 5, key: "constitutionDocs", rule: "firmOrCompany", label: "Constitution Docs – Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation" },
-      { sr: 6, key: "boardResolution", rule: "firmOrCompany", label: "Board Resolution / Partners' Authority Letter to borrow" },
-      { sr: 7, key: "udyam", rule: "all", label: "Udyam Registration Certificate" },
-      { sr: 8, key: "gstRegistration", rule: "all", label: "GST Registration Certificate" },
-      { sr: 9, key: "tradeLicence", rule: "all", label: "Shop & Establishment / Trade Licence" },
-      { sr: 10, key: "activityLicence", rule: "optional", label: "Activity-specific Licence (FSSAI / Drug / Pollution NOC etc.)" },
-      { sr: 11, key: "addressProof", rule: "all", label: "Business Address Proof – Ownership Doc / Rent Agreement + Landlord KYC + Utility Bill" },
+      { sr: "1", key: "loanApplication", rule: "all", label: "Loan Application Form (duly filled & signed)" },
+      { sr: "2", key: "photographs", rule: "all", label: "Photographs of Proprietor / Partners / Directors / Guarantors" },
+      { sr: "3", key: "panEntity", rule: "firmOrCompany", label: "PAN of Entity" },
+      { sr: "4", key: "panAadhaarPromoters", rule: "all", label: "PAN & Aadhaar of Proprietor / Partners / Directors / Guarantors (self-attested & OSV)" },
+      { sr: "5", key: "constitutionDocs", rule: "firmOrCompany", label: "Constitution Docs – Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation" },
+      { sr: "6", key: "boardResolution", rule: "firmOrCompany", label: "Board Resolution / Partners' Authority Letter to borrow" },
+      { sr: "7", key: "udyam", rule: "all", label: "Udyam Registration Certificate" },
+      { sr: "8", key: "gstRegistration", rule: "all", label: "GST Registration Certificate" },
+      { sr: "9", key: "tradeLicence", rule: "all", label: "Shop & Establishment / Trade Licence" },
+      { sr: "10", key: "activityLicence", rule: "optional", label: "Activity-specific Licence (FSSAI / Drug / Pollution NOC etc.)" },
+      { sr: "11a", key: "addressOwnership", rule: "all", label: "Business Address Proof – Ownership Document / Rent Agreement" },
+      { sr: "11b", key: "landlordKyc", rule: "rented", label: "Business Address Proof – Landlord KYC" },
+      { sr: "11c", key: "utilityBill", rule: "all", label: "Business Address Proof – Utility Bill" },
     ],
   },
   {
     id: "B",
     title: "Due Diligence Checks",
+    doneLabel: "Attached",
     items: [
-      { sr: 12, key: "cicEntity", rule: "all", label: "CIC Report – Entity (Commercial CIBIL / CMR Rank)" },
-      { sr: 13, key: "cicPromoters", rule: "all", label: "CIC Report – All Promoters & Guarantors" },
-      { sr: 14, key: "cersaiSearch", rule: "all", label: "CERSAI Search (Property / Assets)" },
-      { sr: 15, key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
-      { sr: 16, key: "legalSearch", rule: "all", label: "Litigation / Legal Search" },
+      { sr: "12", key: "cicEntity", rule: "all", label: "CIC Report – Entity (Commercial CIBIL / CMR Rank)" },
+      { sr: "13", key: "cicPromoters", rule: "all", label: "CIC Report – All Promoters & Guarantors" },
+      { sr: "14", key: "cersaiSearch", rule: "notCgtmseClean", label: "CERSAI Search (Property / Assets)" },
+      { sr: "15", key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
+      { sr: "16", key: "legalSearch", rule: "notCgtmseClean", label: "Litigation / Legal Search" },
+      { sr: "17", key: "netWorth", rule: "all", label: "Net Worth Statement of Promoters & Guarantors" },
     ],
   },
   {
     id: "C",
     title: "Financials",
+    doneLabel: "Received",
     items: [
-      { sr: 17, key: "itrY1", rule: "all", label: fy => `ITR with Computation – ${fyLabel(fy.audited[0], true)}` },
-      { sr: 18, key: "itrY2", rule: "all", label: fy => `ITR with Computation – ${fyLabel(fy.audited[1], true)}` },
-      { sr: 19, key: "itrY3", rule: "all", label: fy => `ITR with Computation – ${fyLabel(fy.audited[2], true)}` },
-      { sr: 20, key: "bsY1", rule: "all", label: fy => `Balance Sheet & P&L with Schedules – ${fyLabel(fy.audited[0])} (Audited)` },
-      { sr: 21, key: "bsY2", rule: "all", label: fy => `Balance Sheet & P&L with Schedules – ${fyLabel(fy.audited[1])} (Audited)` },
-      { sr: 22, key: "bsY3", rule: "all", label: fy => `Balance Sheet & P&L with Schedules – ${fyLabel(fy.audited[2])} (Audited)` },
-      { sr: 23, key: "bsProvisional", rule: "all", label: fy => `Balance Sheet & P&L – ${fyLabel(fy.provisional)} (Provisional / Estimated)` },
-      { sr: 24, key: "bsProjected", rule: "all", label: fy => `Balance Sheet & P&L – ${fyLabel(fy.projected)} (Projected)` },
-      { sr: 25, key: "taxAudit", rule: "optional", label: "Tax Audit Report (Form 3CD)" },
-      { sr: 26, key: "gstReturns", rule: "all", label: "GST Returns (GSTR-3B & GSTR-1) – Last 12 Months" },
-      { sr: 27, key: "bankStatements", rule: "all", label: "Bank Statements of All Accounts – Last 12 Months" },
-      { sr: 28, key: "netWorth", rule: "all", label: "Net Worth Statement of Promoters & Guarantors" },
+      { sr: "18", key: "financialStatements", rule: "all", label: "ITR & Financial Statements (year-wise)", parts: financialParts },
+      { sr: "19", key: "gstReturns", rule: "all", label: "GST Returns (GSTR-3B & GSTR-1) – Last 12 Months" },
+      { sr: "20", key: "bankStatements", rule: "all", label: "Bank Statements of All Accounts – Last 12 Months" },
     ],
   },
   {
     id: "D",
     title: "Term Loan Specific",
+    doneLabel: "Received",
     items: [
-      { sr: 29, key: "quotation", rule: "tl", label: "Quotation from Authorised Dealer (Supplier GST verified)" },
-      { sr: 30, key: "projectReport", rule: "tl", label: "Project Report" },
-      { sr: 31, key: "meansOfFinance", rule: "tl", label: "Means of Finance & Proof of Promoter Margin" },
+      { sr: "21", key: "quotation", rule: "tl", label: "Quotation from Authorised Dealer (Supplier GST verified)" },
+      { sr: "22", key: "projectReport", rule: "tl", label: "Project Report" },
+      { sr: "23", key: "meansOfFinance", rule: "tl", label: "Means of Finance & Proof of Promoter Margin" },
     ],
   },
   {
     id: "E",
     title: "Cash Credit Specific",
+    doneLabel: "Received",
     items: [
-      { sr: 32, key: "stockStatement", rule: "cc", label: "Latest Stock Statement" },
-      { sr: 33, key: "debtorsCreditors", rule: "cc", label: "Age-wise List of Debtors & Creditors" },
+      { sr: "24", key: "stockStatement", rule: "cc", label: "Latest Stock Statement" },
+      { sr: "25", key: "debtorsCreditors", rule: "cc", label: "Age-wise List of Debtors & Creditors" },
     ],
   },
   {
     id: "F",
     title: "Security / Collateral",
+    doneLabel: "Received",
     items: [
-      { sr: 34, key: "titleSearch", rule: "collateral", label: "Title Search Report (Legal Opinion)" },
-      { sr: 35, key: "valuation", rule: "collateral", label: "Valuation Report (Approved Valuer)" },
-      { sr: 36, key: "cgtmse", rule: "all", label: "CGTMSE Eligibility & Coverage (Collateral-free up to ₹10 lakh for MSE)" },
+      { sr: "26", key: "titleSearch", rule: "collateral", label: "Title Search Report (Legal Opinion)" },
+      { sr: "27", key: "valuation", rule: "collateral", label: "Valuation Report (Approved Valuer)" },
+      { sr: "28", key: "cgtmse", rule: "collateral", label: "CGTMSE Eligibility & Coverage" },
     ],
   },
   {
     id: "G",
     title: "Appraisal & Inspection",
+    doneLabel: "Received",
     items: [
-      { sr: 37, key: "unitVisit", rule: "all", label: "Pre-Sanction Unit Visit Report (Geo-tagged Photos)" },
-      { sr: 38, key: "anyOther", rule: "optional", label: "Any Other (Specify in Remarks)" },
+      { sr: "29", key: "unitVisit", rule: "all", label: "Pre-Sanction Unit Visit Report (Geo-tagged Photos)" },
+      { sr: "30", key: "anyOther", rule: "optional", label: "Any Other (Specify in Remarks)" },
     ],
   },
 ];
+
+// Why a whole section can be hidden, for the note under the checklist.
+export const HIDDEN_SECTION_REASONS = { D: "no Term Loan", E: "no Cash Credit", F: "no collateral" };
 
 export const ALL_ITEMS = SECTIONS.flatMap(section => section.items);
 
@@ -156,10 +170,47 @@ export function fyLabel(startYear, withAssessmentYear = false) {
   return withAssessmentYear ? `${fy} (AY ${yy(startYear + 1)}-${yy(startYear + 2)})` : fy;
 }
 
-export function itemLabel(item, applicationDate) {
-  if (typeof item.label !== "function") return item.label;
-  const fy = fyContext(applicationDate) || { audited: [null, null, null], provisional: null, projected: null };
-  return item.label(fy);
+export function itemLabel(item) {
+  return item.label;
+}
+
+// Year-wise parts of the ITR & financial statements question:
+// ITRs for the three completed years, audited statements for the same three,
+// plus provisional (current FY) and projected (next FY) statements.
+function financialParts(fy) {
+  const parts = [];
+  for (const year of fy.audited) {
+    parts.push({ key: `itr:${year}`, doc: "itr", year, stage: "Audited" });
+    parts.push({ key: `bs:${year}`, doc: "bs", year, stage: "Audited" });
+  }
+  parts.push({ key: `bs:${fy.provisional}`, doc: "bs", year: fy.provisional, stage: "Provisional" });
+  parts.push({ key: `bs:${fy.projected}`, doc: "bs", year: fy.projected, stage: "Projected" });
+  return parts;
+}
+
+export function itemParts(item, applicationDate) {
+  if (!item.parts) return [];
+  const fy = fyContext(applicationDate);
+  return fy ? item.parts(fy) : [];
+}
+
+// Rows for the year-wise grid: one per financial year, oldest first.
+export function financialRows(item, applicationDate) {
+  const rows = new Map();
+  for (const part of itemParts(item, applicationDate)) {
+    if (!rows.has(part.year)) rows.set(part.year, { year: part.year, stage: part.stage, itr: null, bs: null });
+    rows.get(part.year)[part.doc] = part;
+  }
+  return [...rows.values()];
+}
+
+export function partDone(checklist, item, partKey) {
+  return checklist?.items?.[item.key]?.parts?.[partKey] === true;
+}
+
+export function partProgress(checklist, item) {
+  const parts = itemParts(item, checklist?.applicationDate);
+  return { done: parts.filter(part => partDone(checklist, item, part.key)).length, total: parts.length };
 }
 
 // ── Profile & visibility ─────────────────────────────────────────────────
@@ -169,13 +220,16 @@ export function profileOf(checklist) {
     constitution: checklist?.constitution || "",
     facility: checklist?.facility || "",
     collateral: checklist?.collateral === true ? true : checklist?.collateral === false ? false : null,
+    cgtmse: checklist?.cgtmse === true ? true : checklist?.cgtmse === false ? false : null,
   };
 }
 
 // The items cannot be worked out until every profile question is answered.
 export function isProfileComplete(checklist) {
   const p = profileOf(checklist);
-  return Boolean(p.constitution) && Boolean(p.facility) && p.collateral !== null;
+  if (!p.constitution || !p.facility || p.collateral === null) return false;
+  // CGTMSE cover is only asked when there is no collateral.
+  return p.collateral === true || p.cgtmse !== null;
 }
 
 export function itemApplies(item, profile) {
@@ -195,6 +249,10 @@ export function visibleSections(checklist) {
 // ── Status & summary ─────────────────────────────────────────────────────
 
 export function itemStatus(checklist, item) {
+  if (item.parts) {
+    const { done, total } = partProgress(checklist, item);
+    return total > 0 && done === total ? "received" : "pending";
+  }
   const status = checklist?.items?.[item.key]?.status;
   if (status === "received") return "received";
   if (status === "na" && allowsNA(item)) return "na";
@@ -244,6 +302,7 @@ export function newChecklist({ applicationDate, user } = {}) {
     applicationDate: applicationDate || "",
     constitution: "",
     collateral: null,
+    cgtmse: null,
     items: {},
     createdAt: now,
     createdBy: user || "",
