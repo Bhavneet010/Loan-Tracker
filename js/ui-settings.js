@@ -113,9 +113,6 @@ export function renderSettingsList() {
       <button type="button" id="wipeFreshBtn" class="btn btn-primary-full" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#DC2626,#991B1B);" onclick="wipeSanctionedFreshLoans()">&#128465; Wipe All Sanctioned Fresh</button>
       <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none;" onchange="handleCsvUpload(event)">
       <button type="button" id="importCsvBtn" class="btn btn-primary-full" style="width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);" onclick="triggerCsvUpload()">&#128229; Upload CSV</button>`;
-  } else if (S.settingsTab === 'checklist') {
-    el.innerHTML = '<div style="padding:12px;text-align:center;font-size:13px;color:#7B7A9A;">Loading checklists…</div>';
-    window.renderSanctionChecklistSettings();
   } else if (S.settingsTab === 'userstatus') {
     el.innerHTML = `
       <div style="padding:4px 2px 10px;font-size:13px;color:#7B7A9A;line-height:1.45;">Who is currently active in the app. Presence updates every 2 minutes.</div>

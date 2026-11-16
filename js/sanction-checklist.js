@@ -1,5 +1,5 @@
 // Pre-sanction checklist (Beta) — standalone admin tool opened from the
-// "Checklist" tab in Admin Settings. Loaded lazily; it does not read or
+// admin menu (user pill dropdown). Loaded lazily; it does not read or
 // write loans. Checklists are stored in the `sanctionChecklists` collection.
 import {
   collection, deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc,
@@ -16,6 +16,7 @@ import {
 
 const COLLECTION = "sanctionChecklists";
 const OVERLAY_ID = "sanctionChecklistOverlay";
+const LIST_ID = "sanctionChecklistListOverlay";
 const SAVE_DELAY_MS = 500;
 
 const state = {
@@ -48,21 +49,56 @@ const stamp = () => ({ updatedAt: new Date().toISOString(), updatedBy: S.user ||
 
 // ── Settings tab: list of saved checklists ───────────────────────────────
 
-async function renderSanctionChecklistSettings() {
+const isOpen = id => document.getElementById(id)?.getAttribute("aria-hidden") === "false";
+
+function ensureListOverlay() {
+  let overlay = document.getElementById(LIST_ID);
+  if (overlay) return overlay;
+  overlay = document.createElement("div");
+  overlay.className = "overlay sc-overlay";
+  overlay.id = LIST_ID;
+  overlay.style.display = "none";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="sheet sc-sheet" role="dialog" aria-modal="true" aria-labelledby="scListTitle">
+      <div class="sheet-handle"></div>
+      <div class="sc-head">
+        <h2 id="scListTitle">Pre-Sanction Checklists</h2>
+        <span class="sc-beta">Beta</span>
+        <button type="button" class="sc-close" aria-label="Close checklists" onclick="closeChecklistList()">&#215;</button>
+      </div>
+      <div class="sc-intro">For SME loans up to ₹${AMOUNT_WARN_LAKH} lakh.</div>
+      <button type="button" class="btn btn-primary-full sc-new-btn" onclick="openSanctionChecklist()">+ New checklist</button>
+      <div id="scList" class="sc-list"></div>
+    </div>`;
+  overlay.addEventListener("click", event => { if (event.target === overlay) closeChecklistList(); });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+// Entry point from the admin menu: the list of saved checklists.
+function openChecklistList() {
+  if (!S.isAdmin) { toast("Admin access required"); return; }
   ensureStyles();
-  const el = document.getElementById("settingsContent");
-  if (!el || S.settingsTab !== "checklist") return;
-  el.innerHTML = `
-    <div class="sc-intro">Pre-sanction checklist for SME loans up to ₹${AMOUNT_WARN_LAKH} lakh. <span class="sc-beta">Beta</span></div>
-    <button type="button" class="btn btn-primary-full sc-new-btn" onclick="openSanctionChecklist()">+ New checklist</button>
-    <div id="scList" class="sc-list"><div class="sc-empty">Loading…</div></div>`;
+  const overlay = ensureListOverlay();
+  openOverlay(overlay);
+  loadList();
+}
+
+function closeChecklistList() {
+  closeOverlay(LIST_ID);
+}
+
+async function loadList() {
+  const list = document.getElementById("scList");
+  if (!list) return;
+  if (!cachedList.length) list.innerHTML = `<div class="sc-empty">Loading…</div>`;
   try {
     const snap = await getDocs(query(collection(db, COLLECTION), orderBy("updatedAt", "desc")));
     cachedList = snap.docs.map(d => ({ ...d.data(), id: d.id }));
   } catch (error) {
     console.error("[Checklist] load failed", error);
-    const list = document.getElementById("scList");
-    if (list) list.innerHTML = `<div class="sc-empty">Could not load checklists.</div>`;
+    list.innerHTML = `<div class="sc-empty">Could not load checklists.</div>`;
     return;
   }
   renderList();
@@ -117,7 +153,7 @@ function ensureOverlay() {
   let overlay = document.getElementById(OVERLAY_ID);
   if (overlay) return overlay;
   overlay = document.createElement("div");
-  overlay.className = "overlay sc-overlay";
+  overlay.className = "overlay sc-overlay sc-overlay--item";
   overlay.id = OVERLAY_ID;
   overlay.style.display = "none";
   overlay.setAttribute("aria-hidden", "true");
@@ -139,9 +175,12 @@ function ensureOverlay() {
   return overlay;
 }
 
-function onKeydown(event) {
-  if (event.key === "Escape" && !document.querySelector(".confirm-overlay")) closeSanctionChecklist();
-}
+// Escape closes the top sheet: the open checklist first, then the list.
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape" || document.querySelector(".confirm-overlay")) return;
+  if (isOpen(OVERLAY_ID)) closeSanctionChecklist();
+  else if (isOpen(LIST_ID)) closeChecklistList();
+});
 
 function openSanctionChecklist(id) {
   if (!S.isAdmin) { toast("Admin access required"); return; }
@@ -160,16 +199,13 @@ function openSanctionChecklist(id) {
   setSaveState("");
   render();
   overlay.querySelector(".sc-sheet").scrollTop = 0;
-  document.addEventListener("keydown", onKeydown);
   openOverlay(overlay);
 }
 
 function closeSanctionChecklist() {
   flushSave();
-  document.removeEventListener("keydown", onKeydown);
-  closeOverlay(OVERLAY_ID, () => {
-    if (S.settingsTab === "checklist") renderSanctionChecklistSettings();
-  });
+  // Re-read so the list shows this checklist's latest percentage.
+  closeOverlay(OVERLAY_ID, () => { if (isOpen(LIST_ID)) loadList(); });
 }
 
 function render() {
@@ -421,7 +457,8 @@ function createChecklist() {
   render();
 }
 
-window.renderSanctionChecklistSettings = renderSanctionChecklistSettings;
+window.openChecklistList = openChecklistList;
+window.closeChecklistList = closeChecklistList;
 window.openSanctionChecklist = openSanctionChecklist;
 window.closeSanctionChecklist = closeSanctionChecklist;
 window.deleteSanctionChecklist = deleteSanctionChecklist;

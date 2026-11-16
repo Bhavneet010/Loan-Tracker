@@ -41,7 +41,7 @@ for (const name of [
 }
 
 for (const name of [
-  "renderSanctionChecklistSettings",
+  "openChecklistList",
   "openSanctionChecklist",
   "deleteSanctionChecklist",
 ]) {

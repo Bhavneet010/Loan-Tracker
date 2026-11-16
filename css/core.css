@@ -178,6 +178,7 @@ body::after{
   border-radius:var(--radius-sm);cursor:pointer;
 }
 .udrop-item:hover{background:var(--p-subtle);}
+.udrop-beta{display:inline-block;vertical-align:middle;margin-left:4px;padding:1px 6px;border-radius:var(--radius-pill);background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);font-size:var(--fs-xs);font-weight:800;letter-spacing:0.5px;text-transform:uppercase;}
 body.dark .user-dropdown{background:rgba(30,28,58,0.97);border-color:rgba(80,70,130,0.3);}
 body.dark .udrop-item{color:var(--text1);}
 body.dark .udrop-item:hover{background:rgba(107,95,191,0.15);}

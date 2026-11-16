@@ -23,13 +23,15 @@
 .sc-pct--done{color:var(--green);}
 .sc-empty{padding:12px;text-align:center;font-size:var(--fs-md);color:var(--muted);}
 
-/* Sheet */
+/* Sheet — the open checklist always stacks above the list */
+.sc-overlay--item{z-index:201;}
 .sc-sheet{max-width:720px;}
 .sc-head{
   display:flex;align-items:center;gap:8px;margin:0 -18px 14px;padding:8px 18px;
   position:sticky;top:0;z-index:2;background:var(--surface-alt);
 }
 .sc-head h2{margin:0;font-size:var(--fs-lg);}
+.sc-beta + .sc-close{margin-left:auto;}
 .sc-save{margin-left:auto;font-size:var(--fs-sm);color:var(--muted);}
 .sc-close{
   width:36px;height:36px;flex:none;border-radius:var(--radius-sm);cursor:pointer;
