@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ALL_ITEMS, SECTIONS, amountWarning, financialRows, fyContext, fyLabel, isProfileComplete,
-  itemParts, itemStatus, newChecklist, partProgress, summarize, visibleSections,
+  itemParts, itemStatus, newChecklist, partProgress, partState, summarize, visibleSections,
 } from "../js/sanction-checklist-model.js";
 
 const profile = (overrides = {}) => ({
@@ -18,14 +18,27 @@ const byKey = Object.fromEntries(ALL_ITEMS.map(item => [item.key, item]));
 const sectionIds = checklist => visibleSections(checklist).map(section => section.id);
 const visibleKeys = checklist => visibleSections(checklist).flatMap(section => section.items.map(item => item.key));
 
-test("the template has unique keys and numbers 1–30 with 11a–11c", () => {
+const visibleNos = checklist => visibleSections(checklist).flatMap(section => section.items.map(item => item.no));
+
+test("the template has unique keys and the expected sections", () => {
   assert.equal(new Set(ALL_ITEMS.map(item => item.key)).size, ALL_ITEMS.length);
-  const srs = ALL_ITEMS.map(item => item.sr);
-  assert.deepEqual(srs.slice(10, 13), ["11a", "11b", "11c"]);
-  assert.equal(srs.at(-1), "30");
   assert.equal(ALL_ITEMS.length, 32);
   assert.deepEqual(SECTIONS.map(section => section.id), ["A", "B", "C", "D", "E", "F", "G"]);
   assert.equal(SECTIONS.find(section => section.id === "B").doneLabel, "Attached");
+});
+
+test("visible items are numbered one after another with no gaps", () => {
+  // Everything applies: 1–10, 11a–11c, then 12–30.
+  const full = visibleNos(profile({ constitution: "company", facility: "CCTL", collateral: true }));
+  assert.deepEqual(full.slice(9, 14), ["10", "11a", "11b", "11c", "12"]);
+  assert.equal(full.at(-1), "30");
+
+  // Proprietorship, CC, no collateral under CGTMSE: many items hidden, still 1..n.
+  const lean = visibleNos(profile({ collateral: false, cgtmse: true }));
+  const plain = lean.filter(no => /^\d+$/.test(no)).map(Number);
+  assert.deepEqual(plain, Array.from({ length: plain.length }, (_, i) => (i < 7 ? i + 1 : i + 2)));
+  assert.deepEqual(lean.slice(6, 10), ["7", "8a", "8b", "8c"]);
+  assert.equal(lean.at(-1), String(plain.length + 1));
 });
 
 test("removed items are gone and net worth moved to due diligence", () => {
@@ -96,11 +109,23 @@ test("the year-wise question lists 3 ITRs and 5 statements, done only when all a
   ]);
 
   const keys = itemParts(item, "2026-11-16").map(part => part.key);
-  const partial = profile({ items: { financialStatements: { parts: { "itr:2023": true, "bs:2023": true } } } });
-  assert.deepEqual(partProgress(partial, item), { done: 2, total: 8 });
+  // `true` is the older stored form of "received".
+  const partial = profile({ items: { financialStatements: { parts: { "itr:2023": true, "bs:2023": "received", "itr:2024": "na" } } } });
+  assert.deepEqual(partProgress(partial, item), { done: 2, na: 1, total: 7, count: 8 });
+  assert.equal(partState(partial, item, "itr:2023"), "received");
+  assert.equal(partState(partial, item, "itr:2024"), "na");
+  assert.equal(partState(partial, item, "bs:2027"), "pending");
   assert.equal(itemStatus(partial, item), "pending");
 
-  const all = profile({ items: { financialStatements: { parts: Object.fromEntries(keys.map(key => [key, true])) } } });
+  // Received and N/A together complete it (e.g. a young unit without three ITRs).
+  const mixed = profile({ items: { financialStatements: { parts: Object.fromEntries(keys.map((key, i) => [key, i < 2 ? "na" : "received"])) } } });
+  assert.equal(itemStatus(mixed, item), "received");
+
+  // All N/A drops the question out of the count, like any N/A item.
+  const allNa = profile({ items: { financialStatements: { parts: Object.fromEntries(keys.map(key => [key, "na"])) } } });
+  assert.equal(itemStatus(allNa, item), "na");
+
+  const all = profile({ items: { financialStatements: { parts: Object.fromEntries(keys.map(key => [key, "received"])) } } });
   assert.equal(itemStatus(all, item), "received");
   // A later application date moves the years, so earlier ticks no longer complete it.
   assert.equal(itemStatus({ ...all, applicationDate: "2027-05-01" }, item), "pending");

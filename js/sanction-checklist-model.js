@@ -1,6 +1,7 @@
 // Pre-sanction checklist for SME loans (up to ₹50 lakh).
-// Template v2: items renumbered 1–30 after review (11 split into 11a–c,
-// ITR and financial statements merged into one year-wise question).
+// Template v2: 11 split into three parts, ITR and financial statements
+// merged into one year-wise question. Item numbers are not stored: they are
+// assigned in order to the visible items (see numberSections).
 //
 // Pure data + rules, no DOM or Firestore, so it can be unit-tested. The
 // screen lives in sanction-checklist.js. Item keys are stored in Firestore,
@@ -45,28 +46,30 @@ const RULES = {
 // Section B documents are pulled and attached by the credit officer, not
 // received from the borrower, so its "done" state reads "Attached".
 //
-// An item with `parts` is a year-wise question: it is done when every part
-// is ticked. Parts are keyed by financial-year start so they survive a change
-// of application date.
+// Items sharing a `group` are numbered as one question with a/b/c suffixes.
+//
+// An item with `parts` is a year-wise question: each part is Pending,
+// Received or N/A, and the question is done when no part is pending. Parts
+// are keyed by financial-year start so they survive a change of date.
 export const SECTIONS = [
   {
     id: "A",
     title: "Borrower & Constitution",
     doneLabel: "Received",
     items: [
-      { sr: "1", key: "loanApplication", rule: "all", label: "Loan Application Form (duly filled & signed)" },
-      { sr: "2", key: "photographs", rule: "all", label: "Photographs of Proprietor / Partners / Directors / Guarantors" },
-      { sr: "3", key: "panEntity", rule: "firmOrCompany", label: "PAN of Entity" },
-      { sr: "4", key: "panAadhaarPromoters", rule: "all", label: "PAN & Aadhaar of Proprietor / Partners / Directors / Guarantors (self-attested & OSV)" },
-      { sr: "5", key: "constitutionDocs", rule: "firmOrCompany", label: "Constitution Docs – Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation" },
-      { sr: "6", key: "boardResolution", rule: "firmOrCompany", label: "Board Resolution / Partners' Authority Letter to borrow" },
-      { sr: "7", key: "udyam", rule: "all", label: "Udyam Registration Certificate" },
-      { sr: "8", key: "gstRegistration", rule: "all", label: "GST Registration Certificate" },
-      { sr: "9", key: "tradeLicence", rule: "all", label: "Shop & Establishment / Trade Licence" },
-      { sr: "10", key: "activityLicence", rule: "optional", label: "Activity-specific Licence (FSSAI / Drug / Pollution NOC etc.)" },
-      { sr: "11a", key: "addressOwnership", rule: "all", label: "Business Address Proof – Ownership Document / Rent Agreement" },
-      { sr: "11b", key: "landlordKyc", rule: "rented", label: "Business Address Proof – Landlord KYC" },
-      { sr: "11c", key: "utilityBill", rule: "all", label: "Business Address Proof – Utility Bill" },
+      { key: "loanApplication", rule: "all", label: "Loan Application Form (duly filled & signed)" },
+      { key: "photographs", rule: "all", label: "Photographs of Proprietor / Partners / Directors / Guarantors" },
+      { key: "panEntity", rule: "firmOrCompany", label: "PAN of Entity" },
+      { key: "panAadhaarPromoters", rule: "all", label: "PAN & Aadhaar of Proprietor / Partners / Directors / Guarantors (self-attested & OSV)" },
+      { key: "constitutionDocs", rule: "firmOrCompany", label: "Constitution Docs – Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation" },
+      { key: "boardResolution", rule: "firmOrCompany", label: "Board Resolution / Partners' Authority Letter to borrow" },
+      { key: "udyam", rule: "all", label: "Udyam Registration Certificate" },
+      { key: "gstRegistration", rule: "all", label: "GST Registration Certificate" },
+      { key: "tradeLicence", rule: "all", label: "Shop & Establishment / Trade Licence" },
+      { key: "activityLicence", rule: "optional", label: "Activity-specific Licence (FSSAI / Drug / Pollution NOC etc.)" },
+      { key: "addressOwnership", group: "address", rule: "all", label: "Business Address Proof – Ownership Document / Rent Agreement" },
+      { key: "landlordKyc", group: "address", rule: "rented", label: "Business Address Proof – Landlord KYC" },
+      { key: "utilityBill", group: "address", rule: "all", label: "Business Address Proof – Utility Bill" },
     ],
   },
   {
@@ -74,12 +77,12 @@ export const SECTIONS = [
     title: "Due Diligence Checks",
     doneLabel: "Attached",
     items: [
-      { sr: "12", key: "cicEntity", rule: "all", label: "CIC Report – Entity (Commercial CIBIL / CMR Rank)" },
-      { sr: "13", key: "cicPromoters", rule: "all", label: "CIC Report – All Promoters & Guarantors" },
-      { sr: "14", key: "cersaiSearch", rule: "notCgtmseClean", label: "CERSAI Search (Property / Assets)" },
-      { sr: "15", key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
-      { sr: "16", key: "legalSearch", rule: "notCgtmseClean", label: "Litigation / Legal Search" },
-      { sr: "17", key: "netWorth", rule: "all", label: "Net Worth Statement of Promoters & Guarantors" },
+      { key: "cicEntity", rule: "all", label: "CIC Report – Entity (Commercial CIBIL / CMR Rank)" },
+      { key: "cicPromoters", rule: "all", label: "CIC Report – All Promoters & Guarantors" },
+      { key: "cersaiSearch", rule: "notCgtmseClean", label: "CERSAI Search (Property / Assets)" },
+      { key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
+      { key: "legalSearch", rule: "notCgtmseClean", label: "Litigation / Legal Search" },
+      { key: "netWorth", rule: "all", label: "Net Worth Statement of Promoters & Guarantors" },
     ],
   },
   {
@@ -87,9 +90,9 @@ export const SECTIONS = [
     title: "Financials",
     doneLabel: "Received",
     items: [
-      { sr: "18", key: "financialStatements", rule: "all", label: "ITR & Financial Statements (year-wise)", parts: financialParts },
-      { sr: "19", key: "gstReturns", rule: "all", label: "GST Returns (GSTR-3B & GSTR-1) – Last 12 Months" },
-      { sr: "20", key: "bankStatements", rule: "all", label: "Bank Statements of All Accounts – Last 12 Months" },
+      { key: "financialStatements", rule: "all", label: "ITR & Financial Statements (year-wise)", parts: financialParts },
+      { key: "gstReturns", rule: "all", label: "GST Returns (GSTR-3B & GSTR-1) – Last 12 Months" },
+      { key: "bankStatements", rule: "all", label: "Bank Statements of All Accounts – Last 12 Months" },
     ],
   },
   {
@@ -97,9 +100,9 @@ export const SECTIONS = [
     title: "Term Loan Specific",
     doneLabel: "Received",
     items: [
-      { sr: "21", key: "quotation", rule: "tl", label: "Quotation from Authorised Dealer (Supplier GST verified)" },
-      { sr: "22", key: "projectReport", rule: "tl", label: "Project Report" },
-      { sr: "23", key: "meansOfFinance", rule: "tl", label: "Means of Finance & Proof of Promoter Margin" },
+      { key: "quotation", rule: "tl", label: "Quotation from Authorised Dealer (Supplier GST verified)" },
+      { key: "projectReport", rule: "tl", label: "Project Report" },
+      { key: "meansOfFinance", rule: "tl", label: "Means of Finance & Proof of Promoter Margin" },
     ],
   },
   {
@@ -107,8 +110,8 @@ export const SECTIONS = [
     title: "Cash Credit Specific",
     doneLabel: "Received",
     items: [
-      { sr: "24", key: "stockStatement", rule: "cc", label: "Latest Stock Statement" },
-      { sr: "25", key: "debtorsCreditors", rule: "cc", label: "Age-wise List of Debtors & Creditors" },
+      { key: "stockStatement", rule: "cc", label: "Latest Stock Statement" },
+      { key: "debtorsCreditors", rule: "cc", label: "Age-wise List of Debtors & Creditors" },
     ],
   },
   {
@@ -116,9 +119,9 @@ export const SECTIONS = [
     title: "Security / Collateral",
     doneLabel: "Received",
     items: [
-      { sr: "26", key: "titleSearch", rule: "collateral", label: "Title Search Report (Legal Opinion)" },
-      { sr: "27", key: "valuation", rule: "collateral", label: "Valuation Report (Approved Valuer)" },
-      { sr: "28", key: "cgtmse", rule: "collateral", label: "CGTMSE Eligibility & Coverage" },
+      { key: "titleSearch", rule: "collateral", label: "Title Search Report (Legal Opinion)" },
+      { key: "valuation", rule: "collateral", label: "Valuation Report (Approved Valuer)" },
+      { key: "cgtmse", rule: "collateral", label: "CGTMSE Eligibility & Coverage" },
     ],
   },
   {
@@ -126,8 +129,8 @@ export const SECTIONS = [
     title: "Appraisal & Inspection",
     doneLabel: "Received",
     items: [
-      { sr: "29", key: "unitVisit", rule: "all", label: "Pre-Sanction Unit Visit Report (Geo-tagged Photos)" },
-      { sr: "30", key: "anyOther", rule: "optional", label: "Any Other (Specify in Remarks)" },
+      { key: "unitVisit", rule: "all", label: "Pre-Sanction Unit Visit Report (Geo-tagged Photos)" },
+      { key: "anyOther", rule: "optional", label: "Any Other (Specify in Remarks)" },
     ],
   },
 ];
@@ -204,13 +207,25 @@ export function financialRows(item, applicationDate) {
   return [...rows.values()];
 }
 
-export function partDone(checklist, item, partKey) {
-  return checklist?.items?.[item.key]?.parts?.[partKey] === true;
+// `true` is how template v2 first stored a ticked part.
+export function partState(checklist, item, partKey) {
+  const value = checklist?.items?.[item.key]?.parts?.[partKey];
+  if (value === "received" || value === true) return "received";
+  if (value === "na") return "na";
+  return "pending";
 }
 
+// `total` excludes N/A parts, so "done/total" reads like the main summary.
 export function partProgress(checklist, item) {
   const parts = itemParts(item, checklist?.applicationDate);
-  return { done: parts.filter(part => partDone(checklist, item, part.key)).length, total: parts.length };
+  let done = 0;
+  let na = 0;
+  for (const part of parts) {
+    const state = partState(checklist, item, part.key);
+    if (state === "received") done += 1;
+    else if (state === "na") na += 1;
+  }
+  return { done, na, total: parts.length - na, count: parts.length };
 }
 
 // ── Profile & visibility ─────────────────────────────────────────────────
@@ -241,17 +256,37 @@ export function itemApplies(item, profile) {
 export function visibleSections(checklist) {
   if (!isProfileComplete(checklist)) return [];
   const profile = profileOf(checklist);
-  return SECTIONS
+  return numberSections(SECTIONS
     .map(section => ({ ...section, items: section.items.filter(item => itemApplies(item, profile)) }))
-    .filter(section => section.items.length > 0);
+    .filter(section => section.items.length > 0));
+}
+
+// Numbers the visible items 1, 2, 3… with no gaps. Visible items of a group
+// share one number with a, b, c suffixes (no suffix if only one is visible).
+export function numberSections(sections) {
+  let counter = 0;
+  let lastGroup = null;
+  return sections.map(section => {
+    const items = section.items.map((item, index) => {
+      if (!item.group) { lastGroup = null; return { ...item, no: String(++counter) }; }
+      if (item.group !== lastGroup) { counter += 1; lastGroup = item.group; }
+      const members = section.items.filter(other => other.group === item.group);
+      if (members.length === 1) return { ...item, no: String(counter) };
+      const position = members.indexOf(section.items[index]);
+      return { ...item, no: `${counter}${String.fromCharCode(97 + position)}` };
+    });
+    return { ...section, items };
+  });
 }
 
 // ── Status & summary ─────────────────────────────────────────────────────
 
 export function itemStatus(checklist, item) {
   if (item.parts) {
-    const { done, total } = partProgress(checklist, item);
-    return total > 0 && done === total ? "received" : "pending";
+    const { done, total, count } = partProgress(checklist, item);
+    if (count === 0) return "pending";
+    if (total === 0) return "na";
+    return done === total ? "received" : "pending";
   }
   const status = checklist?.items?.[item.key]?.status;
   if (status === "received") return "received";

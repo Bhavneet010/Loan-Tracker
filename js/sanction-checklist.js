@@ -10,8 +10,8 @@ import { appConfirm, esc, toast, todayStr } from "./utils.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
   AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
-  financialRows, fyLabel, isProfileComplete, itemLabel, itemStatus, newChecklist, parseAmountLakh,
-  partDone, partProgress, ruleLabel, sectionSummary, summarize, visibleSections,
+  financialRows, fyLabel, itemParts, isProfileComplete, itemLabel, itemStatus, newChecklist, parseAmountLakh,
+  partProgress, partState, ruleLabel, sectionSummary, summarize, visibleSections,
 } from "./sanction-checklist-model.js";
 
 const COLLECTION = "sanctionChecklists";
@@ -321,7 +321,7 @@ function itemHtml(item, section) {
   const labelId = `scItem_${item.key}`;
   return `<div class="sc-item sc-item--${status}">
     <div class="sc-item-top">
-      <span class="sc-sr">${item.sr}</span>
+      <span class="sc-sr">${item.no}</span>
       <span class="sc-item-label" id="${labelId}">${esc(itemLabel(item))}</span>
       ${item.rule === "all" ? "" : `<span class="sc-rule">${esc(ruleLabel(item.rule))}</span>`}
     </div>
@@ -329,18 +329,38 @@ function itemHtml(item, section) {
       <div class="sc-seg sc-seg--status" role="radiogroup" aria-labelledby="${labelId}">
         ${options.map(([value, label]) => `<button type="button" role="radio" aria-checked="${status === value}" class="${status === value ? `on on--${value}` : ""}" data-action="status" data-key="${item.key}" data-value="${value}">${label}</button>`).join("")}
       </div>
-      <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.sr}">
+      <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.no}">
     </div>
   </div>`;
 }
 
-// Year-wise grid: one row per FY, a tick button for the ITR and for the
-// balance sheet & P&L. The question is done when every button is ticked.
-function partButton(item, part, text) {
-  if (!part) return `<span class="sc-fin-none" aria-hidden="true">—</span>`;
-  const done = partDone(state.data, item, part.key);
-  return `<button type="button" class="sc-fin-cell${done ? " on" : ""}" aria-pressed="${done}" data-action="part" data-key="${item.key}" data-part="${part.key}">
-      <span class="sc-fin-tick" aria-hidden="true">${done ? "&#10003;" : ""}</span>${text}</button>`;
+// Year-wise question: one card per financial year, each document in it
+// with its own Pending / Received / N/A choice.
+const PART_OPTIONS = [["pending", "Pending"], ["received", "Received"], ["na", "N/A"]];
+
+function partRowHtml(item, part, title, sub) {
+  const value = partState(state.data, item, part.key);
+  const labelId = `scPart_${item.key}_${part.key.replace(":", "_")}`;
+  return `<div class="sc-fin-doc sc-fin-doc--${value}">
+      <span class="sc-fin-doc-label" id="${labelId}">${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</span>
+      <div class="sc-seg sc-seg--status sc-seg--compact" role="radiogroup" aria-labelledby="${labelId}">
+        ${PART_OPTIONS.map(([option, label]) => `<button type="button" role="radio" aria-checked="${value === option}" class="${value === option ? `on on--${option}` : ""}" data-action="part" data-key="${item.key}" data-part="${part.key}" data-value="${option}">${label}</button>`).join("")}
+      </div>
+    </div>`;
+}
+
+function yearCardHtml(item, row) {
+  const parts = [row.itr, row.bs].filter(Boolean);
+  const states = parts.map(part => partState(state.data, item, part.key));
+  const tone = states.includes("pending") ? "pending" : "done";
+  return `<div class="sc-fin-year sc-fin-year--${tone}">
+      <div class="sc-fin-year-head">
+        <span class="sc-fin-year-label">${esc(fyLabel(row.year))}</span>
+        <span class="sc-fin-stage">${esc(row.stage)}</span>
+      </div>
+      ${row.itr ? partRowHtml(item, row.itr, "ITR with Computation", `AY ${fyLabel(row.year + 1).slice(3)}`) : ""}
+      ${row.bs ? partRowHtml(item, row.bs, "Balance Sheet & P&L", row.stage === "Audited" ? "Audited, with schedules" : row.stage === "Provisional" ? "Provisional / Estimated" : "Projected") : ""}
+    </div>`;
 }
 
 function financialItemHtml(item) {
@@ -348,27 +368,21 @@ function financialItemHtml(item) {
   const status = itemStatus(data, item);
   const remark = data.items?.[item.key]?.remark || "";
   const rows = financialRows(item, data.applicationDate);
-  const { done, total } = partProgress(data, item);
-  const grid = rows.length
-    ? `<div class="sc-fin" role="group" aria-label="${esc(itemLabel(item))}">
-        <span class="sc-fin-head">Financial year</span>
-        <span class="sc-fin-head">ITR with computation</span>
-        <span class="sc-fin-head">Balance Sheet &amp; P&amp;L</span>
-        ${rows.map(row => `
-          <span class="sc-fin-year">${esc(fyLabel(row.year))}</span>
-          ${partButton(item, row.itr, `<span class="sc-fin-sub">AY ${esc(fyLabel(row.year + 1).slice(3))}</span>`)}
-          ${partButton(item, row.bs, `<span class="sc-fin-sub">${esc(row.stage)}</span>`)}`).join("")}
-      </div>`
+  const { done, na, total } = partProgress(data, item);
+  const anyPending = done < total;
+  const body = rows.length
+    ? `<div class="sc-fin">${rows.map(row => yearCardHtml(item, row)).join("")}</div>`
     : `<div class="sc-hint">Enter the date of application to list the financial years.</div>`;
   return `<div class="sc-item sc-item--${status}">
     <div class="sc-item-top">
-      <span class="sc-sr">${item.sr}</span>
+      <span class="sc-sr">${item.no}</span>
       <span class="sc-item-label">${esc(itemLabel(item))}</span>
-      <span class="sc-fin-count${done === total && total ? " done" : ""}">${done}/${total}</span>
+      <span class="sc-fin-count${anyPending ? "" : " done"}">${done}/${total}${na ? ` · ${na} N/A` : ""}</span>
     </div>
-    ${grid}
+    ${rows.length && anyPending ? `<button type="button" class="sc-fin-all" data-action="partsAll" data-key="${item.key}">Mark all pending as received</button>` : ""}
+    ${body}
     <div class="sc-item-controls">
-      <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.sr}">
+      <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.no}">
     </div>
   </div>`;
 }
@@ -398,9 +412,19 @@ function onClick(event) {
     if (state.collapsed.has(id)) state.collapsed.delete(id); else state.collapsed.add(id);
     render();
   } else if (action === "part") {
-    const { key, part } = target.dataset;
+    const { key, part, value } = target.dataset;
     const parts = { ...(state.data.items[key]?.parts || {}) };
-    if (parts[part]) delete parts[part]; else parts[part] = true;
+    if (value === "pending") delete parts[part]; else parts[part] = value;
+    setItem(key, { parts });
+    render();
+  } else if (action === "partsAll") {
+    const key = target.dataset.key;
+    const item = visibleSections(state.data).flatMap(section => section.items).find(entry => entry.key === key);
+    if (!item) return;
+    const parts = { ...(state.data.items[key]?.parts || {}) };
+    for (const part of itemParts(item, state.data.applicationDate)) {
+      if (partState(state.data, item, part.key) === "pending") parts[part.key] = "received";
+    }
     setItem(key, { parts });
     render();
   } else if (action === "status") {
