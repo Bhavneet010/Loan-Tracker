@@ -10,8 +10,9 @@ import { appConfirm, esc, toast, todayStr } from "./utils.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
   AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
-  financialRows, fyLabel, itemParts, isProfileComplete, itemLabel, itemStatus, newChecklist, parseAmountLakh,
-  partProgress, partState, ruleLabel, sectionSummary, summarize, visibleSections,
+  ayLabel, bsStage, fyLabel, isProfileComplete, itemLabel, itemStatus, newChecklist, nextYear,
+  parseAmountLakh, ruleLabel, sectionSummary, summarize, visibleSections, yearOptions, yearProgress,
+  yearRows,
 } from "./sanction-checklist-model.js";
 
 const COLLECTION = "sanctionChecklists";
@@ -118,7 +119,7 @@ function renderList() {
     return `<div class="sc-list-row">
       <button type="button" class="sc-list-open" data-id="${esc(item.id)}" onclick="openSanctionChecklist(this.dataset.id)">
         <span class="sc-list-name">${esc(item.borrowerName || "Unnamed borrower")}</span>
-        <span class="sc-list-meta">${esc(facilityShort(item.facility))} · ${esc(fmtLakh(item.amountLakh))} · ${esc(fmtDate(item.applicationDate))}${done ? ` · ${done.pending} pending` : ""}</span>
+        <span class="sc-list-meta">${esc(facilityShort(item.facility))} · ${esc(fmtLakh(item.amountLakh))} · ${esc(fmtDate((item.createdAt || "").slice(0, 10)))}${done ? ` · ${done.pending} pending` : ""}</span>
       </button>
       <span class="sc-pct${tone}">${pct}</span>
       <button type="button" class="btn-sm-danger" data-id="${esc(item.id)}" aria-label="Delete checklist for ${esc(item.borrowerName || "borrower")}" onclick="deleteSanctionChecklist(this.dataset.id)">&#215;</button>
@@ -191,7 +192,7 @@ function openSanctionChecklist(id) {
   state.id = existing ? existing.id : null;
   state.data = existing
     ? structuredClone({ ...existing, items: existing.items || {} })
-    : newChecklist({ applicationDate: todayStr(), user: S.user });
+    : newChecklist({ today: todayStr(), user: S.user });
   delete state.data.id;
   state.pendingOnly = false;
   state.collapsed = new Set();
@@ -217,7 +218,7 @@ function render() {
   body.innerHTML = `
     ${detailsHtml(data)}
     ${!state.id ? createHtml(data, profileReady) : ""}
-    ${state.id && !profileReady ? `<div class="sc-hint">Answer constitution, facility, collateral and CGTMSE to see the checklist.</div>` : ""}
+    ${state.id && !profileReady ? `<div class="sc-hint">Answer constitution, facility, collateral and premises to see the checklist.</div>` : ""}
     ${state.id && profileReady ? summaryHtml(data, sections) + sections.map(sectionHtml).join("") + hiddenNoteHtml(sections) : ""}`;
 }
 
@@ -231,7 +232,7 @@ function selectHtml(id, name, options, value, placeholder) {
 function yesNoHtml(id, label, action, value) {
   const yes = value === true;
   const no = value === false;
-  return `<div class="form-group sc-full">
+  return `<div class="form-group">
       <span class="form-label" id="${id}">${esc(label)}</span>
       <div class="sc-seg" role="radiogroup" aria-labelledby="${id}">
         <button type="button" role="radio" aria-checked="${yes}" class="${yes ? "on" : ""}" data-action="${action}" data-value="yes">Yes</button>
@@ -256,22 +257,21 @@ function detailsHtml(data) {
       <input id="scAmount" type="number" inputmode="decimal" min="0" step="0.01" data-field="amountLakh" value="${data.amountLakh ?? ""}" placeholder="e.g. 45">
     </div>
     <div class="sc-warn sc-full" id="scAmountWarn" role="status" ${warning ? "" : "hidden"}>&#9888; ${esc(warning)}</div>
-    <div class="form-group">
-      <label for="scDate">Date of Application</label>
-      <input id="scDate" type="date" data-field="applicationDate" value="${esc(data.applicationDate)}">
-    </div>
-    <div class="form-group">
+    <div class="form-group sc-full">
       <label for="scConstitution">Constitution</label>
       ${selectHtml("scConstitution", "constitution", CONSTITUTIONS, data.constitution, "Select")}
     </div>
-    ${yesNoHtml("scCollateralLabel", "Collateral offered?", "collateral", data.collateral)}
-    ${data.collateral === false ? yesNoHtml("scCgtmseLabel", "Covered under CGTMSE?", "cgtmse", data.cgtmse) : ""}
+    <div class="sc-yesno-row sc-full">
+      ${yesNoHtml("scCollateralLabel", "Collateral offered?", "collateral", data.collateral)}
+      ${yesNoHtml("scRentedLabel", "Rented premises?", "rented", data.rented)}
+    </div>
+    ${data.collateral === false ? `<div class="sc-note sc-full">No collateral – treated as covered under CGTMSE.</div>` : ""}
   </div>`;
 }
 
 function createHtml(data, profileReady) {
   const ready = profileReady && data.borrowerName.trim();
-  return `<div class="sc-hint">${ready ? "Ready to start." : "Fill in the borrower name, facility, constitution and collateral (and CGTMSE if no collateral) to start."}</div>
+  return `<div class="sc-hint">${ready ? "Ready to start." : "Fill in the borrower name, facility, constitution, collateral and premises to start."}</div>
     <button type="button" class="btn btn-primary-full sc-create" data-action="create" ${ready ? "" : "disabled"}>Create checklist</button>`;
 }
 
@@ -313,7 +313,7 @@ function sectionHtml(section) {
 
 function itemHtml(item, section) {
   const data = state.data;
-  if (item.parts) return financialItemHtml(item);
+  if (item.years) return yearItemHtml(item);
   const status = itemStatus(data, item);
   const remark = data.items?.[item.key]?.remark || "";
   const options = [["pending", "Pending"], ["received", section.doneLabel || "Received"]];
@@ -334,57 +334,65 @@ function itemHtml(item, section) {
   </div>`;
 }
 
-// Year-wise question: one card per financial year, each document in it
-// with its own Pending / Received / N/A choice.
-const PART_OPTIONS = [["pending", "Pending"], ["received", "Received"], ["na", "N/A"]];
+// Year-wise question as a compact table: one row per financial year with
+// its own Pending / Received / N/A. The year can be changed from the
+// dropdown or the row deleted; "+ Add year" inserts the latest free year.
+const ROW_OPTIONS = [["pending", "Pending"], ["received", "Received"], ["na", "N/A"]];
 
-function partRowHtml(item, part, title, sub) {
-  const value = partState(state.data, item, part.key);
-  const labelId = `scPart_${item.key}_${part.key.replace(":", "_")}`;
-  return `<div class="sc-fin-doc sc-fin-doc--${value}">
-      <span class="sc-fin-doc-label" id="${labelId}">${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</span>
-      <div class="sc-seg sc-seg--status sc-seg--compact" role="radiogroup" aria-labelledby="${labelId}">
-        ${PART_OPTIONS.map(([option, label]) => `<button type="button" role="radio" aria-checked="${value === option}" class="${value === option ? `on on--${option}` : ""}" data-action="part" data-key="${item.key}" data-part="${part.key}" data-value="${option}">${label}</button>`).join("")}
+function yearRowHtml(item, row) {
+  const data = state.data;
+  const sub = item.years === "itr" ? ayLabel(row.year) : bsStage(data, row.year);
+  const selectId = `scYear_${item.key}_${row.year}`;
+  return `<div class="sc-yt-row sc-yt-row--${row.status}">
+      <div class="sc-yt-year">
+        <select id="${selectId}" class="sc-yt-select" data-year-of="${item.key}" data-year="${row.year}" aria-label="Financial year">
+          ${yearOptions(data, item, row.year).map(year => `<option value="${year}" ${year === row.year ? "selected" : ""}>${esc(fyLabel(year))}</option>`).join("")}
+        </select>
+        <small>${esc(sub)}</small>
       </div>
+      <div class="sc-seg sc-seg--status sc-seg--compact" role="radiogroup" aria-label="${esc(`${itemLabel(item)} ${fyLabel(row.year)}`)}">
+        ${ROW_OPTIONS.map(([option, label]) => `<button type="button" role="radio" aria-checked="${row.status === option}" class="${row.status === option ? `on on--${option}` : ""}" data-action="rowStatus" data-key="${item.key}" data-year="${row.year}" data-value="${option}">${label}</button>`).join("")}
+      </div>
+      <button type="button" class="sc-yt-del" data-action="rowDelete" data-key="${item.key}" data-year="${row.year}" aria-label="Delete ${esc(fyLabel(row.year))}">&#215;</button>
     </div>`;
 }
 
-function yearCardHtml(item, row) {
-  const parts = [row.itr, row.bs].filter(Boolean);
-  const states = parts.map(part => partState(state.data, item, part.key));
-  const tone = states.includes("pending") ? "pending" : "done";
-  return `<div class="sc-fin-year sc-fin-year--${tone}">
-      <div class="sc-fin-year-head">
-        <span class="sc-fin-year-label">${esc(fyLabel(row.year))}</span>
-        <span class="sc-fin-stage">${esc(row.stage)}</span>
-      </div>
-      ${row.itr ? partRowHtml(item, row.itr, "ITR with Computation", `AY ${fyLabel(row.year + 1).slice(3)}`) : ""}
-      ${row.bs ? partRowHtml(item, row.bs, "Balance Sheet & P&L", row.stage === "Audited" ? "Audited, with schedules" : row.stage === "Provisional" ? "Provisional / Estimated" : "Projected") : ""}
-    </div>`;
-}
-
-function financialItemHtml(item) {
+function yearItemHtml(item) {
   const data = state.data;
   const status = itemStatus(data, item);
   const remark = data.items?.[item.key]?.remark || "";
-  const rows = financialRows(item, data.applicationDate);
-  const { done, na, total } = partProgress(data, item);
-  const anyPending = done < total;
-  const body = rows.length
-    ? `<div class="sc-fin">${rows.map(row => yearCardHtml(item, row)).join("")}</div>`
-    : `<div class="sc-hint">Enter the date of application to list the financial years.</div>`;
+  const rows = yearRows(data, item);
+  const { done, na, total } = yearProgress(data, item);
+  const anyPending = rows.some(row => row.status === "pending");
+  const canAdd = nextYear(data, item) != null;
   return `<div class="sc-item sc-item--${status}">
     <div class="sc-item-top">
       <span class="sc-sr">${item.no}</span>
       <span class="sc-item-label">${esc(itemLabel(item))}</span>
-      <span class="sc-fin-count${anyPending ? "" : " done"}">${done}/${total}${na ? ` · ${na} N/A` : ""}</span>
+      <span class="sc-fin-count${rows.length && !anyPending ? " done" : ""}">${done}/${total}${na ? ` · ${na} N/A` : ""}</span>
     </div>
-    ${rows.length && anyPending ? `<button type="button" class="sc-fin-all" data-action="partsAll" data-key="${item.key}">Mark all pending as received</button>` : ""}
-    ${body}
+    <div class="sc-yt">
+      ${rows.length ? rows.map(row => yearRowHtml(item, row)).join("") : `<div class="sc-empty">No years – add at least one.</div>`}
+    </div>
+    <div class="sc-yt-actions">
+      ${canAdd ? `<button type="button" class="sc-yt-btn" data-action="rowAdd" data-key="${item.key}">+ Add year</button>` : ""}
+      ${anyPending ? `<button type="button" class="sc-yt-btn sc-yt-btn--all" data-action="rowsAll" data-key="${item.key}">Mark all received</button>` : ""}
+    </div>
     <div class="sc-item-controls">
       <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.no}">
     </div>
   </div>`;
+}
+
+const findItem = key => visibleSections(state.data).flatMap(section => section.items).find(entry => entry.key === key);
+
+// Every edit stores the full row list, so defaults become explicit once touched.
+function updateRows(key, change) {
+  const item = findItem(key);
+  if (!item) return;
+  const rows = change(yearRows(state.data, item));
+  setItem(key, { rows: rows.sort((a, b) => a.year - b.year) });
+  render();
 }
 
 // Tell the user which sections are hidden and why, so nothing looks missing.
@@ -405,28 +413,24 @@ function onClick(event) {
   const action = target.dataset.action;
   if (action === "close") closeSanctionChecklist();
   else if (action === "collateral") setField("collateral", target.dataset.value === "yes", true);
-  else if (action === "cgtmse") setField("cgtmse", target.dataset.value === "yes", true);
+  else if (action === "rented") setField("rented", target.dataset.value === "yes", true);
   else if (action === "create") createChecklist();
   else if (action === "toggleSection") {
     const id = target.dataset.section;
     if (state.collapsed.has(id)) state.collapsed.delete(id); else state.collapsed.add(id);
     render();
-  } else if (action === "part") {
-    const { key, part, value } = target.dataset;
-    const parts = { ...(state.data.items[key]?.parts || {}) };
-    if (value === "pending") delete parts[part]; else parts[part] = value;
-    setItem(key, { parts });
-    render();
-  } else if (action === "partsAll") {
-    const key = target.dataset.key;
-    const item = visibleSections(state.data).flatMap(section => section.items).find(entry => entry.key === key);
-    if (!item) return;
-    const parts = { ...(state.data.items[key]?.parts || {}) };
-    for (const part of itemParts(item, state.data.applicationDate)) {
-      if (partState(state.data, item, part.key) === "pending") parts[part.key] = "received";
-    }
-    setItem(key, { parts });
-    render();
+  } else if (action === "rowStatus") {
+    const year = Number(target.dataset.year);
+    updateRows(target.dataset.key, rows => rows.map(row => (row.year === year ? { ...row, status: target.dataset.value } : row)));
+  } else if (action === "rowDelete") {
+    const year = Number(target.dataset.year);
+    updateRows(target.dataset.key, rows => rows.filter(row => row.year !== year));
+  } else if (action === "rowAdd") {
+    const item = findItem(target.dataset.key);
+    const year = item ? nextYear(state.data, item) : null;
+    if (year != null) updateRows(target.dataset.key, rows => [...rows, { year, status: "pending" }]);
+  } else if (action === "rowsAll") {
+    updateRows(target.dataset.key, rows => rows.map(row => (row.status === "pending" ? { ...row, status: "received" } : row)));
   } else if (action === "status") {
     setItem(target.dataset.key, { status: target.dataset.value });
     render();
@@ -438,6 +442,12 @@ function onChange(event) {
   if (target.dataset.action === "pendingOnly") {
     state.pendingOnly = target.checked;
     render();
+    return;
+  }
+  if (target.dataset.yearOf) {
+    const from = Number(target.dataset.year);
+    const to = Number(target.value);
+    updateRows(target.dataset.yearOf, rows => rows.map(row => (row.year === from ? { ...row, year: to } : row)));
     return;
   }
   if (target.dataset.remark) {

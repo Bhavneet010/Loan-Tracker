@@ -1,13 +1,14 @@
 // Pre-sanction checklist for SME loans (up to ₹50 lakh).
-// Template v2: 11 split into three parts, ITR and financial statements
-// merged into one year-wise question. Item numbers are not stored: they are
-// assigned in order to the visible items (see numberSections).
+// Template v3: no application date; rented premises decides the address
+// proofs; no collateral means CGTMSE cover; ITR and balance sheet are two
+// year-wise questions whose years can be edited. Item numbers are not
+// stored: they are assigned in order to the visible items (numberSections).
 //
 // Pure data + rules, no DOM or Firestore, so it can be unit-tested. The
 // screen lives in sanction-checklist.js. Item keys are stored in Firestore,
 // so never rename or reuse a key; add new ones and bump TEMPLATE_VERSION.
 
-export const TEMPLATE_VERSION = 2;
+export const TEMPLATE_VERSION = 3;
 export const AMOUNT_WARN_LAKH = 50;
 
 export const CONSTITUTIONS = [
@@ -27,10 +28,13 @@ export const STATUSES = ["pending", "received", "na"];
 
 // Applicability rules. Each maps a borrower profile to "does this item apply".
 // `optional` items always show but may be marked N/A by the officer.
+// A loan without collateral is covered under CGTMSE, so collateral-only
+// checks (CERSAI, legal search, title, valuation) use the `collateral` rule.
 const RULES = {
   all: { label: "All", applies: () => true },
   optional: { label: "If applicable", applies: () => true, allowNA: true },
-  rented: { label: "If rented", applies: () => true, allowNA: true },
+  owned: { label: "Owned premises", applies: p => p.rented === false },
+  rented: { label: "Rented premises", applies: p => p.rented === true },
   firmOrCompany: {
     label: "Firm / Company",
     applies: p => p.constitution === "partnership" || p.constitution === "llp" || p.constitution === "company",
@@ -39,8 +43,6 @@ const RULES = {
   tl: { label: "If TL", applies: p => p.facility === "TL" || p.facility === "CCTL" },
   cc: { label: "If CC", applies: p => p.facility === "CC" || p.facility === "CCTL" },
   collateral: { label: "If collateral", applies: p => p.collateral === true },
-  // Not needed for a collateral-free loan covered under CGTMSE.
-  notCgtmseClean: { label: "Unless CGTMSE", applies: p => !(p.collateral === false && p.cgtmse === true) },
 };
 
 // Section B documents are pulled and attached by the credit officer, not
@@ -48,9 +50,10 @@ const RULES = {
 //
 // Items sharing a `group` are numbered as one question with a/b/c suffixes.
 //
-// An item with `parts` is a year-wise question: each part is Pending,
-// Received or N/A, and the question is done when no part is pending. Parts
-// are keyed by financial-year start so they survive a change of date.
+// An item with `years` is a year-wise question shown as a small table: each
+// row is a financial year with its own Pending / Received / N/A. The rows
+// start from the defaults below and the officer can change, add or delete
+// years. The question is done when no row is pending.
 export const SECTIONS = [
   {
     id: "A",
@@ -67,7 +70,8 @@ export const SECTIONS = [
       { key: "gstRegistration", rule: "all", label: "GST Registration Certificate" },
       { key: "tradeLicence", rule: "all", label: "Shop & Establishment / Trade Licence" },
       { key: "activityLicence", rule: "optional", label: "Activity-specific Licence (FSSAI / Drug / Pollution NOC etc.)" },
-      { key: "addressOwnership", group: "address", rule: "all", label: "Business Address Proof – Ownership Document / Rent Agreement" },
+      { key: "ownershipDoc", group: "address", rule: "owned", label: "Business Address Proof – Ownership Document" },
+      { key: "rentAgreement", group: "address", rule: "rented", label: "Business Address Proof – Rent Agreement" },
       { key: "landlordKyc", group: "address", rule: "rented", label: "Business Address Proof – Landlord KYC" },
       { key: "utilityBill", group: "address", rule: "all", label: "Business Address Proof – Utility Bill" },
     ],
@@ -79,9 +83,9 @@ export const SECTIONS = [
     items: [
       { key: "cicEntity", rule: "all", label: "CIC Report – Entity (Commercial CIBIL / CMR Rank)" },
       { key: "cicPromoters", rule: "all", label: "CIC Report – All Promoters & Guarantors" },
-      { key: "cersaiSearch", rule: "notCgtmseClean", label: "CERSAI Search (Property / Assets)" },
+      { key: "cersaiSearch", rule: "collateral", label: "CERSAI Search (Property / Assets)" },
       { key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
-      { key: "legalSearch", rule: "notCgtmseClean", label: "Litigation / Legal Search" },
+      { key: "legalSearch", rule: "collateral", label: "Litigation / Legal Search" },
       { key: "netWorth", rule: "all", label: "Net Worth Statement of Promoters & Guarantors" },
     ],
   },
@@ -90,7 +94,8 @@ export const SECTIONS = [
     title: "Financials",
     doneLabel: "Received",
     items: [
-      { key: "financialStatements", rule: "all", label: "ITR & Financial Statements (year-wise)", parts: financialParts },
+      { key: "itrYears", rule: "all", label: "ITR with Computation", years: "itr" },
+      { key: "balanceSheetYears", rule: "all", label: "Balance Sheet & P&L with Schedules", years: "bs" },
       { key: "gstReturns", rule: "all", label: "GST Returns (GSTR-3B & GSTR-1) – Last 12 Months" },
       { key: "bankStatements", rule: "all", label: "Bank Statements of All Accounts – Last 12 Months" },
     ],
@@ -136,115 +141,104 @@ export const SECTIONS = [
 ];
 
 // Why a whole section can be hidden, for the note under the checklist.
-export const HIDDEN_SECTION_REASONS = { D: "no Term Loan", E: "no Cash Credit", F: "no collateral" };
+export const HIDDEN_SECTION_REASONS = { D: "no Term Loan", E: "no Cash Credit", F: "no collateral – CGTMSE" };
 
 export const ALL_ITEMS = SECTIONS.flatMap(section => section.items);
 
 export const ruleLabel = rule => RULES[rule]?.label || rule;
 export const allowsNA = item => Boolean(RULES[item.rule]?.allowNA);
+export const itemLabel = item => item.label;
 
 // ── Financial years ──────────────────────────────────────────────────────
 // Indian FY runs April–March; a FY is identified by its starting year.
-// For an application dated in FY N: provisional = N, projected = N+1,
-// audited = the three completed years N-3, N-2, N-1.
+// The checklist's reference date (the day it was started) fixes the current
+// FY N: the three completed years N-3..N-1 are audited, N is provisional and
+// N+1 is projected.
 
 export function fyStartYear(dateStr) {
-  const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(dateStr || "");
+  const match = /^(\d{4})-(\d{2})-\d{2}/.exec(dateStr || "");
   if (!match) return null;
   const year = Number(match[1]);
   return Number(match[2]) >= 4 ? year : year - 1;
 }
 
-export function fyContext(dateStr) {
-  const current = fyStartYear(dateStr);
-  if (current == null) return null;
-  return {
-    audited: [current - 3, current - 2, current - 1],
-    provisional: current,
-    projected: current + 1,
-  };
+const yy = year => String(((year % 100) + 100) % 100).padStart(2, "0");
+
+export function fyLabel(startYear) {
+  return startYear == null ? "FY —" : `FY ${yy(startYear)}-${yy(startYear + 1)}`;
 }
 
-const yy = year => String(year % 100).padStart(2, "0");
+export const ayLabel = startYear => `AY ${yy(startYear + 1)}-${yy(startYear + 2)}`;
 
-export function fyLabel(startYear, withAssessmentYear = false) {
-  if (startYear == null) return "FY —";
-  const fy = `FY ${yy(startYear)}-${yy(startYear + 1)}`;
-  return withAssessmentYear ? `${fy} (AY ${yy(startYear + 1)}-${yy(startYear + 2)})` : fy;
+// Older checklists have no referenceDate; fall back to when they were made.
+export function currentFy(checklist) {
+  return fyStartYear(checklist?.referenceDate) ?? fyStartYear(checklist?.createdAt) ?? fyStartYear(new Date().toISOString());
 }
 
-export function itemLabel(item) {
-  return item.label;
+// Audited / Provisional / Projected follows from the year itself.
+export function bsStage(checklist, year) {
+  const current = currentFy(checklist);
+  if (year < current) return "Audited";
+  return year === current ? "Provisional" : "Projected";
 }
 
-// Year-wise parts of the ITR & financial statements question:
-// ITRs for the three completed years, audited statements for the same three,
-// plus provisional (current FY) and projected (next FY) statements.
-function financialParts(fy) {
-  const parts = [];
-  for (const year of fy.audited) {
-    parts.push({ key: `itr:${year}`, doc: "itr", year, stage: "Audited" });
-    parts.push({ key: `bs:${year}`, doc: "bs", year, stage: "Audited" });
-  }
-  parts.push({ key: `bs:${fy.provisional}`, doc: "bs", year: fy.provisional, stage: "Provisional" });
-  parts.push({ key: `bs:${fy.projected}`, doc: "bs", year: fy.projected, stage: "Projected" });
-  return parts;
+function yearRules(item, checklist) {
+  const current = currentFy(checklist);
+  return item.years === "itr"
+    ? { defaults: [current - 3, current - 2, current - 1], max: current - 1, min: current - 10 }
+    : { defaults: [current - 3, current - 2, current - 1, current, current + 1], max: current + 1, min: current - 10 };
 }
 
-export function itemParts(item, applicationDate) {
-  if (!item.parts) return [];
-  const fy = fyContext(applicationDate);
-  return fy ? item.parts(fy) : [];
+const normalizeStatus = value => (value === "received" || value === "na" ? value : "pending");
+
+// Rows as stored, or the default years until the officer changes anything.
+export function yearRows(checklist, item) {
+  const stored = checklist?.items?.[item.key]?.rows;
+  const rows = Array.isArray(stored)
+    ? stored.filter(row => Number.isInteger(row?.year)).map(row => ({ year: row.year, status: normalizeStatus(row.status) }))
+    : yearRules(item, checklist).defaults.map(year => ({ year, status: "pending" }));
+  return rows.sort((a, b) => a.year - b.year);
 }
 
-// Rows for the year-wise grid: one per financial year, oldest first.
-export function financialRows(item, applicationDate) {
-  const rows = new Map();
-  for (const part of itemParts(item, applicationDate)) {
-    if (!rows.has(part.year)) rows.set(part.year, { year: part.year, stage: part.stage, itr: null, bs: null });
-    rows.get(part.year)[part.doc] = part;
-  }
-  return [...rows.values()];
+// Years a row can be changed to: the allowed range minus years used by other rows.
+export function yearOptions(checklist, item, ownYear = null) {
+  const { min, max } = yearRules(item, checklist);
+  const used = new Set(yearRows(checklist, item).map(row => row.year).filter(year => year !== ownYear));
+  const options = [];
+  for (let year = max; year >= min; year -= 1) if (!used.has(year)) options.push(year);
+  return options;
 }
 
-// `true` is how template v2 first stored a ticked part.
-export function partState(checklist, item, partKey) {
-  const value = checklist?.items?.[item.key]?.parts?.[partKey];
-  if (value === "received" || value === true) return "received";
-  if (value === "na") return "na";
-  return "pending";
+// The year "+ Add year" inserts: the latest free year, or null if none left.
+export function nextYear(checklist, item) {
+  return yearOptions(checklist, item)[0] ?? null;
 }
 
-// `total` excludes N/A parts, so "done/total" reads like the main summary.
-export function partProgress(checklist, item) {
-  const parts = itemParts(item, checklist?.applicationDate);
-  let done = 0;
-  let na = 0;
-  for (const part of parts) {
-    const state = partState(checklist, item, part.key);
-    if (state === "received") done += 1;
-    else if (state === "na") na += 1;
-  }
-  return { done, na, total: parts.length - na, count: parts.length };
+// `total` excludes N/A rows, so "done/total" reads like the main summary.
+export function yearProgress(checklist, item) {
+  const rows = yearRows(checklist, item);
+  const done = rows.filter(row => row.status === "received").length;
+  const na = rows.filter(row => row.status === "na").length;
+  return { done, na, total: rows.length - na, count: rows.length };
 }
 
 // ── Profile & visibility ─────────────────────────────────────────────────
+
+const yesNo = value => (value === true ? true : value === false ? false : null);
 
 export function profileOf(checklist) {
   return {
     constitution: checklist?.constitution || "",
     facility: checklist?.facility || "",
-    collateral: checklist?.collateral === true ? true : checklist?.collateral === false ? false : null,
-    cgtmse: checklist?.cgtmse === true ? true : checklist?.cgtmse === false ? false : null,
+    collateral: yesNo(checklist?.collateral),
+    rented: yesNo(checklist?.rented),
   };
 }
 
 // The items cannot be worked out until every profile question is answered.
 export function isProfileComplete(checklist) {
   const p = profileOf(checklist);
-  if (!p.constitution || !p.facility || p.collateral === null) return false;
-  // CGTMSE cover is only asked when there is no collateral.
-  return p.collateral === true || p.cgtmse !== null;
+  return Boolean(p.constitution) && Boolean(p.facility) && p.collateral !== null && p.rented !== null;
 }
 
 export function itemApplies(item, profile) {
@@ -282,9 +276,9 @@ export function numberSections(sections) {
 // ── Status & summary ─────────────────────────────────────────────────────
 
 export function itemStatus(checklist, item) {
-  if (item.parts) {
-    const { done, total, count } = partProgress(checklist, item);
-    if (count === 0) return "pending";
+  if (item.years) {
+    const { done, total, count } = yearProgress(checklist, item);
+    if (count === 0) return "pending"; // every year deleted: still needs one
     if (total === 0) return "na";
     return done === total ? "received" : "pending";
   }
@@ -327,17 +321,17 @@ export function amountWarning(value) {
     : "";
 }
 
-export function newChecklist({ applicationDate, user } = {}) {
+export function newChecklist({ today, user } = {}) {
   const now = new Date().toISOString();
   return {
     templateVersion: TEMPLATE_VERSION,
     borrowerName: "",
     facility: "",
     amountLakh: null,
-    applicationDate: applicationDate || "",
+    referenceDate: today || now.slice(0, 10),
     constitution: "",
     collateral: null,
-    cgtmse: null,
+    rented: null,
     items: {},
     createdAt: now,
     createdBy: user || "",
