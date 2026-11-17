@@ -314,35 +314,53 @@ const SECTION_ICON = {
   G: svg('<rect x="6" y="4.5" width="12" height="16.5" rx="2.5"/><path d="M9.5 3.5h5v3h-5z"/><path d="M9 13.5l2 2 4-4"/>'),
 };
 
-// Header card: borrower, facts, progress ring and quick filters in one place.
+const initialsOf = name => (name || "?").trim().split(/\s+/).slice(0, 2).map(word => word[0] || "").join("").toUpperCase() || "?";
+
+// Header card: who the borrower is, and how far the checklist has got.
+// The Pending tile doubles as the "pending only" filter.
 function heroHtml(data, sections, editing) {
   const sum = summarize(data, sections);
   const facts = [
     facilityShort(data.facility),
     fmtLakh(data.amountLakh),
     CONSTITUTIONS.find(opt => opt.value === data.constitution)?.label || "",
-    data.collateral ? "Collateral" : "CGTMSE (no collateral)",
-    data.rented ? "Rented premises" : "Owned premises",
   ].filter(Boolean);
+  const flags = [
+    data.collateral ? "With collateral" : "CGTMSE",
+    data.rented ? "Rented premises" : "Owned premises",
+  ];
   const warning = amountWarning(data.amountLakh);
   const complete = sum.applicable > 0 && sum.pending === 0;
+  const status = complete
+    ? "All items done"
+    : `${sum.pending} ${sum.pending === 1 ? "item" : "items"} left to collect`;
   return `<div class="sc-hero${complete ? " is-complete" : ""}">
     <div class="sc-hero-top">
+      <span class="sc-hero-avatar" aria-hidden="true">${esc(initialsOf(data.borrowerName))}</span>
       <div class="sc-hero-id">
         <span class="sc-hero-name">${esc(data.borrowerName || "Unnamed borrower")}</span>
-        <span class="sc-hero-facts">${facts.map(fact => `<span>${esc(fact)}</span>`).join("")}</span>
-        ${warning ? `<span class="sc-hero-warn">&#9888; Above ₹${AMOUNT_WARN_LAKH} lakh</span>` : ""}
+        <span class="sc-hero-facts">${facts.map(esc).join('<i aria-hidden="true">•</i>')}</span>
       </div>
       ${editing ? "" : `<button type="button" class="sc-hero-icon" data-action="editDetails" aria-label="Edit borrower details" title="Edit details">${ICON.edit}</button>`}
     </div>
-    <div class="sc-hero-stats">
-      <div class="sc-ring" ${meterAttrs("ring", sum.percent)} role="img" aria-label="${sum.percent}% complete"><span>${Math.round(sum.percent)}<small>%</small></span></div>
-      <div class="sc-hero-counts">
-        <span class="sc-stat"><b>${sum.received}</b>done</span>
-        <span class="sc-stat sc-stat--pending"><b>${sum.pending}</b>pending</span>
-        ${sum.na ? `<span class="sc-stat"><b>${sum.na}</b>N/A</span>` : ""}
+    <div class="sc-hero-flags">
+      ${flags.map(flag => `<span>${esc(flag)}</span>`).join("")}
+      ${warning ? `<span class="sc-hero-warn">&#9888; Above ₹${AMOUNT_WARN_LAKH} lakh</span>` : ""}
+    </div>
+    <div class="sc-hero-panel">
+      <div class="sc-ring" ${meterAttrs("ring", sum.percent)} role="img" aria-label="${sum.percent}% complete">
+        <span><b>${Math.round(sum.percent)}</b><small>%</small></span>
       </div>
-      <button type="button" class="sc-hero-chip${state.pendingOnly ? " on" : ""}" aria-pressed="${state.pendingOnly}" aria-label="Show pending only" title="Show pending only" data-action="pendingOnly">${ICON.filter}<span>Pending only</span></button>
+      <div class="sc-hero-right">
+        <span class="sc-hero-status">${esc(status)}</span>
+        <div class="sc-hero-tiles">
+          <span class="sc-tile sc-tile--done"><b>${sum.received}</b><small>Done</small></span>
+          <button type="button" class="sc-tile sc-tile--pending${state.pendingOnly ? " on" : ""}" data-action="pendingOnly" aria-pressed="${state.pendingOnly}" aria-label="${sum.pending} pending. ${state.pendingOnly ? "Showing pending only – tap to show all" : "Tap to show pending only"}" title="${state.pendingOnly ? "Show all items" : "Show pending only"}">
+            <b>${sum.pending}</b><small>Pending ${ICON.filter}</small>
+          </button>
+          <span class="sc-tile sc-tile--na"><b>${sum.na}</b><small>N/A</small></span>
+        </div>
+      </div>
     </div>
   </div>`;
 }
