@@ -11,7 +11,7 @@ import { closeOverlay, openOverlay } from "./animate.js";
 import {
   AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
   ayLabel, bsStage, fyLabel, isProfileComplete, itemLabel, itemStatus, newChecklist, nextYear,
-  fyInput, parseAmountLakh, parseFy, ruleLabel, sectionSummary, summarize, visibleSections, yearProgress,
+  fyInput, parseAmountLakh, parseFy, sectionSummary, summarize, visibleSections, yearProgress,
   yearRows,
 } from "./sanction-checklist-model.js";
 
@@ -24,7 +24,9 @@ const state = {
   id: null,          // Firestore id; null while a new checklist is a draft
   data: null,        // checklist being edited
   pendingOnly: false,
-  collapsed: new Set(),
+  toggled: new Map(),   // section id → open/closed chosen by the officer
+  editDetails: false,
+  editingRemark: null,
   dirty: {},         // field paths waiting to be written
   saveTimer: null,
 };
@@ -172,6 +174,9 @@ function ensureOverlay() {
   overlay.addEventListener("click", onClick);
   overlay.addEventListener("change", onChange);
   overlay.addEventListener("input", onInput);
+  overlay.addEventListener("keydown", event => {
+    if (event.key === "Enter" && (event.target.dataset.remark || event.target.dataset.yearOf)) event.target.blur();
+  });
   document.body.appendChild(overlay);
   return overlay;
 }
@@ -195,7 +200,9 @@ function openSanctionChecklist(id) {
     : newChecklist({ today: todayStr(), user: S.user });
   delete state.data.id;
   state.pendingOnly = false;
-  state.collapsed = new Set();
+  state.toggled = new Map();
+  state.editDetails = false;
+  state.editingRemark = null;
   state.dirty = {};
   setSaveState("");
   render();
@@ -215,11 +222,38 @@ function render() {
   const data = state.data;
   const sections = visibleSections(data);
   const profileReady = isProfileComplete(data);
+  if (!state.id) {
+    body.innerHTML = detailsHtml(data) + createHtml(data, profileReady);
+    return;
+  }
+  const editing = state.editDetails || !profileReady;
   body.innerHTML = `
-    ${detailsHtml(data)}
-    ${!state.id ? createHtml(data, profileReady) : ""}
-    ${state.id && !profileReady ? `<div class="sc-hint">Answer constitution, facility, collateral and premises to see the checklist.</div>` : ""}
-    ${state.id && profileReady ? summaryHtml(data, sections) + sections.map(sectionHtml).join("") + hiddenNoteHtml(sections) : ""}`;
+    ${editing ? detailsHtml(data) + (profileReady ? `<button type="button" class="sc-link-btn sc-details-done" data-action="editDetails">Done editing</button>` : `<div class="sc-hint">Answer constitution, facility, collateral and premises to see the checklist.</div>`) : profileBarHtml(data)}
+    ${profileReady ? summaryHtml(data, sections) + sections.map(sectionHtml).join("") + hiddenNoteHtml(sections) : ""}`;
+  if (state.editingRemark) {
+    const input = body.querySelector(`[data-remark="${state.editingRemark}"]`);
+    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+  }
+}
+
+// Once the checklist exists, the borrower details fold into one line.
+function profileBarHtml(data) {
+  const facts = [
+    facilityShort(data.facility),
+    fmtLakh(data.amountLakh),
+    CONSTITUTIONS.find(opt => opt.value === data.constitution)?.label || "",
+    data.collateral ? "Collateral" : "No collateral (CGTMSE)",
+    data.rented ? "Rented" : "Owned premises",
+  ].filter(Boolean);
+  const warning = amountWarning(data.amountLakh);
+  return `<div class="sc-profile">
+    <div class="sc-profile-main">
+      <span class="sc-profile-name">${esc(data.borrowerName || "Unnamed borrower")}</span>
+      <span class="sc-profile-facts">${facts.map(esc).join(" · ")}</span>
+      ${warning ? `<span class="sc-profile-warn">&#9888; Above ₹${AMOUNT_WARN_LAKH} lakh</span>` : ""}
+    </div>
+    <button type="button" class="sc-link-btn" data-action="editDetails" aria-label="Edit borrower details">Edit</button>
+  </div>`;
 }
 
 function selectHtml(id, name, options, value, placeholder) {
@@ -277,83 +311,95 @@ function createHtml(data, profileReady) {
 
 function summaryHtml(data, sections) {
   const sum = summarize(data, sections);
-  return `<div class="sc-card sc-summary">
-    <div class="sc-summary-top">
-      <span class="sc-summary-pct">${sum.percent}%</span>
-      <span class="sc-summary-label">complete</span>
+  return `<div class="sc-summary">
+    <div class="sc-ring" style="--pct:${sum.percent}" role="img" aria-label="${sum.percent}% complete"><span>${Math.round(sum.percent)}%</span></div>
+    <div class="sc-summary-mid">
+      <div class="sc-counts"><span class="sc-c-received"><b>${sum.received}</b> done</span><span class="sc-c-pending"><b>${sum.pending}</b> pending</span>${sum.na ? `<span><b>${sum.na}</b> N/A</span>` : ""}</div>
+      <div class="sc-bar" aria-hidden="true"><span style="width:${sum.percent}%"></span></div>
     </div>
-    <div class="sc-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${sum.percent}" aria-label="Checklist completion"><span style="width:${sum.percent}%"></span></div>
-    <div class="sc-counts">
-      <span><b>${sum.applicable}</b> Applicable</span>
-      <span class="sc-c-received"><b>${sum.received}</b> Done</span>
-      <span class="sc-c-pending"><b>${sum.pending}</b> Pending</span>
-      ${sum.na ? `<span><b>${sum.na}</b> N/A</span>` : ""}
-    </div>
-    <label class="sc-toggle"><input type="checkbox" data-action="pendingOnly" ${state.pendingOnly ? "checked" : ""}> Show pending only</label>
+    <button type="button" class="sc-chip${state.pendingOnly ? " on" : ""}" aria-pressed="${state.pendingOnly}" data-action="pendingOnly">Pending only</button>
   </div>`;
+}
+
+// Sections open while they have pending items and fold away once complete,
+// unless the officer has opened or closed one by hand.
+function sectionOpen(section, complete) {
+  return state.toggled.has(section.id) ? state.toggled.get(section.id) : !complete;
 }
 
 function sectionHtml(section) {
   const data = state.data;
   const sum = sectionSummary(data, section);
-  const open = !state.collapsed.has(section.id);
+  const complete = sum.pending === 0;
+  const open = sectionOpen(section, complete);
   const items = state.pendingOnly
     ? section.items.filter(item => itemStatus(data, item) === "pending")
     : section.items;
-  const complete = sum.pending === 0;
-  return `<section class="sc-section">
-    <button type="button" class="sc-section-head" data-action="toggleSection" data-section="${section.id}" aria-expanded="${open}">
-      <span class="sc-chevron" aria-hidden="true">${open ? "&#9662;" : "&#9656;"}</span>
-      <span class="sc-section-title">${section.id}. ${esc(section.title)}</span>
-      <span class="sc-section-count${complete ? " done" : ""}">${complete ? "&#10003; " : ""}${sum.received}/${sum.applicable}</span>
-    </button>
+  const pct = sum.applicable ? Math.round((sum.received / sum.applicable) * 100) : 100;
+  const doneWord = (section.doneLabel || "Received").toLowerCase();
+  return `<section class="sc-section sc-section--${section.id.toLowerCase()}${complete ? " is-complete" : ""}">
+    <div class="sc-section-head">
+      <button type="button" class="sc-section-toggle" data-action="toggleSection" data-section="${section.id}" data-open="${open}" aria-expanded="${open}">
+        <span class="sc-letter" aria-hidden="true">${complete ? "&#10003;" : section.id}</span>
+        <span class="sc-section-text">
+          <span class="sc-section-title">${esc(section.title)}</span>
+          <span class="sc-section-sub">${complete ? "All done" : `Tick when ${doneWord}`}</span>
+        </span>
+        <span class="sc-section-count">${sum.received}/${sum.applicable}</span>
+        <span class="sc-chevron" aria-hidden="true">${open ? "&#9662;" : "&#9656;"}</span>
+      </button>
+      ${complete ? "" : `<button type="button" class="sc-all-btn" data-action="sectionAll" data-section="${section.id}" aria-label="Tick all pending in ${esc(section.title)}">&#10003; All</button>`}
+    </div>
+    <div class="sc-section-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
     ${open ? `<div class="sc-items">${items.length ? items.map(item => itemHtml(item, section)).join("") : `<div class="sc-empty">Nothing pending</div>`}</div>` : ""}
   </section>`;
 }
 
+function remarkHtml(item) {
+  const remark = state.data.items?.[item.key]?.remark || "";
+  if (state.editingRemark === item.key) {
+    return `<input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Add a remark" aria-label="Remark for item ${item.no}" enterkeyhint="done">`;
+  }
+  return remark ? `<button type="button" class="sc-remark-text" data-action="editRemark" data-key="${item.key}">${esc(remark)}</button>` : "";
+}
+
+function noteButton(item) {
+  const has = Boolean(state.data.items?.[item.key]?.remark) || state.editingRemark === item.key;
+  return has ? "" : `<button type="button" class="sc-icon-btn" data-action="editRemark" data-key="${item.key}" aria-label="Add remark for item ${item.no}" title="Add remark">&#9998;</button>`;
+}
+
+// One line per item: tap the tick (or the label) to mark it done; N/A only
+// where allowed; remarks open from the pencil.
 function itemHtml(item, section) {
-  const data = state.data;
   if (item.years) return yearItemHtml(item);
-  const status = itemStatus(data, item);
-  const remark = data.items?.[item.key]?.remark || "";
-  const options = [["pending", "Pending"], ["received", section.doneLabel || "Received"]];
-  if (allowsNA(item)) options.push(["na", "N/A"]);
-  const labelId = `scItem_${item.key}`;
-  return `<div class="sc-item sc-item--${status}">
-    <div class="sc-item-top">
-      <span class="sc-sr">${item.no}</span>
-      <span class="sc-item-label" id="${labelId}">${esc(itemLabel(item))}</span>
-      ${item.rule === "all" ? "" : `<span class="sc-rule">${esc(ruleLabel(item.rule))}</span>`}
+  const status = itemStatus(state.data, item);
+  const doneWord = section.doneLabel || "Received";
+  return `<div class="sc-row sc-row--${status}">
+    <span class="sc-no">${item.no}</span>
+    <div class="sc-row-main">
+      <button type="button" class="sc-row-label" data-action="toggleDone" data-key="${item.key}">${esc(itemLabel(item))}</button>
+      ${remarkHtml(item)}
     </div>
-    <div class="sc-item-controls">
-      <div class="sc-seg sc-seg--status" role="radiogroup" aria-labelledby="${labelId}">
-        ${options.map(([value, label]) => `<button type="button" role="radio" aria-checked="${status === value}" class="${status === value ? `on on--${value}` : ""}" data-action="status" data-key="${item.key}" data-value="${value}">${label}</button>`).join("")}
-      </div>
-      <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.no}">
-    </div>
+    ${noteButton(item)}
+    ${allowsNA(item) ? `<button type="button" class="sc-na${status === "na" ? " on" : ""}" aria-pressed="${status === "na"}" data-action="toggleNA" data-key="${item.key}" aria-label="Not applicable: item ${item.no}">N/A</button>` : ""}
+    <button type="button" class="sc-check${status === "received" ? " on" : ""}" aria-pressed="${status === "received"}" data-action="toggleDone" data-key="${item.key}" aria-label="${esc(doneWord)}: item ${item.no}" title="${esc(doneWord)}">&#10003;</button>
   </div>`;
 }
 
-// Year-wise question as a compact table: one row per financial year with
-// its own Pending / Received / N/A. The year is typed in; "+ Add year"
-// adds the year after the latest one.
-const ROW_OPTIONS = [["pending", "Pending"], ["received", "Received"], ["na", "N/A"]];
-
+// Year-wise question: a compact table, one line per financial year with the
+// same N/A and tick buttons. The year is typed in; "+ Add year" adds the
+// year after the latest one.
 function yearRowHtml(item, row) {
-  const data = state.data;
-  const sub = item.years === "itr" ? ayLabel(row.year) : bsStage(data, row.year);
+  const sub = item.years === "itr" ? ayLabel(row.year) : bsStage(state.data, row.year);
   return `<div class="sc-yt-row sc-yt-row--${row.status}">
-      <div class="sc-yt-year">
-        <label class="sc-yt-field"><span aria-hidden="true">FY</span>
-          <input type="text" class="sc-yt-input" inputmode="numeric" autocomplete="off" maxlength="12"
-            data-year-of="${item.key}" data-year="${row.year}" value="${esc(fyInput(row.year))}"
-            placeholder="2023-24" aria-label="Financial year, e.g. 2023-24">
-        </label>
-        <small>${esc(sub)}</small>
-      </div>
-      <div class="sc-seg sc-seg--status sc-seg--compact" role="radiogroup" aria-label="${esc(`${itemLabel(item)} ${fyLabel(row.year)}`)}">
-        ${ROW_OPTIONS.map(([option, label]) => `<button type="button" role="radio" aria-checked="${row.status === option}" class="${row.status === option ? `on on--${option}` : ""}" data-action="rowStatus" data-key="${item.key}" data-year="${row.year}" data-value="${option}">${label}</button>`).join("")}
-      </div>
+      <label class="sc-yt-field"><span aria-hidden="true">FY</span>
+        <input type="text" class="sc-yt-input" inputmode="numeric" autocomplete="off" maxlength="12"
+          data-year-of="${item.key}" data-year="${row.year}" value="${esc(fyInput(row.year))}"
+          placeholder="2023-24" aria-label="Financial year, e.g. 2023-24">
+      </label>
+      <span class="sc-yt-sub">${esc(sub)}</span>
+      <button type="button" class="sc-na${row.status === "na" ? " on" : ""}" aria-pressed="${row.status === "na"}" data-action="rowToggle" data-value="na" data-key="${item.key}" data-year="${row.year}" aria-label="Not applicable: ${esc(fyLabel(row.year))}">N/A</button>
+      <button type="button" class="sc-check sc-check--sm${row.status === "received" ? " on" : ""}" aria-pressed="${row.status === "received"}" data-action="rowToggle" data-value="received" data-key="${item.key}" data-year="${row.year}" aria-label="Received: ${esc(fyLabel(row.year))}">&#10003;</button>
       <button type="button" class="sc-yt-del" data-action="rowDelete" data-key="${item.key}" data-year="${row.year}" aria-label="Delete ${esc(fyLabel(row.year))}">&#215;</button>
     </div>`;
 }
@@ -361,26 +407,25 @@ function yearRowHtml(item, row) {
 function yearItemHtml(item) {
   const data = state.data;
   const status = itemStatus(data, item);
-  const remark = data.items?.[item.key]?.remark || "";
   const rows = yearRows(data, item);
   const { done, na, total } = yearProgress(data, item);
   const anyPending = rows.some(row => row.status === "pending");
-  const canAdd = nextYear(data, item) != null;
-  return `<div class="sc-item sc-item--${status}">
-    <div class="sc-item-top">
-      <span class="sc-sr">${item.no}</span>
-      <span class="sc-item-label">${esc(itemLabel(item))}</span>
-      <span class="sc-fin-count${rows.length && !anyPending ? " done" : ""}">${done}/${total}${na ? ` · ${na} N/A` : ""}</span>
-    </div>
-    <div class="sc-yt">
-      ${rows.length ? rows.map(row => yearRowHtml(item, row)).join("") : `<div class="sc-empty">No years – add at least one.</div>`}
-    </div>
-    <div class="sc-yt-actions">
-      ${canAdd ? `<button type="button" class="sc-yt-btn" data-action="rowAdd" data-key="${item.key}">+ Add year</button>` : ""}
-      ${anyPending ? `<button type="button" class="sc-yt-btn sc-yt-btn--all" data-action="rowsAll" data-key="${item.key}">Mark all received</button>` : ""}
-    </div>
-    <div class="sc-item-controls">
-      <input type="text" class="sc-remark" data-remark="${item.key}" value="${esc(remark)}" placeholder="Remarks" aria-label="Remarks for item ${item.no}">
+  return `<div class="sc-row sc-row--years sc-row--${status}">
+    <span class="sc-no">${item.no}</span>
+    <div class="sc-row-main">
+      <div class="sc-years-head">
+        <span class="sc-years-title">${esc(itemLabel(item))}</span>
+        <span class="sc-fin-count${rows.length && !anyPending ? " done" : ""}">${done}/${total}${na ? ` · ${na} N/A` : ""}</span>
+        ${noteButton(item)}
+      </div>
+      ${remarkHtml(item)}
+      <div class="sc-yt">
+        ${rows.length ? rows.map(row => yearRowHtml(item, row)).join("") : `<div class="sc-empty">No years – add at least one.</div>`}
+      </div>
+      <div class="sc-yt-actions">
+        <button type="button" class="sc-link-btn" data-action="rowAdd" data-key="${item.key}">+ Add year</button>
+        ${anyPending ? `<button type="button" class="sc-link-btn sc-link-btn--ok" data-action="rowsAll" data-key="${item.key}">&#10003; All years received</button>` : ""}
+      </div>
     </div>
   </div>`;
 }
@@ -416,13 +461,26 @@ function onClick(event) {
   else if (action === "collateral") setField("collateral", target.dataset.value === "yes", true);
   else if (action === "rented") setField("rented", target.dataset.value === "yes", true);
   else if (action === "create") createChecklist();
+  else if (action === "editDetails") { state.editDetails = !state.editDetails; render(); }
+  else if (action === "pendingOnly") { state.pendingOnly = !state.pendingOnly; render(); }
   else if (action === "toggleSection") {
-    const id = target.dataset.section;
-    if (state.collapsed.has(id)) state.collapsed.delete(id); else state.collapsed.add(id);
+    state.toggled.set(target.dataset.section, target.dataset.open !== "true");
     render();
-  } else if (action === "rowStatus") {
+  } else if (action === "sectionAll") {
+    markSectionDone(target.dataset.section);
+  } else if (action === "editRemark") {
+    state.editingRemark = target.dataset.key;
+    render();
+  } else if (action === "toggleDone" || action === "toggleNA") {
+    const item = findItem(target.dataset.key);
+    if (!item) return;
+    const want = action === "toggleDone" ? "received" : "na";
+    setItem(item.key, { status: itemStatus(state.data, item) === want ? "pending" : want });
+    render();
+  } else if (action === "rowToggle") {
     const year = Number(target.dataset.year);
-    updateRows(target.dataset.key, rows => rows.map(row => (row.year === year ? { ...row, status: target.dataset.value } : row)));
+    const want = target.dataset.value;
+    updateRows(target.dataset.key, rows => rows.map(row => (row.year === year ? { ...row, status: row.status === want ? "pending" : want } : row)));
   } else if (action === "rowDelete") {
     const year = Number(target.dataset.year);
     updateRows(target.dataset.key, rows => rows.filter(row => row.year !== year));
@@ -432,19 +490,36 @@ function onClick(event) {
     if (year != null) updateRows(target.dataset.key, rows => [...rows, { year, status: "pending" }]);
   } else if (action === "rowsAll") {
     updateRows(target.dataset.key, rows => rows.map(row => (row.status === "pending" ? { ...row, status: "received" } : row)));
-  } else if (action === "status") {
-    setItem(target.dataset.key, { status: target.dataset.value });
-    render();
   }
+}
+
+// "✓ All" on a section: ticks every pending item (and pending year) after a
+// confirmation, leaving N/A choices alone.
+async function markSectionDone(sectionId) {
+  const section = visibleSections(state.data).find(entry => entry.id === sectionId);
+  if (!section) return;
+  const pending = section.items.filter(item => itemStatus(state.data, item) === "pending");
+  if (!pending.length) return;
+  const word = (section.doneLabel || "Received").toLowerCase();
+  const ok = await appConfirm({
+    title: `Tick all in ${section.title}?`,
+    message: `Mark ${pending.length} pending ${pending.length === 1 ? "item" : "items"} as ${word}.`,
+    confirmLabel: "Tick all",
+  });
+  if (!ok) return;
+  for (const item of pending) {
+    if (item.years) {
+      const rows = yearRows(state.data, item).map(row => (row.status === "pending" ? { ...row, status: "received" } : row));
+      setItem(item.key, { rows });
+    } else {
+      setItem(item.key, { status: "received" });
+    }
+  }
+  render();
 }
 
 function onChange(event) {
   const target = event.target;
-  if (target.dataset.action === "pendingOnly") {
-    state.pendingOnly = target.checked;
-    render();
-    return;
-  }
   if (target.dataset.yearOf) {
     const key = target.dataset.yearOf;
     const from = Number(target.dataset.year);
@@ -457,7 +532,10 @@ function onChange(event) {
     return;
   }
   if (target.dataset.remark) {
+    // Saved without re-drawing: a redraw here would swallow the tap that
+    // moved focus away. The next redraw shows it as plain text.
     setItem(target.dataset.remark, { remark: target.value.trim() });
+    state.editingRemark = null;
     return;
   }
   const field = target.dataset.field;
