@@ -11,7 +11,7 @@ import { closeOverlay, openOverlay } from "./animate.js";
 import {
   AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
   ayLabel, bsStage, fyLabel, isProfileComplete, itemLabel, itemStatus, newChecklist, nextYear,
-  parseAmountLakh, ruleLabel, sectionSummary, summarize, visibleSections, yearOptions, yearProgress,
+  fyInput, parseAmountLakh, parseFy, ruleLabel, sectionSummary, summarize, visibleSections, yearProgress,
   yearRows,
 } from "./sanction-checklist-model.js";
 
@@ -335,19 +335,20 @@ function itemHtml(item, section) {
 }
 
 // Year-wise question as a compact table: one row per financial year with
-// its own Pending / Received / N/A. The year can be changed from the
-// dropdown or the row deleted; "+ Add year" inserts the latest free year.
+// its own Pending / Received / N/A. The year is typed in; "+ Add year"
+// adds the year after the latest one.
 const ROW_OPTIONS = [["pending", "Pending"], ["received", "Received"], ["na", "N/A"]];
 
 function yearRowHtml(item, row) {
   const data = state.data;
   const sub = item.years === "itr" ? ayLabel(row.year) : bsStage(data, row.year);
-  const selectId = `scYear_${item.key}_${row.year}`;
   return `<div class="sc-yt-row sc-yt-row--${row.status}">
       <div class="sc-yt-year">
-        <select id="${selectId}" class="sc-yt-select" data-year-of="${item.key}" data-year="${row.year}" aria-label="Financial year">
-          ${yearOptions(data, item, row.year).map(year => `<option value="${year}" ${year === row.year ? "selected" : ""}>${esc(fyLabel(year))}</option>`).join("")}
-        </select>
+        <label class="sc-yt-field"><span aria-hidden="true">FY</span>
+          <input type="text" class="sc-yt-input" inputmode="numeric" autocomplete="off" maxlength="12"
+            data-year-of="${item.key}" data-year="${row.year}" value="${esc(fyInput(row.year))}"
+            placeholder="2023-24" aria-label="Financial year, e.g. 2023-24">
+        </label>
         <small>${esc(sub)}</small>
       </div>
       <div class="sc-seg sc-seg--status sc-seg--compact" role="radiogroup" aria-label="${esc(`${itemLabel(item)} ${fyLabel(row.year)}`)}">
@@ -445,9 +446,14 @@ function onChange(event) {
     return;
   }
   if (target.dataset.yearOf) {
+    const key = target.dataset.yearOf;
     const from = Number(target.dataset.year);
-    const to = Number(target.value);
-    updateRows(target.dataset.yearOf, rows => rows.map(row => (row.year === from ? { ...row, year: to } : row)));
+    const to = parseFy(target.value);
+    const item = findItem(key);
+    if (to == null) { toast("Type the year like 2023-24"); render(); return; }
+    if (to === from) { render(); return; }
+    if (item && yearRows(state.data, item).some(row => row.year === to)) { toast(`${fyLabel(to)} is already listed`); render(); return; }
+    updateRows(key, rows => rows.map(row => (row.year === from ? { ...row, year: to } : row)));
     return;
   }
   if (target.dataset.remark) {

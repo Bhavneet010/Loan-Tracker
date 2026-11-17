@@ -52,8 +52,9 @@ const RULES = {
 //
 // An item with `years` is a year-wise question shown as a small table: each
 // row is a financial year with its own Pending / Received / N/A. The rows
-// start from the defaults below and the officer can change, add or delete
-// years. The question is done when no row is pending.
+// start from the defaults below; the officer can type a different year,
+// delete rows, and "+ Add year" continues the sequence from the latest
+// year. The question is done when no row is pending.
 export const SECTIONS = [
   {
     id: "A",
@@ -67,8 +68,8 @@ export const SECTIONS = [
       { key: "constitutionDocs", rule: "firmOrCompany", label: "Constitution Docs – Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation" },
       { key: "boardResolution", rule: "firmOrCompany", label: "Board Resolution / Partners' Authority Letter to borrow" },
       { key: "udyam", rule: "all", label: "Udyam Registration Certificate" },
-      { key: "gstRegistration", rule: "all", label: "GST Registration Certificate" },
-      { key: "tradeLicence", rule: "all", label: "Shop & Establishment / Trade Licence" },
+      { key: "gstRegistration", rule: "optional", label: "GST Registration Certificate" },
+      { key: "tradeLicence", rule: "optional", label: "Shop & Establishment / Trade Licence" },
       { key: "activityLicence", rule: "optional", label: "Activity-specific Licence (FSSAI / Drug / Pollution NOC etc.)" },
       { key: "ownershipDoc", group: "address", rule: "owned", label: "Business Address Proof – Ownership Document" },
       { key: "rentAgreement", group: "address", rule: "rented", label: "Business Address Proof – Rent Agreement" },
@@ -87,6 +88,7 @@ export const SECTIONS = [
       { key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
       { key: "legalSearch", rule: "collateral", label: "Litigation / Legal Search" },
       { key: "netWorth", rule: "all", label: "Net Worth Statement of Promoters & Guarantors" },
+      { key: "assetsLiabilities", rule: "all", label: "Assets & Liabilities Statement of Promoters & Guarantors" },
     ],
   },
   {
@@ -182,11 +184,11 @@ export function bsStage(checklist, year) {
   return year === current ? "Provisional" : "Projected";
 }
 
-function yearRules(item, checklist) {
+function defaultYears(item, checklist) {
   const current = currentFy(checklist);
   return item.years === "itr"
-    ? { defaults: [current - 3, current - 2, current - 1], max: current - 1, min: current - 10 }
-    : { defaults: [current - 3, current - 2, current - 1, current, current + 1], max: current + 1, min: current - 10 };
+    ? [current - 3, current - 2, current - 1]
+    : [current - 3, current - 2, current - 1, current, current + 1];
 }
 
 const normalizeStatus = value => (value === "received" || value === "na" ? value : "pending");
@@ -196,22 +198,35 @@ export function yearRows(checklist, item) {
   const stored = checklist?.items?.[item.key]?.rows;
   const rows = Array.isArray(stored)
     ? stored.filter(row => Number.isInteger(row?.year)).map(row => ({ year: row.year, status: normalizeStatus(row.status) }))
-    : yearRules(item, checklist).defaults.map(year => ({ year, status: "pending" }));
+    : defaultYears(item, checklist).map(year => ({ year, status: "pending" }));
   return rows.sort((a, b) => a.year - b.year);
 }
 
-// Years a row can be changed to: the allowed range minus years used by other rows.
-export function yearOptions(checklist, item, ownYear = null) {
-  const { min, max } = yearRules(item, checklist);
-  const used = new Set(yearRows(checklist, item).map(row => row.year).filter(year => year !== ownYear));
-  const options = [];
-  for (let year = max; year >= min; year -= 1) if (!used.has(year)) options.push(year);
-  return options;
+// The year "+ Add year" inserts: the one after the latest row, so added
+// years follow on in sequence. With no rows it starts from the defaults.
+export function nextYear(checklist, item) {
+  const rows = yearRows(checklist, item);
+  return rows.length ? rows[rows.length - 1].year + 1 : defaultYears(item, checklist)[0];
 }
 
-// The year "+ Add year" inserts: the latest free year, or null if none left.
-export function nextYear(checklist, item) {
-  return yearOptions(checklist, item)[0] ?? null;
+// Shown in the year box, e.g. 2023 → "2023-24".
+export const fyInput = startYear => `${startYear}-${yy(startYear + 1)}`;
+
+// Reads a typed financial year: "2023-24", "23-24", "FY 2023-2024",
+// "2023/24" or just "2023". Returns the starting year, or null if unclear.
+export function parseFy(text) {
+  const match = /^\s*(?:FY\s*)?(\d{2}|\d{4})(?:\s*[-/]\s*(\d{2}|\d{4}))?\s*$/i.exec(text || "");
+  if (!match) return null;
+  const short = Number(match[1]);
+  // Two digits: 90–99 are the 1990s, anything else this century.
+  const start = match[1].length === 4 ? short : short >= 90 ? 1900 + short : 2000 + short;
+  if (start < 1990 || start > 2100) return null;
+  if (match[2] != null) {
+    const end = Number(match[2]);
+    const ok = match[2].length === 2 ? end === (start + 1) % 100 : end === start + 1;
+    if (!ok) return null;
+  }
+  return start;
 }
 
 // `total` excludes N/A rows, so "done/total" reads like the main summary.

@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ALL_ITEMS, SECTIONS, amountWarning, ayLabel, bsStage, currentFy, fyLabel, fyStartYear,
-  isProfileComplete, itemStatus, newChecklist, nextYear, summarize, visibleSections, yearOptions,
-  yearProgress, yearRows,
+  allowsNA, fyInput, isProfileComplete, itemStatus, newChecklist, nextYear, parseFy, summarize,
+  visibleSections, yearProgress, yearRows,
 } from "../js/sanction-checklist-model.js";
 
 const profile = (overrides = {}) => ({
@@ -101,18 +101,37 @@ test("the reference date sets the financial year across the April rollover", () 
   assert.deepEqual(yearRows(newChecklist({ today: "2027-04-01" }), byKey.itrYears).map(row => row.year), [2024, 2025, 2026]);
 });
 
-test("years can be changed, added and deleted without duplicates", () => {
-  const c = withRows("itrYears", [{ year: 2024, status: "received" }, { year: 2025, status: "pending" }]);
-  // ITR years stop at the last completed FY; other rows' years are excluded.
-  const options = yearOptions(c, byKey.itrYears, 2025);
-  assert.equal(options[0], 2025);
-  assert.equal(options.includes(2024), false);
-  assert.equal(options.includes(2026), false);
-  assert.equal(nextYear(c, byKey.itrYears), 2023);
-  assert.equal(nextYear(profile(), byKey.balanceSheetYears), 2022);
+test("typed financial years are understood in the usual formats", () => {
+  for (const text of ["2023-24", "23-24", "FY 23-24", "fy2023-2024", "2023/24", " 2023 ", "23"]) {
+    assert.equal(parseFy(text), 2023, text);
+  }
+  assert.equal(parseFy("99-00"), 1999);
+  assert.equal(parseFy("09-10"), 2009);
+  for (const text of ["", "abc", "2023-25", "2023-2025", "23-2", "1800-01", "2023-24-25"]) {
+    assert.equal(parseFy(text), null, text);
+  }
+  assert.equal(fyInput(2023), "2023-24");
+  assert.equal(fyInput(1999), "1999-00");
+});
+
+test("added years follow on in sequence from the latest year", () => {
+  assert.equal(nextYear(profile(), byKey.itrYears), 2026);
+  assert.equal(nextYear(profile(), byKey.balanceSheetYears), 2028);
+  const c = withRows("itrYears", [{ year: 2019, status: "received" }, { year: 2020, status: "pending" }]);
+  assert.equal(nextYear(c, byKey.itrYears), 2021);
+  // With every row deleted it starts again from the first default year.
+  assert.equal(nextYear(withRows("itrYears", []), byKey.itrYears), 2023);
   // Stored rows are sorted and bad entries dropped.
   const messy = withRows("itrYears", [{ year: 2025, status: "x" }, { year: "bad" }, { year: 2022, status: "na" }]);
   assert.deepEqual(yearRows(messy, byKey.itrYears), [{ year: 2022, status: "na" }, { year: 2025, status: "pending" }]);
+});
+
+test("GST registration and trade licence allow N/A; assets & liabilities is a due diligence item", () => {
+  assert.equal(allowsNA(byKey.gstRegistration), true);
+  assert.equal(allowsNA(byKey.tradeLicence), true);
+  assert.equal(itemStatus(profile({ items: { gstRegistration: { status: "na" } } }), byKey.gstRegistration), "na");
+  const due = visibleSections(profile()).find(section => section.id === "B").items.map(item => item.key);
+  assert.deepEqual(due.slice(-2), ["netWorth", "assetsLiabilities"]);
 });
 
 test("a year question is done when no year is pending; all N/A or no years behave sensibly", () => {
