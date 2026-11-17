@@ -326,8 +326,8 @@ function heroHtml(data, sections, editing) {
     CONSTITUTIONS.find(opt => opt.value === data.constitution)?.label || "",
   ].filter(Boolean);
   const flags = [
-    data.collateral ? "With collateral" : "CGTMSE",
-    data.rented ? "Rented premises" : "Owned premises",
+    { text: data.collateral ? "With collateral" : "CGTMSE", tone: "mint" },
+    { text: data.rented ? "Rented premises" : "Owned premises", tone: "sky" },
   ];
   const warning = amountWarning(data.amountLakh);
   const complete = sum.applicable > 0 && sum.pending === 0;
@@ -344,7 +344,7 @@ function heroHtml(data, sections, editing) {
       ${editing ? "" : `<button type="button" class="sc-hero-icon" data-action="editDetails" aria-label="Edit borrower details" title="Edit details">${ICON.edit}</button>`}
     </div>
     <div class="sc-hero-flags">
-      ${flags.map(flag => `<span>${esc(flag)}</span>`).join("")}
+      ${flags.map(flag => `<span class="sc-flag sc-flag--${flag.tone}">${esc(flag.text)}</span>`).join("")}
       ${warning ? `<span class="sc-hero-warn">&#9888; Above ₹${AMOUNT_WARN_LAKH} lakh</span>` : ""}
     </div>
     <div class="sc-hero-panel">
