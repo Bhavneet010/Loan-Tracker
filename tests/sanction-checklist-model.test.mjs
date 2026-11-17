@@ -131,7 +131,8 @@ test("GST registration and trade licence allow N/A; assets & liabilities is a du
   assert.equal(allowsNA(byKey.tradeLicence), true);
   assert.equal(itemStatus(profile({ items: { gstRegistration: { status: "na" } } }), byKey.gstRegistration), "na");
   const due = visibleSections(profile()).find(section => section.id === "B").items.map(item => item.key);
-  assert.deepEqual(due.slice(-2), ["netWorth", "assetsLiabilities"]);
+  assert.equal(due.at(-1), "assetsLiabilities");
+  assert.equal(byKey.netWorth, undefined);
 });
 
 test("a year question is done when no year is pending; all N/A or no years behave sensibly", () => {

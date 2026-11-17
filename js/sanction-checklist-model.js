@@ -87,7 +87,6 @@ export const SECTIONS = [
       { key: "cersaiSearch", rule: "collateral", label: "CERSAI Search (Property / Assets)" },
       { key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
       { key: "legalSearch", rule: "collateral", label: "Litigation / Legal Search" },
-      { key: "netWorth", rule: "all", label: "Net Worth Statement of Promoters & Guarantors" },
       { key: "assetsLiabilities", rule: "all", label: "Assets & Liabilities Statement of Promoters & Guarantors" },
     ],
   },
