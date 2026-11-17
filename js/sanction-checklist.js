@@ -1,4 +1,4 @@
-// Pre-sanction checklist (Beta) — standalone admin tool opened from the
+// Pre-sanction checklist — standalone admin tool opened from the
 // admin menu (user pill dropdown). Loaded lazily; it does not read or
 // write loans. Checklists are stored in the `sanctionChecklists` collection.
 import {
@@ -27,7 +27,8 @@ const state = {
   toggled: new Map(),   // section id → open/closed chosen by the officer
   editDetails: false,
   editingRemark: null,
-  justToggled: null,    // "key" or "key:year" of the last tick, to animate just that one
+  justToggled: null,
+  meters: new Map(),    // last drawn percentage per bar, for animating changes    // "key" or "key:year" of the last tick, to animate just that one
   dirty: {},         // field paths waiting to be written
   saveTimer: null,
 };
@@ -68,7 +69,6 @@ function ensureListOverlay() {
       <div class="sheet-handle"></div>
       <div class="sc-head">
         <h2 id="scListTitle">Pre-Sanction Checklists</h2>
-        <span class="sc-beta">Beta</span>
         <button type="button" class="sc-close" aria-label="Close checklists" onclick="closeChecklistList()">&#215;</button>
       </div>
       <div class="sc-intro">For SME loans up to ₹${AMOUNT_WARN_LAKH} lakh.</div>
@@ -166,8 +166,7 @@ function ensureOverlay() {
       <div class="sheet-handle"></div>
       <div class="sc-head">
         <h2 id="scTitle">Pre-Sanction Checklist</h2>
-        <span class="sc-beta">Beta</span>
-        <span class="sc-save" id="scSaveState" aria-live="polite"></span>
+        <span class="sc-save" id="scSaveState" data-state="" role="status" aria-live="polite"><span class="sc-sr-only"></span></span>
         <button type="button" class="sc-close" aria-label="Close checklist" data-action="close">&#215;</button>
       </div>
       <div id="scBody"></div>
@@ -204,6 +203,7 @@ function openSanctionChecklist(id) {
   state.toggled = new Map();
   state.editDetails = false;
   state.editingRemark = null;
+  state.meters = new Map();
   state.dirty = {};
   setSaveState("");
   render();
@@ -232,6 +232,7 @@ function render() {
     ${editing ? detailsHtml(data) + (profileReady ? `<button type="button" class="sc-pill-btn sc-details-done" data-action="editDetails">Done editing</button>` : `<div class="sc-hint">Answer constitution, facility, collateral and premises to see the checklist.</div>`) : ""}
     ${profileReady ? heroHtml(data, sections, editing) + sections.map(sectionHtml).join("") + hiddenNoteHtml(sections) : ""}`;
   state.justToggled = null;
+  animateMeters(body);
   if (state.editingRemark) {
     const input = body.querySelector(`[data-remark="${state.editingRemark}"]`);
     if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
@@ -335,7 +336,7 @@ function heroHtml(data, sections, editing) {
       ${editing ? "" : `<button type="button" class="sc-hero-icon" data-action="editDetails" aria-label="Edit borrower details" title="Edit details">${ICON.edit}</button>`}
     </div>
     <div class="sc-hero-stats">
-      <div class="sc-ring" style="--pct:${sum.percent}" role="img" aria-label="${sum.percent}% complete"><span>${Math.round(sum.percent)}<small>%</small></span></div>
+      <div class="sc-ring" ${meterAttrs("ring", sum.percent)} role="img" aria-label="${sum.percent}% complete"><span>${Math.round(sum.percent)}<small>%</small></span></div>
       <div class="sc-hero-counts">
         <span class="sc-stat"><b>${sum.received}</b>done</span>
         <span class="sc-stat sc-stat--pending"><b>${sum.pending}</b>pending</span>
@@ -346,35 +347,50 @@ function heroHtml(data, sections, editing) {
   </div>`;
 }
 
-// Sections open while they have pending items and fold away once complete,
-// unless the officer has opened or closed one by hand.
-function sectionOpen(section, complete) {
-  return state.toggled.has(section.id) ? state.toggled.get(section.id) : !complete;
+// Every section starts closed; the officer opens the ones being worked on.
+function sectionOpen(section) {
+  return state.toggled.get(section.id) === true;
+}
+
+// Progress bars and the ring animate from their last value to the new one:
+// they are drawn at the old value and moved to the new one after the redraw
+// (see animateMeters). Opening the checklist animates them up from zero.
+function meterAttrs(key, pct) {
+  const from = state.meters.has(key) ? state.meters.get(key) : 0;
+  state.meters.set(key, pct);
+  return `data-meter-to="${pct}" style="--from:${from};--to:${pct}"`;
+}
+
+function animateMeters(root) {
+  const meters = root.querySelectorAll("[data-meter-to]");
+  if (!meters.length) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    meters.forEach(el => el.classList.add("is-set"));
+  }));
 }
 
 function sectionHtml(section) {
   const data = state.data;
   const sum = sectionSummary(data, section);
   const complete = sum.pending === 0;
-  const open = sectionOpen(section, complete);
+  const open = sectionOpen(section);
   const items = state.pendingOnly
     ? section.items.filter(item => itemStatus(data, item) === "pending")
     : section.items;
   const pct = sum.applicable ? Math.round((sum.received / sum.applicable) * 100) : 100;
   const doneWord = (section.doneLabel || "Received").toLowerCase();
   return `<section class="sc-section sc-section--${section.id.toLowerCase()}${complete ? " is-complete" : ""}${open ? " is-open" : ""}">
-    <div class="sc-section-head">
-      <button type="button" class="sc-section-toggle" data-action="toggleSection" data-section="${section.id}" data-open="${open}" aria-expanded="${open}">
-        <span class="sc-section-icon" aria-hidden="true">${complete ? ICON.check : SECTION_ICON[section.id] || section.id}</span>
-        <span class="sc-section-text">
-          <span class="sc-section-title"><span class="sc-section-letter">${section.id}</span>${esc(section.title)}</span>
-          <span class="sc-section-meter" aria-hidden="true"><span style="width:${pct}%"></span></span>
-          <span class="sc-section-sub">${complete ? "All done" : `${sum.received} of ${sum.applicable} ${doneWord}`}</span>
+    <button type="button" class="sc-section-head" data-action="toggleSection" data-section="${section.id}" data-open="${open}" aria-expanded="${open}">
+      <span class="sc-section-icon" aria-hidden="true">${complete ? ICON.check : SECTION_ICON[section.id] || section.id}</span>
+      <span class="sc-section-text">
+        <span class="sc-section-title"><span class="sc-section-letter">${section.id}</span><span class="sc-section-name">${esc(section.title)}</span></span>
+        <span class="sc-section-progress">
+          <span class="sc-section-meter" aria-hidden="true"><span class="sc-meter-fill" ${meterAttrs(`s:${section.id}`, pct)}></span></span>
+          <span class="sc-section-count" aria-label="${sum.received} of ${sum.applicable} ${doneWord}">${complete ? "Done" : `${sum.received}/${sum.applicable}`}</span>
         </span>
-        ${ICON.chevron}
-      </button>
-      ${complete ? "" : `<button type="button" class="sc-all-btn" data-action="sectionAll" data-section="${section.id}" aria-label="Tick all pending in ${esc(section.title)}" title="Tick all pending">${ICON.checks}<span>All</span></button>`}
-    </div>
+      </span>
+      ${ICON.chevron}
+    </button>
     ${open ? `<div class="sc-items">${items.length ? items.map(item => itemHtml(item, section)).join("") : `<div class="sc-empty">Nothing pending here</div>`}</div>` : ""}
   </section>`;
 }
@@ -503,8 +519,6 @@ function onClick(event) {
   else if (action === "toggleSection") {
     state.toggled.set(target.dataset.section, target.dataset.open !== "true");
     render();
-  } else if (action === "sectionAll") {
-    markSectionDone(target.dataset.section);
   } else if (action === "editRemark") {
     state.editingRemark = target.dataset.key;
     render();
@@ -531,31 +545,6 @@ function onClick(event) {
   } else if (action === "rowsAll") {
     updateRows(target.dataset.key, rows => rows.map(row => (row.status === "pending" ? { ...row, status: "received" } : row)));
   }
-}
-
-// "✓ All" on a section: ticks every pending item (and pending year) after a
-// confirmation, leaving N/A choices alone.
-async function markSectionDone(sectionId) {
-  const section = visibleSections(state.data).find(entry => entry.id === sectionId);
-  if (!section) return;
-  const pending = section.items.filter(item => itemStatus(state.data, item) === "pending");
-  if (!pending.length) return;
-  const word = (section.doneLabel || "Received").toLowerCase();
-  const ok = await appConfirm({
-    title: `Tick all in ${section.title}?`,
-    message: `Mark ${pending.length} pending ${pending.length === 1 ? "item" : "items"} as ${word}.`,
-    confirmLabel: "Tick all",
-  });
-  if (!ok) return;
-  for (const item of pending) {
-    if (item.years) {
-      const rows = yearRows(state.data, item).map(row => (row.status === "pending" ? { ...row, status: "received" } : row));
-      setItem(item.key, { rows });
-    } else {
-      setItem(item.key, { status: "received" });
-    }
-  }
-  render();
 }
 
 function onChange(event) {
@@ -613,9 +602,14 @@ function setItem(key, patch) {
 
 // ── Persistence ──────────────────────────────────────────────────────────
 
+// A fixed-size icon (spinner / tick / warning), so the header never changes
+// size while saving – which used to push the whole list up and down.
 function setSaveState(text) {
   const el = document.getElementById("scSaveState");
-  if (el) el.textContent = text;
+  if (!el) return;
+  el.dataset.state = text === "Saving…" ? "saving" : text === "Saved" ? "saved" : text ? "error" : "";
+  el.title = text;
+  el.firstElementChild.textContent = text;
 }
 
 function queueSave(fields) {

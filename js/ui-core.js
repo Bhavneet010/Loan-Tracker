@@ -114,7 +114,7 @@ window.toggleUserMenu = function () {
     menu.innerHTML = `
       ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();handleSettings()">&#9881; Settings</button>` : ''}
       ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();showOnlineOverlay()">&#128101; Who\'s Online</button>` : ''}
-      ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();openChecklistList()">&#128203; Checklist <span class="udrop-beta">Beta</span></button>` : ''}
+      ${S.isAdmin ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();openChecklistList()">&#128203; Checklist</button>` : ''}
       ${!S.isAdmin && S.user ? `<button class="udrop-item" role="menuitem" onclick="closeUserMenu();openPhotoOverlay()">&#128247; My Photo</button>` : ''}
       <button class="udrop-item" role="menuitem" id="themeToggleBtn" onclick="cycleTheme()">${_themeLabel()}</button>
       <button class="udrop-item" role="menuitem" onclick="closeUserMenu();showUserSelect()">&#128100; Change officer</button>`;
