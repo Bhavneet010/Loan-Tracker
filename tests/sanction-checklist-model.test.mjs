@@ -100,13 +100,21 @@ test("constitution documents and authority to borrow follow the constitution", (
 
 test("no collateral (CGTMSE) hides CERSAI, legal search and the whole collateral section", () => {
   const without = visibleKeys(profile({ collateral: false }));
-  for (const key of ["cersaiSearch", "legalSearch", "titleSearch", "valuation", "cgtmse"]) {
+  for (const key of ["cersaiSearch", "legalSearch", "titleSearch", "valuation"]) {
     assert.equal(without.includes(key), false, key);
   }
   const withCollateral = visibleKeys(profile({ collateral: true }));
-  for (const key of ["cersaiSearch", "legalSearch", "titleSearch", "valuation", "cgtmse"]) {
+  for (const key of ["cersaiSearch", "legalSearch", "titleSearch", "valuation"]) {
     assert.equal(withCollateral.includes(key), true, key);
   }
+});
+
+test("with collateral, the security section asks for CERSAI instead of CGTMSE", () => {
+  assert.equal(byKey.cgtmse, undefined);
+  const security = visibleSections(profile({ collateral: true })).find(section => section.id === "F");
+  assert.deepEqual(security.items.map(item => item.key), ["titleSearch", "valuation", "cersaiSearch"]);
+  const dueDiligence = visibleSections(profile({ collateral: true })).find(section => section.id === "B");
+  assert.equal(dueDiligence.items.some(item => item.key === "cersaiSearch"), false);
 });
 
 test("facility decides the TL and CC sections; collateral decides section F", () => {
