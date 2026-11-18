@@ -109,14 +109,11 @@ test("no collateral (CGTMSE) hides CERSAI, legal search and the whole collateral
   }
 });
 
-test("with collateral, the security section holds title, legal search, two valuations and CERSAI", () => {
+test("with collateral, the security section holds title, legal search, valuation and CERSAI", () => {
   assert.equal(byKey.cgtmse, undefined);
   const security = visibleSections(profile({ collateral: true })).find(section => section.id === "F");
-  assert.deepEqual(security.items.map(item => item.key), ["titleSearch", "legalSearch", "valuation", "valuation2", "cersaiSearch"]);
-  // The two valuation reports share one number: e.g. 23a and 23b.
-  const [v1, v2] = security.items.filter(item => item.group === "valuation").map(item => item.no);
-  assert.match(v1, /^\d+a$/);
-  assert.equal(v2, v1.replace("a", "b"));
+  assert.deepEqual(security.items.map(item => item.key), ["titleSearch", "legalSearch", "valuation", "cersaiSearch"]);
+  assert.equal(security.items.find(item => item.key === "valuation").label, "Valuation Report (Approved Valuer)");
   const dueDiligence = visibleSections(profile({ collateral: true })).find(section => section.id === "B");
   assert.equal(dueDiligence.items.some(item => ["cersaiSearch", "legalSearch"].includes(item.key)), false);
 });
@@ -145,7 +142,7 @@ test("visible items are numbered one after another with no gaps", () => {
   // Distinct base numbers run 1, 2, 3 … with no gaps; lettered items share one.
   const bases = [...new Set(nos.map(no => Number.parseInt(no, 10)))];
   assert.deepEqual(bases, bases.map((_, i) => i + 1));
-  assert.equal(nos.filter(no => /b$/.test(no)).length, 2); // 11b and the second valuation
+  assert.deepEqual(nos.filter(no => /[a-z]$/.test(no)), ["11a", "11b", "11c"]);
 });
 
 test("ITR and balance sheet are separate questions with default years", () => {
