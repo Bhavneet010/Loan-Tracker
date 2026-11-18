@@ -54,7 +54,7 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
   COLS.remark = CW - COLS.no - COLS.label - COLS.status;
   const X = { no: M, label: M + COLS.no, status: M + COLS.no + COLS.label };
   X.remark = X.status + COLS.status;
-  const BOTTOM = H - 16;
+  const BOTTOM = H - 14;
   let y = M;
 
   const text = (value, x, ty, opts) => doc.text(clean(value), x, ty, opts);
@@ -62,13 +62,13 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
 
   const tableHeader = () => {
     doc.setFillColor(...INDIGO);
-    doc.rect(M, y, CW, 7.5, "F");
+    doc.rect(M, y, CW, 6.8, "F");
     setFont("bold", 9, [255, 255, 255]);
-    text("No.", X.no + 1.5, y + 5.1);
-    text("Particular", X.label + 1.5, y + 5.1);
-    text("Status", X.status + COLS.status / 2, y + 5.1, { align: "center" });
-    text("Remarks", X.remark + 1.5, y + 5.1);
-    y += 7.5;
+    text("No.", X.no + 1.5, y + 4.7);
+    text("Particular", X.label + 1.5, y + 4.7);
+    text("Status", X.status + COLS.status / 2, y + 4.7, { align: "center" });
+    text("Remarks", X.remark + 1.5, y + 4.7);
+    y += 6.8;
   };
   let currentSection = null;
   const newPage = () => {
@@ -81,10 +81,10 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
 
   // ── Title band: the title alone, centred ──
   doc.setFillColor(...INDIGO);
-  doc.roundedRect(M, y, CW, 18, 2.5, 2.5, "F");
-  setFont("bold", 20, [255, 255, 255]);
-  text("Pre-Sanction Checklist", W / 2, y + 11.8, { align: "center" });
-  y += 23;
+  doc.roundedRect(M, y, CW, 14, 2.5, 2.5, "F");
+  setFont("bold", 18, [255, 255, 255]);
+  text("Pre-Sanction Checklist", W / 2, y + 9.4, { align: "center" });
+  y += 17;
 
   // ── Borrower details ──
   const constitution = CONSTITUTIONS.find(opt => opt.value === checklist.constitution)?.label || "-";
@@ -97,7 +97,7 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
     ["Premises", checklist.rented ? "Rented" : "Owned"],
   ];
   const half = CW / 2;
-  const boxH = Math.ceil(details.length / 2) * 7 + 4;
+  const boxH = Math.ceil(details.length / 2) * 6.2 + 3;
   doc.setDrawColor(...LINE);
   doc.setFillColor(248, 247, 253);
   doc.roundedRect(M, y, CW, boxH, 2, 2, "FD");
@@ -105,13 +105,13 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
     const col = index % 2;
     const row = Math.floor(index / 2);
     const bx = M + 4 + col * half;
-    const by = y + 6.8 + row * 7;
+    const by = y + 6 + row * 6.2;
     setFont("normal", 9, MUTED);
     text(label, bx, by);
     setFont("bold", 10, INK);
     text(doc.splitTextToSize(clean(value), half - 32)[0], bx + 26, by);
   });
-  y += boxH + 4;
+  y += boxH + 3;
 
   // ── Summary tiles ──
   const s = report.summary;
@@ -125,44 +125,44 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
   tiles.forEach(([label, value, rgb], index) => {
     const tx = M + index * (tileW + 3);
     doc.setFillColor(...tint(rgb, 0.1));
-    doc.roundedRect(tx, y, tileW, 13, 2, 2, "F");
-    setFont("bold", 15, rgb);
+    doc.roundedRect(tx, y, tileW, 10.5, 2, 2, "F");
+    setFont("bold", 14, rgb);
     const valueWidth = doc.getTextWidth(String(value));
-    text(String(value), tx + 4, y + 8.6);
+    text(String(value), tx + 4, y + 7.3);
     setFont("bold", 8, MUTED);
-    text(label.toUpperCase(), tx + 4 + valueWidth + 2.5, y + 8.2);
+    text(label.toUpperCase(), tx + 4 + valueWidth + 2.5, y + 6.9);
   });
-  y += 13;
+  y += 10.5;
   // Overall progress bar
   doc.setFillColor(...tint(INDIGO, 0.12));
-  doc.roundedRect(M, y + 3, CW, 2.2, 1.1, 1.1, "F");
+  doc.roundedRect(M, y + 2.5, CW, 2, 1, 1, "F");
   if (s.percent > 0) {
     doc.setFillColor(...INDIGO);
-    doc.roundedRect(M, y + 3, Math.max(2.2, (CW * s.percent) / 100), 2.2, 1.1, 1.1, "F");
+    doc.roundedRect(M, y + 2.5, Math.max(2, (CW * s.percent) / 100), 2, 1, 1, "F");
   }
-  y += 9;
+  y += 7.5;
 
   // ── Sections ──
   function sectionBand(section, continued = false) {
     const rgb = SECTION_RGB[section.id] || INDIGO;
-    ensure(8 + 9.5);
+    ensure(7 + 8.4);
     doc.setFillColor(...tint(rgb, 0.14));
-    doc.rect(M, y, CW, 8, "F");
+    doc.rect(M, y, CW, 7, "F");
     doc.setFillColor(...rgb);
-    doc.rect(M, y, 1.6, 8, "F");
+    doc.rect(M, y, 1.6, 7, "F");
     setFont("bold", 10, rgb);
-    text(`${section.id}.`, M + 4, y + 5.5);
+    text(`${section.id}.`, M + 4, y + 4.9);
     setFont("bold", 10, INK);
-    text(`${section.title}${continued ? " (continued)" : ""}`, M + 11, y + 5.5);
+    text(`${section.title}${continued ? " (continued)" : ""}`, M + 11, y + 4.9);
     setFont("bold", 9, rgb);
-    text(`${section.received}/${section.applicable} ${section.doneLabel.toLowerCase()}`, M + CW - 3, y + 5.5, { align: "right" });
-    y += 8;
+    text(`${section.received}/${section.applicable} ${section.doneLabel.toLowerCase()}`, M + CW - 3, y + 4.9, { align: "right" });
+    y += 7;
   }
 
   const statusCell = (status, label, ty, rowH) => {
     const pillW = COLS.status - 4;
     doc.setFillColor(...(STATUS_FILL[status] || STATUS_FILL.pending));
-    doc.roundedRect(X.status + 2, ty + (rowH - 5.6) / 2, pillW, 5.6, 2.8, 2.8, "F");
+    doc.roundedRect(X.status + 2, ty + (rowH - 5.2) / 2, pillW, 5.2, 2.6, 2.6, "F");
     setFont("bold", 8.5, STATUS_RGB[status] || STATUS_RGB.pending);
     text(label, X.status + 2 + pillW / 2, ty + rowH / 2 + 1.5, { align: "center" });
   };
@@ -175,19 +175,22 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
 
   tableHeader();
   for (const section of report.sections) {
-    currentSection = section;
+    // Set after drawing the band: if the band itself moves to a new page,
+    // it must not also be repeated there as "(continued)".
+    currentSection = null;
     sectionBand(section);
+    currentSection = section;
     for (const row of section.rows) {
-      const LH = 4.3; // line height for 9.5pt text
+      const LH = 4; // line height for 9.5pt text
       setFont("normal", 9.5, INK);
       const labelLines = doc.splitTextToSize(clean(row.label), COLS.label - 3);
       setFont("italic", 9, MUTED);
       const remarkLines = row.remark ? doc.splitTextToSize(clean(row.remark), COLS.remark - 4) : [];
       // Rows leave room for a hand-written remark when none was typed.
-      const rowH = Math.max(remarkLines.length ? 8.5 : 10, 3.6 + Math.max(labelLines.length, remarkLines.length || 1) * LH);
+      const rowH = Math.max(8.4, 3 + Math.max(labelLines.length, remarkLines.length || 1) * LH);
       ensure(rowH);
       // Centre the label block in the row, like the status pill beside it.
-      const labelY = y + (rowH - labelLines.length * LH) / 2 + 3.2;
+      const labelY = y + (rowH - labelLines.length * LH) / 2 + 3;
       setFont("bold", 9, SECTION_RGB[section.id] || INDIGO);
       text(row.no, X.no + 1.5, labelY);
       setFont(row.years ? "bold" : "normal", 9.5, row.status === "na" ? MUTED : INK);
@@ -195,29 +198,29 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
       statusCell(row.status, row.statusLabel, y, rowH);
       if (remarkLines.length) {
         setFont("italic", 9, MUTED);
-        doc.text(remarkLines, X.remark + 2, y + (rowH - remarkLines.length * LH) / 2 + 3.1);
+        doc.text(remarkLines, X.remark + 2, y + (rowH - remarkLines.length * LH) / 2 + 2.9);
       } else {
         // Empty outline so a remark can be written on the printout.
         doc.setDrawColor(175, 170, 205);
         doc.setLineWidth(0.25);
-        doc.roundedRect(X.remark + 1.5, y + (rowH - 7.4) / 2, COLS.remark - 3, 7.4, 3.7, 3.7, "S");
+        doc.roundedRect(X.remark + 1.5, y + (rowH - 6.6) / 2, COLS.remark - 3, 6.6, 3.3, 3.3, "S");
       }
       y += rowH;
       for (const entry of row.years || []) {
-        ensure(7);
+        ensure(5.8);
         setFont("normal", 9, entry.status === "na" ? MUTED : INK);
-        text(`-  ${entry.label}`, X.label + 5, y + 4.7);
-        statusCell(entry.status, entry.statusLabel, y, 7);
-        y += 7;
+        text(`-  ${entry.label}`, X.label + 5, y + 4);
+        statusCell(entry.status, entry.statusLabel, y, 5.8);
+        y += 5.8;
       }
       if (!row.years?.length && row.years) {
         setFont("italic", 9, MUTED);
-        text("No years listed", X.label + 5, y + 4.7);
-        y += 7;
+        text("No years listed", X.label + 5, y + 4);
+        y += 5.8;
       }
       rowLine(y);
     }
-    y += 2;
+    y += 1.5;
   }
   currentSection = null;
 
@@ -235,8 +238,8 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
   for (let page = 1; page <= pages; page += 1) {
     doc.setPage(page);
     setFont("normal", 8, MUTED);
-    text(`${checklist.borrowerName || "Borrower"} - Pre-Sanction Checklist${user ? ` - exported by ${user}` : ""}`, M, H - 7);
-    text(`Page ${page} of ${pages}`, M + CW, H - 7, { align: "right" });
+    text(`${checklist.borrowerName || "Borrower"} - Pre-Sanction Checklist${user ? ` - exported by ${user}` : ""}`, M, H - 6);
+    text(`Page ${page} of ${pages}`, M + CW, H - 6, { align: "right" });
   }
   return doc;
 }
