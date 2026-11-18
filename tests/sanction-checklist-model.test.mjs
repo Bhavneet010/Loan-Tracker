@@ -62,6 +62,17 @@ test("photo and PAN/Aadhaar questions name only the people the constitution has"
   assert.equal(report.sections[0].rows.find(row => row.label.startsWith("Photographs")).label, "Photographs of Directors & Guarantors");
 });
 
+test("CIC and assets & liabilities questions name the constitution's people", () => {
+  const labels = constitution => {
+    const items = visibleSections(profile({ constitution }))[1].items;
+    return [items.find(item => item.key === "cicPromoters").label, items.find(item => item.key === "assetsLiabilities").label];
+  };
+  assert.deepEqual(labels("proprietorship"), ["CIC Report – Proprietor & Guarantors", "Assets & Liabilities Statement of Proprietor & Guarantors"]);
+  assert.deepEqual(labels("partnership"), ["CIC Report – Partners & Guarantors", "Assets & Liabilities Statement of Partners & Guarantors"]);
+  assert.equal(labels("llp")[0], "CIC Report – Designated Partners & Guarantors");
+  assert.equal(labels("company")[1], "Assets & Liabilities Statement of Directors & Guarantors");
+});
+
 test("constitution documents and authority to borrow follow the constitution", () => {
   const labels = constitution => {
     const items = visibleSections(profile({ constitution }))[0].items;

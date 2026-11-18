@@ -85,11 +85,11 @@ export const SECTIONS = [
     doneLabel: "Attached",
     items: [
       { key: "cicEntity", rule: "all", label: "CIC Report – Entity (Commercial CIBIL / CMR Rank)" },
-      { key: "cicPromoters", rule: "all", label: "CIC Report – All Promoters & Guarantors" },
+      { key: "cicPromoters", rule: "all", label: p => `CIC Report – ${peopleFor(p)}` },
       { key: "cersaiSearch", rule: "collateral", label: "CERSAI Search (Property / Assets)" },
       { key: "mca21", rule: "company", label: "MCA21 Check (Directors, Charges)" },
       { key: "legalSearch", rule: "collateral", label: "Litigation / Legal Search" },
-      { key: "assetsLiabilities", rule: "all", label: "Assets & Liabilities Statement of Promoters & Guarantors" },
+      { key: "assetsLiabilities", rule: "all", label: p => `Assets & Liabilities Statement of ${peopleFor(p)}` },
     ],
   },
   {
