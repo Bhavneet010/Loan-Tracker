@@ -109,12 +109,16 @@ test("no collateral (CGTMSE) hides CERSAI, legal search and the whole collateral
   }
 });
 
-test("with collateral, the security section asks for CERSAI instead of CGTMSE", () => {
+test("with collateral, the security section holds title, legal search, two valuations and CERSAI", () => {
   assert.equal(byKey.cgtmse, undefined);
   const security = visibleSections(profile({ collateral: true })).find(section => section.id === "F");
-  assert.deepEqual(security.items.map(item => item.key), ["titleSearch", "valuation", "cersaiSearch"]);
+  assert.deepEqual(security.items.map(item => item.key), ["titleSearch", "legalSearch", "valuation", "valuation2", "cersaiSearch"]);
+  // The two valuation reports share one number: e.g. 23a and 23b.
+  const [v1, v2] = security.items.filter(item => item.group === "valuation").map(item => item.no);
+  assert.match(v1, /^\d+a$/);
+  assert.equal(v2, v1.replace("a", "b"));
   const dueDiligence = visibleSections(profile({ collateral: true })).find(section => section.id === "B");
-  assert.equal(dueDiligence.items.some(item => item.key === "cersaiSearch"), false);
+  assert.equal(dueDiligence.items.some(item => ["cersaiSearch", "legalSearch"].includes(item.key)), false);
 });
 
 test("facility decides the TL and CC sections; collateral decides section F", () => {
@@ -138,8 +142,10 @@ test("constitution decides entity PAN, firm/company and MCA21 items", () => {
 test("visible items are numbered one after another with no gaps", () => {
   const nos = visibleNos(profile({ constitution: "company", facility: "CCTL", collateral: true, rented: true }));
   assert.deepEqual(nos.slice(9, 14), ["10", "11a", "11b", "11c", "12"]);
-  const plain = nos.filter(no => /^\d+$/.test(no)).map(Number);
-  assert.deepEqual(plain, plain.map((_, i) => (i < 10 ? i + 1 : i + 2)));
+  // Distinct base numbers run 1, 2, 3 … with no gaps; lettered items share one.
+  const bases = [...new Set(nos.map(no => Number.parseInt(no, 10)))];
+  assert.deepEqual(bases, bases.map((_, i) => i + 1));
+  assert.equal(nos.filter(no => /b$/.test(no)).length, 2); // 11b and the second valuation
 });
 
 test("ITR and balance sheet are separate questions with default years", () => {
