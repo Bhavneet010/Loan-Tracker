@@ -98,24 +98,25 @@ test("constitution documents and authority to borrow follow the constitution", (
   assert.deepEqual(labels("proprietorship"), [undefined, undefined]);
 });
 
-test("no collateral (CGTMSE) hides CERSAI, legal search and the whole collateral section", () => {
+test("no collateral (CGTMSE) hides CERSAI and the whole collateral section", () => {
   const without = visibleKeys(profile({ collateral: false }));
-  for (const key of ["cersaiSearch", "legalSearch", "titleSearch", "valuation"]) {
+  for (const key of ["cersaiSearch", "titleSearch", "valuation"]) {
     assert.equal(without.includes(key), false, key);
   }
   const withCollateral = visibleKeys(profile({ collateral: true }));
-  for (const key of ["cersaiSearch", "legalSearch", "titleSearch", "valuation"]) {
+  for (const key of ["cersaiSearch", "titleSearch", "valuation"]) {
     assert.equal(withCollateral.includes(key), true, key);
   }
 });
 
-test("with collateral, the security section holds title, legal search, valuation and CERSAI", () => {
+test("with collateral, the security section holds title search, valuation and CERSAI", () => {
   assert.equal(byKey.cgtmse, undefined);
   const security = visibleSections(profile({ collateral: true })).find(section => section.id === "F");
-  assert.deepEqual(security.items.map(item => item.key), ["titleSearch", "legalSearch", "valuation", "cersaiSearch"]);
+  assert.deepEqual(security.items.map(item => item.key), ["titleSearch", "valuation", "cersaiSearch"]);
+  assert.equal(byKey.legalSearch, undefined); // litigation / legal search removed
   assert.equal(security.items.find(item => item.key === "valuation").label, "Valuation Report (Approved Valuer)");
   const dueDiligence = visibleSections(profile({ collateral: true })).find(section => section.id === "B");
-  assert.equal(dueDiligence.items.some(item => ["cersaiSearch", "legalSearch"].includes(item.key)), false);
+  assert.equal(dueDiligence.items.some(item => item.key === "cersaiSearch"), false);
 });
 
 test("facility decides the TL and CC sections; collateral decides section F", () => {

@@ -128,7 +128,6 @@ export const SECTIONS = [
     doneLabel: "Received",
     items: [
       { key: "titleSearch", rule: "collateral", label: "Title Search Report (Legal Opinion)" },
-      { key: "legalSearch", rule: "collateral", label: "Litigation / Legal Search" },
       { key: "valuation", rule: "collateral", label: "Valuation Report (Approved Valuer)" },
       // With collateral there is no CGTMSE cover, so the security section
       // asks for the CERSAI check instead (the key is kept so earlier ticks
