@@ -62,6 +62,17 @@ test("photo and PAN/Aadhaar questions name only the people the constitution has"
   assert.equal(report.sections[0].rows.find(row => row.label.startsWith("Photographs")).label, "Photographs of Directors & Guarantors");
 });
 
+test("constitution documents and authority to borrow follow the constitution", () => {
+  const labels = constitution => {
+    const items = visibleSections(profile({ constitution }))[0].items;
+    return [items.find(item => item.key === "constitutionDocs")?.label, items.find(item => item.key === "boardResolution")?.label];
+  };
+  assert.deepEqual(labels("partnership"), ["Constitution Docs – Partnership Deed", "Partners' Authority Letter to borrow"]);
+  assert.deepEqual(labels("llp"), ["Constitution Docs – LLP Agreement & Certificate of Incorporation", "Partners' Resolution / Authority Letter to borrow"]);
+  assert.deepEqual(labels("company"), ["Constitution Docs – MOA, AOA & Certificate of Incorporation", "Board Resolution to borrow"]);
+  assert.deepEqual(labels("proprietorship"), [undefined, undefined]);
+});
+
 test("no collateral (CGTMSE) hides CERSAI, legal search and the whole collateral section", () => {
   const without = visibleKeys(profile({ collateral: false }));
   for (const key of ["cersaiSearch", "legalSearch", "titleSearch", "valuation", "cgtmse"]) {

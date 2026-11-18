@@ -80,10 +80,10 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
 
   // ── Title band: the title alone, centred ──
   doc.setFillColor(...INDIGO);
-  doc.roundedRect(M, y, CW, 12, 2, 2, "F");
-  setFont("bold", 14, [255, 255, 255]);
-  text("Pre-Sanction Checklist", W / 2, y + 8, { align: "center" });
-  y += 17;
+  doc.roundedRect(M, y, CW, 18, 2.5, 2.5, "F");
+  setFont("bold", 20, [255, 255, 255]);
+  text("Pre-Sanction Checklist", W / 2, y + 11.8, { align: "center" });
+  y += 23;
 
   // ── Borrower details ──
   const constitution = CONSTITUTIONS.find(opt => opt.value === checklist.constitution)?.label || "-";

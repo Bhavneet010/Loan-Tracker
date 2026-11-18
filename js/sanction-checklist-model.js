@@ -68,8 +68,8 @@ export const SECTIONS = [
       { key: "photographs", rule: "all", label: p => `Photographs of ${peopleFor(p)}` },
       { key: "panEntity", rule: "firmOrCompany", label: "PAN of Entity" },
       { key: "panAadhaarPromoters", rule: "all", label: p => `PAN & Aadhaar of ${peopleFor(p)} (self-attested & OSV)` },
-      { key: "constitutionDocs", rule: "firmOrCompany", label: "Constitution Docs – Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation" },
-      { key: "boardResolution", rule: "firmOrCompany", label: "Board Resolution / Partners' Authority Letter to borrow" },
+      { key: "constitutionDocs", rule: "firmOrCompany", label: p => `Constitution Docs – ${constitutionDocsFor(p)}` },
+      { key: "boardResolution", rule: "firmOrCompany", label: p => authorityToBorrowFor(p) },
       { key: "udyam", rule: "all", label: "Udyam Registration Certificate" },
       { key: "gstRegistration", rule: "optional", label: "GST Registration Certificate" },
       { key: "tradeLicence", rule: "optional", label: "Shop & Establishment / Trade Licence" },
@@ -159,6 +159,24 @@ const PEOPLE = {
 };
 export function peopleFor(profile) {
   return PEOPLE[profile?.constitution] || "Proprietor / Partners / Directors & Guarantors";
+}
+
+// Constitution documents and the authority to borrow, by constitution.
+const CONSTITUTION_DOCS = {
+  partnership: "Partnership Deed",
+  llp: "LLP Agreement & Certificate of Incorporation",
+  company: "MOA, AOA & Certificate of Incorporation",
+};
+const AUTHORITY_TO_BORROW = {
+  partnership: "Partners' Authority Letter to borrow",
+  llp: "Partners' Resolution / Authority Letter to borrow",
+  company: "Board Resolution to borrow",
+};
+export function constitutionDocsFor(profile) {
+  return CONSTITUTION_DOCS[profile?.constitution] || "Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation";
+}
+export function authorityToBorrowFor(profile) {
+  return AUTHORITY_TO_BORROW[profile?.constitution] || "Board Resolution / Partners' Authority Letter to borrow";
 }
 
 // Labels are resolved for the profile by visibleSections; this also copes
