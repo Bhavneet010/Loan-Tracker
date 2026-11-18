@@ -103,8 +103,6 @@ export function drawChecklistPdf(doc, checklist, { today, user } = {}) {
     ["Constitution", constitution],
     ["Collateral", checklist.collateral ? "Offered" : "None - covered under CGTMSE"],
     ["Premises", checklist.rented ? "Rented" : "Owned"],
-    ["Started on", fmtDate(checklist.referenceDate || checklist.createdAt)],
-    ["Last updated", `${fmtDate(checklist.updatedAt)}${checklist.updatedBy ? ` by ${checklist.updatedBy}` : ""}`],
   ];
   const half = CW / 2;
   const boxH = Math.ceil(details.length / 2) * 6 + 4;
@@ -192,16 +190,24 @@ export function drawChecklistPdf(doc, checklist, { today, user } = {}) {
       const labelLines = doc.splitTextToSize(clean(row.label), COLS.label - 3);
       setFont("italic", 7.5, MUTED);
       const remarkLines = row.remark ? doc.splitTextToSize(clean(row.remark), COLS.remark - 3) : [];
-      const rowH = Math.max(7, 3 + Math.max(labelLines.length, remarkLines.length || 1) * 3.6);
+      // Rows leave room for a hand-written remark when none was typed.
+      const rowH = Math.max(remarkLines.length ? 7 : 8.4, 3 + Math.max(labelLines.length, remarkLines.length || 1) * 3.6);
       ensure(rowH);
+      // Centre the label block in the row, like the status pill beside it.
+      const labelY = y + (rowH - labelLines.length * 3.6) / 2 + 2.7;
       setFont("bold", 7.5, SECTION_RGB[section.id] || INDIGO);
-      text(row.no, X.no + 1.5, y + 4.6);
+      text(row.no, X.no + 1.5, labelY);
       setFont(row.years ? "bold" : "normal", 8, row.status === "na" ? MUTED : INK);
-      doc.text(labelLines, X.label + 1.5, y + 4.6);
+      doc.text(labelLines, X.label + 1.5, labelY);
       statusCell(row.status, row.statusLabel, y, rowH);
       if (remarkLines.length) {
         setFont("italic", 7.5, MUTED);
         doc.text(remarkLines, X.remark + 1.5, y + 4.6);
+      } else {
+        // Empty outline so a remark can be written on the printout.
+        doc.setDrawColor(175, 170, 205);
+        doc.setLineWidth(0.25);
+        doc.roundedRect(X.remark + 1.5, y + (rowH - 6.2) / 2, COLS.remark - 3, 6.2, 3.1, 3.1, "S");
       }
       y += rowH;
       for (const entry of row.years || []) {

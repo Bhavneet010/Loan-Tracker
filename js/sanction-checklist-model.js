@@ -33,7 +33,6 @@ export const STATUSES = ["pending", "received", "na"];
 const RULES = {
   all: { label: "All", applies: () => true },
   optional: { label: "If applicable", applies: () => true, allowNA: true },
-  owned: { label: "Owned premises", applies: p => p.rented === false },
   rented: { label: "Rented premises", applies: p => p.rented === true },
   firmOrCompany: {
     label: "Firm / Company",
@@ -49,6 +48,10 @@ const RULES = {
 // received from the borrower, so its "done" state reads "Attached".
 //
 // Items sharing a `group` are numbered as one question with a/b/c suffixes.
+// For owned premises the utility bill alone is the address proof.
+//
+// A `label` may be a function of the profile, so questions about people
+// name only those the constitution has (see peopleFor).
 //
 // An item with `years` is a year-wise question shown as a small table: each
 // row is a financial year with its own Pending / Received / N/A. The rows
@@ -62,16 +65,15 @@ export const SECTIONS = [
     doneLabel: "Received",
     items: [
       { key: "loanApplication", rule: "all", label: "Loan Application Form (duly filled & signed)" },
-      { key: "photographs", rule: "all", label: "Photographs of Proprietor / Partners / Directors / Guarantors" },
+      { key: "photographs", rule: "all", label: p => `Photographs of ${peopleFor(p)}` },
       { key: "panEntity", rule: "firmOrCompany", label: "PAN of Entity" },
-      { key: "panAadhaarPromoters", rule: "all", label: "PAN & Aadhaar of Proprietor / Partners / Directors / Guarantors (self-attested & OSV)" },
+      { key: "panAadhaarPromoters", rule: "all", label: p => `PAN & Aadhaar of ${peopleFor(p)} (self-attested & OSV)` },
       { key: "constitutionDocs", rule: "firmOrCompany", label: "Constitution Docs – Partnership Deed / LLP Agreement / MOA-AOA & Cert. of Incorporation" },
       { key: "boardResolution", rule: "firmOrCompany", label: "Board Resolution / Partners' Authority Letter to borrow" },
       { key: "udyam", rule: "all", label: "Udyam Registration Certificate" },
       { key: "gstRegistration", rule: "optional", label: "GST Registration Certificate" },
       { key: "tradeLicence", rule: "optional", label: "Shop & Establishment / Trade Licence" },
       { key: "activityLicence", rule: "optional", label: "Activity-specific Licence (FSSAI / Drug / Pollution NOC etc.)" },
-      { key: "ownershipDoc", group: "address", rule: "owned", label: "Business Address Proof – Ownership Document" },
       { key: "rentAgreement", group: "address", rule: "rented", label: "Business Address Proof – Rent Agreement" },
       { key: "landlordKyc", group: "address", rule: "rented", label: "Business Address Proof – Landlord KYC" },
       { key: "utilityBill", group: "address", rule: "all", label: "Business Address Proof – Utility Bill" },
@@ -148,7 +150,20 @@ export const ALL_ITEMS = SECTIONS.flatMap(section => section.items);
 
 export const ruleLabel = rule => RULES[rule]?.label || rule;
 export const allowsNA = item => Boolean(RULES[item.rule]?.allowNA);
-export const itemLabel = item => item.label;
+// Who the KYC questions are about, by constitution.
+const PEOPLE = {
+  proprietorship: "Proprietor & Guarantors",
+  partnership: "Partners & Guarantors",
+  llp: "Designated Partners & Guarantors",
+  company: "Directors & Guarantors",
+};
+export function peopleFor(profile) {
+  return PEOPLE[profile?.constitution] || "Proprietor / Partners / Directors & Guarantors";
+}
+
+// Labels are resolved for the profile by visibleSections; this also copes
+// with a raw template item.
+export const itemLabel = (item, profile) => (typeof item.label === "function" ? item.label(profile || {}) : item.label);
 
 // ── Financial years ──────────────────────────────────────────────────────
 // Indian FY runs April–March; a FY is identified by its starting year.
@@ -265,7 +280,12 @@ export function visibleSections(checklist) {
   if (!isProfileComplete(checklist)) return [];
   const profile = profileOf(checklist);
   return numberSections(SECTIONS
-    .map(section => ({ ...section, items: section.items.filter(item => itemApplies(item, profile)) }))
+    .map(section => ({
+      ...section,
+      items: section.items
+        .filter(item => itemApplies(item, profile))
+        .map(item => ({ ...item, label: itemLabel(item, profile) })),
+    }))
     .filter(section => section.items.length > 0));
 }
 

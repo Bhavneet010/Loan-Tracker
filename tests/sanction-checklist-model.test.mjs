@@ -39,12 +39,27 @@ test("nothing shows until constitution, facility, collateral and premises are an
 test("rented premises decides the address proofs", () => {
   const address = checklist => visibleSections(checklist)[0].items.filter(item => item.group === "address");
   const owned = address(profile({ rented: false }));
-  assert.deepEqual(owned.map(item => item.key), ["ownershipDoc", "utilityBill"]);
+  // Owned premises: the utility bill alone is the address proof.
+  assert.deepEqual(owned.map(item => item.key), ["utilityBill"]);
   const rented = address(profile({ rented: true }));
   assert.deepEqual(rented.map(item => item.key), ["rentAgreement", "landlordKyc", "utilityBill"]);
   // Proprietorship: 7 single items first, so the address group is 8.
-  assert.deepEqual(owned.map(item => item.no), ["8a", "8b"]);
+  assert.deepEqual(owned.map(item => item.no), ["8"]);
   assert.deepEqual(rented.map(item => item.no), ["8a", "8b", "8c"]);
+});
+
+test("photo and PAN/Aadhaar questions name only the people the constitution has", () => {
+  const labels = constitution => {
+    const items = visibleSections(profile({ constitution }))[0].items;
+    return [items.find(item => item.key === "photographs").label, items.find(item => item.key === "panAadhaarPromoters").label];
+  };
+  assert.deepEqual(labels("proprietorship"), ["Photographs of Proprietor & Guarantors", "PAN & Aadhaar of Proprietor & Guarantors (self-attested & OSV)"]);
+  assert.equal(labels("partnership")[0], "Photographs of Partners & Guarantors");
+  assert.equal(labels("llp")[1], "PAN & Aadhaar of Designated Partners & Guarantors (self-attested & OSV)");
+  assert.equal(labels("company")[0], "Photographs of Directors & Guarantors");
+  // The PDF report uses the same wording.
+  const report = checklistReport(profile({ constitution: "company" }));
+  assert.equal(report.sections[0].rows.find(row => row.label.startsWith("Photographs")).label, "Photographs of Directors & Guarantors");
 });
 
 test("no collateral (CGTMSE) hides CERSAI, legal search and the whole collateral section", () => {
@@ -162,7 +177,7 @@ test("summary counts done, pending and N/A over visible items only", () => {
   });
   const sum = summarize(checklist);
   const visible = visibleKeys(checklist).length;
-  assert.equal(visible, ALL_ITEMS.length - 1); // only the owned-premises proof is hidden
+  assert.equal(visible, ALL_ITEMS.length); // company + CC/TL + collateral + rented: everything applies
   assert.equal(sum.na, 1);
   assert.equal(sum.applicable, visible - 1);
   assert.equal(sum.received, 2);
@@ -196,6 +211,7 @@ test("the PDF report lists only applicable items with their status words and yea
   assert.deepEqual(report.hidden.map(entry => entry.id), ["E", "F"]);
   const [a, b, c] = report.sections;
   assert.deepEqual(a.rows[0], { no: "1", label: byKey.loanApplication.label, status: "received", statusLabel: "Received", remark: "Signed copy on file" });
+  assert.equal(a.rows.some(row => typeof row.label !== "string"), false);
   assert.equal(a.rows.find(row => row.label.includes("Activity")).statusLabel, "N/A");
   assert.equal(b.rows[0].statusLabel, "Attached");
   assert.equal(b.rows[1].statusLabel, "Pending");
