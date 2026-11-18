@@ -78,6 +78,10 @@ test("GST returns are hidden while the GST certificate is marked N/A", () => {
   assert.equal(has(profile()), true);
   assert.equal(has(profile({ items: { gstRegistration: { status: "received" } } })), true);
   assert.equal(has(profile({ items: { gstRegistration: { status: "na" } } })), false);
+  // The PDF report follows the same rule.
+  const rowsIn = checklist => checklistReport(checklist).sections.flatMap(section => section.rows.map(row => row.label));
+  assert.equal(rowsIn(profile()).some(label => label.startsWith("GST Returns")), true);
+  assert.equal(rowsIn(profile({ items: { gstRegistration: { status: "na" } } })).some(label => label.startsWith("GST Returns")), false);
   // A tick on GST returns made earlier stops counting while hidden.
   const hidden = profile({ items: { gstRegistration: { status: "na" }, gstReturns: { status: "received" } } });
   assert.equal(summarize(hidden).received, 0);
