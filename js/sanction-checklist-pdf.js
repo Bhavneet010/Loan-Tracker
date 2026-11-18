@@ -231,18 +231,6 @@ export function drawChecklistPdf(doc, checklist, { today, user } = {}) {
     y += 4 + lines.length * 3.4;
   }
 
-  // ── Sign-off ──
-  ensure(26);
-  y += 14;
-  doc.setDrawColor(...MUTED);
-  doc.setLineWidth(0.3);
-  const sigW = 60;
-  [[M, "Prepared by (Credit Officer)"], [M + CW - sigW, "Verified by (Branch Manager)"]].forEach(([sx, label]) => {
-    doc.line(sx, y, sx + sigW, y);
-    setFont("normal", 7.5, MUTED);
-    text(label, sx, y + 4);
-  });
-
   // ── Footer on every page ──
   const pages = doc.getNumberOfPages();
   for (let page = 1; page <= pages; page += 1) {
