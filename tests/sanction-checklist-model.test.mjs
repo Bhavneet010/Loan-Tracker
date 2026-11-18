@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ALL_ITEMS, SECTIONS, amountWarning, ayLabel, bsStage, currentFy, fyLabel, fyStartYear,
-  allowsNA, fyInput, isProfileComplete, itemStatus, newChecklist, nextYear, parseFy, summarize,
+  allowsNA, checklistReport, fyInput, isProfileComplete, itemStatus, newChecklist, nextYear, parseFy, summarize,
   visibleSections, yearProgress, yearRows,
 } from "../js/sanction-checklist-model.js";
 
@@ -177,4 +177,36 @@ test("amounts above ₹50 lakh warn but are allowed", () => {
   assert.equal(amountWarning(50), "");
   assert.equal(amountWarning(""), "");
   assert.match(amountWarning("50.01"), /above ₹50 lakh/);
+});
+
+test("the PDF report lists only applicable items with their status words and years", () => {
+  const checklist = profile({
+    facility: "TL",
+    collateral: false,
+    rented: true,
+    items: {
+      loanApplication: { status: "received", remark: "Signed copy on file" },
+      activityLicence: { status: "na" },
+      cicEntity: { status: "received" },
+      itrYears: { rows: [{ year: 2023, status: "received" }, { year: 2024, status: "na" }, { year: 2025, status: "pending" }] },
+    },
+  });
+  const report = checklistReport(checklist);
+  assert.deepEqual(report.sections.map(section => section.id), ["A", "B", "C", "D", "G"]);
+  assert.deepEqual(report.hidden.map(entry => entry.id), ["E", "F"]);
+  const [a, b, c] = report.sections;
+  assert.deepEqual(a.rows[0], { no: "1", label: byKey.loanApplication.label, status: "received", statusLabel: "Received", remark: "Signed copy on file" });
+  assert.equal(a.rows.find(row => row.label.includes("Activity")).statusLabel, "N/A");
+  assert.equal(b.rows[0].statusLabel, "Attached");
+  assert.equal(b.rows[1].statusLabel, "Pending");
+  const itr = c.rows.find(row => row.years && row.label.startsWith("ITR"));
+  assert.equal(itr.statusLabel, "1/2");
+  assert.deepEqual(itr.years.map(entry => [entry.label, entry.statusLabel]), [
+    ["FY 23-24 (AY 24-25)", "Received"],
+    ["FY 24-25 (AY 25-26)", "N/A"],
+    ["FY 25-26 (AY 26-27)", "Pending"],
+  ]);
+  const bs = c.rows.find(row => row.years && row.label.startsWith("Balance"));
+  assert.equal(bs.years.at(-1).label, "FY 27-28 – Projected");
+  assert.equal(report.summary.received, 2); // ITR still has a pending year
 });

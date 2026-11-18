@@ -353,3 +353,52 @@ export function newChecklist({ today, user } = {}) {
     updatedBy: user || "",
   };
 }
+
+// ── Report (what the PDF export prints) ──────────────────────────────────
+// Only the items that apply are listed, in the same order and numbering as
+// on screen. Year-wise questions carry one line per financial year.
+
+const STATUS_WORD = { received: null, pending: "Pending", na: "N/A" };
+
+export function checklistReport(checklist) {
+  const sections = visibleSections(checklist);
+  const shown = new Set(sections.map(section => section.id));
+  return {
+    summary: summarize(checklist, sections),
+    hidden: Object.keys(HIDDEN_SECTION_REASONS)
+      .filter(id => !shown.has(id))
+      .map(id => ({ id, title: SECTIONS.find(section => section.id === id).title, reason: HIDDEN_SECTION_REASONS[id] })),
+    sections: sections.map(section => {
+      const doneLabel = section.doneLabel || "Received";
+      const word = status => STATUS_WORD[status] || doneLabel;
+      const sum = sectionSummary(checklist, section);
+      return {
+        id: section.id,
+        title: section.title,
+        doneLabel,
+        received: sum.received,
+        applicable: sum.applicable,
+        rows: section.items.map(item => {
+          const status = itemStatus(checklist, item);
+          const row = {
+            no: item.no,
+            label: item.label,
+            status,
+            statusLabel: word(status),
+            remark: checklist?.items?.[item.key]?.remark || "",
+          };
+          if (item.years) {
+            const progress = yearProgress(checklist, item);
+            row.statusLabel = status === "pending" ? `${progress.done}/${progress.total}` : word(status);
+            row.years = yearRows(checklist, item).map(entry => ({
+              label: `${fyLabel(entry.year)}${item.years === "itr" ? ` (${ayLabel(entry.year)})` : ` – ${bsStage(checklist, entry.year)}`}`,
+              status: entry.status,
+              statusLabel: word(entry.status),
+            }));
+          }
+          return row;
+        }),
+      };
+    }),
+  };
+}

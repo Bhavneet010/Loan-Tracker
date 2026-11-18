@@ -37,6 +37,19 @@
 }
 .sc-save[data-state="error"]{background:var(--red-bg);}
 .sc-save[data-state="error"]::before{content:"!";font-weight:800;font-size:13px;color:var(--red);}
+.sc-pdf-btn{
+  flex:none;height:36px;padding:0 12px 0 10px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+  font:inherit;font-size:var(--fs-sm);font-weight:800;letter-spacing:0.3px;border-radius:var(--radius-sm);
+  border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.1);color:#4F46C8;
+  transition:background var(--dur-fast),transform var(--dur-fast);
+}
+.sc-pdf-btn[hidden]{display:none;}
+.sc-pdf-btn .sc-ico{width:16px;height:16px;}
+.sc-pdf-btn:hover{background:rgba(99,102,241,0.18);}
+.sc-pdf-btn:active{transform:scale(0.96);}
+.sc-pdf-btn:disabled{opacity:0.6;cursor:progress;}
+.sc-pdf-btn:focus-visible{outline:2px solid var(--p2);outline-offset:2px;}
+body.dark .sc-pdf-btn{color:#C7C0FF;background:rgba(155,143,228,0.16);border-color:rgba(155,143,228,0.35);}
 .sc-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 @keyframes scSpin{to{transform:rotate(360deg);}}
 .sc-close{

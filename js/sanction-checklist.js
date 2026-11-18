@@ -167,6 +167,9 @@ function ensureOverlay() {
       <div class="sc-head">
         <h2 id="scTitle">Pre-Sanction Checklist</h2>
         <span class="sc-save" id="scSaveState" data-state="" role="status" aria-live="polite"><span class="sc-sr-only"></span></span>
+        <button type="button" class="sc-pdf-btn" id="scPdfBtn" data-action="exportPdf" hidden aria-label="Export checklist as PDF" title="Export PDF">
+          <svg class="sc-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg><span>PDF</span>
+        </button>
         <button type="button" class="sc-close" aria-label="Close checklist" data-action="close">&#215;</button>
       </div>
       <div id="scBody"></div>
@@ -223,10 +226,13 @@ function render() {
   const data = state.data;
   const sections = visibleSections(data);
   const profileReady = isProfileComplete(data);
+  const pdfBtn = document.getElementById("scPdfBtn");
   if (!state.id) {
+    if (pdfBtn) pdfBtn.hidden = true;
     body.innerHTML = detailsHtml(data) + createHtml(data, profileReady);
     return;
   }
+  if (pdfBtn) pdfBtn.hidden = !profileReady;
   const editing = state.editDetails || !profileReady;
   body.innerHTML = `
     ${editing ? detailsHtml(data) + (profileReady ? `<button type="button" class="sc-pill-btn sc-details-done" data-action="editDetails">Done editing</button>` : `<div class="sc-hint">Answer constitution, facility, collateral and premises to see the checklist.</div>`) : ""}
@@ -529,6 +535,7 @@ function onClick(event) {
   if (!target) return;
   const action = target.dataset.action;
   if (action === "close") closeSanctionChecklist();
+  else if (action === "exportPdf") exportPdf(target);
   else if (action === "collateral") setField("collateral", target.dataset.value === "yes", true);
   else if (action === "rented") setField("rented", target.dataset.value === "yes", true);
   else if (action === "create") createChecklist();
@@ -616,6 +623,26 @@ function setItem(key, patch) {
   if (!next.status) next.status = "pending";
   state.data.items = { ...state.data.items, [key]: next };
   queueSave({ [`items.${key}`]: next });
+}
+
+// ── PDF export ───────────────────────────────────────────────────────────
+
+async function exportPdf(button) {
+  if (button.disabled || !state.id) return;
+  flushSave();
+  button.disabled = true;
+  button.classList.add("is-busy");
+  toast("Preparing PDF…");
+  try {
+    const { exportChecklistPdf } = await import("./sanction-checklist-pdf.js");
+    await exportChecklistPdf(structuredClone(state.data), { today: todayStr(), user: S.user || "" });
+  } catch (error) {
+    console.error("[Checklist] PDF export failed", error);
+    toast("Could not create the PDF. Check the connection and try again.");
+  } finally {
+    button.disabled = false;
+    button.classList.remove("is-busy");
+  }
 }
 
 // ── Persistence ──────────────────────────────────────────────────────────
