@@ -73,6 +73,16 @@ test("CIC and assets & liabilities questions name the constitution's people", ()
   assert.equal(labels("company")[1], "Assets & Liabilities Statement of Directors & Guarantors");
 });
 
+test("GST returns are hidden while the GST certificate is marked N/A", () => {
+  const has = checklist => visibleKeys(checklist).includes("gstReturns");
+  assert.equal(has(profile()), true);
+  assert.equal(has(profile({ items: { gstRegistration: { status: "received" } } })), true);
+  assert.equal(has(profile({ items: { gstRegistration: { status: "na" } } })), false);
+  // A tick on GST returns made earlier stops counting while hidden.
+  const hidden = profile({ items: { gstRegistration: { status: "na" }, gstReturns: { status: "received" } } });
+  assert.equal(summarize(hidden).received, 0);
+});
+
 test("constitution documents and authority to borrow follow the constitution", () => {
   const labels = constitution => {
     const items = visibleSections(profile({ constitution }))[0].items;

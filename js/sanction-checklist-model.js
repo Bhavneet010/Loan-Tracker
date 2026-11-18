@@ -42,6 +42,8 @@ const RULES = {
   tl: { label: "If TL", applies: p => p.facility === "TL" || p.facility === "CCTL" },
   cc: { label: "If CC", applies: p => p.facility === "CC" || p.facility === "CCTL" },
   collateral: { label: "If collateral", applies: p => p.collateral === true },
+  // GST returns only make sense if the borrower is GST-registered.
+  gstRegistered: { label: "If GST registered", applies: p => p.gstNA !== true },
 };
 
 // Section B documents are pulled and attached by the credit officer, not
@@ -99,7 +101,7 @@ export const SECTIONS = [
     items: [
       { key: "itrYears", rule: "all", label: "ITR with Computation", years: "itr" },
       { key: "balanceSheetYears", rule: "all", label: "Balance Sheet & P&L with Schedules", years: "bs" },
-      { key: "gstReturns", rule: "all", label: "GST Returns (GSTR-3B & GSTR-1) – Last 12 Months" },
+      { key: "gstReturns", rule: "gstRegistered", label: "GST Returns (GSTR-3B & GSTR-1) – Last 12 Months" },
       { key: "bankStatements", rule: "all", label: "Bank Statements of All Accounts – Last 12 Months" },
     ],
   },
@@ -279,6 +281,8 @@ export function profileOf(checklist) {
     facility: checklist?.facility || "",
     collateral: yesNo(checklist?.collateral),
     rented: yesNo(checklist?.rented),
+    // An answer inside the checklist that hides another question.
+    gstNA: checklist?.items?.gstRegistration?.status === "na",
   };
 }
 
