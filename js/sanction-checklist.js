@@ -27,6 +27,7 @@ const state = {
   toggled: new Map(),   // section id → open/closed chosen by the officer
   editDetails: false,
   editingRemark: null,
+  focusRemark: false,   // focus the remark box once, right after the pencil is tapped
   justToggled: null,
   meters: new Map(),    // last drawn percentage per bar, for animating changes    // "key" or "key:year" of the last tick, to animate just that one
   dirty: {},         // field paths waiting to be written
@@ -178,7 +179,22 @@ function ensureOverlay() {
   overlay.addEventListener("change", onChange);
   overlay.addEventListener("input", onInput);
   overlay.addEventListener("keydown", event => {
-    if (event.key === "Enter" && (event.target.dataset.remark || event.target.dataset.yearOf)) event.target.blur();
+    const field = event.target.dataset;
+    if (event.key === "Enter" && (field.remark || field.yearOf)) event.target.blur();
+    // Escape in a remark box just closes the box, not the whole checklist.
+    if (event.key === "Escape" && field.remark) {
+      event.stopPropagation();
+      event.target.blur();
+    }
+  });
+  // Leaving a remark box always ends the edit, even if nothing was typed
+  // (an unchanged box fires no "change"), so later redraws don't re-focus it
+  // and pop the keyboard up again.
+  overlay.addEventListener("focusout", event => {
+    if (event.target.dataset?.remark && state.editingRemark === event.target.dataset.remark) {
+      state.editingRemark = null;
+      state.focusRemark = false;
+    }
   });
   document.body.appendChild(overlay);
   return overlay;
@@ -186,7 +202,8 @@ function ensureOverlay() {
 
 // Escape closes the top sheet: the open checklist first, then the list.
 document.addEventListener("keydown", event => {
-  if (event.key !== "Escape" || document.querySelector(".confirm-overlay")) return;
+  if (event.key !== "Escape" || event.defaultPrevented || document.querySelector(".confirm-overlay")) return;
+  if (event.target?.dataset?.remark) return;
   if (isOpen(OVERLAY_ID)) closeSanctionChecklist();
   else if (isOpen(LIST_ID)) closeChecklistList();
 });
@@ -206,6 +223,7 @@ function openSanctionChecklist(id) {
   state.toggled = new Map();
   state.editDetails = false;
   state.editingRemark = null;
+  state.focusRemark = false;
   state.meters = new Map();
   state.dirty = {};
   setSaveState("");
@@ -239,7 +257,8 @@ function render() {
     ${profileReady ? heroHtml(data, sections, editing) + sections.map(sectionHtml).join("") + hiddenNoteHtml(sections) : ""}`;
   state.justToggled = null;
   animateMeters(body);
-  if (state.editingRemark) {
+  if (state.editingRemark && state.focusRemark) {
+    state.focusRemark = false;
     const input = body.querySelector(`[data-remark="${state.editingRemark}"]`);
     if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
   }
@@ -546,6 +565,7 @@ function onClick(event) {
     render();
   } else if (action === "editRemark") {
     state.editingRemark = target.dataset.key;
+    state.focusRemark = true;
     render();
   } else if (action === "toggleDone" || action === "toggleNA") {
     const item = findItem(target.dataset.key);
