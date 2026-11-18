@@ -35,10 +35,6 @@ const clean = value => String(value ?? "")
   .replace(/…/g, "...")
   .replace(/[^\x00-\xFF]/g, "");
 
-const fmtDate = iso => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
-  return match ? `${match[3]}-${match[2]}-${match[1]}` : "-";
-};
 const fmtLakh = value => (value == null ? "-" : `Rs ${Number(value).toLocaleString("en-IN", { maximumFractionDigits: 2 })} lakh`);
 const facilityName = value => ({ CC: "Cash Credit (CC)", TL: "Term Loan (TL)", CCTL: "CC + TL" }[value] || "-");
 
@@ -47,7 +43,7 @@ export function checklistPdfFilename(checklist, today) {
   return `pre-sanction-checklist-${slug}-${today}.pdf`;
 }
 
-export function drawChecklistPdf(doc, checklist, { today, user } = {}) {
+export function drawChecklistPdf(doc, checklist, { user } = {}) {
   const report = checklistReport(checklist);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -82,17 +78,12 @@ export function drawChecklistPdf(doc, checklist, { today, user } = {}) {
   };
   const ensure = height => { if (y + height > BOTTOM) newPage(); };
 
-  // ── Title band ──
+  // ── Title band: the title alone, centred ──
   doc.setFillColor(...INDIGO);
-  doc.roundedRect(M, y, CW, 16, 2, 2, "F");
+  doc.roundedRect(M, y, CW, 12, 2, 2, "F");
   setFont("bold", 14, [255, 255, 255]);
-  text("Pre-Sanction Checklist", M + 5, y + 7);
-  setFont("normal", 8.5, [225, 222, 255]);
-  text("SME loans up to Rs 50 lakh", M + 5, y + 12.2);
-  setFont("normal", 8, [225, 222, 255]);
-  text(`Generated ${fmtDate(today)}`, M + CW - 5, y + 7, { align: "right" });
-  text(`${report.summary.percent}% complete`, M + CW - 5, y + 12.2, { align: "right" });
-  y += 21;
+  text("Pre-Sanction Checklist", W / 2, y + 8, { align: "center" });
+  y += 17;
 
   // ── Borrower details ──
   const constitution = CONSTITUTIONS.find(opt => opt.value === checklist.constitution)?.label || "-";
@@ -252,6 +243,6 @@ export async function exportChecklistPdf(checklist, { today, user } = {}) {
   await ensureJsPdf();
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
-  drawChecklistPdf(doc, checklist, { today, user });
+  drawChecklistPdf(doc, checklist, { user });
   doc.save(checklistPdfFilename(checklist, today));
 }
