@@ -445,12 +445,14 @@ body.dark .decision-checklist-cta.is-done{--cta-accent:var(--green-vivid);}
 .decision-age-chip svg{width:11px;height:11px;}
 .decision-age-chip.is-warn{color:var(--red);border-color:var(--red-bd);background:var(--red-bg);}
 
-/* ── Pending-docs chips (was the Ageing/Remarks rows) ── */
-.decision-pending-line{align-items:center;}
-.decision-pending-chips{display:flex;gap:4px;align-items:center;overflow:hidden;min-width:0;}
+/* ── Pending-docs chips: sideways-scrollable strip of all open items ── */
+.decision-pending-line{grid-template-columns:104px minmax(0,1fr);align-items:center;}
+.decision-pending-chips{display:flex;gap:4px;align-items:center;min-width:0;
+  flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;overscroll-behavior-x:contain;padding-bottom:1px;}
+.decision-pending-chips::-webkit-scrollbar{display:none;}
 .decision-pending-chip{flex:0 0 auto;font-size:9.5px;font-weight:900;padding:1px 7px;border-radius:999px;
-  background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+  background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);white-space:nowrap;}
 .decision-pending-chip.is-more{background:transparent;color:var(--text3);border-color:var(--text3);}
 
 /* ── Reminder block (was the "Mail sent" line) ── */

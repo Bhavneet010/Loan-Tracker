@@ -176,14 +176,15 @@ function loanDecisionLines(loan) {
   return rows.join('');
 }
 
-// Compact "pending docs" row for a pending SME loan: keyword chips drawn from
-// the checklist. Filled in by hydrateChecklistLine; opens the checklist on tap.
+// "Pending docs" row for a pending SME loan: keyword chips drawn from the
+// checklist, shown as a sideways-scrollable strip of all open items. Read-only
+// (the checklist is opened from the CTA above, not from here). Filled in by
+// hydrateChecklistLine.
 function pendingChipsRow(loan) {
   if (!canHaveChecklist(loan)) return '';
-  return `<div class="decision-account-line decision-account-line--tap decision-pending-line" data-checklist-pending="${esc(loan.id)}" onclick="openLoanChecklist('${esc(loan.id)}')" title="Open checklist">
+  return `<div class="decision-account-line decision-pending-line" data-checklist-pending="${esc(loan.id)}">
     <small>Pending</small>
-    <span class="decision-pending-chips" data-pending-chips><span class="decision-pending-chip is-more">…</span></span>
-    <span class="decision-line-chev">&rsaquo;</span>
+    <span class="decision-pending-chips" data-pending-chips aria-label="Pending documents"><span class="decision-pending-chip is-more">…</span></span>
   </div>`;
 }
 
@@ -408,8 +409,6 @@ function updateChecklistCta(overlay, loan, info) {
   }
 }
 
-const PENDING_CHIP_LIMIT = 3;
-
 function updatePendingChips(overlay, loan, info) {
   const row = overlay.querySelector('[data-checklist-pending]');
   if (!row || row.dataset.checklistPending !== loan.id) return;
@@ -417,10 +416,8 @@ function updatePendingChips(overlay, loan, info) {
   if (!box) return;
   const tags = info && info.exists ? (info.tags || []) : null;
   if (tags && tags.length) {
-    const shown = tags.slice(0, PENDING_CHIP_LIMIT);
-    const extra = tags.length - shown.length;
-    box.innerHTML = shown.map(t => `<span class="decision-pending-chip">${esc(t)}</span>`).join('')
-      + (extra > 0 ? `<span class="decision-pending-chip is-more">+${extra}</span>` : '');
+    // All pending items; the strip scrolls sideways when they overflow.
+    box.innerHTML = tags.map(t => `<span class="decision-pending-chip">${esc(t)}</span>`).join('');
     row.style.display = '';
   } else if (info && info.exists && info.ready && info.pending === 0) {
     // Everything collected — no need to keep an empty Pending row around.
