@@ -98,11 +98,12 @@ function reminderMailLine(loan) {
   </div>`;
 }
 
-// Pre-sanction checklist entry for a pending, fresh SME loan (admin only).
-// The text is filled in asynchronously by hydrateChecklistLine once the
-// checklist module has looked up this loan's checklist.
+// Pre-sanction checklist entry for a pending, fresh SME loan. Available to
+// every officer, not just admins. The text is filled in asynchronously by
+// hydrateChecklistLine once the checklist module has looked up this loan's
+// checklist.
 function canHaveChecklist(loan) {
-  return S.isAdmin && !!loan.id && loan.category === 'SME'
+  return !!loan.id && loan.category === 'SME'
     && (loan.status || 'pending') === 'pending' && isFreshCC(loan);
 }
 

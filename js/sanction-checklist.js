@@ -252,7 +252,6 @@ async function findChecklistForLoan(loanId) {
 // Opened from a pending SME loan's status sheet: open the loan's checklist, or
 // start a new one pre-filled from the loan (borrower, facility, amount).
 async function openLoanChecklist(loanId) {
-  if (!S.isAdmin) { toast("Admin access required"); return; }
   const loan = S.loans.find(entry => entry.id === loanId);
   if (!loan) { toast("Loan not found"); return; }
   ensureStyles();
@@ -277,7 +276,6 @@ async function openLoanChecklist(loanId) {
 // Progress summary for a loan's checklist, for the status-sheet line. Returns
 // null when none exists yet (so the sheet offers "Create checklist").
 async function loanChecklistInfo(loanId) {
-  if (!S.isAdmin) return null;
   const existing = await findChecklistForLoan(loanId);
   if (!existing) return null;
   const ready = isProfileComplete(existing);
