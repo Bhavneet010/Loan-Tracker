@@ -43,6 +43,8 @@ for (const name of [
 for (const name of [
   "openChecklistList",
   "openSanctionChecklist",
+  "openLoanChecklist",
+  "loanChecklistInfo",
   "deleteSanctionChecklist",
 ]) {
   registerLazyAction(name, "./sanction-checklist.js", "checklist");

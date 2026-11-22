@@ -98,6 +98,23 @@ function reminderMailLine(loan) {
   </div>`;
 }
 
+// Pre-sanction checklist entry for a pending, fresh SME loan (admin only).
+// The text is filled in asynchronously by hydrateChecklistLine once the
+// checklist module has looked up this loan's checklist.
+function canHaveChecklist(loan) {
+  return S.isAdmin && !!loan.id && loan.category === 'SME'
+    && (loan.status || 'pending') === 'pending' && isFreshCC(loan);
+}
+
+function checklistLine(loan) {
+  if (!canHaveChecklist(loan)) return '';
+  return `<div class="decision-account-line decision-account-line--tap" data-checklist-line="${esc(loan.id)}" onclick="openLoanChecklist('${esc(loan.id)}')" title="Pre-sanction checklist">
+    <small>Checklist</small>
+    <b class="decision-line-muted" data-checklist-text>Loading…</b>
+    <span class="decision-line-chev">&rsaquo;</span>
+  </div>`;
+}
+
 function loanDecisionLines(loan) {
   const rows = [
     accountLine('Branch', loan.branch),
@@ -112,6 +129,7 @@ function loanDecisionLines(loan) {
     const days = daysPending(loan.receiveDate);
     rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`, days > 7 ? 'alert' : ''));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
+    rows.push(checklistLine(loan));
   }
   if (loan.status === 'sanctioned') {
     rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
@@ -312,6 +330,35 @@ function bindInlineDraftControls(container, draft, onStructuralChange) {
     autosize();
     area.addEventListener('input', autosize);
   });
+}
+
+// Fill in the pre-sanction checklist line once the checklist module reports
+// this loan's progress. Falls back to a plain "Create / Open" label if the
+// lookup is unavailable (offline, load error).
+async function hydrateChecklistLine(overlay, loan) {
+  const line = overlay.querySelector('[data-checklist-line]');
+  if (!line) return;
+  const textEl = line.querySelector('[data-checklist-text]');
+  if (!textEl) return;
+  let info = null;
+  try {
+    info = await window.loanChecklistInfo?.(loan.id);
+  } catch { /* leave the fallback label below */ }
+  if (!overlay.isConnected) return;
+  const current = overlay.querySelector('[data-checklist-line]');
+  if (!current || current.dataset.checklistLine !== loan.id) return;
+  const el = current.querySelector('[data-checklist-text]');
+  if (!el) return;
+  if (info && info.exists && info.ready && info.applicable > 0) {
+    el.textContent = `${info.received}/${info.applicable} · ${Math.round(info.percent)}%`;
+    el.classList.toggle('decision-line-muted', info.received === 0);
+  } else if (info && info.exists) {
+    el.textContent = 'Open checklist';
+    el.classList.remove('decision-line-muted');
+  } else {
+    el.textContent = 'Create checklist';
+    el.classList.add('decision-line-muted');
+  }
 }
 
 function loanAccountCardHtml(loan, linesHtml) {
@@ -551,6 +598,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
     if (editMode) updateDecisionStatusPill(overlay, stagedStatus);
     else updateLoanDecisionView(overlay, preview, stagedStatus);
     setDecisionSelected(overlay, stagedStatus, { emit: false });
+    if (!editMode) hydrateChecklistLine(overlay, loan);
   };
   editBtn?.addEventListener('click', () => {
     editMode = !editMode;
@@ -561,6 +609,12 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
     if (e.detail?.id === id) renderCard();
   };
   document.addEventListener('remindermailschange', onReminderChange);
+  // Refresh the checklist line when its checklist is edited and closed.
+  const onChecklistChange = e => {
+    if (!overlay.isConnected) { document.removeEventListener('loanchecklistchange', onChecklistChange); return; }
+    if (e.detail?.loanId === id) hydrateChecklistLine(overlay, loan);
+  };
+  document.addEventListener('loanchecklistchange', onChecklistChange);
   overlay.addEventListener('decisionchange', e => {
     stagedStatus = e.detail?.value || stagedStatus;
     if (overlay.querySelector('.decision-slider.dragging')) {
