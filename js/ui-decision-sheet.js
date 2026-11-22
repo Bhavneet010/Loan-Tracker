@@ -107,13 +107,21 @@ function canHaveChecklist(loan) {
     && (loan.status || 'pending') === 'pending' && isFreshCC(loan);
 }
 
+const ICON_CHECKLIST = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><rect x="9" y="3.5" width="6" height="3" rx="1"/><path d="m8.5 13 2 2 4-4"/></svg>`;
+
+// Rendered as a bold, standout call-to-action (not a plain detail line) so an
+// incomplete checklist is the most eye-catching thing in the expanded loan
+// view. hydrateChecklistLine fills in the status and the urgency state.
 function checklistLine(loan) {
   if (!canHaveChecklist(loan)) return '';
-  return `<div class="decision-account-line decision-account-line--tap" data-checklist-line="${esc(loan.id)}" onclick="openLoanChecklist('${esc(loan.id)}')" title="Pre-sanction checklist">
-    <small>Checklist</small>
-    <b class="decision-line-muted" data-checklist-text>Loading…</b>
-    <span class="decision-line-chev">&rsaquo;</span>
-  </div>`;
+  return `<button type="button" class="decision-checklist-cta is-loading" data-checklist-line="${esc(loan.id)}" onclick="openLoanChecklist('${esc(loan.id)}')" aria-label="Pre-sanction checklist">
+    <span class="decision-checklist-ico" aria-hidden="true">${ICON_CHECKLIST}</span>
+    <span class="decision-checklist-main">
+      <span class="decision-checklist-title">Pre-Sanction Checklist</span>
+      <span class="decision-checklist-status" data-checklist-text>Checking…</span>
+    </span>
+    <span class="decision-checklist-chev" aria-hidden="true">&rsaquo;</span>
+  </button>`;
 }
 
 function loanDecisionLines(loan) {
@@ -339,26 +347,30 @@ function bindInlineDraftControls(container, draft, onStructuralChange) {
 async function hydrateChecklistLine(overlay, loan) {
   const line = overlay.querySelector('[data-checklist-line]');
   if (!line) return;
-  const textEl = line.querySelector('[data-checklist-text]');
-  if (!textEl) return;
   let info = null;
   try {
     info = await window.loanChecklistInfo?.(loan.id);
-  } catch { /* leave the fallback label below */ }
+  } catch { /* leave the fallback state below */ }
   if (!overlay.isConnected) return;
   const current = overlay.querySelector('[data-checklist-line]');
   if (!current || current.dataset.checklistLine !== loan.id) return;
   const el = current.querySelector('[data-checklist-text]');
   if (!el) return;
+  current.classList.remove('is-loading', 'is-create', 'is-progress', 'is-open', 'is-done');
   if (info && info.exists && info.ready && info.applicable > 0) {
-    el.textContent = `${info.received}/${info.applicable} · ${Math.round(info.percent)}%`;
-    el.classList.toggle('decision-line-muted', info.received === 0);
+    if (info.pending === 0) {
+      current.classList.add('is-done');
+      el.textContent = `Complete · ${info.received}/${info.applicable}`;
+    } else {
+      current.classList.add('is-progress');
+      el.textContent = `${info.received}/${info.applicable} done · ${info.pending} left · ${Math.round(info.percent)}%`;
+    }
   } else if (info && info.exists) {
-    el.textContent = 'Open checklist';
-    el.classList.remove('decision-line-muted');
+    current.classList.add('is-open');
+    el.textContent = 'Started — tap to continue';
   } else {
-    el.textContent = 'Create checklist';
-    el.classList.add('decision-line-muted');
+    current.classList.add('is-create');
+    el.textContent = 'Not started — tap to begin';
   }
 }
 

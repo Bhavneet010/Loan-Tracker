@@ -385,6 +385,55 @@ body.dark .decision-edit-check{background:rgba(107,95,191,0.12);border-color:rgb
 .decision-account-line--tap:active{background:rgba(107,95,191,0.10);}
 .decision-line-chev{justify-self:end;color:var(--text3);font-size:var(--fs-md);font-weight:900;line-height:1;}
 .decision-line-muted{color:var(--text3);font-weight:800;}
+
+/* ── Pre-sanction checklist call-to-action (pending SME) ──
+   Rendered inside the account-lines block but styled to break out as the
+   most prominent element, so an incomplete checklist nags the officer. */
+.decision-checklist-cta{
+  --cta-accent:var(--amber);--cta-bg:var(--amber-bg);--cta-bd:var(--amber-bd);
+  display:flex;align-items:center;gap:10px;width:auto;
+  margin:7px 6px 6px;padding:9px 11px;border:1.5px solid var(--cta-bd);border-radius:var(--radius-sm);
+  background:var(--cta-bg);color:var(--text1);cursor:pointer;text-align:left;font-family:inherit;
+  transition:transform var(--dur-fast) ease,box-shadow var(--dur-fast) ease,background var(--dur-fast) ease,border-color var(--dur-fast) ease;
+}
+.decision-checklist-cta:active{transform:translateY(1px);}
+.decision-checklist-cta:focus-visible{outline:2px solid var(--cta-accent);outline-offset:2px;}
+.decision-checklist-ico{
+  flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--cta-accent);color:#fff;
+}
+.decision-checklist-ico svg{width:17px;height:17px;}
+.decision-checklist-main{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto;}
+.decision-checklist-title{
+  font-size:var(--fs-xs);font-weight:900;letter-spacing:0.45px;text-transform:uppercase;color:var(--cta-accent);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.decision-checklist-status{
+  font-size:11.5px;font-weight:900;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.decision-checklist-chev{flex:0 0 auto;color:var(--cta-accent);font-size:19px;font-weight:900;line-height:1;}
+.decision-checklist-cta.is-loading{opacity:0.7;}
+/* Needs attention: strong amber, with a soft pulse to draw the eye. */
+.decision-checklist-cta.is-create,
+.decision-checklist-cta.is-progress,
+.decision-checklist-cta.is-open{
+  --cta-accent:#B45309;--cta-bg:rgba(245,158,11,0.16);--cta-bd:rgba(245,158,11,0.48);
+  animation:checklistPulse 1.9s ease-in-out infinite;
+}
+.decision-checklist-cta.is-create{--cta-bg:rgba(245,158,11,0.22);--cta-bd:rgba(245,158,11,0.62);}
+/* Done: calm green, no pulse. */
+.decision-checklist-cta.is-done{
+  --cta-accent:var(--green);--cta-bg:var(--green-bg);--cta-bd:var(--green-bd);animation:none;
+}
+@keyframes checklistPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0);}
+  50%{box-shadow:0 0 0 4px rgba(245,158,11,0.18);}
+}
+@media (prefers-reduced-motion:reduce){.decision-checklist-cta{animation:none !important;}}
+body.dark .decision-checklist-cta.is-create,
+body.dark .decision-checklist-cta.is-progress,
+body.dark .decision-checklist-cta.is-open{--cta-accent:#F59E0B;--cta-bg:rgba(245,158,11,0.15);--cta-bd:rgba(245,158,11,0.42);}
+body.dark .decision-checklist-cta.is-done{--cta-accent:var(--green-vivid);}
 .reminder-mail-overlay{z-index:260;background:rgba(20,18,40,0.42);backdrop-filter:blur(1.5px);}
 .reminder-mail-sheet{padding-bottom:18px;}
 .reminder-mail-form{
