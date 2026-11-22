@@ -138,7 +138,6 @@ function loanDecisionLines(loan) {
     const days = daysPending(loan.receiveDate);
     rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`, days > 7 ? 'alert' : ''));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
-    rows.push(checklistLine(loan));
   }
   if (loan.status === 'sanctioned') {
     rows.push(accountLine('Sanction Date', fmtDate(loan.sanctionDate)));
@@ -155,6 +154,9 @@ function loanDecisionLines(loan) {
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added', 'alert'));
   }
   rows.push(reminderMailLine(loan));
+  // The checklist is the priority action, so it sits above every detail line.
+  const checklist = checklistLine(loan);
+  if (checklist) rows.unshift(checklist);
   return rows.join('');
 }
 
