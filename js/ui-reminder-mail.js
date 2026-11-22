@@ -11,6 +11,10 @@ import { istDateTimeStr } from "./ist-date.js";
 
 const MAIL_TARGETS = ['Branch', 'Customer', 'Both'];
 
+// Branch docs still pending on the checklist for the loan whose sheet is open.
+// Set when the sheet is (re)rendered; snapshotted onto each logged mail.
+let sheetPending = [];
+
 export function reminderMails(loan) {
   const list = Array.isArray(loan?.reminderMails) ? loan.reminderMails.filter(Boolean) : [];
   return [...list].sort((a, b) => (b.sentAt || '').localeCompare(a.sentAt || ''));
@@ -57,6 +61,7 @@ function entryRowHtml(loanId, entry) {
       <b>To ${esc(entry.sentTo || 'Branch')}</b>
       <small>${esc(fmtDateTime(entry.sentAt))} · by ${esc(entry.by || '?')}</small>
       ${entry.remarks ? `<span class="reminder-mail-remarks">${esc(entry.remarks)}</span>` : ''}
+      ${Array.isArray(entry.pendingAtSend) && entry.pendingAtSend.length ? `<span class="reminder-mail-chased">Pending then: ${esc(entry.pendingAtSend.join(', '))}</span>` : ''}
     </span>
     ${canDelete ? `<button type="button" class="reminder-mail-del" title="Delete entry" onclick="deleteReminderMail('${esc(loanId)}','${esc(entry.id)}')">&#128465;</button>` : ''}
   </div>`;
@@ -81,6 +86,10 @@ function sheetBodyHtml(loan) {
     <div class="reminder-mail-field">
       <small>Mail remarks</small>
       <textarea data-reminder-remarks rows="2" placeholder="e.g. Asked branch to expedite pending documents"></textarea>
+      <span class="reminder-autofill" data-reminder-autofill hidden>
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4L19 7.5"/></svg>
+        <span>Auto-filled from checklist · branch docs only</span>
+      </span>
     </div>
     <button type="button" class="btn btn-primary-full" data-reminder-log>&#9993; Log Reminder Mail</button>
   </div>
@@ -106,6 +115,9 @@ function bindSheetBody(body, loan) {
       sentTo,
       sentAt,
       remarks,
+      // What was still pending on the checklist when this mail went out — a
+      // follow-up trail of what each reminder chased.
+      pendingAtSend: Array.isArray(sheetPending) ? [...sheetPending] : [],
       by: S.user || '?',
       loggedAt: new Date().toISOString(),
     };
@@ -131,6 +143,22 @@ function renderSheetBody(loan) {
   if (!body) return;
   body.innerHTML = sheetBodyHtml(loan);
   bindSheetBody(body, loan);
+  fillPendingFromChecklist(loan, body);
+}
+
+// Pre-fill the remarks with the branch's pending checklist docs, and remember
+// them for the sent-snapshot. Never overwrites text the officer has typed.
+async function fillPendingFromChecklist(loan, body) {
+  sheetPending = [];
+  let info = null;
+  try { info = await window.loanChecklistInfo?.(loan.id); } catch { /* checklist unavailable */ }
+  const tags = info && info.exists ? (info.branchTags || []) : [];
+  sheetPending = tags;
+  if (!tags.length || !body.isConnected) return;
+  const textarea = body.querySelector('[data-reminder-remarks]');
+  const note = body.querySelector('[data-reminder-autofill]');
+  if (textarea && !textarea.value.trim()) textarea.value = `Pending from branch: ${tags.join(', ')}`;
+  if (note) note.hidden = false;
 }
 
 window.closeReminderMailSheet = function() {

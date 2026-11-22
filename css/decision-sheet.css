@@ -437,6 +437,45 @@ body.dark .decision-checklist-cta.is-create{--cta-accent:var(--red-vivid);--cta-
 body.dark .decision-checklist-cta.is-progress,
 body.dark .decision-checklist-cta.is-open{--cta-accent:#F59E0B;--cta-bg:rgba(245,158,11,0.15);--cta-bd:rgba(245,158,11,0.42);}
 body.dark .decision-checklist-cta.is-done{--cta-accent:var(--green-vivid);}
+
+/* ── Ageing chip (title row) ── */
+.decision-age-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:999px;
+  font-size:10.5px;font-weight:900;line-height:1.5;white-space:nowrap;
+  border:1.5px solid var(--text3);color:var(--text2);background:transparent;}
+.decision-age-chip svg{width:11px;height:11px;}
+.decision-age-chip.is-warn{color:var(--red);border-color:var(--red-bd);background:var(--red-bg);}
+
+/* ── Pending-docs chips (was the Ageing/Remarks rows) ── */
+.decision-pending-line{align-items:center;}
+.decision-pending-chips{display:flex;gap:4px;align-items:center;overflow:hidden;min-width:0;}
+.decision-pending-chip{flex:0 0 auto;font-size:9.5px;font-weight:900;padding:1px 7px;border-radius:999px;
+  background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.decision-pending-chip.is-more{background:transparent;color:var(--text3);border-color:var(--text3);}
+
+/* ── Reminder block (was the "Mail sent" line) ── */
+.decision-reminder-cta{display:flex;align-items:center;gap:8px;margin:5px;padding:6px 9px;
+  border:1.5px solid var(--glass-bd);border-radius:var(--radius-sm);background:var(--glass);cursor:pointer;
+  transition:transform var(--dur-fast) ease,background var(--dur-fast) ease;}
+.decision-reminder-cta:active{transform:translateY(1px);}
+.decision-reminder-cta.is-sent{--rem-accent:var(--green);}
+.decision-reminder-cta.is-nudge{--rem-accent:var(--amber);border-color:var(--amber-bd);background:var(--amber-bg);}
+.decision-reminder-ico{flex:0 0 auto;width:25px;height:25px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--rem-accent,var(--text3));color:#fff;}
+.decision-reminder-ico svg{width:14px;height:14px;}
+.decision-reminder-main{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;line-height:1.14;}
+.decision-reminder-title{font-size:9px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--rem-accent,var(--text2));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.decision-reminder-sub{font-size:11px;font-weight:900;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.decision-reminder-btn{flex:0 0 auto;font-size:10.5px;font-weight:900;padding:5px 12px;border-radius:999px;
+  border:1.5px solid var(--glass-bd);background:var(--p2);color:#fff;cursor:pointer;font-family:inherit;}
+.decision-reminder-cta.is-sent .decision-reminder-btn{background:transparent;color:var(--p2);border-color:var(--p2);}
+
+/* ── Auto-fill note + sent snapshot in the reminder-mail sheet ── */
+.reminder-autofill{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:10px;font-weight:900;color:var(--green);}
+.reminder-autofill[hidden]{display:none;}
+.reminder-mail-chased{display:block;font-size:10px;font-weight:800;color:var(--text3);margin-top:2px;}
+
 .reminder-mail-overlay{z-index:260;background:rgba(20,18,40,0.42);backdrop-filter:blur(1.5px);}
 .reminder-mail-sheet{padding-bottom:18px;}
 .reminder-mail-form{

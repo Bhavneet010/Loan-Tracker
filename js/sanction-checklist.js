@@ -11,7 +11,7 @@ import { closeOverlay, openOverlay } from "./animate.js";
 import {
   AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
   ayLabel, bsStage, facilityFromLoanType, fyLabel, isProfileComplete, itemLabel, itemStatus,
-  newChecklist, nextYear, fyInput, parseAmountLakh, parseFy, sectionSummary, summarize,
+  newChecklist, nextYear, fyInput, parseAmountLakh, parseFy, pendingTags, sectionSummary, summarize,
   visibleSections, yearProgress, yearRows,
 } from "./sanction-checklist-model.js";
 
@@ -288,6 +288,10 @@ async function loanChecklistInfo(loanId) {
     applicable: sum ? sum.applicable : 0,
     pending: sum ? sum.pending : 0,
     percent: sum ? sum.percent : 0,
+    // Short keywords of what's still outstanding, for the card snippet and the
+    // branch reminder mail (branchTags drops the officer-pulled CIC/MCA items).
+    tags: ready ? pendingTags(existing) : [],
+    branchTags: ready ? pendingTags(existing, { branchOnly: true }) : [],
   };
 }
 

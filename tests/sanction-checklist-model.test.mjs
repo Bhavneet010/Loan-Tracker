@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ALL_ITEMS, SECTIONS, amountWarning, ayLabel, bsStage, currentFy, fyLabel, fyStartYear,
-  allowsNA, checklistReport, fyInput, isProfileComplete, itemStatus, newChecklist, nextYear, parseFy, summarize,
+  allowsNA, checklistReport, fyInput, isProfileComplete, itemStatus, newChecklist, nextYear, parseFy,
+  pendingItems, pendingTags, shortTag, summarize,
   visibleSections, yearProgress, yearRows,
 } from "../js/sanction-checklist-model.js";
 
@@ -273,4 +274,37 @@ test("the PDF report lists only applicable items with their status words and yea
   const bs = c.rows.find(row => row.years && row.label.startsWith("Balance"));
   assert.equal(bs.years.at(-1).label, "FY 27-28 – Projected");
   assert.equal(report.summary.received, 2); // ITR still has a pending year
+});
+
+test("every item has a short keyword tag distinct from its key", () => {
+  for (const item of ALL_ITEMS) {
+    const tag = shortTag(item.key);
+    assert.equal(typeof tag, "string");
+    assert.ok(tag.length > 0);
+    assert.notEqual(tag, item.key);
+  }
+});
+
+test("pendingTags: de-duped, branch-only drops officer-pulled docs, received drops out", () => {
+  const checklist = profile({ rented: true }); // fresh → everything pending
+  const all = pendingTags(checklist);
+  // the three address proofs collapse to one tag
+  assert.equal(all.filter(t => t === "Address proof").length, 1);
+  // pendingItems flags who supplies each doc
+  const items = pendingItems(checklist);
+  assert.ok(items.every(i => typeof i.branch === "boolean"));
+  assert.equal(items.find(i => i.key === "cicEntity").branch, false);
+  assert.equal(items.find(i => i.key === "itrYears").branch, true);
+  // branch-only view drops Section B (CIC / assets & liabilities)
+  const branch = pendingTags(checklist, { branchOnly: true });
+  assert.ok(all.includes("CIBIL (entity)"));
+  assert.ok(!branch.includes("CIBIL (entity)"));
+  assert.ok(!branch.includes("Assets/Liab."));
+  assert.ok(branch.includes("ITR"));
+  // collecting a doc removes its tag
+  const itrDone = {
+    ...checklist,
+    items: { ...checklist.items, itrYears: { rows: [2023, 2024, 2025].map(year => ({ year, status: "received" })) } },
+  };
+  assert.ok(!pendingTags(itrDone).includes("ITR"));
 });

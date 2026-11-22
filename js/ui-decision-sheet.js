@@ -3,7 +3,7 @@ import { effectiveOfficer } from "./derived.js";
 import { todayStr, esc, fmtAmt, fmtDate, catCls, daysPending, computeRenewalStatus, isFreshCC, isStageTracked, timeAgo } from "./utils.js";
 import { animateOverlayIn, animateOverlayOut } from "./animate.js";
 import { matchBranchOption, assignedOfficerForBranch, normalizeName } from "./ui-forms.js";
-import { reminderSummary, canTrackReminders } from "./ui-reminder-mail.js";
+import { reminderMails, canTrackReminders } from "./ui-reminder-mail.js";
 
 /* SHARED UI HELPERS */
 export function accountAmount(loan) {
@@ -86,15 +86,30 @@ function accountLine(label, value, tone = '') {
   return `<div class="decision-account-line${cls}"><small>${esc(label)}</small><b>${esc(value)}</b>${mark}</div>`;
 }
 
-// One tappable line instead of extra form fields: the full reminder-mail log
-// (sent to, date & time, remarks, history) lives in its own sheet.
-function reminderMailLine(loan) {
+const ICON_MAIL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>`;
+const ICON_CLOCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>`;
+
+// Reminder-mail state as a prominent block (was a small line): calm once the
+// branch has been reminded, an amber nudge when it hasn't. The "N docs
+// pending" sub-line is filled in by hydrateChecklistLine for SME loans.
+function reminderBlock(loan) {
   if (!loan.id || !canTrackReminders(loan)) return '';
-  const summary = reminderSummary(loan);
-  return `<div class="decision-account-line decision-account-line--tap" onclick="openReminderMailSheet('${esc(loan.id)}')" title="Reminder mail log">
-    <small>Mail Sent</small>
-    <b class="${summary ? '' : 'decision-line-muted'}">${esc(summary || 'None yet — tap to log')}</b>
-    <span class="decision-line-chev">&rsaquo;</span>
+  const mails = reminderMails(loan);
+  const last = mails[0];
+  const reminded = Boolean(last);
+  const to = last?.sentTo || 'Branch';
+  const title = reminded ? `${to} reminded` : 'Branch not reminded';
+  const sub = reminded
+    ? `${timeAgo(last.sentAt)} · ${mails.length} ${mails.length === 1 ? 'mail' : 'mails'}`
+    : 'Not reminded yet';
+  const btn = reminded ? 'Send again' : 'Send';
+  return `<div class="decision-reminder-cta ${reminded ? 'is-sent' : 'is-nudge'}" data-reminder-block="${esc(loan.id)}" onclick="openReminderMailSheet('${esc(loan.id)}')" role="button" tabindex="0" aria-label="Reminder mail">
+    <span class="decision-reminder-ico" aria-hidden="true">${ICON_MAIL}</span>
+    <span class="decision-reminder-main">
+      <span class="decision-reminder-title">${esc(title)}</span>
+      <span class="decision-reminder-sub" data-reminder-sub>${esc(sub)}</span>
+    </span>
+    <button type="button" class="decision-reminder-btn" onclick="event.stopPropagation();openReminderMailSheet('${esc(loan.id)}')">${btn}</button>
   </div>`;
 }
 
@@ -135,8 +150,9 @@ function loanDecisionLines(loan) {
     rows.push(accountLine('Limit Expiry', fmtDate(loan.limitExpiryDate)));
   }
   if ((loan.status || 'pending') === 'pending') {
-    const days = daysPending(loan.receiveDate);
-    rows.push(accountLine('Ageing', `${days} ${days === 1 ? 'day' : 'days'}`, days > 7 ? 'alert' : ''));
+    // Ageing now rides as a chip in the title row; the checklist's pending
+    // docs show as keyword chips, with the manual remark kept beneath them.
+    rows.push(pendingChipsRow(loan));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added'));
   }
   if (loan.status === 'sanctioned') {
@@ -153,11 +169,22 @@ function loanDecisionLines(loan) {
     if(loan._returnReason)rows.push(accountLine('Return reason',loan._returnReason,'alert'));
     rows.push(accountLine('Remarks', loan.remarks || 'No remarks added', 'alert'));
   }
-  rows.push(reminderMailLine(loan));
+  rows.push(reminderBlock(loan));
   // The checklist is the priority action, so it sits above every detail line.
   const checklist = checklistLine(loan);
   if (checklist) rows.unshift(checklist);
   return rows.join('');
+}
+
+// Compact "pending docs" row for a pending SME loan: keyword chips drawn from
+// the checklist. Filled in by hydrateChecklistLine; opens the checklist on tap.
+function pendingChipsRow(loan) {
+  if (!canHaveChecklist(loan)) return '';
+  return `<div class="decision-account-line decision-account-line--tap decision-pending-line" data-checklist-pending="${esc(loan.id)}" onclick="openLoanChecklist('${esc(loan.id)}')" title="Open checklist">
+    <small>Pending</small>
+    <span class="decision-pending-chips" data-pending-chips><span class="decision-pending-chip is-more">…</span></span>
+    <span class="decision-line-chev">&rsaquo;</span>
+  </div>`;
 }
 
 function previewLoanStatus(loan, status, remarks = '') {
@@ -343,37 +370,83 @@ function bindInlineDraftControls(container, draft, onStructuralChange) {
   });
 }
 
-// Fill in the pre-sanction checklist line once the checklist module reports
-// this loan's progress. Falls back to a plain "Create / Open" label if the
-// lookup is unavailable (offline, load error).
+// One checklist lookup drives three pieces of the pending-loan sheet: the
+// checklist CTA, the pending-docs chips, and the reminder block's nudge.
+// Each is updated only if present; falls back gracefully when offline.
 async function hydrateChecklistLine(overlay, loan) {
-  const line = overlay.querySelector('[data-checklist-line]');
-  if (!line) return;
+  if (!overlay.querySelector('[data-checklist-line]') && !overlay.querySelector('[data-checklist-pending]')) return;
   let info = null;
   try {
     info = await window.loanChecklistInfo?.(loan.id);
-  } catch { /* leave the fallback state below */ }
+  } catch { /* leave the fallback states below */ }
   if (!overlay.isConnected) return;
-  const current = overlay.querySelector('[data-checklist-line]');
-  if (!current || current.dataset.checklistLine !== loan.id) return;
-  const el = current.querySelector('[data-checklist-text]');
+  updateChecklistCta(overlay, loan, info);
+  updatePendingChips(overlay, loan, info);
+  updateReminderNudge(overlay, loan, info);
+}
+
+function updateChecklistCta(overlay, loan, info) {
+  const cta = overlay.querySelector('[data-checklist-line]');
+  if (!cta || cta.dataset.checklistLine !== loan.id) return;
+  const el = cta.querySelector('[data-checklist-text]');
   if (!el) return;
-  current.classList.remove('is-loading', 'is-create', 'is-progress', 'is-open', 'is-done');
+  cta.classList.remove('is-loading', 'is-create', 'is-progress', 'is-open', 'is-done');
   if (info && info.exists && info.ready && info.applicable > 0) {
     if (info.pending === 0) {
-      current.classList.add('is-done');
+      cta.classList.add('is-done');
       el.textContent = `Complete · ${info.received}/${info.applicable}`;
     } else {
-      current.classList.add('is-progress');
+      cta.classList.add('is-progress');
       el.textContent = `${info.received}/${info.applicable} done · ${info.pending} left · ${Math.round(info.percent)}%`;
     }
   } else if (info && info.exists) {
-    current.classList.add('is-open');
+    cta.classList.add('is-open');
     el.textContent = 'Started — tap to continue';
   } else {
-    current.classList.add('is-create');
+    cta.classList.add('is-create');
     el.textContent = 'Not started — tap to begin';
   }
+}
+
+const PENDING_CHIP_LIMIT = 3;
+
+function updatePendingChips(overlay, loan, info) {
+  const row = overlay.querySelector('[data-checklist-pending]');
+  if (!row || row.dataset.checklistPending !== loan.id) return;
+  const box = row.querySelector('[data-pending-chips]');
+  if (!box) return;
+  const tags = info && info.exists ? (info.tags || []) : null;
+  if (tags && tags.length) {
+    const shown = tags.slice(0, PENDING_CHIP_LIMIT);
+    const extra = tags.length - shown.length;
+    box.innerHTML = shown.map(t => `<span class="decision-pending-chip">${esc(t)}</span>`).join('')
+      + (extra > 0 ? `<span class="decision-pending-chip is-more">+${extra}</span>` : '');
+    row.style.display = '';
+  } else if (info && info.exists && info.ready && info.pending === 0) {
+    // Everything collected — no need to keep an empty Pending row around.
+    row.style.display = 'none';
+  } else if (info && info.exists) {
+    box.innerHTML = `<span class="decision-pending-chip is-more">Finish the profile to list docs</span>`;
+    row.style.display = '';
+  } else {
+    box.innerHTML = `<span class="decision-pending-chip is-more">Start checklist to list docs</span>`;
+    row.style.display = '';
+  }
+}
+
+function updateReminderNudge(overlay, loan, info) {
+  const block = overlay.querySelector('[data-reminder-block]');
+  if (!block || block.dataset.reminderBlock !== loan.id || !block.classList.contains('is-nudge')) return;
+  const sub = block.querySelector('[data-reminder-sub]');
+  if (sub && info && info.exists && info.pending > 0) {
+    sub.textContent = `${info.pending} ${info.pending === 1 ? 'doc' : 'docs'} pending`;
+  }
+}
+
+function ageChipHtml(loan) {
+  if ((loan.status || 'pending') !== 'pending' || !loan.receiveDate) return '';
+  const days = daysPending(loan.receiveDate);
+  return `<span class="decision-age-chip${days > 7 ? ' is-warn' : ''}" title="${days} ${days === 1 ? 'day' : 'days'} pending">${ICON_CLOCK}${days}d</span>`;
 }
 
 function loanAccountCardHtml(loan, linesHtml) {
@@ -383,6 +456,7 @@ function loanAccountCardHtml(loan, linesHtml) {
         <div class="decision-name-wrap">
           <div class="decision-name">${esc(loan.customerName)}</div>
           ${categoryBadgeHtml(loan)}
+          ${ageChipHtml(loan)}
         </div>
         <div class="decision-amount">${accountAmount(loan)}</div>
       </div>

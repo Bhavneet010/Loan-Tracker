@@ -159,6 +159,51 @@ export const HIDDEN_SECTION_REASONS = { D: "no Term Loan", E: "no Cash Credit", 
 
 export const ALL_ITEMS = SECTIONS.flatMap(section => section.items);
 
+// Short keyword per item, for the "pending docs" snippet on the loan card and
+// the branch reminder mail. Keep them terse — a glanceable tag, not a sentence.
+const SHORT = {
+  loanApplication: "Loan form", photographs: "Photos", panEntity: "Entity PAN",
+  panAadhaarPromoters: "KYC", constitutionDocs: "Constitution", boardResolution: "Board res.",
+  udyam: "Udyam", gstRegistration: "GST cert", tradeLicence: "Trade lic.",
+  activityLicence: "Activity lic.", rentAgreement: "Address proof", landlordKyc: "Address proof",
+  utilityBill: "Address proof", cicEntity: "CIBIL (entity)", cicPromoters: "CIBIL",
+  mca21: "MCA21", assetsLiabilities: "Assets/Liab.", itrYears: "ITR",
+  balanceSheetYears: "B/S", gstReturns: "GST returns", bankStatements: "Bank stmt",
+  quotation: "Quotation", projectReport: "Project rep.", meansOfFinance: "Margin proof",
+  stockStatement: "Stock stmt", debtorsCreditors: "Debtors list", titleSearch: "Title search",
+  valuation: "Valuation", cersaiSearch: "CERSAI", unitVisit: "Unit visit", anyOther: "Other",
+};
+export const shortTag = key => SHORT[key] || key;
+
+// Pending items in display order. `branch` marks items the branch/borrower
+// supplies (so a branch reminder can list them); Section B is pulled by the
+// credit officer ("Attached"), so those are not the branch's to chase.
+export function pendingItems(checklist) {
+  const out = [];
+  for (const section of visibleSections(checklist)) {
+    const branch = (section.doneLabel || "Received") !== "Attached";
+    for (const item of section.items) {
+      if (itemStatus(checklist, item) !== "pending") continue;
+      out.push({ key: item.key, short: shortTag(item.key), branch });
+    }
+  }
+  return out;
+}
+
+// De-duplicated short tags of the pending items (e.g. the three address proofs
+// collapse to one "Address proof"). `branchOnly` keeps just the branch's docs.
+export function pendingTags(checklist, { branchOnly = false } = {}) {
+  const seen = new Set();
+  const tags = [];
+  for (const item of pendingItems(checklist)) {
+    if (branchOnly && !item.branch) continue;
+    if (seen.has(item.short)) continue;
+    seen.add(item.short);
+    tags.push(item.short);
+  }
+  return tags;
+}
+
 export const ruleLabel = rule => RULES[rule]?.label || rule;
 export const allowsNA = item => Boolean(RULES[item.rule]?.allowNA);
 // Who the KYC questions are about, by constitution.

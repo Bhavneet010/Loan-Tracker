@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expanded Loan Card — Redesign Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@500;700;800&family=Outfit:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/core.css">
+<link rel="stylesheet" href="/css/forms.css">
+<link rel="stylesheet" href="/css/decision-sheet.css">
+<link rel="stylesheet" href="/css/sketchnote.css">
+<style>
+  body.theme-sketchnote{min-height:100vh;margin:0;background:var(--paper);padding:22px 16px 48px;}
+  /* lift above the app's fixed body::before paper layer */
+  h1.mk-title,p.mk-sub,.mk-wrap{position:relative;z-index:1;}
+  .mk-wrap{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start;}
+  .mk-col{width:390px;max-width:100%;}
+  .mk-caption{font-family:'Caveat',cursive;font-size:20px;color:var(--ink-soft);margin:0 0 8px;text-align:center;}
+  .mk-note{font-family:'Architects Daughter',cursive;font-size:12.5px;color:var(--marker-coral);
+    background:var(--marker-coral-bg);border:1.5px dashed var(--marker-coral);border-radius:10px;
+    padding:6px 9px;margin:9px 2px 0;line-height:1.35;}
+  .mk-note b{color:var(--ink);}
+  .mk-sheet{position:static;transform:none;margin:0;}
+  h1.mk-title{font-family:'Architects Daughter',cursive;color:var(--ink);text-align:center;font-size:26px;margin:0 0 4px;}
+  p.mk-sub{font-family:'Caveat',cursive;text-align:center;color:var(--ink-soft);font-size:19px;margin:0 0 26px;}
+
+  /* ── NEW: ageing chip at the top ── */
+  .mk-age-chip{display:inline-flex;align-items:center;gap:3px;padding:1px 8px;border-radius:999px;
+    font-size:11px;font-weight:900;border:1.5px solid var(--text3);color:var(--text2);background:transparent;margin-left:7px;vertical-align:middle;}
+  .mk-age-chip svg{width:12px;height:12px;}
+  .mk-age-chip.is-warn{color:var(--red);border-color:var(--red-bd);background:var(--red-bg);}
+
+  /* ── NEW: pending-docs chip strip (sits alongside manual Remarks) ── */
+  .decision-account-line--pending{align-items:center;}
+  .mk-pending-chips{display:flex;gap:4px;align-items:center;overflow:hidden;min-width:0;}
+  .mk-pending-chip{flex:0 0 auto;font-size:10px;font-weight:900;padding:1px 7px;border-radius:999px;
+    background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);white-space:nowrap;}
+  .mk-pending-chip.more{background:transparent;color:var(--text3);border-color:var(--text3);}
+  .mk-pending-chip.done{background:var(--green-bg);color:var(--green);border-color:var(--green-bd);}
+
+  /* ── NEW: redesigned reminder block (was the tiny "Mail sent" line) ── */
+  .mk-reminder{display:flex;align-items:center;gap:9px;margin:8px 0 0;padding:9px 10px;border-radius:var(--radius-sm);
+    border:1.5px solid var(--glass-bd);background:var(--card);}
+  .mk-reminder-ico{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+    background:var(--marker-mint);color:#fff;}
+  .mk-reminder-ico svg{width:17px;height:17px;}
+  .mk-reminder.is-nudge{border-color:var(--amber-bd);background:var(--amber-bg);}
+  .mk-reminder.is-nudge .mk-reminder-ico{background:var(--amber);}
+  .mk-reminder-main{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;line-height:1.18;}
+  .mk-reminder-title{font-size:11px;font-weight:900;color:var(--text1);text-transform:uppercase;letter-spacing:.3px;}
+  .mk-reminder.is-nudge .mk-reminder-title{color:var(--amber);}
+  .mk-reminder-sub{font-size:10.5px;font-weight:800;color:var(--text3);}
+  .mk-reminder-btn{flex:0 0 auto;font-size:11px;font-weight:900;padding:6px 13px;border-radius:999px;border:1.5px solid var(--glass-bd);
+    background:var(--p2);color:#fff;cursor:pointer;font-family:inherit;}
+
+  .mk-mailsheet{margin-top:6px;padding:12px;border-radius:16px;border:1.5px solid var(--glass-bd);background:var(--card);}
+  .mk-mailsheet h3{margin:0 0 10px;font-family:'Architects Daughter',cursive;color:var(--ink);font-size:18px;}
+  .mk-field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .mk-field small{color:var(--text3);font-size:9px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;}
+  .mk-chips{display:flex;gap:6px;}
+  .mk-chip{font-size:11px;font-weight:900;padding:4px 11px;border-radius:999px;border:1.5px solid var(--glass-bd);background:transparent;color:var(--text2);}
+  .mk-chip.active{background:var(--p2);color:#fff;}
+  .mk-textarea{border:1.5px solid var(--glass-bd);border-radius:10px;background:var(--surface-alt);padding:8px 10px;
+    font-size:12px;font-weight:800;color:var(--text1);min-height:46px;line-height:1.4;}
+  .mk-autofill{font-size:10px;font-weight:900;color:var(--marker-mint);margin-top:4px;display:flex;align-items:center;gap:4px;}
+  .mk-logbtn{margin-top:4px;width:100%;padding:9px;border-radius:12px;border:1.5px solid var(--glass-bd);background:var(--p2);color:#fff;font-weight:900;font-size:13px;font-family:inherit;}
+</style>
+</head>
+<body class="theme-sketchnote">
+<h1 class="mk-title">Expanded Loan Card — proposed redesign</h1>
+<p class="mk-sub">Pending chips sit <em>alongside</em> the manual remark · reminder promoted · ageing moved up</p>
+
+<div class="mk-wrap">
+
+  <!-- ░░░ CARD A: checklist in progress, branch reminded ░░░ -->
+  <div class="mk-col">
+    <div class="mk-caption">A · in progress · branch already reminded</div>
+    <div class="sheet decision-sheet mk-sheet">
+      <div class="decision-title-row"><h2>Loan status</h2></div>
+      <div class="decision-account-card">
+        <div class="decision-account-main">
+          <div class="decision-name-row">
+            <div class="decision-name-wrap">
+              <div class="decision-name">SHUBHAM</div>
+              <span class="tag decision-category-badge cat-sme">SME · TL</span>
+              <!-- NEW: ageing chip -->
+              <span class="mk-age-chip" title="3 days pending">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>3d
+              </span>
+            </div>
+            <div class="decision-amount"><span class="rs">&#8377;</span>3.05<span> L</span></div>
+          </div>
+          <div class="decision-account-lines">
+            <button type="button" class="decision-checklist-cta is-progress">
+              <span class="decision-checklist-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><rect x="9" y="3.5" width="6" height="3" rx="1"/><path d="m8.5 13 2 2 4-4"/></svg></span>
+              <span class="decision-checklist-main">
+                <span class="decision-checklist-title">Pre-Sanction Checklist</span>
+                <span class="decision-checklist-status">11/16 done · 5 left · 69%</span>
+              </span>
+              <span class="decision-checklist-chev">&rsaquo;</span>
+            </button>
+            <div class="decision-account-line"><small>Branch</small><b>1680 : ADB PAONTA SAHIB</b><span></span></div>
+            <div class="decision-account-line"><small>Officer</small><b>Vibhor</b><span></span></div>
+            <div class="decision-account-line"><small>Received</small><b>19.11.2026</b><span></span></div>
+            <!-- NEW: pending chips (derived from checklist) -->
+            <div class="decision-account-line decision-account-line--pending decision-account-line--tap" title="Tap to open checklist">
+              <small>Pending</small>
+              <span class="mk-pending-chips">
+                <span class="mk-pending-chip">ITR</span>
+                <span class="mk-pending-chip">GST returns</span>
+                <span class="mk-pending-chip">Bank stmt</span>
+                <span class="mk-pending-chip more">+2</span>
+              </span>
+              <span class="decision-line-chev">&rsaquo;</span>
+            </div>
+            <!-- KEPT: manual remarks, unchanged -->
+            <div class="decision-account-line"><small>Remarks</small><b>Follow up after Diwali holidays</b><span></span></div>
+          </div>
+          <!-- NEW: reminder block replaces the tiny "Mail sent" line -->
+          <div class="mk-reminder">
+            <span class="mk-reminder-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg></span>
+            <span class="mk-reminder-main">
+              <span class="mk-reminder-title">Branch reminded</span>
+              <span class="mk-reminder-sub">2 days ago · 3rd mail · Vibhor</span>
+            </span>
+            <button class="mk-reminder-btn">Send again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mk-note"><b>Pending</b> chips = short keywords from the checklist's open items, next to the manual remark (both kept). Tap → opens the checklist.</div>
+  </div>
+
+  <!-- ░░░ CARD B: not started, branch never reminded ░░░ -->
+  <div class="mk-col">
+    <div class="mk-caption">B · not started · branch not yet reminded</div>
+    <div class="sheet decision-sheet mk-sheet">
+      <div class="decision-title-row"><h2>Loan status</h2></div>
+      <div class="decision-account-card">
+        <div class="decision-account-main">
+          <div class="decision-name-row">
+            <div class="decision-name-wrap">
+              <div class="decision-name">PAONTA TRADING CO.</div>
+              <span class="tag decision-category-badge cat-sme">SME · CC</span>
+              <span class="mk-age-chip is-warn" title="18 days pending">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>18d
+              </span>
+            </div>
+            <div class="decision-amount"><span class="rs">&#8377;</span>15<span> L</span></div>
+          </div>
+          <div class="decision-account-lines">
+            <button type="button" class="decision-checklist-cta is-create">
+              <span class="decision-checklist-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><rect x="9" y="3.5" width="6" height="3" rx="1"/><path d="m8.5 13 2 2 4-4"/></svg></span>
+              <span class="decision-checklist-main">
+                <span class="decision-checklist-title">Pre-Sanction Checklist</span>
+                <span class="decision-checklist-status">Not started — tap to begin</span>
+              </span>
+              <span class="decision-checklist-chev">&rsaquo;</span>
+            </button>
+            <div class="decision-account-line"><small>Branch</small><b>1680 : ADB PAONTA SAHIB</b><span></span></div>
+            <div class="decision-account-line"><small>Officer</small><b>Vibhor</b><span></span></div>
+            <div class="decision-account-line"><small>Received</small><b>04.11.2026</b><span></span></div>
+            <div class="decision-account-line decision-account-line--pending decision-account-line--tap" title="Tap to open checklist">
+              <small>Pending</small>
+              <span class="mk-pending-chips">
+                <span class="mk-pending-chip more">Start checklist to list docs</span>
+              </span>
+              <span class="decision-line-chev">&rsaquo;</span>
+            </div>
+            <div class="decision-account-line"><small>Remarks</small><b style="color:var(--text3);font-weight:800;">No remarks added</b><span></span></div>
+          </div>
+          <div class="mk-reminder is-nudge">
+            <span class="mk-reminder-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg></span>
+            <span class="mk-reminder-main">
+              <span class="mk-reminder-title">Branch not reminded</span>
+              <span class="mk-reminder-sub">18 days old · checklist not started</span>
+            </span>
+            <button class="mk-reminder-btn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mk-note"><b>Reminder</b> block nudges in amber when nothing has been sent, with a one-tap <b>Send</b>. Ageing chip turns red past 7 days.</div>
+  </div>
+
+  <!-- ░░░ The link: reminder-mail sheet auto-filled from the checklist ░░░ -->
+  <div class="mk-col">
+    <div class="mk-caption">C · the link — tapping “Send” pre-fills the mail</div>
+    <div class="sheet decision-sheet mk-sheet">
+      <div class="decision-title-row"><h2>Reminder Mail</h2></div>
+      <p class="decision-copy" style="margin:0 0 10px;">SHUBHAM · 1680 : ADB PAONTA SAHIB</p>
+      <div class="mk-mailsheet">
+        <div class="mk-field">
+          <small>Mail sent to</small>
+          <div class="mk-chips">
+            <span class="mk-chip active">Branch</span>
+            <span class="mk-chip">Customer</span>
+            <span class="mk-chip">Both</span>
+          </div>
+        </div>
+        <div class="mk-field">
+          <small>Mail remarks</small>
+          <div class="mk-textarea">Pending from branch: ITR, GST returns, Bank stmt, Stock stmt, Unit visit</div>
+          <span class="mk-autofill">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4L19 7.5"/></svg>
+            Auto-filled from checklist · branch docs only (CIBIL / MCA skipped)
+          </span>
+        </div>
+        <button class="mk-logbtn">&#9993; Log &amp; send reminder</button>
+      </div>
+    </div>
+    <div class="mk-note"><b>One source of truth:</b> the same pending keywords feed the card chips <b>and</b> the mail draft. Each logged mail stores a snapshot of what was pending — a real follow-up trail.</div>
+  </div>
+
+</div>
+</body>
+</html>
