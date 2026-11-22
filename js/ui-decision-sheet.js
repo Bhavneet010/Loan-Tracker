@@ -670,6 +670,7 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
   initDecisionSheet(overlay, options, stagedStatus);
   const card = overlay.querySelector('[data-decision-card]');
   const editBtn = overlay.querySelector('[data-decision-edit]');
+  const sheetEl = overlay.querySelector('.decision-sheet');
   const renderCard = () => {
     const preview = previewLoanStatus(loanFromDraft(loan, draft, stagedStatus), stagedStatus, draft.remarks);
     if (editMode) {
@@ -681,6 +682,8 @@ window.openLoanDecisionSheet = function(id, preferredStatus = null) {
     }
     editBtn?.classList.toggle('active', editMode);
     editBtn?.setAttribute('aria-pressed', editMode ? 'true' : 'false');
+    // A loan still pending after 7 days turns the whole sheet red.
+    sheetEl?.classList.toggle('is-overdue', stagedStatus === 'pending' && daysPending(loan.receiveDate) > 7);
     if (editMode) updateDecisionStatusPill(overlay, stagedStatus);
     else updateLoanDecisionView(overlay, preview, stagedStatus);
     setDecisionSelected(overlay, stagedStatus, { emit: false });
