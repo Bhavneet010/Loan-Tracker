@@ -24,6 +24,14 @@ export const FACILITIES = [
   { value: "CCTL", label: "CC + TL" },
 ];
 
+// Loans store the facility as CC / TL / CC_TL; the checklist uses CC / TL /
+// CCTL. Map one to the other when a checklist is created from a loan.
+export function facilityFromLoanType(loanType) {
+  if (loanType === "TL") return "TL";
+  if (loanType === "CC_TL" || loanType === "CCTL") return "CCTL";
+  return "CC";
+}
+
 export const STATUSES = ["pending", "received", "na"];
 
 // Applicability rules. Each maps a borrower profile to "does this item apply".
@@ -385,6 +393,9 @@ export function newChecklist({ today, user } = {}) {
     borrowerName: "",
     facility: "",
     amountLakh: null,
+    // Set when the checklist is created from a pending SME loan; null for a
+    // standalone checklist made from the admin menu.
+    loanId: null,
     referenceDate: today || now.slice(0, 10),
     constitution: "",
     collateral: null,

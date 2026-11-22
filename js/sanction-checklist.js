@@ -2,7 +2,7 @@
 // admin menu (user pill dropdown). Loaded lazily; it does not read or
 // write loans. Checklists are stored in the `sanctionChecklists` collection.
 import {
-  collection, deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc,
+  collection, deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc, where,
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { db } from "./config.js";
 import { S } from "./state.js";
@@ -10,9 +10,9 @@ import { appConfirm, esc, toast, todayStr } from "./utils.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
   AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
-  ayLabel, bsStage, fyLabel, isProfileComplete, itemLabel, itemStatus, newChecklist, nextYear,
-  fyInput, parseAmountLakh, parseFy, sectionSummary, summarize, visibleSections, yearProgress,
-  yearRows,
+  ayLabel, bsStage, facilityFromLoanType, fyLabel, isProfileComplete, itemLabel, itemStatus,
+  newChecklist, nextYear, fyInput, parseAmountLakh, parseFy, sectionSummary, summarize,
+  visibleSections, yearProgress, yearRows,
 } from "./sanction-checklist-model.js";
 
 const COLLECTION = "sanctionChecklists";
@@ -208,16 +208,11 @@ document.addEventListener("keydown", event => {
   else if (isOpen(LIST_ID)) closeChecklistList();
 });
 
-function openSanctionChecklist(id) {
-  if (!S.isAdmin) { toast("Admin access required"); return; }
-  ensureStyles();
-  const overlay = ensureOverlay();
-  const existing = id ? cachedList.find(entry => entry.id === id) : null;
-  if (id && !existing) { toast("Checklist not found"); return; }
-  state.id = existing ? existing.id : null;
-  state.data = existing
-    ? structuredClone({ ...existing, items: existing.items || {} })
-    : newChecklist({ today: todayStr(), user: S.user });
+// Load a checklist (existing doc, or a fresh draft) into the editor state and
+// show the sheet. `id` is null for an unsaved draft.
+function loadChecklistState(data, id, overlay) {
+  state.id = id || null;
+  state.data = structuredClone({ ...data, items: data.items || {} });
   delete state.data.id;
   state.pendingOnly = false;
   state.toggled = new Map();
@@ -232,10 +227,79 @@ function openSanctionChecklist(id) {
   openOverlay(overlay);
 }
 
+function openSanctionChecklist(id) {
+  if (!S.isAdmin) { toast("Admin access required"); return; }
+  ensureStyles();
+  const overlay = ensureOverlay();
+  const existing = id ? cachedList.find(entry => entry.id === id) : null;
+  if (id && !existing) { toast("Checklist not found"); return; }
+  loadChecklistState(existing || newChecklist({ today: todayStr(), user: S.user }), existing?.id, overlay);
+}
+
+// ── Loan link ────────────────────────────────────────────────────────────
+// The checklist for a loan is found by its `loanId`. There is at most one.
+async function findChecklistForLoan(loanId) {
+  const cached = cachedList.find(entry => entry.loanId === loanId);
+  if (cached) return cached;
+  const snap = await getDocs(query(collection(db, COLLECTION), where("loanId", "==", loanId)));
+  if (snap.empty) return null;
+  const found = { ...snap.docs[0].data(), id: snap.docs[0].id };
+  // Keep it around so the admin list and later lookups see it too.
+  if (!cachedList.some(entry => entry.id === found.id)) cachedList.push(found);
+  return found;
+}
+
+// Opened from a pending SME loan's status sheet: open the loan's checklist, or
+// start a new one pre-filled from the loan (borrower, facility, amount).
+async function openLoanChecklist(loanId) {
+  if (!S.isAdmin) { toast("Admin access required"); return; }
+  const loan = S.loans.find(entry => entry.id === loanId);
+  if (!loan) { toast("Loan not found"); return; }
+  ensureStyles();
+  const overlay = ensureOverlay();
+  let existing = null;
+  try {
+    existing = await findChecklistForLoan(loanId);
+  } catch (error) {
+    console.error("[Checklist] loan lookup failed", error);
+    toast("Could not load the checklist");
+    return;
+  }
+  if (existing) { loadChecklistState(existing, existing.id, overlay); return; }
+  const draft = newChecklist({ today: todayStr(), user: S.user });
+  draft.loanId = loanId;
+  draft.borrowerName = loan.customerName || "";
+  draft.facility = facilityFromLoanType(loan.loanType || (loan.isTermLoan ? "TL" : "CC"));
+  draft.amountLakh = Number(loan.amount) || null;
+  loadChecklistState(draft, null, overlay);
+}
+
+// Progress summary for a loan's checklist, for the status-sheet line. Returns
+// null when none exists yet (so the sheet offers "Create checklist").
+async function loanChecklistInfo(loanId) {
+  if (!S.isAdmin) return null;
+  const existing = await findChecklistForLoan(loanId);
+  if (!existing) return null;
+  const ready = isProfileComplete(existing);
+  const sum = ready ? summarize(existing) : null;
+  return {
+    exists: true,
+    id: existing.id,
+    ready,
+    received: sum ? sum.received : 0,
+    applicable: sum ? sum.applicable : 0,
+    pending: sum ? sum.pending : 0,
+    percent: sum ? sum.percent : 0,
+  };
+}
+
 function closeSanctionChecklist() {
   flushSave();
+  const loanId = state.data?.loanId || null;
   // Re-read so the list shows this checklist's latest percentage.
   closeOverlay(OVERLAY_ID, () => { if (isOpen(LIST_ID)) loadList(); });
+  // Let an open loan status sheet refresh its checklist line.
+  if (loanId) document.dispatchEvent(new CustomEvent("loanchecklistchange", { detail: { loanId } }));
 }
 
 function render() {
@@ -729,5 +793,7 @@ function createChecklist() {
 window.openChecklistList = openChecklistList;
 window.closeChecklistList = closeChecklistList;
 window.openSanctionChecklist = openSanctionChecklist;
+window.openLoanChecklist = openLoanChecklist;
+window.loanChecklistInfo = loanChecklistInfo;
 window.closeSanctionChecklist = closeSanctionChecklist;
 window.deleteSanctionChecklist = deleteSanctionChecklist;
