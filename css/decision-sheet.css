@@ -478,13 +478,13 @@ body.dark .decision-checklist-cta.is-done{--cta-accent:var(--green-vivid);}
 .reminder-autofill[hidden]{display:none;}
 .reminder-mail-chased{display:block;font-size:10px;font-weight:800;color:var(--text3);margin-top:2px;}
 
-/* ── Overdue: a loan still pending after 7 days turns the whole sheet red ── */
-.decision-sheet.is-overdue{border:2px solid var(--red) !important;box-shadow:0 -18px 44px rgba(239,68,68,0.30) !important;}
+/* ── Overdue: a loan still pending after 7 days turns the outer sheet pill
+   red (no outline); the detail card stays its normal surface on top. ── */
+.decision-sheet.is-overdue{background:#F7DADA !important;}
 .decision-sheet.is-overdue .decision-title-row h2{color:var(--red);}
-.decision-sheet.is-overdue .decision-account-card{
-  border:2px solid var(--red) !important;background:var(--red-bg) !important;box-shadow:0 0 0 3px var(--red-bg) !important;
-}
-.decision-sheet.is-overdue .decision-account-lines{border-color:var(--red-bd) !important;}
+.decision-sheet.is-overdue .decision-account-card{background:#FFFFFF !important;}
+body.dark .decision-sheet.is-overdue{background:#3A1E24 !important;}
+body.dark .decision-sheet.is-overdue .decision-account-card{background:rgba(30,28,58,0.96) !important;}
 
 .reminder-mail-overlay{z-index:260;background:rgba(20,18,40,0.42);backdrop-filter:blur(1.5px);}
 .reminder-mail-sheet{padding-bottom:18px;}
