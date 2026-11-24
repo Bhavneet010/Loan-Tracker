@@ -9,10 +9,11 @@ import { S } from "./state.js";
 import { appConfirm, esc, toast, todayStr } from "./utils.js";
 import { closeOverlay, openOverlay } from "./animate.js";
 import {
-  AMOUNT_WARN_LAKH, CONSTITUTIONS, FACILITIES, HIDDEN_SECTION_REASONS, allowsNA, amountWarning,
-  ayLabel, bsStage, facilityFromLoanType, fyLabel, isProfileComplete, itemLabel, itemStatus,
-  newChecklist, nextYear, fyInput, parseAmountLakh, parseFy, pendingTags, sectionSummary, summarize,
-  visibleSections, yearProgress, yearRows,
+  AMOUNT_WARN_LAKH, COLLATERAL_MODES, CONSTITUTIONS, EDU_COLLATERAL_LIMIT_LAKH, FACILITIES, RELATIONS,
+  WORK_TYPES, allowsNA, amountWarning, ayLabel, bsStage, collateralRequired, facilityFromLoanType, fyLabel,
+  hiddenSections, isEducation, isProfileComplete, itemLabel, itemStatus, newChecklist, nextYear, fyInput,
+  parseAmountLakh, parseFy, pendingTags, relationLabel, sectionSummary, summarize, visibleSections,
+  workLabel, yearProgress, yearRows,
 } from "./sanction-checklist-model.js";
 
 const COLLECTION = "sanctionChecklists";
@@ -72,8 +73,11 @@ function ensureListOverlay() {
         <h2 id="scListTitle">Pre-Sanction Checklists</h2>
         <button type="button" class="sc-close" aria-label="Close checklists" onclick="closeChecklistList()">&#215;</button>
       </div>
-      <div class="sc-intro">For SME loans up to ₹${AMOUNT_WARN_LAKH} lakh.</div>
-      <button type="button" class="btn btn-primary-full sc-new-btn" onclick="openSanctionChecklist()">+ New checklist</button>
+      <div class="sc-intro">For SME loans up to ₹${AMOUNT_WARN_LAKH} lakh and education loans.</div>
+      <div class="sc-new-row">
+        <button type="button" class="btn btn-primary-full sc-new-btn" onclick="openSanctionChecklist(null, 'sme')">+ SME checklist</button>
+        <button type="button" class="btn btn-primary-full sc-new-btn" onclick="openSanctionChecklist(null, 'education')">+ Education checklist</button>
+      </div>
       <div id="scList" class="sc-list"></div>
     </div>`;
   overlay.addEventListener("click", event => { if (event.target === overlay) closeChecklistList(); });
@@ -123,7 +127,7 @@ function renderList() {
     return `<div class="sc-list-row">
       <button type="button" class="sc-list-open" data-id="${esc(item.id)}" onclick="openSanctionChecklist(this.dataset.id)">
         <span class="sc-list-name">${esc(item.borrowerName || "Unnamed borrower")}</span>
-        <span class="sc-list-meta">${esc(facilityShort(item.facility))} · ${esc(fmtLakh(item.amountLakh))} · ${esc(fmtDate((item.createdAt || "").slice(0, 10)))}${done ? ` · ${done.pending} pending` : ""}</span>
+        <span class="sc-list-meta">${isEducation(item) ? `<span class="sc-type-tag">Education</span>` : `<span class="sc-type-tag sc-type-tag--sme">SME</span> ${esc(facilityShort(item.facility))}`} · ${esc(fmtLakh(item.amountLakh))} · ${esc(fmtDate((item.createdAt || "").slice(0, 10)))}${done ? ` · ${done.pending} pending` : ""}</span>
       </button>
       <span class="sc-pct${tone}">${pct}</span>
       <button type="button" class="btn-sm-danger" data-id="${esc(item.id)}" aria-label="Delete checklist for ${esc(item.borrowerName || "borrower")}" onclick="deleteSanctionChecklist(this.dataset.id)">&#215;</button>
@@ -227,13 +231,14 @@ function loadChecklistState(data, id, overlay) {
   openOverlay(overlay);
 }
 
-function openSanctionChecklist(id) {
+// `type` ("sme" / "education") picks the template for a new checklist.
+function openSanctionChecklist(id, type = "sme") {
   if (!S.isAdmin) { toast("Admin access required"); return; }
   ensureStyles();
   const overlay = ensureOverlay();
   const existing = id ? cachedList.find(entry => entry.id === id) : null;
   if (id && !existing) { toast("Checklist not found"); return; }
-  loadChecklistState(existing || newChecklist({ today: todayStr(), user: S.user }), existing?.id, overlay);
+  loadChecklistState(existing || newChecklist({ today: todayStr(), user: S.user, type }), existing?.id, overlay);
 }
 
 // ── Loan link ────────────────────────────────────────────────────────────
@@ -249,8 +254,9 @@ async function findChecklistForLoan(loanId) {
   return found;
 }
 
-// Opened from a pending SME loan's status sheet: open the loan's checklist, or
-// start a new one pre-filled from the loan (borrower, facility, amount).
+// Opened from a pending SME or education loan's status sheet: open the loan's
+// checklist, or start a new one pre-filled from the loan (borrower or
+// student, facility for SME, amount). The loan's category picks the type.
 async function openLoanChecklist(loanId) {
   const loan = S.loans.find(entry => entry.id === loanId);
   if (!loan) { toast("Loan not found"); return; }
@@ -265,10 +271,11 @@ async function openLoanChecklist(loanId) {
     return;
   }
   if (existing) { loadChecklistState(existing, existing.id, overlay); return; }
-  const draft = newChecklist({ today: todayStr(), user: S.user });
+  const education = loan.category === "Education";
+  const draft = newChecklist({ today: todayStr(), user: S.user, type: education ? "education" : "sme" });
   draft.loanId = loanId;
   draft.borrowerName = loan.customerName || "";
-  draft.facility = facilityFromLoanType(loan.loanType || (loan.isTermLoan ? "TL" : "CC"));
+  if (!education) draft.facility = facilityFromLoanType(loan.loanType || (loan.isTermLoan ? "TL" : "CC"));
   draft.amountLakh = Number(loan.amount) || null;
   loadChecklistState(draft, null, overlay);
 }
@@ -304,22 +311,33 @@ function closeSanctionChecklist() {
   if (loanId) document.dispatchEvent(new CustomEvent("loanchecklistchange", { detail: { loanId } }));
 }
 
+// Which sections are showing, to tell whether an amount change needs a redraw.
+const sectionsKey = data => visibleSections(data).map(section => section.id).join("");
+
 function render() {
   const body = document.getElementById("scBody");
   if (!body) return;
   const data = state.data;
   const sections = visibleSections(data);
+  state.drawnSections = sections.map(section => section.id).join("");
   const profileReady = isProfileComplete(data);
   const pdfBtn = document.getElementById("scPdfBtn");
+  const title = document.getElementById("scTitle");
+  const edu = isEducation(data);
+  if (title) title.textContent = edu ? "Education Checklist" : "Pre-Sanction Checklist";
+  const details = edu ? eduDetailsHtml(data) : detailsHtml(data);
   if (!state.id) {
     if (pdfBtn) pdfBtn.hidden = true;
-    body.innerHTML = detailsHtml(data) + createHtml(data, profileReady);
+    body.innerHTML = details + createHtml(data, profileReady);
     return;
   }
   if (pdfBtn) pdfBtn.hidden = !profileReady;
   const editing = state.editDetails || !profileReady;
+  const missingHint = edu
+    ? "Answer the student and co-applicant questions (and the amount, for collateral by amount) to see the checklist."
+    : "Answer constitution, facility, collateral and premises to see the checklist.";
   body.innerHTML = `
-    ${editing ? detailsHtml(data) + (profileReady ? `<button type="button" class="sc-pill-btn sc-details-done" data-action="editDetails">Done editing</button>` : `<div class="sc-hint">Answer constitution, facility, collateral and premises to see the checklist.</div>`) : ""}
+    ${editing ? details + (profileReady ? `<button type="button" class="sc-pill-btn sc-details-done" data-action="editDetails">Done editing</button>` : `<div class="sc-hint">${esc(missingHint)}</div>`) : ""}
     ${profileReady ? heroHtml(data, sections, editing) + sections.map(sectionHtml).join("") + hiddenNoteHtml(sections) : ""}`;
   state.justToggled = null;
   animateMeters(body);
@@ -337,16 +355,81 @@ function selectHtml(id, name, options, value, placeholder) {
   </select>`;
 }
 
-function yesNoHtml(id, label, action, value) {
+function yesNoHtml(id, label, action, value, field = "") {
   const yes = value === true;
   const no = value === false;
+  const fieldAttr = field ? ` data-choice="${field}"` : "";
   return `<div class="form-group">
       <span class="form-label" id="${id}">${esc(label)}</span>
       <div class="sc-seg" role="radiogroup" aria-labelledby="${id}">
-        <button type="button" role="radio" aria-checked="${yes}" class="${yes ? "on" : ""}" data-action="${action}" data-value="yes">Yes</button>
-        <button type="button" role="radio" aria-checked="${no}" class="${no ? "on" : ""}" data-action="${action}" data-value="no">No</button>
+        <button type="button" role="radio" aria-checked="${yes}" class="${yes ? "on" : ""}" data-action="${action}"${fieldAttr} data-value="yes">Yes</button>
+        <button type="button" role="radio" aria-checked="${no}" class="${no ? "on" : ""}" data-action="${action}"${fieldAttr} data-value="no">No</button>
       </div>
     </div>`;
+}
+
+// Segmented choice over a list of options (used for the collateral mode).
+function choiceHtml(id, label, field, options, value) {
+  return `<div class="form-group sc-full">
+      <span class="form-label" id="${id}">${esc(label)}</span>
+      <div class="sc-seg" role="radiogroup" aria-labelledby="${id}">
+        ${options.map(opt => {
+          const on = opt.value === value;
+          return `<button type="button" role="radio" aria-checked="${on}" class="${on ? "on" : ""}" data-action="choice" data-choice="${field}" data-value="${esc(opt.value)}">${esc(opt.label)}</button>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
+// What collateral means for this education loan right now, in words.
+function collateralNote(data) {
+  const required = collateralRequired(data);
+  const mode = data.collateralMode || "auto";
+  if (mode !== "auto") return required ? "Collateral required – set manually." : "No collateral – set manually.";
+  if (required == null) return `Enter the amount: collateral is needed above ₹${EDU_COLLATERAL_LIMIT_LAKH} lakh.`;
+  return required
+    ? `Above ₹${EDU_COLLATERAL_LIMIT_LAKH} lakh – collateral required.`
+    : `Up to ₹${EDU_COLLATERAL_LIMIT_LAKH} lakh – no collateral needed.`;
+}
+
+function coApplicantFieldsHtml(data, n) {
+  return `<div class="sc-subhead sc-full">Co-applicant ${n}</div>
+    <div class="form-group">
+      <label for="scCo${n}Relation">Relation to student</label>
+      ${selectHtml(`scCo${n}Relation`, `co${n}Relation`, RELATIONS, data[`co${n}Relation`], "Select")}
+    </div>
+    <div class="form-group">
+      <label for="scCo${n}Work">Work</label>
+      ${selectHtml(`scCo${n}Work`, `co${n}Work`, WORK_TYPES, data[`co${n}Work`], "Select")}
+    </div>`;
+}
+
+function eduDetailsHtml(data) {
+  return `<div class="sc-card sc-details">
+    <div class="form-group sc-full">
+      <label for="scBorrower">Student Name</label>
+      <input id="scBorrower" type="text" data-field="borrowerName" value="${esc(data.borrowerName)}" placeholder="e.g. RIYA SHARMA" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="scCourse">Course / Institute</label>
+      <input id="scCourse" type="text" data-field="course" value="${esc(data.course || "")}" placeholder="e.g. B.Tech, IIT Delhi" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="scAmount">Amount (in Lakhs)</label>
+      <input id="scAmount" type="number" inputmode="decimal" min="0" step="0.01" data-field="amountLakh" value="${data.amountLakh ?? ""}" placeholder="e.g. 12">
+    </div>
+    <div class="sc-yesno-row sc-full">
+      ${yesNoHtml("scAbroadLabel", "Studying abroad?", "choice", data.studyAbroad, "studyAbroad")}
+      ${yesNoHtml("scDegreeLabel", "Degree after 12th?", "choice", data.priorDegree, "priorDegree")}
+    </div>
+    ${coApplicantFieldsHtml(data, 1)}
+    <div class="sc-yesno-row sc-full">
+      ${yesNoHtml("scSecondCoLabel", "Second co-applicant?", "choice", data.secondCoApplicant, "secondCoApplicant")}
+    </div>
+    ${data.secondCoApplicant === true ? coApplicantFieldsHtml(data, 2) : ""}
+    ${choiceHtml("scCollateralModeLabel", "Collateral", "collateralMode", COLLATERAL_MODES, data.collateralMode || "auto")}
+    <div class="sc-note sc-full" id="scCollateralNote">${esc(collateralNote(data))}</div>
+  </div>`;
 }
 
 function detailsHtml(data) {
@@ -377,9 +460,16 @@ function detailsHtml(data) {
   </div>`;
 }
 
+function createHint(data, profileReady) {
+  if (profileReady && (data.borrowerName || "").trim()) return "Ready to start.";
+  return isEducation(data)
+    ? "Fill in the student name, amount, study and co-applicant questions to start."
+    : "Fill in the borrower name, facility, constitution, collateral and premises to start.";
+}
+
 function createHtml(data, profileReady) {
-  const ready = profileReady && data.borrowerName.trim();
-  return `<div class="sc-hint">${ready ? "Ready to start." : "Fill in the borrower name, facility, constitution, collateral and premises to start."}</div>
+  const ready = profileReady && (data.borrowerName || "").trim();
+  return `<div class="sc-hint" id="scCreateHint">${esc(createHint(data, profileReady))}</div>
     <button type="button" class="btn btn-primary-full sc-create" data-action="create" ${ready ? "" : "disabled"}>Create checklist</button>`;
 }
 
@@ -404,23 +494,54 @@ const SECTION_ICON = {
   F: svg('<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>'),
   G: svg('<rect x="6" y="4.5" width="12" height="16.5" rx="2.5"/><path d="M9.5 3.5h5v3h-5z"/><path d="M9 13.5l2 2 4-4"/>'),
 };
+// Education sections name their icon (`section.icon`) instead of using the
+// SME letter, since the letters mean different things there.
+const NAMED_ICON = {
+  student: svg('<path d="M2.5 9L12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c1.5 1.6 3.4 2.4 5.5 2.4s4-.8 5.5-2.4V11"/><path d="M21.5 9v5"/>'),
+  people: svg('<circle cx="9" cy="8.5" r="3"/><path d="M3 19.5c.5-3.2 3-5 6-5s5.5 1.8 6 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.6c2.4.2 4.1 1.8 4.5 4.4"/>'),
+  book: svg('<path d="M4 5.5c2.7-1 5.3-1 8 .8v13c-2.7-1.8-5.3-1.8-8-.8z"/><path d="M20 5.5c-2.7-1-5.3-1-8 .8v13c2.7-1.8 5.3-1.8 8-.8z"/>'),
+  school: svg('<path d="M3 20.5h18"/><path d="M5 20.5V10l7-4.5 7 4.5v10.5"/><path d="M10 20.5v-5h4v5"/>'),
+  plane: svg('<path d="M10.5 13.5L3 11l1.5-1.5 8 .5 4.5-4.5c.8-.8 2.2-.8 3 0s.8 2.2 0 3L15.5 13l.5 8-1.5 1.5-2.5-7.5-3.5 3.5V21l-1.5 1.5-1-3.5-3.5-1L4 16.5h2.5z"/>'),
+  search: SECTION_ICON.B,
+  lock: SECTION_ICON.F,
+};
+const sectionIcon = section => (section.icon ? NAMED_ICON[section.icon] : SECTION_ICON[section.id]) || section.id;
 
 const initialsOf = name => (name || "?").trim().split(/\s+/).slice(0, 2).map(word => word[0] || "").join("").toUpperCase() || "?";
 
 // Header card: who the borrower is, and how far the checklist has got.
 // The Pending tile doubles as the "pending only" filter.
+function heroFacts(data) {
+  if (isEducation(data)) {
+    const coApplicants = [1, ...(data.secondCoApplicant ? [2] : [])]
+      .map(n => `${relationLabel(data[`co${n}Relation`])} (${workLabel(data[`co${n}Work`])})`);
+    const auto = (data.collateralMode || "auto") === "auto";
+    return {
+      facts: ["Education", fmtLakh(data.amountLakh), data.course || ""].filter(Boolean),
+      flags: [
+        { text: data.studyAbroad ? "Study abroad" : "Study in India", tone: "sky" },
+        { text: `Co-applicant${coApplicants.length > 1 ? "s" : ""}: ${coApplicants.join(", ")}`, tone: "sky" },
+        { text: `${collateralRequired(data) ? "Collateral" : "No collateral"} – ${auto ? "by amount" : "overridden"}`, tone: "mint" },
+      ],
+    };
+  }
+  return {
+    facts: [
+      facilityShort(data.facility),
+      fmtLakh(data.amountLakh),
+      CONSTITUTIONS.find(opt => opt.value === data.constitution)?.label || "",
+    ].filter(Boolean),
+    flags: [
+      { text: data.collateral ? "With collateral" : "CGTMSE", tone: "mint" },
+      { text: data.rented ? "Rented premises" : "Owned premises", tone: "sky" },
+    ],
+  };
+}
+
 function heroHtml(data, sections, editing) {
   const sum = summarize(data, sections);
-  const facts = [
-    facilityShort(data.facility),
-    fmtLakh(data.amountLakh),
-    CONSTITUTIONS.find(opt => opt.value === data.constitution)?.label || "",
-  ].filter(Boolean);
-  const flags = [
-    { text: data.collateral ? "With collateral" : "CGTMSE", tone: "mint" },
-    { text: data.rented ? "Rented premises" : "Owned premises", tone: "sky" },
-  ];
-  const warning = amountWarning(data.amountLakh);
+  const { facts, flags } = heroFacts(data);
+  const warning = isEducation(data) ? "" : amountWarning(data.amountLakh);
   const complete = sum.applicable > 0 && sum.pending === 0;
   const status = complete
     ? "All items done"
@@ -432,7 +553,7 @@ function heroHtml(data, sections, editing) {
         <span class="sc-hero-name">${esc(data.borrowerName || "Unnamed borrower")}</span>
         <span class="sc-hero-facts">${facts.map(esc).join('<i aria-hidden="true">•</i>')}</span>
       </div>
-      ${editing ? "" : `<button type="button" class="sc-hero-icon" data-action="editDetails" aria-label="Edit borrower details" title="Edit details">${ICON.edit}</button>`}
+      ${editing ? "" : `<button type="button" class="sc-hero-icon" data-action="editDetails" aria-label="Edit ${isEducation(data) ? "student" : "borrower"} details" title="Edit details">${ICON.edit}</button>`}
     </div>
     <div class="sc-hero-flags">
       ${flags.map(flag => `<span class="sc-flag sc-flag--${flag.tone}">${esc(flag.text)}</span>`).join("")}
@@ -490,7 +611,7 @@ function sectionHtml(section) {
   const doneWord = (section.doneLabel || "Received").toLowerCase();
   return `<section class="sc-section sc-section--${section.id.toLowerCase()}${complete ? " is-complete" : ""}${open ? " is-open" : ""}">
     <button type="button" class="sc-section-head" data-action="toggleSection" data-section="${section.id}" data-open="${open}" aria-expanded="${open}">
-      <span class="sc-section-icon" aria-hidden="true">${complete ? ICON.check : SECTION_ICON[section.id] || section.id}</span>
+      <span class="sc-section-icon" aria-hidden="true">${complete ? ICON.check : sectionIcon(section)}</span>
       <span class="sc-section-text">
         <span class="sc-section-title"><span class="sc-section-letter">${section.id}</span><span class="sc-section-name">${esc(section.title)}</span></span>
         <span class="sc-section-progress">
@@ -605,11 +726,9 @@ function updateRows(key, change) {
 
 // Tell the user which sections are hidden and why, so nothing looks missing.
 function hiddenNoteHtml(sections) {
-  const shown = new Set(sections.map(section => section.id));
-  const reasons = HIDDEN_SECTION_REASONS;
-  const hidden = Object.keys(reasons).filter(id => !shown.has(id));
+  const hidden = hiddenSections(state.data, sections);
   if (!hidden.length) return "";
-  return `<div class="sc-hint sc-hidden-note">Not applicable: ${hidden.map(id => `${id} (${reasons[id]})`).join(", ")}.</div>`;
+  return `<div class="sc-hint sc-hidden-note">Not applicable: ${hidden.map(entry => esc(`${entry.id} – ${entry.title} (${entry.reason})`)).join(", ")}.</div>`;
 }
 
 // ── Events ───────────────────────────────────────────────────────────────
@@ -623,6 +742,13 @@ function onClick(event) {
   else if (action === "exportPdf") exportPdf(target);
   else if (action === "collateral") setField("collateral", target.dataset.value === "yes", true);
   else if (action === "rented") setField("rented", target.dataset.value === "yes", true);
+  else if (action === "choice") {
+    // Yes/No questions store booleans; the collateral mode keeps its word.
+    const field = target.dataset.choice;
+    const raw = target.dataset.value;
+    const value = field === "collateralMode" ? raw : raw === "yes";
+    setField(field, value, true);
+  }
   else if (action === "create") createChecklist();
   else if (action === "editDetails") { state.editDetails = !state.editDetails; render(); }
   else if (action === "pendingOnly") { state.pendingOnly = !state.pendingOnly; render(); }
@@ -680,8 +806,16 @@ function onChange(event) {
   }
   const field = target.dataset.field;
   if (!field) return;
-  if (field === "amountLakh") setField(field, parseAmountLakh(target.value), false);
-  else if (field === "borrowerName") setField(field, target.value.trim(), !state.id);
+  // Text boxes never redraw on change: the change fires as focus moves to the
+  // next control, and a redraw would swallow that tap. For education loans
+  // the amount can flip collateral, so redraw only a saved checklist, and
+  // only when that changes which sections show.
+  if (field === "amountLakh") {
+    setField(field, parseAmountLakh(target.value), false);
+    if (state.id && sectionsKey(state.data) !== state.drawnSections) render();
+  } else if (field === "borrowerName" || field === "course") {
+    setField(field, target.value.trim(), false);
+  }
   else setField(field, target.value, true);
 }
 
@@ -689,13 +823,28 @@ function onInput(event) {
   const target = event.target;
   if (target.dataset.field === "amountLakh") {
     const warn = document.getElementById("scAmountWarn");
-    const message = amountWarning(target.value);
+    const message = isEducation(state.data) ? "" : amountWarning(target.value);
     if (warn) { warn.hidden = !message; warn.textContent = message ? `⚠ ${message}` : ""; }
+    if (isEducation(state.data)) {
+      // Keep the collateral note and the Create button in step while typing.
+      state.data.amountLakh = parseAmountLakh(target.value);
+      const note = document.getElementById("scCollateralNote");
+      if (note) note.textContent = collateralNote(state.data);
+      refreshCreateButton();
+    }
   } else if (target.dataset.field === "borrowerName" && !state.id) {
     state.data.borrowerName = target.value;
-    const button = document.querySelector(`#${OVERLAY_ID} [data-action="create"]`);
-    if (button) button.disabled = !(isProfileComplete(state.data) && target.value.trim());
+    refreshCreateButton();
   }
+}
+
+// Enables "Create checklist" on a draft once everything needed is filled in.
+function refreshCreateButton() {
+  if (state.id) return;
+  const button = document.querySelector(`#${OVERLAY_ID} [data-action="create"]`);
+  if (button) button.disabled = !(isProfileComplete(state.data) && (state.data.borrowerName || "").trim());
+  const hint = document.getElementById("scCreateHint");
+  if (hint) hint.textContent = createHint(state.data, isProfileComplete(state.data));
 }
 
 function setField(field, value, rerender) {

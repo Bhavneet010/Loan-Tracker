@@ -1,7 +1,9 @@
 // PDF export of a pre-sanction checklist (A4 portrait, drawn with jsPDF).
 // Loaded on demand from sanction-checklist.js when "PDF" is tapped.
 import { createRetryableScriptLoader } from "./script-loader.js";
-import { CONSTITUTIONS, checklistReport } from "./sanction-checklist-model.js";
+import {
+  CONSTITUTIONS, checklistReport, collateralRequired, isEducation, relationLabel, workLabel,
+} from "./sanction-checklist-model.js";
 
 const ensureJsPdf = createRetryableScriptLoader({
   documentRef: document,
@@ -13,7 +15,7 @@ const ensureJsPdf = createRetryableScriptLoader({
 // Section colours, matching the cards on screen.
 const SECTION_RGB = {
   A: [110, 96, 214], B: [13, 148, 136], C: [37, 118, 214], D: [202, 128, 16],
-  E: [224, 98, 40], F: [200, 60, 108], G: [64, 150, 60],
+  E: [224, 98, 40], F: [200, 60, 108], G: [64, 150, 60], H: [120, 90, 60],
 };
 const INDIGO = [79, 70, 200];
 const INK = [30, 27, 58];
@@ -40,7 +42,42 @@ const facilityName = value => ({ CC: "Cash Credit (CC)", TL: "Term Loan (TL)", C
 
 export function checklistPdfFilename(checklist, today) {
   const slug = clean(checklist?.borrowerName || "borrower").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "borrower";
-  return `pre-sanction-checklist-${slug}-${today}.pdf`;
+  return `${isEducation(checklist) ? "education-loan-checklist" : "pre-sanction-checklist"}-${slug}-${today}.pdf`;
+}
+
+const pdfTitle = checklist => (isEducation(checklist) ? "Education Loan Checklist" : "Pre-Sanction Checklist");
+
+// Label / value pairs for the details box at the top.
+export function checklistPdfDetails(checklist) {
+  if (isEducation(checklist)) {
+    const coApplicant = n => {
+      const relation = relationLabel(checklist[`co${n}Relation`]) || "-";
+      const work = workLabel(checklist[`co${n}Work`]);
+      return work ? `${relation} (${work})` : relation;
+    };
+    const required = collateralRequired(checklist);
+    const auto = (checklist.collateralMode || "auto") === "auto";
+    // Short enough to fit on one line of the details box.
+    const collateral = `${required ? "Required" : "Not required"} - ${auto ? "by amount" : "overridden"}`;
+    return [
+      ["Student", checklist.borrowerName || "-"],
+      ["Amount", fmtLakh(checklist.amountLakh)],
+      ["Course", checklist.course || "-"],
+      ["Study", checklist.studyAbroad ? "Abroad" : "India"],
+      ["Co-applicant 1", coApplicant(1)],
+      ["Co-applicant 2", checklist.secondCoApplicant ? coApplicant(2) : "None"],
+      ["Collateral", collateral],
+    ];
+  }
+  const constitution = CONSTITUTIONS.find(opt => opt.value === checklist.constitution)?.label || "-";
+  return [
+    ["Borrower", checklist.borrowerName || "-"],
+    ["Facility", facilityName(checklist.facility)],
+    ["Amount", fmtLakh(checklist.amountLakh)],
+    ["Constitution", constitution],
+    ["Collateral", checklist.collateral ? "Offered" : "None - covered under CGTMSE"],
+    ["Premises", checklist.rented ? "Rented" : "Owned"],
+  ];
 }
 
 export function drawChecklistPdf(doc, checklist, { user } = {}) {
@@ -83,19 +120,13 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
   doc.setFillColor(...INDIGO);
   doc.roundedRect(M, y, CW, 14, 2.5, 2.5, "F");
   setFont("bold", 18, [255, 255, 255]);
-  text("Pre-Sanction Checklist", W / 2, y + 9.4, { align: "center" });
+  text(pdfTitle(checklist), W / 2, y + 9.4, { align: "center" });
   y += 17;
 
-  // ── Borrower details ──
-  const constitution = CONSTITUTIONS.find(opt => opt.value === checklist.constitution)?.label || "-";
-  const details = [
-    ["Borrower", checklist.borrowerName || "-"],
-    ["Facility", facilityName(checklist.facility)],
-    ["Amount", fmtLakh(checklist.amountLakh)],
-    ["Constitution", constitution],
-    ["Collateral", checklist.collateral ? "Offered" : "None - covered under CGTMSE"],
-    ["Premises", checklist.rented ? "Rented" : "Owned"],
-  ];
+  // ── Borrower / student details ──
+  const details = checklistPdfDetails(checklist);
+  // Education labels ("Co-applicant 1") are longer, so give them more room.
+  const labelW = isEducation(checklist) ? 28 : 26;
   const half = CW / 2;
   const boxH = Math.ceil(details.length / 2) * 6.2 + 3;
   doc.setDrawColor(...LINE);
@@ -109,7 +140,7 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
     setFont("normal", 9, MUTED);
     text(label, bx, by);
     setFont("bold", 10, INK);
-    text(doc.splitTextToSize(clean(value), half - 32)[0], bx + 26, by);
+    text(doc.splitTextToSize(clean(value), half - labelW - 6)[0], bx + labelW, by);
   });
   y += boxH + 3;
 
@@ -238,7 +269,7 @@ export function drawChecklistPdf(doc, checklist, { user } = {}) {
   for (let page = 1; page <= pages; page += 1) {
     doc.setPage(page);
     setFont("normal", 8, MUTED);
-    text(`${checklist.borrowerName || "Borrower"} - Pre-Sanction Checklist${user ? ` - exported by ${user}` : ""}`, M, H - 6);
+    text(`${checklist.borrowerName || "Borrower"} - ${pdfTitle(checklist)}${user ? ` - exported by ${user}` : ""}`, M, H - 6);
     text(`Page ${page} of ${pages}`, M + CW, H - 6, { align: "right" });
   }
   return doc;

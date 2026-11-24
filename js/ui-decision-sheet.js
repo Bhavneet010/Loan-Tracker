@@ -113,13 +113,13 @@ function reminderBlock(loan) {
   </div>`;
 }
 
-// Pre-sanction checklist entry for a pending, fresh SME loan. Available to
-// every officer, not just admins. The text is filled in asynchronously by
-// hydrateChecklistLine once the checklist module has looked up this loan's
-// checklist.
+// Pre-sanction checklist entry for a pending fresh SME loan or a pending
+// education loan. Available to every officer, not just admins. The text is
+// filled in asynchronously by hydrateChecklistLine once the checklist module
+// has looked up this loan's checklist.
 function canHaveChecklist(loan) {
-  return !!loan.id && loan.category === 'SME'
-    && (loan.status || 'pending') === 'pending' && isFreshCC(loan);
+  if (!loan.id || (loan.status || 'pending') !== 'pending') return false;
+  return (loan.category === 'SME' && isFreshCC(loan)) || loan.category === 'Education';
 }
 
 const ICON_CHECKLIST = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><rect x="9" y="3.5" width="6" height="3" rx="1"/><path d="m8.5 13 2 2 4-4"/></svg>`;

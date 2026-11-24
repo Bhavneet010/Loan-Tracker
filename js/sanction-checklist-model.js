@@ -1,4 +1,8 @@
-// Pre-sanction checklist for SME loans (up to ₹50 lakh).
+// Pre-sanction checklists: one template for SME loans (up to ₹50 lakh) and
+// one for education loans. A checklist's `type` picks the template; older
+// checklists have no type and are SME.
+//
+// SME notes —
 // Template v3: no application date; rented premises decides the address
 // proofs; no collateral means CGTMSE cover; ITR and balance sheet are two
 // year-wise questions whose years can be edited. Item numbers are not
@@ -52,6 +56,21 @@ const RULES = {
   collateral: { label: "If collateral", applies: p => p.collateral === true },
   // GST returns only make sense if the borrower is GST-registered.
   gstRegistered: { label: "If GST registered", applies: p => p.gstNA !== true },
+  // Education loan rules (profile from eduProfileOf).
+  abroad: { label: "Study abroad", applies: p => p.abroad === true },
+  abroadOptional: { label: "Study abroad, if available", applies: p => p.abroad === true, allowNA: true },
+  priorDegree: { label: "If degree done", applies: p => p.priorDegree === true },
+  co1Salaried: { label: "Co-applicant 1 salaried", applies: p => p.co1Work === "salaried" },
+  co1Self: { label: "Co-applicant 1 self-employed", applies: p => p.co1Work === "self" },
+  co1Working: { label: "Co-applicant 1 working", applies: p => p.co1Work === "salaried" || p.co1Work === "self" },
+  co2: { label: "Second co-applicant", applies: p => p.secondCo === true },
+  co2Optional: { label: "Second co-applicant, if applicable", applies: p => p.secondCo === true, allowNA: true },
+  co2Salaried: { label: "Co-applicant 2 salaried", applies: p => p.secondCo === true && p.co2Work === "salaried" },
+  co2Self: { label: "Co-applicant 2 self-employed", applies: p => p.secondCo === true && p.co2Work === "self" },
+  co2Working: {
+    label: "Co-applicant 2 working",
+    applies: p => p.secondCo === true && (p.co2Work === "salaried" || p.co2Work === "self"),
+  },
 };
 
 // Section B documents are pulled and attached by the credit officer, not
@@ -159,6 +178,199 @@ export const HIDDEN_SECTION_REASONS = { D: "no Term Loan", E: "no Cash Credit", 
 
 export const ALL_ITEMS = SECTIONS.flatMap(section => section.items);
 
+// ── Education loan template ──────────────────────────────────────────────
+// Student plus one or two co-applicants (parent, in-law, sibling…). Item
+// keys all start with "edu" so they never clash with SME keys; the two
+// co-applicants have their own keys (eduCo1…, eduCo2…) so switching the
+// second one off and on again keeps its ticks.
+
+export const EDU_COLLATERAL_LIMIT_LAKH = 7.5;
+
+export const RELATIONS = [
+  { value: "parent", label: "Parent" },
+  { value: "inLaw", label: "Parent-in-law" },
+  { value: "brother", label: "Brother" },
+  { value: "sister", label: "Sister" },
+  { value: "other", label: "Other" },
+];
+
+export const WORK_TYPES = [
+  { value: "salaried", label: "Salaried" },
+  { value: "self", label: "Self-employed" },
+  { value: "none", label: "Not working" },
+];
+
+// "auto" follows the amount; "yes" / "no" override it, since some institutes
+// need collateral at a different limit.
+export const COLLATERAL_MODES = [
+  { value: "auto", label: "By amount" },
+  { value: "yes", label: "Required" },
+  { value: "no", label: "Not required" },
+];
+
+export const relationLabel = value => RELATIONS.find(opt => opt.value === value)?.label || "";
+export const workLabel = value => WORK_TYPES.find(opt => opt.value === value)?.label || "";
+
+// true / false, or null while it cannot be told (by amount, with no amount).
+export function collateralRequired(checklist) {
+  const mode = checklist?.collateralMode || "auto";
+  if (mode === "yes") return true;
+  if (mode === "no") return false;
+  const amount = parseAmountLakh(checklist?.amountLakh);
+  return amount == null ? null : amount > EDU_COLLATERAL_LIMIT_LAKH;
+}
+
+function coApplicantSection(n, id) {
+  const key = name => `eduCo${n}${name}`;
+  const rule = n === 1
+    ? { all: "all", optional: "optional", salaried: "co1Salaried", self: "co1Self", working: "co1Working" }
+    : { all: "co2", optional: "co2Optional", salaried: "co2Salaried", self: "co2Self", working: "co2Working" };
+  return {
+    id,
+    title: p => {
+      const relation = relationLabel(p[`co${n}Relation`]);
+      return `Co-applicant ${n}${relation ? ` – ${relation}` : ""}`;
+    },
+    icon: "people",
+    doneLabel: "Received",
+    items: [
+      { key: key("Photo"), rule: rule.all, label: "Photograph" },
+      { key: key("PanAadhaar"), rule: rule.all, label: "PAN & Aadhaar (self-attested)" },
+      { key: key("Relation"), rule: rule.optional, label: "Proof of Relationship with Student" },
+      { key: key("SalarySlips"), rule: rule.salaried, label: "Salary Slips – Last 3 Months" },
+      { key: key("Form16"), rule: rule.salaried, label: "Form 16 – Last 2 Years" },
+      { key: key("Employment"), rule: rule.salaried, label: "Employment Proof (ID Card / Appointment Letter)" },
+      { key: key("Itr"), rule: rule.self, label: "ITR with Computation", years: "itr" },
+      { key: key("BusinessProof"), rule: rule.self, label: "Business Proof (GST / Udyam / Shop Licence)" },
+      {
+        key: key("Bank"),
+        rule: rule.working,
+        label: p => (p[`co${n}Work`] === "salaried"
+          ? "Bank Statement (Salary Account) – Last 6 Months"
+          : "Bank Statements – Last 12 Months"),
+      },
+      { key: key("OtherIncome"), rule: rule.optional, label: "Other Income / Property Documents" },
+    ],
+  };
+}
+
+export const EDU_SECTIONS = [
+  {
+    id: "A",
+    title: "Student",
+    icon: "student",
+    doneLabel: "Received",
+    items: [
+      { key: "eduLoanApplication", rule: "all", label: "Loan Application Form (signed by Student & Co-applicants)" },
+      { key: "eduVidyalaxmi", rule: "all", label: "PM-Vidyalaxmi Portal Application" },
+      { key: "eduStudentPhoto", rule: "all", label: "Photograph of Student" },
+      { key: "eduStudentPanAadhaar", rule: "all", label: "PAN & Aadhaar of Student (self-attested)" },
+      { key: "eduStudentAddress", rule: "optional", label: "Address Proof of Student (if different from Aadhaar)" },
+    ],
+  },
+  coApplicantSection(1, "B"),
+  coApplicantSection(2, "C"),
+  {
+    id: "D",
+    title: "Academics",
+    icon: "book",
+    doneLabel: "Received",
+    items: [
+      { key: "edu10th", rule: "all", label: "10th Marksheet & Passing Certificate" },
+      { key: "edu12th", rule: "all", label: "12th Marksheet & Passing Certificate" },
+      { key: "eduDegree", rule: "priorDegree", label: "Graduation / Other Degree – Marksheets & Certificate" },
+      {
+        key: "eduEntrance",
+        rule: "optional",
+        label: p => (p.abroad
+          ? "Test Scorecard (GRE / GMAT / IELTS / TOEFL)"
+          : "Entrance Exam Scorecard (JEE / NEET / CAT etc.)"),
+      },
+      { key: "eduGap", rule: "optional", label: "Gap Certificate / Affidavit for Gap in Studies" },
+    ],
+  },
+  {
+    id: "E",
+    title: "Admission & Costs",
+    icon: "school",
+    doneLabel: "Received",
+    items: [
+      { key: "eduAdmission", rule: "all", label: "Admission / Offer Letter" },
+      { key: "eduFeeStructure", rule: "all", label: "Detailed Fee Structure (from the Institute)" },
+      { key: "eduFeeReceipts", rule: "optional", label: "Receipts of Fees Already Paid" },
+      { key: "eduScholarship", rule: "optional", label: "Scholarship Letter" },
+    ],
+  },
+  {
+    id: "F",
+    title: "Study Abroad",
+    icon: "plane",
+    doneLabel: "Received",
+    items: [
+      { key: "eduPassport", rule: "abroad", label: "Passport of Student" },
+      { key: "eduI20", rule: "abroad", label: "I-20 / CAS / Confirmation of Enrolment" },
+      { key: "eduFxCost", rule: "abroad", label: "Cost Sheet in INR (at current Exchange Rate)" },
+      { key: "eduVisa", rule: "abroadOptional", label: "Student Visa (if already issued)" },
+    ],
+  },
+  {
+    id: "G",
+    title: "Due Diligence Checks",
+    icon: "search",
+    doneLabel: "Attached",
+    items: [
+      { key: "eduCicStudent", rule: "all", label: "CIC Report – Student" },
+      { key: "eduCicCo1", rule: "all", label: "CIC Report – Co-applicant 1" },
+      { key: "eduCicCo2", rule: "co2", label: "CIC Report – Co-applicant 2" },
+    ],
+  },
+  {
+    id: "H",
+    title: "Security / Collateral",
+    icon: "lock",
+    doneLabel: "Received",
+    items: [
+      { key: "eduPropertyDocs", rule: "collateral", label: "Property Title Deeds & Chain Documents" },
+      { key: "eduTitleSearch", rule: "collateral", label: "Title Search Report (Legal Opinion)" },
+      { key: "eduValuation", rule: "collateral", label: "Valuation Report (Approved Valuer)" },
+      { key: "eduCersai", rule: "collateral", label: "CERSAI Search (Property)" },
+    ],
+  },
+];
+
+export const EDU_ALL_ITEMS = EDU_SECTIONS.flatMap(section => section.items);
+
+const yesNoOf = value => (value === true ? true : value === false ? false : null);
+
+function eduProfileOf(checklist) {
+  return {
+    abroad: yesNoOf(checklist?.studyAbroad),
+    priorDegree: yesNoOf(checklist?.priorDegree),
+    co1Relation: checklist?.co1Relation || "",
+    co1Work: checklist?.co1Work || "",
+    secondCo: yesNoOf(checklist?.secondCoApplicant),
+    co2Relation: checklist?.co2Relation || "",
+    co2Work: checklist?.co2Work || "",
+    collateral: collateralRequired(checklist),
+  };
+}
+
+function eduProfileComplete(checklist) {
+  const p = eduProfileOf(checklist);
+  return p.abroad !== null && p.priorDegree !== null && Boolean(p.co1Relation) && Boolean(p.co1Work)
+    && p.secondCo !== null && (p.secondCo === false || (Boolean(p.co2Relation) && Boolean(p.co2Work)))
+    && p.collateral !== null;
+}
+
+function eduHiddenReasons(checklist) {
+  const mode = checklist?.collateralMode || "auto";
+  return {
+    C: "no second co-applicant",
+    F: "studying in India",
+    H: mode === "no" ? "marked not required" : `up to ₹${EDU_COLLATERAL_LIMIT_LAKH} lakh`,
+  };
+}
+
 // Short keyword per item, for the "pending docs" snippet on the loan card and
 // the branch reminder mail. Keep them terse — a glanceable tag, not a sentence.
 const SHORT = {
@@ -172,6 +384,22 @@ const SHORT = {
   quotation: "Quotation", projectReport: "Project rep.", meansOfFinance: "Margin proof",
   stockStatement: "Stock stmt", debtorsCreditors: "Debtors list", titleSearch: "Title search",
   valuation: "Valuation", cersaiSearch: "CERSAI", unitVisit: "Unit visit", anyOther: "Other",
+  // Education loans
+  eduLoanApplication: "Loan form", eduVidyalaxmi: "Vidyalaxmi", eduStudentPhoto: "Student photo",
+  eduStudentPanAadhaar: "Student KYC", eduStudentAddress: "Student address",
+  eduCo1Photo: "Co-app photo", eduCo1PanAadhaar: "Co-app KYC", eduCo1Relation: "Relation proof",
+  eduCo1SalarySlips: "Salary slips", eduCo1Form16: "Form 16", eduCo1Employment: "Job proof",
+  eduCo1Itr: "Co-app ITR", eduCo1BusinessProof: "Business proof", eduCo1Bank: "Co-app bank stmt",
+  eduCo1OtherIncome: "Other income",
+  eduCo2Photo: "Co-app 2 photo", eduCo2PanAadhaar: "Co-app 2 KYC", eduCo2Relation: "Co-app 2 relation",
+  eduCo2SalarySlips: "Co-app 2 slips", eduCo2Form16: "Co-app 2 Form 16", eduCo2Employment: "Co-app 2 job proof",
+  eduCo2Itr: "Co-app 2 ITR", eduCo2BusinessProof: "Co-app 2 business", eduCo2Bank: "Co-app 2 bank stmt",
+  eduCo2OtherIncome: "Co-app 2 other income",
+  edu10th: "10th", edu12th: "12th", eduDegree: "Degree", eduEntrance: "Scorecard", eduGap: "Gap cert.",
+  eduAdmission: "Admission letter", eduFeeStructure: "Fee structure", eduFeeReceipts: "Fee receipts",
+  eduScholarship: "Scholarship", eduPassport: "Passport", eduI20: "I-20/CAS", eduFxCost: "Cost sheet",
+  eduVisa: "Visa", eduCicStudent: "CIBIL (student)", eduCicCo1: "CIBIL (co-app)", eduCicCo2: "CIBIL (co-app 2)",
+  eduPropertyDocs: "Property docs", eduTitleSearch: "Title search", eduValuation: "Valuation", eduCersai: "CERSAI",
 };
 export const shortTag = key => SHORT[key] || key;
 
@@ -238,6 +466,7 @@ export function authorityToBorrowFor(profile) {
 // Labels are resolved for the profile by visibleSections; this also copes
 // with a raw template item.
 export const itemLabel = (item, profile) => (typeof item.label === "function" ? item.label(profile || {}) : item.label);
+export const sectionTitle = (section, profile) => (typeof section.title === "function" ? section.title(profile || {}) : section.title);
 
 // ── Financial years ──────────────────────────────────────────────────────
 // Indian FY runs April–March; a FY is identified by its starting year.
@@ -327,9 +556,36 @@ export function yearProgress(checklist, item) {
 
 // ── Profile & visibility ─────────────────────────────────────────────────
 
-const yesNo = value => (value === true ? true : value === false ? false : null);
+const yesNo = yesNoOf;
+
+export const LOAN_TYPES = [
+  { value: "sme", label: "SME" },
+  { value: "education", label: "Education" },
+];
+
+// Checklists made before education loans existed have no type: they are SME.
+export const checklistType = checklist => (checklist?.type === "education" ? "education" : "sme");
+export const isEducation = checklist => checklistType(checklist) === "education";
+export const sectionsFor = checklist => (isEducation(checklist) ? EDU_SECTIONS : SECTIONS);
+export const allItemsFor = checklist => (isEducation(checklist) ? EDU_ALL_ITEMS : ALL_ITEMS);
+
+// Whole sections that are hidden, with the reason, for the note under the
+// checklist and in the PDF.
+export function hiddenSections(checklist, sections = visibleSections(checklist)) {
+  const reasons = isEducation(checklist) ? eduHiddenReasons(checklist) : HIDDEN_SECTION_REASONS;
+  const shown = new Set(sections.map(section => section.id));
+  // Plain title: a hidden co-applicant's old relation would only confuse.
+  return Object.keys(reasons)
+    .filter(id => !shown.has(id))
+    .map(id => ({
+      id,
+      title: sectionTitle(sectionsFor(checklist).find(section => section.id === id), {}),
+      reason: reasons[id],
+    }));
+}
 
 export function profileOf(checklist) {
+  if (isEducation(checklist)) return eduProfileOf(checklist);
   return {
     constitution: checklist?.constitution || "",
     facility: checklist?.facility || "",
@@ -342,6 +598,7 @@ export function profileOf(checklist) {
 
 // The items cannot be worked out until every profile question is answered.
 export function isProfileComplete(checklist) {
+  if (isEducation(checklist)) return eduProfileComplete(checklist);
   const p = profileOf(checklist);
   return Boolean(p.constitution) && Boolean(p.facility) && p.collateral !== null && p.rented !== null;
 }
@@ -355,9 +612,10 @@ export function itemApplies(item, profile) {
 export function visibleSections(checklist) {
   if (!isProfileComplete(checklist)) return [];
   const profile = profileOf(checklist);
-  return numberSections(SECTIONS
+  return numberSections(sectionsFor(checklist)
     .map(section => ({
       ...section,
+      title: sectionTitle(section, profile),
       items: section.items
         .filter(item => itemApplies(item, profile))
         .map(item => ({ ...item, label: itemLabel(item, profile) })),
@@ -431,9 +689,11 @@ export function amountWarning(value) {
     : "";
 }
 
-export function newChecklist({ today, user } = {}) {
+export function newChecklist({ today, user, type } = {}) {
+  if (type === "education") return newEducationChecklist({ today, user });
   const now = new Date().toISOString();
   return {
+    type: "sme",
     templateVersion: TEMPLATE_VERSION,
     borrowerName: "",
     facility: "",
@@ -453,6 +713,34 @@ export function newChecklist({ today, user } = {}) {
   };
 }
 
+// Education checklists keep the student's name in `borrowerName`, so the
+// admin list and the loan link work the same for both types.
+export function newEducationChecklist({ today, user } = {}) {
+  const now = new Date().toISOString();
+  return {
+    type: "education",
+    templateVersion: TEMPLATE_VERSION,
+    borrowerName: "",
+    course: "",
+    amountLakh: null,
+    loanId: null,
+    referenceDate: today || now.slice(0, 10),
+    studyAbroad: null,
+    priorDegree: null,
+    co1Relation: "",
+    co1Work: "",
+    secondCoApplicant: null,
+    co2Relation: "",
+    co2Work: "",
+    collateralMode: "auto",
+    items: {},
+    createdAt: now,
+    createdBy: user || "",
+    updatedAt: now,
+    updatedBy: user || "",
+  };
+}
+
 // ── Report (what the PDF export prints) ──────────────────────────────────
 // Only the items that apply are listed, in the same order and numbering as
 // on screen. Year-wise questions carry one line per financial year.
@@ -461,12 +749,9 @@ const STATUS_WORD = { received: null, pending: "Pending", na: "N/A" };
 
 export function checklistReport(checklist) {
   const sections = visibleSections(checklist);
-  const shown = new Set(sections.map(section => section.id));
   return {
     summary: summarize(checklist, sections),
-    hidden: Object.keys(HIDDEN_SECTION_REASONS)
-      .filter(id => !shown.has(id))
-      .map(id => ({ id, title: SECTIONS.find(section => section.id === id).title, reason: HIDDEN_SECTION_REASONS[id] })),
+    hidden: hiddenSections(checklist, sections),
     sections: sections.map(section => {
       const doneLabel = section.doneLabel || "Received";
       const word = status => STATUS_WORD[status] || doneLabel;
