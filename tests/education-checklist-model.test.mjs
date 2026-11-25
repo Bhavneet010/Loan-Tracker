@@ -139,13 +139,14 @@ test("due diligence: residence and workplace visits; assets & liabilities above 
   assert.deepEqual(dd(edu()), ["eduCicStudent", "eduCicCo1", "eduResidenceVisit", "eduWorkVisitCo1"]);
   assert.deepEqual(dd(edu({ co1Work: "none" })), ["eduCicStudent", "eduCicCo1", "eduResidenceVisit"]);
   assert.deepEqual(dd(edu({ amountLakh: 7.5 })).includes("eduAlCo1"), false);
+  assert.deepEqual(dd(edu({ amountLakh: 7.5 })).includes("eduAlStudent"), false);
   assert.deepEqual(dd(edu({ amountLakh: 7.51 })).includes("eduAlCo1"), true);
   // The collateral override does not change the A&L rule when an amount is entered.
   assert.equal(dd(edu({ amountLakh: 20, collateralMode: "no" })).includes("eduAlCo1"), true);
   assert.equal(dd(edu({ amountLakh: 5, collateralMode: "yes" })).includes("eduAlCo1"), false);
   assert.equal(dd(edu({ amountLakh: null, collateralMode: "yes" })).includes("eduAlCo1"), true);
   assert.deepEqual(dd(edu({ amountLakh: 20, secondCoApplicant: true, co2Relation: "brother", co2Work: "self" })), [
-    "eduCicStudent", "eduCicCo1", "eduCicCo2", "eduResidenceVisit", "eduWorkVisitCo1", "eduWorkVisitCo2", "eduAlCo1", "eduAlCo2",
+    "eduCicStudent", "eduCicCo1", "eduCicCo2", "eduResidenceVisit", "eduWorkVisitCo1", "eduWorkVisitCo2", "eduAlStudent", "eduAlCo1", "eduAlCo2",
   ]);
 });
 

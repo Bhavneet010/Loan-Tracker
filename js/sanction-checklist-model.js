@@ -335,6 +335,7 @@ export const EDU_SECTIONS = [
       { key: "eduResidenceVisit", rule: "all", label: "Pre-Sanction Visit Report – Residence (Geo-tagged Photos)" },
       { key: "eduWorkVisitCo1", rule: "co1Working", label: "Pre-Sanction Visit Report – Workplace of Co-applicant 1" },
       { key: "eduWorkVisitCo2", rule: "co2Working", label: "Pre-Sanction Visit Report – Workplace of Co-applicant 2" },
+      { key: "eduAlStudent", rule: "aboveEduLimit", label: "Assets & Liabilities Statement – Student" },
       { key: "eduAlCo1", rule: "aboveEduLimit", label: "Assets & Liabilities Statement – Co-applicant 1" },
       { key: "eduAlCo2", rule: "co2AboveEduLimit", label: "Assets & Liabilities Statement – Co-applicant 2" },
     ],
@@ -416,7 +417,7 @@ const SHORT = {
   eduScholarship: "Scholarship", eduPassport: "Passport", eduI20: "I-20/CAS", eduFxCost: "Cost sheet",
   eduVisa: "Visa", eduCicStudent: "CIBIL (student)", eduCicCo1: "CIBIL (co-app)", eduCicCo2: "CIBIL (co-app 2)",
   eduResidenceVisit: "Residence visit", eduWorkVisitCo1: "Workplace visit", eduWorkVisitCo2: "Co-app 2 workplace visit",
-  eduAlCo1: "Assets/Liab.", eduAlCo2: "Co-app 2 Assets/Liab.",
+  eduAlStudent: "Student Assets/Liab.", eduAlCo1: "Co-app Assets/Liab.", eduAlCo2: "Co-app 2 Assets/Liab.",
   eduPropertyDocs: "Property docs", eduTitleSearch: "Title search", eduValuation: "Valuation", eduCersai: "CERSAI",
 };
 export const shortTag = key => SHORT[key] || key;
