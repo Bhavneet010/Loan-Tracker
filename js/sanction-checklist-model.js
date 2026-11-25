@@ -71,6 +71,8 @@ const RULES = {
     label: "Co-applicant 2 working",
     applies: p => p.secondCo === true && (p.co2Work === "salaried" || p.co2Work === "self"),
   },
+  aboveEduLimit: { label: "Above ₹7.5 lakh", applies: p => p.aboveLimit === true },
+  co2AboveEduLimit: { label: "Second co-applicant, above ₹7.5 lakh", applies: p => p.secondCo === true && p.aboveLimit === true },
 };
 
 // Section B documents are pulled and attached by the credit officer, not
@@ -211,6 +213,14 @@ export const COLLATERAL_MODES = [
 export const relationLabel = value => RELATIONS.find(opt => opt.value === value)?.label || "";
 export const workLabel = value => WORK_TYPES.find(opt => opt.value === value)?.label || "";
 
+// Assets & liabilities statements are needed above ₹7.5 lakh. This follows
+// the amount alone (no override); with no amount entered it falls back to
+// whether collateral was marked required.
+export function aboveEduLimit(checklist) {
+  const amount = parseAmountLakh(checklist?.amountLakh);
+  return amount == null ? collateralRequired(checklist) : amount > EDU_COLLATERAL_LIMIT_LAKH;
+}
+
 // true / false, or null while it cannot be told (by amount, with no amount).
 export function collateralRequired(checklist) {
   const mode = checklist?.collateralMode || "auto";
@@ -322,6 +332,11 @@ export const EDU_SECTIONS = [
       { key: "eduCicStudent", rule: "all", label: "CIC Report – Student" },
       { key: "eduCicCo1", rule: "all", label: "CIC Report – Co-applicant 1" },
       { key: "eduCicCo2", rule: "co2", label: "CIC Report – Co-applicant 2" },
+      { key: "eduResidenceVisit", rule: "all", label: "Pre-Sanction Visit Report – Residence (Geo-tagged Photos)" },
+      { key: "eduWorkVisitCo1", rule: "co1Working", label: "Pre-Sanction Visit Report – Workplace of Co-applicant 1" },
+      { key: "eduWorkVisitCo2", rule: "co2Working", label: "Pre-Sanction Visit Report – Workplace of Co-applicant 2" },
+      { key: "eduAlCo1", rule: "aboveEduLimit", label: "Assets & Liabilities Statement – Co-applicant 1" },
+      { key: "eduAlCo2", rule: "co2AboveEduLimit", label: "Assets & Liabilities Statement – Co-applicant 2" },
     ],
   },
   {
@@ -352,6 +367,7 @@ function eduProfileOf(checklist) {
     co2Relation: checklist?.co2Relation || "",
     co2Work: checklist?.co2Work || "",
     collateral: collateralRequired(checklist),
+    aboveLimit: aboveEduLimit(checklist),
   };
 }
 
@@ -399,6 +415,8 @@ const SHORT = {
   eduAdmission: "Admission letter", eduFeeStructure: "Fee structure", eduFeeReceipts: "Fee receipts",
   eduScholarship: "Scholarship", eduPassport: "Passport", eduI20: "I-20/CAS", eduFxCost: "Cost sheet",
   eduVisa: "Visa", eduCicStudent: "CIBIL (student)", eduCicCo1: "CIBIL (co-app)", eduCicCo2: "CIBIL (co-app 2)",
+  eduResidenceVisit: "Residence visit", eduWorkVisitCo1: "Workplace visit", eduWorkVisitCo2: "Co-app 2 workplace visit",
+  eduAlCo1: "Assets/Liab.", eduAlCo2: "Co-app 2 Assets/Liab.",
   eduPropertyDocs: "Property docs", eduTitleSearch: "Title search", eduValuation: "Valuation", eduCersai: "CERSAI",
 };
 export const shortTag = key => SHORT[key] || key;

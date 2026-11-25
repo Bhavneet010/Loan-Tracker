@@ -134,6 +134,21 @@ test("pending tags: CIBIL checks are not the branch's to send", () => {
   assert.equal(branch.some(tag => tag.startsWith("CIBIL")), false);
 });
 
+test("due diligence: residence and workplace visits; assets & liabilities above ₹7.5 lakh", () => {
+  const dd = checklist => visibleSections(checklist).find(section => section.id === "G").items.map(item => item.key);
+  assert.deepEqual(dd(edu()), ["eduCicStudent", "eduCicCo1", "eduResidenceVisit", "eduWorkVisitCo1"]);
+  assert.deepEqual(dd(edu({ co1Work: "none" })), ["eduCicStudent", "eduCicCo1", "eduResidenceVisit"]);
+  assert.deepEqual(dd(edu({ amountLakh: 7.5 })).includes("eduAlCo1"), false);
+  assert.deepEqual(dd(edu({ amountLakh: 7.51 })).includes("eduAlCo1"), true);
+  // The collateral override does not change the A&L rule when an amount is entered.
+  assert.equal(dd(edu({ amountLakh: 20, collateralMode: "no" })).includes("eduAlCo1"), true);
+  assert.equal(dd(edu({ amountLakh: 5, collateralMode: "yes" })).includes("eduAlCo1"), false);
+  assert.equal(dd(edu({ amountLakh: null, collateralMode: "yes" })).includes("eduAlCo1"), true);
+  assert.deepEqual(dd(edu({ amountLakh: 20, secondCoApplicant: true, co2Relation: "brother", co2Work: "self" })), [
+    "eduCicStudent", "eduCicCo1", "eduCicCo2", "eduResidenceVisit", "eduWorkVisitCo1", "eduWorkVisitCo2", "eduAlCo1", "eduAlCo2",
+  ]);
+});
+
 test("PDF details and filename follow the type", () => {
   const checklist = edu({ amountLakh: 20, studyAbroad: true, secondCoApplicant: true, co2Relation: "inLaw", co2Work: "none", course: "MS, TU Munich" });
   const details = Object.fromEntries(checklistPdfDetails(checklist));
